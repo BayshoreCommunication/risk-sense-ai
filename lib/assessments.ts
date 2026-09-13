@@ -51,6 +51,29 @@ export type Assessment = {
   classifications: string[];
 };
 
+/** One row of GET /assessments (DASH-01): the dashboard fields only — no answers, facts or factor breakdown. */
+export type AssessmentListItem = {
+  _id: string;
+  status: Assessment['status'];
+  phase: Assessment['phase'];
+  personaKey?: string;
+  scenarioKey?: string;
+  sector?: string;
+  requestorId: string;
+  departmentId?: string;
+  requestor?: { name: string; email: string };
+  department?: { name: string };
+  result: Pick<Result, 'score' | 'classification' | 'confidence' | 'ruleDriven' | 'professionalConsult' | 'mandatoryReview' | 'recommendedAction' | 'explanation' | 'computedAt'> | null;
+  decision: { type: 'accept' | 'override' | 'escalate'; overriddenTo?: string; decidedAt: string } | null;
+  timing: Assessment['timing'];
+  createdAt: string;
+};
+
+export type AssessmentCounts = Record<Assessment['status'] | 'pending' | 'all', number>;
+export type AssessmentListResult = { items: AssessmentListItem[]; total: number; page: number; limit: number; pages: number; counts: AssessmentCounts };
+export type AssessmentListQuery = NonNullable<paths['/assessments']['get']['parameters']['query']>;
+export type Department = { _id: string; name: string; personaIds: string[] };
+
 export type Turn = Assessment & { nextQuestion?: QuestionSnapshot | null; intakeComplete?: boolean; missingRequired?: string[] };
 
 export type Message = {
@@ -81,8 +104,8 @@ export const assessments = {
   answer: async (id: string, body: MessageBody) => unwrap<Turn>(await api.POST('/assessments/{id}/messages', { params: { path: { id } }, body })),
   submit: async (id: string) => unwrap<Assessment>(await api.POST('/assessments/{id}/submit', { params: { path: { id } } })),
   decide: async (id: string, body: DecisionBody) => unwrap<Assessment>(await api.POST('/assessments/{id}/decision', { params: { path: { id } }, body })),
-  list: async (query?: Record<string, string>) =>
-    unwrap<{ items: Assessment[]; total: number; page: number; limit: number }>(await api.GET('/assessments', { params: { query: query as never } })),
+  list: async (query: AssessmentListQuery = {}) => unwrap<AssessmentListResult>(await api.GET('/assessments', { params: { query } })),
+  departments: async () => unwrap<Department[]>(await api.GET('/departments')),
   personas: async () => unwrap<{ key: string; name: string; description: string; sector: string }[]>(await api.GET('/personas', { params: { query: {} } })),
 };
 

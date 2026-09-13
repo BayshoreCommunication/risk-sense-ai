@@ -3908,10 +3908,14 @@ export interface paths {
             parameters: {
                 query?: {
                     status?: "in_progress" | "intake_complete" | "awaiting_decision" | "escalated" | "closed" | "error_review";
+                    pending?: "true" | "false";
+                    classification?: "monitor_only" | "risk" | "elevated_risk" | "issue";
                     personaKey?: string;
+                    scenarioKey?: string;
                     departmentId?: string;
                     from?: string | null;
                     to?: string | null;
+                    sort?: "pending_first" | "newest" | "oldest";
                     limit?: number;
                     page?: number;
                 };
@@ -3921,7 +3925,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Own / department assessments */
+                /** @description Review dashboard (DASH-01): scoped, filtered, paginated; counts per status within the non-status filters */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -3929,10 +3933,12 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: {
-                                items: components["schemas"]["Assessment"][];
+                                items: components["schemas"]["AssessmentListItem"][];
                                 total: number;
                                 page: number;
                                 limit: number;
+                                pages: number;
+                                counts: components["schemas"]["AssessmentCounts"];
                             };
                             meta: {
                                 requestId: string;
@@ -3975,6 +3981,46 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/departments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The caller's tenant departments (filter lookup; FR-10) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Department"][];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -4317,6 +4363,24 @@ export interface components {
         };
         AssessmentTurn: {
             [key: string]: unknown;
+        };
+        AssessmentListItem: {
+            [key: string]: unknown;
+        };
+        AssessmentCounts: {
+            in_progress: number;
+            intake_complete: number;
+            awaiting_decision: number;
+            escalated: number;
+            closed: number;
+            error_review: number;
+            pending: number;
+            all: number;
+        };
+        Department: {
+            _id: string;
+            name: string;
+            personaIds: string[];
         };
         Assessment: {
             [key: string]: unknown;

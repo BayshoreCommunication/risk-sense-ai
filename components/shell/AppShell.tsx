@@ -90,7 +90,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
           ))}
         </nav>
       </aside>
-      <div className="flex flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-14 items-center justify-between border-b px-6">
           <div className="text-sm text-muted-foreground">{me ? `${me.user.name} · ${me.user.email}` : 'Loading…'}</div>
           <Button variant="outline" size="sm" onClick={() => void logout()}>
