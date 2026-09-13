@@ -342,6 +342,959 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/personas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    status?: "draft" | "active" | "deactivated";
+                    sector?: "financial" | "healthcare" | "it" | "general";
+                    key?: string;
+                    view?: "current" | "all";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description List Personas */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Persona"][];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        key: string;
+                        name: string;
+                        /** @enum {string} */
+                        sector: "financial" | "healthcare" | "it" | "general";
+                        description: string;
+                        /** @default [] */
+                        responsibilities?: string[];
+                        /** @default [] */
+                        activities?: string[];
+                        /** @default [] */
+                        commonRisks?: string[];
+                        /** @default [] */
+                        vocabulary?: string[];
+                        /** @default [] */
+                        policies?: string[];
+                        /** @default [] */
+                        detectHints?: string[];
+                        defaultScenarioKey?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Persona created (draft) */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Persona"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+                /** @description CONFLICT (duplicate key) */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/personas/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Persona */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Persona"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        key?: string;
+                        name?: string;
+                        /** @enum {string} */
+                        sector?: "financial" | "healthcare" | "it" | "general";
+                        description?: string;
+                        /** @default [] */
+                        responsibilities?: string[];
+                        /** @default [] */
+                        activities?: string[];
+                        /** @default [] */
+                        commonRisks?: string[];
+                        /** @default [] */
+                        vocabulary?: string[];
+                        /** @default [] */
+                        policies?: string[];
+                        /** @default [] */
+                        detectHints?: string[];
+                        defaultScenarioKey?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Draft updated in place, or a new draft version created */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Persona"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/personas/{id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description All versions, newest first */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Persona"][];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/personas/{id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Activated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Persona"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+                /** @description NO_LINKED_QUESTIONS / validation */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/personas/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deactivated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Persona"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    personaKey?: string;
+                    status?: "draft" | "active" | "deactivated";
+                    key?: string;
+                    view?: "current" | "all";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description List Scenarios */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Scenario"][];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        key: string;
+                        personaKey: string;
+                        name: string;
+                        description: string;
+                        businessContext: string;
+                        learningObjective?: string;
+                        /** @default [] */
+                        riskIndicators?: string[];
+                        /** @default [] */
+                        conversationFlow?: {
+                            questionKey: string;
+                            showIf?: {
+                                factKey: string;
+                                equals: string | number | boolean;
+                            };
+                        }[];
+                        /** @default [] */
+                        requiredFactKeys?: string[];
+                        /** @enum {string} */
+                        expectedClassification?: "monitor_only" | "risk" | "elevated_risk" | "issue";
+                        reasoningExample?: string;
+                        /** @default {} */
+                        recommendedActions?: {
+                            monitor_only?: {
+                                decisionRecommendation: string;
+                                /** @default [] */
+                                nextSteps?: string[];
+                            };
+                            risk?: {
+                                decisionRecommendation: string;
+                                /** @default [] */
+                                nextSteps?: string[];
+                            };
+                            elevated_risk?: {
+                                decisionRecommendation: string;
+                                /** @default [] */
+                                nextSteps?: string[];
+                            };
+                            issue?: {
+                                decisionRecommendation: string;
+                                /** @default [] */
+                                nextSteps?: string[];
+                            };
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description Scenario created (draft) */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Scenario"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+                /** @description CONFLICT (duplicate key) */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scenarios/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Scenario */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Scenario"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        personaKey?: string;
+                        name?: string;
+                        description?: string;
+                        businessContext?: string;
+                        learningObjective?: string;
+                        /** @default [] */
+                        riskIndicators?: string[];
+                        /** @default [] */
+                        conversationFlow?: {
+                            questionKey: string;
+                            showIf?: {
+                                factKey: string;
+                                equals: string | number | boolean;
+                            };
+                        }[];
+                        /** @default [] */
+                        requiredFactKeys?: string[];
+                        /** @enum {string} */
+                        expectedClassification?: "monitor_only" | "risk" | "elevated_risk" | "issue";
+                        reasoningExample?: string;
+                        /** @default {} */
+                        recommendedActions?: {
+                            monitor_only?: {
+                                decisionRecommendation: string;
+                                /** @default [] */
+                                nextSteps?: string[];
+                            };
+                            risk?: {
+                                decisionRecommendation: string;
+                                /** @default [] */
+                                nextSteps?: string[];
+                            };
+                            elevated_risk?: {
+                                decisionRecommendation: string;
+                                /** @default [] */
+                                nextSteps?: string[];
+                            };
+                            issue?: {
+                                decisionRecommendation: string;
+                                /** @default [] */
+                                nextSteps?: string[];
+                            };
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description Draft updated in place, or a new draft version created */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Scenario"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/scenarios/{id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description All versions, newest first */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Scenario"][];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scenarios/{id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Activated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Scenario"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+                /** @description NO_LINKED_QUESTIONS / validation */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scenarios/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deactivated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Scenario"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/questions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    personaKey?: string;
+                    scenarioKey?: string;
+                    sector?: "financial" | "healthcare" | "it" | "general";
+                    status?: "active" | "retired";
+                    key?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description List Questions */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Question"][];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        key: string;
+                        text: string;
+                        /** @enum {string} */
+                        type: "mcq" | "yes_no" | "free_text" | "number";
+                        /** @default [] */
+                        options?: {
+                            id: string;
+                            label: string;
+                            factValue: string | number | boolean;
+                        }[];
+                        factKey: string;
+                        /** @default true */
+                        required?: boolean;
+                        tags: {
+                            personaKeys: string[];
+                            /** @default [] */
+                            scenarioKeys?: string[];
+                            sectors: ("financial" | "healthcare" | "it" | "general")[];
+                            category?: string;
+                        };
+                        branchTrigger?: {
+                            onValue: string | number | boolean;
+                            questionKeys: string[];
+                        };
+                        scoringHint?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Question created (draft) */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Question"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+                /** @description CONFLICT (duplicate key) */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/questions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Question */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Question"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        text?: string;
+                        /** @enum {string} */
+                        type?: "mcq" | "yes_no" | "free_text" | "number";
+                        /** @default [] */
+                        options?: {
+                            id: string;
+                            label: string;
+                            factValue: string | number | boolean;
+                        }[];
+                        factKey?: string;
+                        /** @default true */
+                        required?: boolean;
+                        tags?: {
+                            personaKeys: string[];
+                            /** @default [] */
+                            scenarioKeys?: string[];
+                            sectors: ("financial" | "healthcare" | "it" | "general")[];
+                            category?: string;
+                        };
+                        branchTrigger?: {
+                            onValue: string | number | boolean;
+                            questionKeys: string[];
+                        };
+                        scoringHint?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Question"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/questions/{id}/retire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Retired */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Question"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -386,6 +1339,15 @@ export interface components {
                 idleTimeoutMin: number;
                 maxConcurrentSessions: number;
             };
+        };
+        Persona: {
+            [key: string]: unknown;
+        };
+        Scenario: {
+            [key: string]: unknown;
+        };
+        Question: {
+            [key: string]: unknown;
         };
     };
     responses: never;
