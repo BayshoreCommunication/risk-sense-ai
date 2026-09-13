@@ -32,6 +32,8 @@ export interface ContentManagerProps {
   columns: { key: string; label: string; render?: (item: Item) => React.ReactNode }[];
   versioned: boolean;
   defaultQuery?: Record<string, string>;
+  /** Change-controlled entities (rules, matrices): show Approve on drafts and Activate only once approved. */
+  approval?: boolean;
 }
 
 function getPath(obj: unknown, path: string): unknown {
@@ -88,13 +90,14 @@ function fromFormValues(values: Record<string, string>, fields: FieldSpec[], edi
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
   active: 'default',
+  approved: 'secondary',
   draft: 'secondary',
   deactivated: 'outline',
   retired: 'outline',
 };
 
 export function ContentManager(props: ContentManagerProps) {
-  const { title, description, apiClient, fields, columns, versioned, defaultQuery } = props;
+  const { title, description, apiClient, fields, columns, versioned, defaultQuery, approval } = props;
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -226,7 +229,12 @@ export function ContentManager(props: ContentManagerProps) {
                       Edit
                     </Button>
                   )}
-                  {versioned && item.status === 'draft' && apiClient.activate && (
+                  {approval && item.status === 'draft' && !item.approvedBy && apiClient.approve && (
+                    <Button size="sm" variant="secondary" onClick={() => void act(() => apiClient.approve!(item._id))}>
+                      Approve
+                    </Button>
+                  )}
+                  {apiClient.activate && (item.status === 'approved' || (item.status === 'draft' && (!approval || Boolean(item.approvedBy)))) && (
                     <Button size="sm" onClick={() => void act(() => apiClient.activate!(item._id))}>
                       Activate
                     </Button>
@@ -236,7 +244,7 @@ export function ContentManager(props: ContentManagerProps) {
                       Deactivate
                     </Button>
                   )}
-                  {!versioned && item.status === 'active' && apiClient.retire && (
+                  {!versioned && (item.status === 'active' || item.status === 'approved') && apiClient.retire && (
                     <Button size="sm" variant="destructive" onClick={() => void act(() => apiClient.retire!(item._id))}>
                       Retire
                     </Button>

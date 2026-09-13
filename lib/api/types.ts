@@ -1552,6 +1552,2351 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    status?: "draft" | "approved" | "active" | "retired";
+                    sector?: "financial" | "healthcare" | "it" | "general";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Rules by priority */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Rule"][];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        key: string;
+                        name: string;
+                        description?: string;
+                        trigger: {
+                            factKey: string;
+                            /** @enum {string} */
+                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                        } | {
+                            all?: ({
+                                factKey: string;
+                                /** @enum {string} */
+                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                            } | {
+                                all?: ({
+                                    factKey: string;
+                                    /** @enum {string} */
+                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                } | {
+                                    all?: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    }[];
+                                    any?: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    }[];
+                                })[];
+                                any?: ({
+                                    factKey: string;
+                                    /** @enum {string} */
+                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                } | {
+                                    all?: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    }[];
+                                    any?: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    }[];
+                                })[];
+                            })[];
+                            any?: ({
+                                factKey: string;
+                                /** @enum {string} */
+                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                            } | {
+                                all?: ({
+                                    factKey: string;
+                                    /** @enum {string} */
+                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                } | {
+                                    all?: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    }[];
+                                    any?: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    }[];
+                                })[];
+                                any?: ({
+                                    factKey: string;
+                                    /** @enum {string} */
+                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                } | {
+                                    all?: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    }[];
+                                    any?: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    }[];
+                                })[];
+                            })[];
+                        };
+                        /** @enum {string} */
+                        forcedClassification: "monitor_only" | "risk" | "elevated_risk" | "issue";
+                        forcedAction?: string;
+                        /** @default 100 */
+                        priority?: number;
+                        /** @default [] */
+                        sectors?: ("financial" | "healthcare" | "it" | "general")[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Draft rule */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Rule"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/rules/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Rule */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Rule"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        name?: string;
+                        description?: string;
+                        trigger?: {
+                            factKey: string;
+                            /** @enum {string} */
+                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                        } | {
+                            all?: ({
+                                factKey: string;
+                                /** @enum {string} */
+                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                            } | {
+                                all?: ({
+                                    factKey: string;
+                                    /** @enum {string} */
+                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                } | {
+                                    all?: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    }[];
+                                    any?: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    }[];
+                                })[];
+                                any?: ({
+                                    factKey: string;
+                                    /** @enum {string} */
+                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                } | {
+                                    all?: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    }[];
+                                    any?: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    }[];
+                                })[];
+                            })[];
+                            any?: ({
+                                factKey: string;
+                                /** @enum {string} */
+                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                            } | {
+                                all?: ({
+                                    factKey: string;
+                                    /** @enum {string} */
+                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                } | {
+                                    all?: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    }[];
+                                    any?: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    }[];
+                                })[];
+                                any?: ({
+                                    factKey: string;
+                                    /** @enum {string} */
+                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                } | {
+                                    all?: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    }[];
+                                    any?: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    }[];
+                                })[];
+                            })[];
+                        };
+                        /** @enum {string} */
+                        forcedClassification?: "monitor_only" | "risk" | "elevated_risk" | "issue";
+                        forcedAction?: string;
+                        /** @default 100 */
+                        priority?: number;
+                        /** @default [] */
+                        sectors?: ("financial" | "healthcare" | "it" | "general")[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Updated (back to draft) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Rule"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/rules/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        changeRef?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Approved */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Rule"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+                /** @description SELF_APPROVAL */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/rules/{id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Active */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Rule"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+                /** @description NOT_APPROVED */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/rules/{id}/retire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Retired */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Rule"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scoring-matrices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    view?: "current" | "all";
+                    key?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Matrices */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["ScoringMatrix"][];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        key: string;
+                        name: string;
+                        /** @enum {string} */
+                        sector?: "financial" | "healthcare" | "it" | "general";
+                        /**
+                         * @default weighted_sum
+                         * @enum {string}
+                         */
+                        formula?: "weighted_sum";
+                        factors: {
+                            controlEffectiveness: {
+                                weight: number;
+                                /**
+                                 * @default {
+                                 *       "min": 1,
+                                 *       "max": 5
+                                 *     }
+                                 */
+                                scale?: {
+                                    min: number;
+                                    max: number;
+                                };
+                                /** @default [] */
+                                mapping?: {
+                                    when: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    } | {
+                                        all?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                        any?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                    };
+                                    value: number;
+                                }[];
+                            };
+                            impact: {
+                                weight: number;
+                                /**
+                                 * @default {
+                                 *       "min": 1,
+                                 *       "max": 5
+                                 *     }
+                                 */
+                                scale?: {
+                                    min: number;
+                                    max: number;
+                                };
+                                /** @default [] */
+                                mapping?: {
+                                    when: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    } | {
+                                        all?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                        any?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                    };
+                                    value: number;
+                                }[];
+                            };
+                            severity: {
+                                weight: number;
+                                /**
+                                 * @default {
+                                 *       "min": 1,
+                                 *       "max": 5
+                                 *     }
+                                 */
+                                scale?: {
+                                    min: number;
+                                    max: number;
+                                };
+                                /** @default [] */
+                                mapping?: {
+                                    when: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    } | {
+                                        all?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                        any?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                    };
+                                    value: number;
+                                }[];
+                            };
+                            likelihood: {
+                                weight: number;
+                                /**
+                                 * @default {
+                                 *       "min": 1,
+                                 *       "max": 5
+                                 *     }
+                                 */
+                                scale?: {
+                                    min: number;
+                                    max: number;
+                                };
+                                /** @default [] */
+                                mapping?: {
+                                    when: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    } | {
+                                        all?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                        any?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                    };
+                                    value: number;
+                                }[];
+                            };
+                            duration: {
+                                weight: number;
+                                /**
+                                 * @default {
+                                 *       "min": 1,
+                                 *       "max": 5
+                                 *     }
+                                 */
+                                scale?: {
+                                    min: number;
+                                    max: number;
+                                };
+                                /** @default [] */
+                                mapping?: {
+                                    when: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    } | {
+                                        all?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                        any?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                    };
+                                    value: number;
+                                }[];
+                            };
+                            regulatorySensitivity: {
+                                weight: number;
+                                /**
+                                 * @default {
+                                 *       "min": 1,
+                                 *       "max": 5
+                                 *     }
+                                 */
+                                scale?: {
+                                    min: number;
+                                    max: number;
+                                };
+                                /** @default [] */
+                                mapping?: {
+                                    when: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    } | {
+                                        all?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                        any?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                    };
+                                    value: number;
+                                }[];
+                            };
+                        };
+                        thresholds: {
+                            monitor_only: {
+                                min: number;
+                                max: number;
+                            };
+                            risk: {
+                                min: number;
+                                max: number;
+                            };
+                            elevated_risk: {
+                                min: number;
+                                max: number;
+                            };
+                            issue: {
+                                min: number;
+                                max: number;
+                            };
+                        };
+                        /** @default {} */
+                        confidence?: {
+                            /** @default 60 */
+                            professionalConsultBelow?: number;
+                            /** @default 40 */
+                            mandatoryReviewBelow?: number;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description Draft matrix */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["ScoringMatrix"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scoring-matrices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Matrix */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["ScoringMatrix"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        name?: string;
+                        /** @enum {string} */
+                        sector?: "financial" | "healthcare" | "it" | "general";
+                        /**
+                         * @default weighted_sum
+                         * @enum {string}
+                         */
+                        formula?: "weighted_sum";
+                        factors?: {
+                            controlEffectiveness: {
+                                weight: number;
+                                /**
+                                 * @default {
+                                 *       "min": 1,
+                                 *       "max": 5
+                                 *     }
+                                 */
+                                scale?: {
+                                    min: number;
+                                    max: number;
+                                };
+                                /** @default [] */
+                                mapping?: {
+                                    when: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    } | {
+                                        all?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                        any?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                    };
+                                    value: number;
+                                }[];
+                            };
+                            impact: {
+                                weight: number;
+                                /**
+                                 * @default {
+                                 *       "min": 1,
+                                 *       "max": 5
+                                 *     }
+                                 */
+                                scale?: {
+                                    min: number;
+                                    max: number;
+                                };
+                                /** @default [] */
+                                mapping?: {
+                                    when: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    } | {
+                                        all?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                        any?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                    };
+                                    value: number;
+                                }[];
+                            };
+                            severity: {
+                                weight: number;
+                                /**
+                                 * @default {
+                                 *       "min": 1,
+                                 *       "max": 5
+                                 *     }
+                                 */
+                                scale?: {
+                                    min: number;
+                                    max: number;
+                                };
+                                /** @default [] */
+                                mapping?: {
+                                    when: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    } | {
+                                        all?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                        any?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                    };
+                                    value: number;
+                                }[];
+                            };
+                            likelihood: {
+                                weight: number;
+                                /**
+                                 * @default {
+                                 *       "min": 1,
+                                 *       "max": 5
+                                 *     }
+                                 */
+                                scale?: {
+                                    min: number;
+                                    max: number;
+                                };
+                                /** @default [] */
+                                mapping?: {
+                                    when: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    } | {
+                                        all?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                        any?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                    };
+                                    value: number;
+                                }[];
+                            };
+                            duration: {
+                                weight: number;
+                                /**
+                                 * @default {
+                                 *       "min": 1,
+                                 *       "max": 5
+                                 *     }
+                                 */
+                                scale?: {
+                                    min: number;
+                                    max: number;
+                                };
+                                /** @default [] */
+                                mapping?: {
+                                    when: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    } | {
+                                        all?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                        any?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                    };
+                                    value: number;
+                                }[];
+                            };
+                            regulatorySensitivity: {
+                                weight: number;
+                                /**
+                                 * @default {
+                                 *       "min": 1,
+                                 *       "max": 5
+                                 *     }
+                                 */
+                                scale?: {
+                                    min: number;
+                                    max: number;
+                                };
+                                /** @default [] */
+                                mapping?: {
+                                    when: {
+                                        factKey: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                    } | {
+                                        all?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                        any?: ({
+                                            factKey: string;
+                                            /** @enum {string} */
+                                            op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                            value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                        } | {
+                                            all?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                            any?: ({
+                                                factKey: string;
+                                                /** @enum {string} */
+                                                op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                            } | {
+                                                all?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                                any?: {
+                                                    factKey: string;
+                                                    /** @enum {string} */
+                                                    op: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                                    value?: string | number | boolean | unknown | (string | number | boolean | unknown | unknown)[] | unknown;
+                                                }[];
+                                            })[];
+                                        })[];
+                                    };
+                                    value: number;
+                                }[];
+                            };
+                        };
+                        thresholds?: {
+                            monitor_only: {
+                                min: number;
+                                max: number;
+                            };
+                            risk: {
+                                min: number;
+                                max: number;
+                            };
+                            elevated_risk: {
+                                min: number;
+                                max: number;
+                            };
+                            issue: {
+                                min: number;
+                                max: number;
+                            };
+                        };
+                        /** @default {} */
+                        confidence?: {
+                            /** @default 60 */
+                            professionalConsultBelow?: number;
+                            /** @default 40 */
+                            mandatoryReviewBelow?: number;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description Draft updated or new draft version (approval cleared) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["ScoringMatrix"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/scoring-matrices/{id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Versions */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["ScoringMatrix"][];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scoring-matrices/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        changeRef?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Approved */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["ScoringMatrix"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+                /** @description SELF_APPROVAL */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scoring-matrices/{id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Active + current */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["ScoringMatrix"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+                /** @description NOT_APPROVED */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scoring-matrices/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deactivated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["ScoringMatrix"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scoring/simulate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        facts: {
+                            [key: string]: string | number | boolean | unknown | unknown;
+                        };
+                        matrixId?: string;
+                        /** @enum {string} */
+                        sector?: "financial" | "healthcare" | "it" | "general";
+                        /** @default [] */
+                        requiredFactKeys?: string[];
+                        /** @default {} */
+                        factConfidences?: {
+                            [key: string]: number;
+                        };
+                        /** @default true */
+                        includeRules?: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description Score, factors, classification, confidence, rule result */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                [key: string]: unknown;
+                            };
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1607,6 +3952,12 @@ export interface components {
             [key: string]: unknown;
         };
         Dataset: {
+            [key: string]: unknown;
+        };
+        Rule: {
+            [key: string]: unknown;
+        };
+        ScoringMatrix: {
             [key: string]: unknown;
         };
     };
