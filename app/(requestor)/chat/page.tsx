@@ -1,5 +1,63 @@
-import { Placeholder } from '@/components/shell/Placeholder';
+'use client';
 
-export default function Page() {
-  return <Placeholder title="New assessment (chat intake)" task="T-038" requirements={['FR-03', 'FR-04', 'FR-05', 'FR-06', 'FR-07']} />;
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { assessments } from '@/lib/assessments';
+import { toApiError } from '@/lib/api/client';
+
+/** Start screen: describe the incident (persona inferred, FR-04) and/or pick the role explicitly. */
+export default function NewAssessmentPage() {
+  const router = useRouter();
+  const [personas, setPersonas] = useState<{ key: string; name: string; description: string }[]>([]);
+  const [text, setText] = useState('');
+  const [personaKey, setPersonaKey] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    assessments.personas().then(setPersonas).catch((e) => setError(toApiError(e).message));
+  }, []);
+
+  async function start() {
+    setBusy(true);
+    setError(null);
+    try {
+      const turn = await assessments.start({ ...(personaKey ? { personaKey } : {}), ...(text.trim().length >= 10 ? { text: text.trim() } : {}) });
+      router.push(`/chat/${turn._id}`);
+    } catch (e) {
+      setError(toApiError(e).message);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>New risk assessment</CardTitle>
+          <CardDescription>Describe what happened in your own words. The assistant will pick the matching scenario and ask guided questions. Nothing is scored until you submit.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Textarea rows={4} value={text} onChange={(e) => setText(e.target.value)} placeholder="e.g. A vendor wire of $250,000 went out yesterday without the second approval…" />
+          <div>
+            <div className="mb-2 text-sm font-medium">Your role (optional — leave empty to let the assistant infer it)</div>
+            <div className="flex flex-wrap gap-2">
+              {personas.map((p) => (
+                <Button key={p.key} type="button" size="sm" variant={personaKey === p.key ? 'default' : 'outline'} onClick={() => setPersonaKey(personaKey === p.key ? null : p.key)}>
+                  {p.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <Button disabled={busy || (!personaKey && text.trim().length < 10)} onClick={() => void start()}>
+            {busy ? 'Starting…' : 'Start'}
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
