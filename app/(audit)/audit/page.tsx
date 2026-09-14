@@ -1,5 +1,6 @@
-import { Placeholder } from '@/components/shell/Placeholder';
+import { redirect } from 'next/navigation';
 
+/** Audit home → the assessments audit view (T-063). */
 export default function Page() {
-  return <Placeholder title="Audit (read-only)" task="T-063" requirements={['FR-26', 'SEC-07']} />;
+  redirect('/audit/assessments');
 }

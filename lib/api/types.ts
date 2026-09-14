@@ -4248,6 +4248,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/assessments/{id}/reconstruct": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description FR-26: lifecycle rebuilt from the audit log (timeline, state, completeness, integrity, conformance) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["AssessmentReconstruction"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/assessments/{id}/escalation-targets": {
         parameters: {
             query?: never;
@@ -4428,6 +4470,9 @@ export interface components {
             personaIds: string[];
         };
         Assessment: {
+            [key: string]: unknown;
+        };
+        AssessmentReconstruction: {
             [key: string]: unknown;
         };
         EscalationTarget: {
