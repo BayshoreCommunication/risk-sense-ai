@@ -46,10 +46,13 @@ export type Assessment = {
   facts: Fact[];
   result: Result | null;
   decision: { type: 'accept' | 'override' | 'escalate'; reason?: string; overriddenTo?: string; decidedAt: string } | null;
+  escalatedTo: { _id: string; name: string } | null; // T-061 reviewer the escalation was routed to
   timing: { startedAt: string; intakeCompletedAt?: string; submittedAt?: string; closedAt?: string; durationSec?: number };
   createdAt: string;
   classifications: string[];
 };
+
+export type EscalationTarget = { _id: string; name: string; email: string; departmentIds: string[]; crossDepartmentAccess: boolean };
 
 /** One row of GET /assessments (DASH-01): the dashboard fields only — no answers, facts or factor breakdown. */
 export type AssessmentListItem = {
@@ -65,6 +68,8 @@ export type AssessmentListItem = {
   department?: { name: string };
   result: Pick<Result, 'score' | 'classification' | 'confidence' | 'ruleDriven' | 'professionalConsult' | 'mandatoryReview' | 'recommendedAction' | 'explanation' | 'computedAt'> | null;
   decision: { type: 'accept' | 'override' | 'escalate'; overriddenTo?: string; decidedAt: string } | null;
+  escalatedToUserId?: string;
+  escalatedTo?: { name: string };
   timing: Assessment['timing'];
   createdAt: string;
 };
@@ -103,6 +108,7 @@ export const assessments = {
   setPersona: async (id: string, personaKey: string) => unwrap<Turn>(await api.POST('/assessments/{id}/persona', { params: { path: { id } }, body: { personaKey } })),
   answer: async (id: string, body: MessageBody) => unwrap<Turn>(await api.POST('/assessments/{id}/messages', { params: { path: { id } }, body })),
   submit: async (id: string) => unwrap<Assessment>(await api.POST('/assessments/{id}/submit', { params: { path: { id } } })),
+  escalationTargets: async (id: string) => unwrap<EscalationTarget[]>(await api.GET('/assessments/{id}/escalation-targets', { params: { path: { id } } })),
   decide: async (id: string, body: DecisionBody) => unwrap<Assessment>(await api.POST('/assessments/{id}/decision', { params: { path: { id } }, body })),
   list: async (query: AssessmentListQuery = {}) => unwrap<AssessmentListResult>(await api.GET('/assessments', { params: { query } })),
   departments: async () => unwrap<Department[]>(await api.GET('/departments')),

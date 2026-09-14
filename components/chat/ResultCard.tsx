@@ -1,15 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import type { Assessment, DecisionInput } from '@/lib/assessments';
+import { assessments, type Assessment, type DecisionInput, type EscalationTarget } from '@/lib/assessments';
 
 const LABEL: Record<string, string> = { monitor_only: 'Monitor Only', risk: 'Risk', elevated_risk: 'Elevated Risk', issue: 'Issue' };
 const VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = { monitor_only: 'secondary', risk: 'default', elevated_risk: 'default', issue: 'destructive' };
+const NOBODY = '__nobody';
 
 /**
  * The AI recommendation + the human decision (FR-20, AI-02, FR-22, FR-23). The assessment cannot close
@@ -20,8 +21,27 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (d:
   const [mode, setMode] = useState<'none' | 'override' | 'escalate'>('none');
   const [reason, setReason] = useState('');
   const [to, setTo] = useState<string>('');
+  const [targets, setTargets] = useState<EscalationTarget[] | null>(null); // null = not loaded; [] = FREE / nobody
+  const [target, setTarget] = useState<string>(NOBODY);
   const decided = a.decision && a.status !== 'escalated';
   const isError = a.status === 'error_review';
+
+  // Close the override/escalate form once a decision has been recorded (status or decision time changed).
+  const decidedAt = a.decision?.decidedAt;
+  useEffect(() => {
+    setMode('none');
+    setReason('');
+  }, [a.status, decidedAt]);
+
+  // T-061: reviewers this assessment can be routed to (PAID); loaded once the user opens "Escalate…".
+  useEffect(() => {
+    if (mode !== 'escalate' || targets !== null) return;
+    assessments
+      .escalationTargets(a._id)
+      .then(setTargets)
+      .catch(() => setTargets([]));
+  }, [mode, targets, a._id]);
+  const targetOptions = [{ value: NOBODY, label: 'No specific reviewer' }, ...(targets ?? []).map((t) => ({ value: t._id, label: `${t.name}${t.crossDepartmentAccess ? ' (cross-department)' : ''}` }))];
 
   return (
     <Card className="border-2">
@@ -38,7 +58,7 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (d:
         </div>
         <CardDescription>
           Recommended action: <span className="font-medium text-foreground">{r.recommendedAction}</span>
-          {r.nextSteps.length ? ` · Next steps: ${r.nextSteps.join(', ')}` : ''}
+          {r.nextSteps?.length ? ` · Next steps: ${r.nextSteps.join(', ')}` : ''}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
@@ -50,7 +70,7 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (d:
           <summary className="cursor-pointer">Factor breakdown</summary>
           <table className="mt-2 w-full">
             <tbody>
-              {Object.entries(r.factors).map(([k, f]) => (
+              {Object.entries(r.factors ?? {}).map(([k, f]) => (
                 <tr key={k} className="border-t">
                   <td className="py-1">{k}</td>
                   <td>value {f.value}</td>
@@ -75,6 +95,12 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (d:
           </div>
         ) : (
           <div className="space-y-3">
+            {a.status === 'escalated' && (
+              <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
+                Escalated{a.escalatedTo ? ` to ${a.escalatedTo.name}` : ''}
+                {a.decision?.reason ? ` — ${a.decision.reason}` : ''} · {new Date(a.decision!.decidedAt).toLocaleString()}. Still open until a reviewer accepts or overrides.
+              </div>
+            )}
             <p className="text-xs text-muted-foreground">The AI does not decide. Record your decision to close this assessment (FR-22).</p>
             <div className="flex flex-wrap gap-2">
               <Button disabled={busy || isError} onClick={() => onDecide({ type: 'accept' })}>
@@ -103,6 +129,23 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (d:
                     </SelectContent>
                   </Select>
                 )}
+                {mode === 'escalate' && targets !== null && targets.length > 0 && (
+                  <Select items={targetOptions} value={target} onValueChange={(v) => setTarget(v ?? NOBODY)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Route to a reviewer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {targetOptions.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                {mode === 'escalate' && targets !== null && targets.length === 0 && (
+                  <p className="text-xs text-muted-foreground">No reviewer routing on this plan — the escalation stays open for you or your department to decide.</p>
+                )}
                 <Textarea
                   rows={3}
                   value={reason}
@@ -111,7 +154,13 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (d:
                 />
                 <Button
                   disabled={busy || (mode === 'override' && (!to || reason.trim().length < 25))}
-                  onClick={() => onDecide(mode === 'override' ? { type: 'override', overriddenTo: to as DecisionInput['overriddenTo'], reason } : { type: 'escalate', reason: reason || undefined })}
+                  onClick={() =>
+                    onDecide(
+                      mode === 'override'
+                        ? { type: 'override', overriddenTo: to as DecisionInput['overriddenTo'], reason }
+                        : { type: 'escalate', reason: reason || undefined, ...(target !== NOBODY ? { escalateToUserId: target } : {}) },
+                    )
+                  }
                 >
                   {mode === 'override' ? 'Record override' : 'Escalate'}
                 </Button>

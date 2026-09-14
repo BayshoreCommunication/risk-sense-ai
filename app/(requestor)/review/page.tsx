@@ -339,7 +339,10 @@ function ReviewDashboard() {
                     '—'
                   )}
                 </TableCell>
-                <TableCell className="whitespace-nowrap">{a.decision ? `${a.decision.type}${a.decision.overriddenTo ? ` → ${CLASS_LABEL[a.decision.overriddenTo] ?? a.decision.overriddenTo}` : ''}` : '—'}</TableCell>
+                <TableCell className="whitespace-nowrap">
+                  {a.decision ? `${a.decision.type}${a.decision.overriddenTo ? ` → ${CLASS_LABEL[a.decision.overriddenTo] ?? a.decision.overriddenTo}` : ''}` : '—'}
+                  {a.status === 'escalated' && a.escalatedTo && <div className="text-xs text-muted-foreground">to {a.escalatedTo.name}</div>}
+                </TableCell>
                 <TableCell className="text-right">
                   <Button size="sm" variant="outline" onClick={() => router.push(`/chat/${a._id}`)}>
                     {PENDING.has(a.status) ? 'Review' : 'Open'}

@@ -3913,6 +3913,8 @@ export interface paths {
                     personaKey?: string;
                     scenarioKey?: string;
                     departmentId?: string;
+                    mandatoryReview?: "true" | "false";
+                    escalatedToMe?: "true" | "false";
                     from?: string | null;
                     to?: string | null;
                     sort?: "pending_first" | "newest" | "oldest";
@@ -4246,6 +4248,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/assessments/{id}/escalation-targets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Reviewers the caller may escalate to (T-061; empty on FREE) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["EscalationTarget"][];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/assessments/{id}/decision": {
         parameters: {
             query?: never;
@@ -4272,6 +4316,7 @@ export interface paths {
                         reason?: string;
                         /** @enum {string} */
                         overriddenTo?: "monitor_only" | "risk" | "elevated_risk" | "issue";
+                        escalateToUserId?: string;
                     };
                 };
             };
@@ -4384,6 +4429,13 @@ export interface components {
         };
         Assessment: {
             [key: string]: unknown;
+        };
+        EscalationTarget: {
+            _id: string;
+            name: string;
+            email: string;
+            departmentIds: string[];
+            crossDepartmentAccess: boolean;
         };
     };
     responses: never;
