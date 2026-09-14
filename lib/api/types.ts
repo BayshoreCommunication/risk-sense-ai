@@ -4038,7 +4038,9 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    unmask?: "true" | "false";
+                };
                 header?: never;
                 path: {
                     id: string;
@@ -4080,7 +4082,9 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    unmask?: "true" | "false";
+                };
                 header?: never;
                 path: {
                     id: string;
@@ -4257,7 +4261,9 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    unmask?: "true" | "false";
+                };
                 header?: never;
                 path: {
                     id: string;
@@ -4402,6 +4408,7 @@ export interface paths {
                     personaKey?: string;
                     scenarioKey?: string;
                     refresh?: "true" | "false";
+                    unmask?: "true" | "false";
                 };
                 header?: never;
                 path: {
@@ -4452,6 +4459,7 @@ export interface paths {
                     personaKey?: string;
                     scenarioKey?: string;
                     refresh?: "true" | "false";
+                    unmask?: "true" | "false";
                     format?: "csv" | "pdf";
                 };
                 header?: never;
@@ -4499,6 +4507,7 @@ export interface paths {
                     personaKey?: string;
                     scenarioKey?: string;
                     refresh?: "true" | "false";
+                    unmask?: "true" | "false";
                     by?: "department" | "persona" | "scenario";
                 };
                 header?: never;
@@ -4673,6 +4682,98 @@ export interface paths {
         };
         trace?: never;
     };
+    "/system/retention/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @default true */
+                        dryRun?: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description SEC-06: run retention for the tenant (dryRun default true); audited retention.* */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["RetentionRunResult"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/system/retention/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Last 30 retention runs (retentionRuns) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: (components["schemas"]["RetentionRunResult"] & {
+                                _id: string;
+                                ranAt: string;
+                                trigger: string;
+                                error?: string;
+                            })[];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4828,6 +4929,23 @@ export interface components {
                 datasetHistoryDays: number;
             };
             updatedAt?: string;
+        };
+        RetentionRunResult: {
+            tenantId: string;
+            slug: string;
+            plan: string;
+            dryRun: boolean;
+            policy: {
+                assessmentDays: number;
+                auditDays: number;
+                graceDays: number;
+            };
+            flagged: number;
+            reduced: number;
+            archived: number;
+            messagesRemoved: number;
+            auditPastRetention: number;
+            durationMs: number;
         };
     };
     responses: never;

@@ -16,10 +16,11 @@ export function AssessmentDetail({ id }: { id: string }) {
   const [a, setA] = useState<Assessment | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [unmask, setUnmask] = useState(false); // SEC-05: clear values on request; the backend logs the access
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([assessments.get(id), assessments.messages(id)])
+    Promise.all([assessments.get(id, unmask), assessments.messages(id, unmask)])
       .then(([doc, msgs]) => {
         if (cancelled) return;
         setA(doc);
@@ -29,7 +30,7 @@ export function AssessmentDetail({ id }: { id: string }) {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, unmask]);
 
   if (error) return <p className="text-sm text-destructive">{error}</p>;
   if (!a) return <p className="text-sm text-muted-foreground">Loading…</p>;
@@ -38,6 +39,16 @@ export function AssessmentDetail({ id }: { id: string }) {
 
   return (
     <div className="space-y-4 text-sm">
+      {a.masked && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed p-2 text-xs text-muted-foreground">
+          <span>
+            Free text is masked ({a.masked.toUpperCase()}, SEC-05). Unmasking is recorded in the audit log with your name.
+          </span>
+          <button type="button" className="underline" onClick={() => setUnmask(true)}>
+            Unmask (logged)
+          </button>
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="outline">{a.status.replace(/_/g, ' ')}</Badge>
         <span className="text-muted-foreground">

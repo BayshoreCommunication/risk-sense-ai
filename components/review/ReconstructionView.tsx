@@ -12,17 +12,18 @@ import { toApiError } from '@/lib/api/client';
 export function ReconstructionView({ id }: { id: string }) {
   const [r, setR] = useState<Reconstruction | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [unmask, setUnmask] = useState(false); // SEC-05
 
   useEffect(() => {
     let cancelled = false;
     auditApi
-      .reconstruct(id)
+      .reconstruct(id, unmask)
       .then((x) => !cancelled && setR(x))
       .catch((e) => !cancelled && setError(toApiError(e).message));
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, unmask]);
 
   if (error) return <p className="text-sm text-destructive">{error}</p>;
   if (!r) return <p className="text-sm text-muted-foreground">Rebuilding from the audit log…</p>;
@@ -36,6 +37,14 @@ export function ReconstructionView({ id }: { id: string }) {
         <Badge variant={r.conformance.matches ? 'outline' : 'destructive'}>{r.conformance.matches ? 'Matches the stored record' : `${r.conformance.differences.length} difference(s) vs stored record`}</Badge>
       </div>
       {r.missing.length > 0 && <p className="text-xs text-muted-foreground">Not logged on this plan: {r.missing.join(', ')}.</p>}
+      {r.masked && (
+        <p className="text-xs text-muted-foreground">
+          User-entered text and payload details are masked ({r.masked.toUpperCase()}, SEC-05).{' '}
+          <button type="button" className="underline" onClick={() => setUnmask(true)}>
+            Unmask (logged)
+          </button>
+        </p>
+      )}
       {!r.conformance.matches && (
         <div className="rounded-md border border-destructive/40 p-3">
           <div className="mb-1 font-medium">Differences (FR-30)</div>

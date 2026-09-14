@@ -27,6 +27,7 @@ export type Reconstruction = {
   integrity: { ok: boolean; checked: number; badSeqs: number[] };
   completeness: 'full' | 'partial' | 'empty';
   missing: string[];
+  masked: 'pii' | 'phi' | 'financial' | null;
   timeline: TimelineStep[];
   state: {
     personaKey: string | null;
@@ -56,5 +57,5 @@ function unwrap<T>(res: { data?: { data: unknown }; error?: unknown }): T {
 export const auditApi = {
   list: async (query: AuditListQuery = {}) => unwrap<{ items: AuditLogEntry[]; nextCursorSeq: number | null }>(await api.GET('/audit-logs', { params: { query } })),
   verify: async () => unwrap<{ ok: boolean; checked: number; firstBadSeq?: number }>(await api.GET('/audit-logs/verify')),
-  reconstruct: async (assessmentId: string) => unwrap<Reconstruction>(await api.GET('/assessments/{id}/reconstruct', { params: { path: { id: assessmentId } } })),
+  reconstruct: async (assessmentId: string, unmask = false) => unwrap<Reconstruction>(await api.GET('/assessments/{id}/reconstruct', { params: { path: { id: assessmentId }, query: unmask ? { unmask: 'true' } : {} } })),
 };

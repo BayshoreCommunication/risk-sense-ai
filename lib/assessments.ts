@@ -50,6 +50,7 @@ export type Assessment = {
   timing: { startedAt: string; intakeCompletedAt?: string; submittedAt?: string; closedAt?: string; durationSec?: number };
   createdAt: string;
   classifications: string[];
+  masked?: 'pii' | 'phi' | 'financial' | null; // SEC-05: set when free text was masked for this reader
 };
 
 export type EscalationTarget = { _id: string; name: string; email: string; departmentIds: string[]; crossDepartmentAccess: boolean };
@@ -103,8 +104,8 @@ type DecisionBody = DecisionInput;
 
 export const assessments = {
   start: async (body: StartBody) => unwrap<Turn>(await api.POST('/assessments', { body })),
-  get: async (id: string) => unwrap<Assessment>(await api.GET('/assessments/{id}', { params: { path: { id } } })),
-  messages: async (id: string) => unwrap<Message[]>(await api.GET('/assessments/{id}/messages', { params: { path: { id } } })),
+  get: async (id: string, unmask = false) => unwrap<Assessment>(await api.GET('/assessments/{id}', { params: { path: { id }, query: unmask ? { unmask: 'true' } : {} } })),
+  messages: async (id: string, unmask = false) => unwrap<Message[]>(await api.GET('/assessments/{id}/messages', { params: { path: { id }, query: unmask ? { unmask: 'true' } : {} } })),
   setPersona: async (id: string, personaKey: string) => unwrap<Turn>(await api.POST('/assessments/{id}/persona', { params: { path: { id } }, body: { personaKey } })),
   answer: async (id: string, body: MessageBody) => unwrap<Turn>(await api.POST('/assessments/{id}/messages', { params: { path: { id } }, body })),
   submit: async (id: string) => unwrap<Assessment>(await api.POST('/assessments/{id}/submit', { params: { path: { id } } })),
