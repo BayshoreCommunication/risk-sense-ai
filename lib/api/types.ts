@@ -4385,6 +4385,152 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reports/{type}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    from?: string | null;
+                    to?: string | null;
+                    interval?: "day" | "week" | "month";
+                    departmentId?: string;
+                    personaKey?: string;
+                    scenarioKey?: string;
+                    refresh?: "true" | "false";
+                };
+                header?: never;
+                path: {
+                    type: "volume" | "classification" | "override-rate" | "assessment-time";
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Standard report (FR-26): volume | classification | override-rate | assessment-time; cached 1 h; PAID reports feature */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["ReportResult"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/{type}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    from?: string | null;
+                    to?: string | null;
+                    interval?: "day" | "week" | "month";
+                    departmentId?: string;
+                    personaKey?: string;
+                    scenarioKey?: string;
+                    refresh?: "true" | "false";
+                    format?: "csv" | "pdf";
+                };
+                header?: never;
+                path: {
+                    type: "volume" | "classification" | "override-rate" | "assessment-time";
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description CSV or PDF of the same rows (FR-28) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/csv": string;
+                        "application/pdf": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/analytics/trends": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    from?: string | null;
+                    to?: string | null;
+                    interval?: "day" | "week" | "month";
+                    departmentId?: string;
+                    personaKey?: string;
+                    scenarioKey?: string;
+                    refresh?: "true" | "false";
+                    by?: "department" | "persona" | "scenario";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Trend rows per period × department | persona | scenario (FR-27, DASH-03) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["ReportResult"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4481,6 +4627,32 @@ export interface components {
             email: string;
             departmentIds: string[];
             crossDepartmentAccess: boolean;
+        };
+        ReportResult: {
+            type: string;
+            params: {
+                [key: string]: unknown;
+            };
+            range: {
+                from: string;
+                to: string;
+                interval: string;
+            };
+            generatedAt: string;
+            cached: boolean;
+            computeMs: number;
+            columns: {
+                key: string;
+                label: string;
+                /** @enum {string} */
+                kind: "text" | "number" | "percent" | "seconds";
+            }[];
+            rows: {
+                [key: string]: string | number | unknown | unknown;
+            }[];
+            summary: {
+                [key: string]: string | number | unknown | unknown;
+            };
         };
     };
     responses: never;
