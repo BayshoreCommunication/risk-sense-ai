@@ -1,5 +1,6 @@
-import { Placeholder } from '@/components/shell/Placeholder';
+import { redirect } from 'next/navigation';
 
+/** System administration home → tenant settings (T-080). */
 export default function Page() {
-  return <Placeholder title="System administration" task="T-080" requirements={['FR-02', 'NFR-06']} />;
+  redirect('/system/tenant');
 }

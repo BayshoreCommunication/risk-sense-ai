@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { api, toApiError } from '@/lib/api/client';
-import { firebaseConfigured, firebaseSignOut, sendPasswordReset, signInWithGoogle, signInWithPassword, signUpWithPassword } from '@/lib/firebase/client';
+import { firebaseConfigured, firebaseSignOut, sendPasswordReset, signInWithGoogle, signInWithPassword, signInWithSso, signUpWithPassword } from '@/lib/firebase/client';
 import { ROLE_HOME, isRole, storeSession } from '@/lib/session';
 
 const DEV_ACCOUNTS = [
@@ -79,6 +79,33 @@ function LoginForm() {
     await fn();
     await startSecondFactor();
   }, { signOutOnError: true });
+
+  /**
+   * Company SSO (FR-03, PAID): look the email domain up, sign in through that Firebase provider, then try the
+   * session directly — the backend skips the email OTP for SSO logins; if it still asks (privileged role), fall
+   * back to the OTP step.
+   */
+  const ssoSignIn = () =>
+    run(
+      async () => {
+        const lookup = await api.GET('/auth/sso/lookup', { params: { query: { email: email.trim() } } });
+        if (!lookup.data) throw toApiError((lookup as { error?: unknown }).error);
+        const { providerId, tenant } = lookup.data.data;
+        if (!providerId) {
+          setNotice('No company SSO is configured for this email domain. Sign in with your password or Google.');
+          return;
+        }
+        setNotice(`Redirecting to ${tenant}'s identity provider…`);
+        await signInWithSso(providerId, email.trim());
+        try {
+          await exchangeForSession();
+        } catch (e) {
+          if (toApiError(e).code === 'OTP_REQUIRED') await startSecondFactor();
+          else throw e;
+        }
+      },
+      { signOutOnError: true },
+    );
 
   return (
     <Card className="w-full max-w-md">
@@ -153,6 +180,9 @@ function LoginForm() {
             <div className="text-center text-xs text-muted-foreground">or</div>
             <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={() => void firstFactor(signInWithGoogle)}>
               Continue with Google
+            </Button>
+            <Button type="button" variant="outline" className="w-full" disabled={busy || !email.includes('@')} title={email.includes('@') ? undefined : 'Enter your work email first'} onClick={() => void ssoSignIn()}>
+              Continue with company SSO
             </Button>
           </div>
         )}

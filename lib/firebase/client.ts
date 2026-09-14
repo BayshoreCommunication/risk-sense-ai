@@ -8,6 +8,7 @@
 import { getApps, initializeApp, type FirebaseApp } from 'firebase/app';
 import {
   GoogleAuthProvider,
+  OAuthProvider,
   createUserWithEmailAndPassword,
   getAuth,
   onAuthStateChanged,
@@ -60,6 +61,18 @@ export function initAuthBridge(): () => void {
 export async function signInWithGoogle(): Promise<User> {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
+  const cred = await signInWithPopup(requireAuth(), provider);
+  return cred.user;
+}
+
+/**
+ * PAID SSO (FR-03): any Firebase OAuth/OIDC/SAML provider by id — `microsoft.com`, `oidc.<id>`, `saml.<id>`.
+ * The provider id comes from `GET /auth/sso/lookup` for the user's email domain; the IdP's own MFA replaces
+ * our email OTP for non-privileged roles (backend decides).
+ */
+export async function signInWithSso(providerId: string, loginHint?: string): Promise<User> {
+  const provider = new OAuthProvider(providerId);
+  if (loginHint) provider.setCustomParameters({ login_hint: loginHint });
   const cred = await signInWithPopup(requireAuth(), provider);
   return cred.user;
 }
