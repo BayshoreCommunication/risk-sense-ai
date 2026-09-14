@@ -4,6 +4,11 @@ import { expect, type Page } from '@playwright/test';
 export async function devLogin(page: Page, email: string) {
   await page.context().clearCookies();
   await page.goto('/login');
+  // Wait for React to hydrate the form; a click before hydration submits the form natively (GET /login?).
+  await page.waitForFunction(() => {
+    const form = document.querySelector('form');
+    return !!form && Object.keys(form).some((k) => k.startsWith('__reactFiber') || k.startsWith('__reactProps'));
+  }, undefined, { timeout: 30_000 });
   const details = page.getByText('Development sign-in (seeded accounts, no OTP)');
   await details.click();
   await page.getByLabel('Seeded dev user').fill(email);
