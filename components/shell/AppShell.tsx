@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,36 +12,42 @@ import { clearSession, type Role } from '@/lib/session';
 
 type Me = { user: { name: string; email: string; role: Role }; tenant: { slug: string; plan: 'free' | 'paid' } };
 
-const NAV: Record<Role, { href: string; label: string }[]> = {
+/** Nav entries per role; labels are message keys under `nav.<role>` (messages/*.json). */
+const NAV: Record<Role, { href: string; key: string }[]> = {
   requestor: [
-    { href: '/chat', label: 'New assessment' },
-    { href: '/review', label: 'Review' },
+    { href: '/chat', key: 'chat' },
+    { href: '/review', key: 'review' },
   ],
   administrator: [
-    { href: '/admin', label: 'Overview' },
-    { href: '/admin/review', label: 'Review queue' },
-    { href: '/admin/personas', label: 'Personas' },
-    { href: '/admin/scenarios', label: 'Scenarios' },
-    { href: '/admin/questions', label: 'Questions' },
-    { href: '/admin/datasets', label: 'Datasets' },
-    { href: '/admin/rules', label: 'Rules' },
-    { href: '/admin/scoring', label: 'Scoring' },
-    { href: '/admin/analytics', label: 'Analytics' },
+    { href: '/admin', key: 'overview' },
+    { href: '/admin/review', key: 'review' },
+    { href: '/admin/personas', key: 'personas' },
+    { href: '/admin/scenarios', key: 'scenarios' },
+    { href: '/admin/questions', key: 'questions' },
+    { href: '/admin/datasets', key: 'datasets' },
+    { href: '/admin/rules', key: 'rules' },
+    { href: '/admin/scoring', key: 'scoring' },
+    { href: '/admin/analytics', key: 'analytics' },
   ],
   system_administrator: [
-    { href: '/system', label: 'Overview' },
-    { href: '/system/users', label: 'Users' },
-    { href: '/system/departments', label: 'Departments' },
-    { href: '/system/tenant', label: 'Tenant' },
-    { href: '/system/retention', label: 'Retention' },
-    { href: '/system/dr', label: 'DR' },
+    { href: '/system', key: 'overview' },
+    { href: '/system/users', key: 'users' },
+    { href: '/system/departments', key: 'departments' },
+    { href: '/system/tenant', key: 'tenant' },
+    { href: '/system/retention', key: 'retention' },
+    { href: '/system/dr', key: 'dr' },
   ],
   audit: [
-    { href: '/audit', label: 'Overview' },
-    { href: '/audit/assessments', label: 'Assessments' },
-    { href: '/audit/logs', label: 'Audit logs' },
+    { href: '/audit', key: 'overview' },
+    { href: '/audit/assessments', key: 'assessments' },
+    { href: '/audit/logs', key: 'logs' },
   ],
 };
+
+const LOCALES = ['en', 'bn'] as const;
+function setLocaleCookie(locale: string) {
+  document.cookie = `rs_locale=${locale}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+}
 
 /**
  * Role-scoped shell: sidebar links come from the role returned by GET /me, never from the URL.
@@ -49,6 +56,8 @@ const NAV: Record<Role, { href: string; label: string }[]> = {
 export function AppShell({ role, children }: { role: Role; children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const t = useTranslations();
+  const locale = useLocale();
   const [me, setMe] = useState<Me | null>(null);
 
   useEffect(() => {
@@ -73,9 +82,9 @@ export function AppShell({ role, children }: { role: Role; children: React.React
     <div className="flex min-h-screen">
       <aside className="w-60 shrink-0 border-r bg-muted/20 p-4">
         <div className="mb-6">
-          <div className="text-lg font-semibold">RiskSense AI</div>
+          <div className="text-lg font-semibold">{t('app.name')}</div>
           <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-            <Badge variant="outline">{role.replace('_', ' ')}</Badge>
+            <Badge variant="outline">{t(`roles.${role}`)}</Badge>
             {me && <Badge variant={me.tenant.plan === 'paid' ? 'default' : 'secondary'}>{me.tenant.plan.toUpperCase()}</Badge>}
           </div>
         </div>
@@ -86,16 +95,32 @@ export function AppShell({ role, children }: { role: Role; children: React.React
               href={item.href}
               className={`block rounded-md px-3 py-2 text-sm hover:bg-muted ${pathname === item.href ? 'bg-muted font-medium' : ''}`}
             >
-              {item.label}
+              {t(`nav.${role}.${item.key}`)}
             </Link>
           ))}
         </nav>
+        <div className="mt-6 flex items-center gap-1 text-xs text-muted-foreground">
+          <span>{t('locale.label')}:</span>
+          {LOCALES.map((l) => (
+            <button
+              key={l}
+              type="button"
+              className={`rounded px-1.5 py-0.5 ${locale === l ? 'bg-muted font-medium text-foreground' : 'hover:bg-muted'}`}
+              onClick={() => {
+                setLocaleCookie(l);
+                router.refresh();
+              }}
+            >
+              {t(`locale.${l}`)}
+            </button>
+          ))}
+        </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-14 items-center justify-between border-b px-6">
-          <div className="text-sm text-muted-foreground">{me ? `${me.user.name} · ${me.user.email}` : 'Loading…'}</div>
+          <div className="text-sm text-muted-foreground">{me ? `${me.user.name} · ${me.user.email}` : t('app.loading')}</div>
           <Button variant="outline" size="sm" onClick={() => void logout()}>
-            Sign out
+            {t('app.signOut')}
           </Button>
         </header>
         <main className="flex-1 p-6">{children}</main>
