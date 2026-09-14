@@ -108,7 +108,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
               className={`rounded px-1.5 py-0.5 ${locale === l ? 'bg-muted font-medium text-foreground' : 'hover:bg-muted'}`}
               onClick={() => {
                 setLocaleCookie(l);
-                router.refresh();
+                window.location.reload(); // the locale is resolved on the server per request; a refresh() keeps the cached client messages
               }}
             >
               {t(`locale.${l}`)}

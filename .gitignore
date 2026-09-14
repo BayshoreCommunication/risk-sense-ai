@@ -42,3 +42,7 @@ next-env.d.ts
 
 # keep the documented example
 !.env.example
+
+# playwright
+/e2e-report/
+/test-results/

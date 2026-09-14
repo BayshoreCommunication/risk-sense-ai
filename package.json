@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "gen:api": "openapi-typescript ../risk-sense-ai-backend/openapi.json -o lib/api/types.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "e2e": "playwright test",
+    "e2e:report": "playwright show-report e2e-report"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -29,6 +31,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

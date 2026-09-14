@@ -1,0 +1,21 @@
+import { expect, type Page } from '@playwright/test';
+
+/** Dev-bypass sign-in (AUTH_DEV_BYPASS on the backend; no OTP). Mirrors the "Development sign-in" box on /login. */
+export async function devLogin(page: Page, email: string) {
+  await page.context().clearCookies();
+  await page.goto('/login');
+  const details = page.getByText('Development sign-in (seeded accounts, no OTP)');
+  await details.click();
+  await page.getByLabel('Seeded dev user').fill(email);
+  await page.getByRole('button', { name: 'Sign in (dev bypass)' }).click();
+  await expect(page).not.toHaveURL(/\/login/);
+}
+
+export const ACCOUNTS = {
+  requestor: 'requestor@dev.local',
+  paidRequestor: 'requestor@paid.local',
+  admin: 'admin@dev.local',
+  paidAdmin: 'admin@paid.local',
+  sysadmin: 'sysadmin@dev.local',
+  audit: 'audit@dev.local',
+};

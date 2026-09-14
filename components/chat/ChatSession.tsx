@@ -83,7 +83,7 @@ export function ChatSession({ id }: { id: string }) {
 
       {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
 
-      <div className="mt-3">
+      <div className="mt-3" data-testid="composer" data-busy={busy ? 'true' : 'false'} data-messages={messages.length} data-status={a?.status ?? ''}>
         {a?.status === 'in_progress' && q && <AnswerBox key={q.key + messages.length} q={q} busy={busy} text={text} setText={setText} onAnswer={answer} />}
         {a?.status === 'intake_complete' && (
           <div className="flex items-center justify-between rounded-md border p-3">
@@ -108,7 +108,7 @@ function AnswerBox({ q, busy, text, setText, onAnswer }: { q: QuestionSnapshot; 
     return (
       <div className="flex flex-wrap gap-2">
         {q.options.map((o) => (
-          <Button key={o.id} variant="outline" disabled={busy} onClick={() => void onAnswer({ value: o.id })}>
+          <Button key={o.id} data-testid="answer-option" variant="outline" disabled={busy} onClick={() => void onAnswer({ value: o.id })}>
             {o.label}
           </Button>
         ))}
