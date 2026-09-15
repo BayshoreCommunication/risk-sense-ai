@@ -1,12 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { api, toApiError } from '@/lib/api/client';
+import { api, handleSessionResponse, toApiError } from '@/lib/api/client';
+import { DEV_AUTH_ENABLED } from '@/lib/environment';
 import { COOKIE_DEV_USER, COOKIE_SESSION, readCookie } from '@/lib/session';
 
 type RowError = { sheet: string; row: number; column?: string; message: string };
@@ -40,7 +42,7 @@ async function authHeaders(): Promise<Record<string, string>> {
   const h: Record<string, string> = {};
   const sessionId = readCookie(COOKIE_SESSION);
   if (sessionId) h['X-Session-Id'] = sessionId;
-  const devUser = process.env.NEXT_PUBLIC_ENV !== 'production' ? readCookie(COOKIE_DEV_USER) : undefined;
+  const devUser = DEV_AUTH_ENABLED ? readCookie(COOKIE_DEV_USER) : undefined;
   if (devUser) h['X-Dev-User'] = devUser;
   else {
     const { getFirebaseAuth } = await import('@/lib/firebase/client');
@@ -55,6 +57,8 @@ async function authHeaders(): Promise<Record<string, string>> {
  * administrator → activation (creates/versions personas, questions, scenarios).
  */
 export default function DatasetsPage() {
+  const locale = useLocale();
+  const t = useTranslations('admin.datasets');
   const [items, setItems] = useState<Dataset[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -91,7 +95,7 @@ export default function DatasetsPage() {
     if (!file) return;
     const form = new FormData();
     form.append('file', file);
-    const res = await fetch(`${apiBase}/datasets`, { method: 'POST', body: form, headers: await authHeaders() });
+    const res = await handleSessionResponse(await fetch(`${apiBase}/datasets`, { method: 'POST', body: form, headers: await authHeaders() }));
     const body = await res.json();
     if (!res.ok) throw body;
     setFile(null);
@@ -99,7 +103,7 @@ export default function DatasetsPage() {
   }
 
   async function downloadTemplate() {
-    const res = await fetch(`${apiBase}/datasets/template`, { headers: await authHeaders() });
+    const res = await handleSessionResponse(await fetch(`${apiBase}/datasets/template`, { headers: await authHeaders() }));
     if (!res.ok) throw await res.json();
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
@@ -114,26 +118,23 @@ export default function DatasetsPage() {
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold">Datasets</h1>
-          <p className="text-sm text-muted-foreground">
-            Upload the content workbook (personas, scenarios, questions, scoring). Rows are validated first; a second administrator approves; activation
-            versions the content (FR-13, AI-06).
-          </p>
+          <h1 className="text-xl font-semibold">{t('title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('description')}</p>
         </div>
         <Button variant="outline" onClick={() => void run(downloadTemplate)} disabled={busy}>
-          Download template
+          {t('downloadTemplate')}
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Upload workbook</CardTitle>
-          <CardDescription>.xlsx in the template layout. Nothing is applied until approved and activated.</CardDescription>
+          <CardTitle className="text-base">{t('upload.title')}</CardTitle>
+          <CardDescription>{t('upload.description')}</CardDescription>
         </CardHeader>
         <CardContent className="flex items-center gap-3">
-          <Input type="file" accept=".xlsx" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="max-w-sm" />
+          <Input aria-label={t('upload.fileLabel')} type="file" accept=".xlsx" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="max-w-sm" />
           <Button onClick={() => void run(upload)} disabled={!file || busy}>
-            {busy ? 'Working…' : 'Upload and validate'}
+            {busy ? t('upload.working') : t('upload.submit')}
           </Button>
         </CardContent>
       </Card>
@@ -145,20 +146,20 @@ export default function DatasetsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>#</TableHead>
-              <TableHead>File</TableHead>
-              <TableHead>Personas</TableHead>
-              <TableHead>Scenarios</TableHead>
-              <TableHead>Questions</TableHead>
-              <TableHead>Errors</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t('columns.file')}</TableHead>
+              <TableHead>{t('columns.personas')}</TableHead>
+              <TableHead>{t('columns.scenarios')}</TableHead>
+              <TableHead>{t('columns.questions')}</TableHead>
+              <TableHead>{t('columns.errors')}</TableHead>
+              <TableHead>{t('columns.status')}</TableHead>
+              <TableHead className="text-right">{t('columns.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {items.length === 0 && (
               <TableRow>
                 <TableCell colSpan={8} className="text-center text-muted-foreground">
-                  No uploads yet.
+                  {t('empty')}
                 </TableCell>
               </TableRow>
             )}
@@ -167,7 +168,7 @@ export default function DatasetsPage() {
                 <TableCell>{d.seq}</TableCell>
                 <TableCell>
                   <div>{d.fileName}</div>
-                  <div className="text-xs text-muted-foreground">{new Date(d.createdAt).toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground">{new Date(d.createdAt).toLocaleString(locale)}</div>
                 </TableCell>
                 <TableCell>{d.counts.personas}</TableCell>
                 <TableCell>{d.counts.scenarios}</TableCell>
@@ -191,7 +192,7 @@ export default function DatasetsPage() {
                       const res = await api.POST('/datasets/{id}/approve', { params: { path: { id: d._id } } });
                       if (res.error) throw res.error;
                     })}>
-                      Approve
+                      {t('actions.approve')}
                     </Button>
                   )}
                   {d.status === 'approved' && (
@@ -199,7 +200,7 @@ export default function DatasetsPage() {
                       const res = await api.POST('/datasets/{id}/activate', { params: { path: { id: d._id } } });
                       if (res.error) throw res.error;
                     })}>
-                      Activate
+                      {t('actions.activate')}
                     </Button>
                   )}
                 </TableCell>
@@ -212,17 +213,17 @@ export default function DatasetsPage() {
       {expanded && items.find((d) => d._id === expanded)?.validationErrors.length ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Validation errors — upload #{items.find((d) => d._id === expanded)?.seq}</CardTitle>
-            <CardDescription>Fix these rows in the workbook and upload again. Nothing from this file was applied.</CardDescription>
+            <CardTitle className="text-base">{t('validation.title', { sequence: items.find((d) => d._id === expanded)?.seq ?? '' })}</CardTitle>
+            <CardDescription>{t('validation.description')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Sheet</TableHead>
-                  <TableHead>Row</TableHead>
-                  <TableHead>Column</TableHead>
-                  <TableHead>Message</TableHead>
+                  <TableHead>{t('validation.columns.sheet')}</TableHead>
+                  <TableHead>{t('validation.columns.row')}</TableHead>
+                  <TableHead>{t('validation.columns.column')}</TableHead>
+                  <TableHead>{t('validation.columns.message')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

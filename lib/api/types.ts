@@ -32,8 +32,118 @@ export interface paths {
                                 db: string;
                                 openai: string;
                                 auth: string;
+                                mail: string;
                                 version: string;
                                 uptimeSec: number;
+                            };
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/health/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Process liveness (no dependency checks) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @enum {string} */
+                                status: "ok";
+                                uptimeSec: number;
+                            };
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/health/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Database readiness with a live ping */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @enum {string} */
+                                status: "ok";
+                                /** @enum {string} */
+                                db: "connected";
+                                dbPingMs: number;
+                            };
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Database is not ready */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @enum {string} */
+                                status: "degraded";
+                                db: string;
+                                dbPingMs: number;
                             };
                             meta: {
                                 requestId: string;
@@ -149,7 +259,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description UNAUTHENTICATED | OTP_REQUIRED | OTP_INVALID | OTP_EXPIRED */
+                /** @description UNAUTHENTICATED | SSO_REQUIRED | OTP_REQUIRED | OTP_INVALID | OTP_EXPIRED */
                 401: {
                     headers: {
                         [name: string]: unknown;
@@ -262,6 +372,7 @@ export interface paths {
                     to?: string | null;
                     limit?: number;
                     cursorSeq?: number | null;
+                    unmask?: "true" | "false";
                 };
                 header?: never;
                 path?: never;
@@ -326,6 +437,104 @@ export interface paths {
                                 checked: number;
                                 firstBadSeq?: number;
                             };
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/audit-logs/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        from: string | null;
+                        to: string | null;
+                        /** @default 5000 */
+                        maxRecords?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Bounded clear-text audit export plus immutable manifest/hash (system_administrator, fullAudit) */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                manifest: {
+                                    [key: string]: unknown;
+                                };
+                                records: {
+                                    [key: string]: unknown;
+                                }[];
+                            };
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/audit-logs/archive-manifests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Immutable audit cold-storage export manifests */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                [key: string]: unknown;
+                            }[];
                             meta: {
                                 requestId: string;
                             };
@@ -1910,6 +2119,48 @@ export interface paths {
         };
         trace?: never;
     };
+    "/rules/{id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description All versions in the logical rule group, newest first */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["Rule"][];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/rules/{id}/approve": {
         parameters: {
             query?: never;
@@ -1931,7 +2182,7 @@ export interface paths {
             requestBody?: {
                 content: {
                     "application/json": {
-                        changeRef?: string;
+                        changeRef: string;
                     };
                 };
             };
@@ -3707,7 +3958,7 @@ export interface paths {
             requestBody?: {
                 content: {
                     "application/json": {
-                        changeRef?: string;
+                        changeRef: string;
                     };
                 };
             };
@@ -3967,7 +4218,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Started; persona set or candidates offered; first question when scenario chosen */
+                /** @description Started; a user-selected persona continues, while an AI proposal pauses for explicit confirmation or override before scenario questions */
                 201: {
                     headers: {
                         [name: string]: unknown;
@@ -4682,6 +4933,501 @@ export interface paths {
         };
         trace?: never;
     };
+    "/system/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Tenant users (system_administrator) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["SystemUser"][];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** Format: email */
+                        email: string;
+                        name: string;
+                        /** @enum {string} */
+                        role: "requestor" | "administrator" | "system_administrator" | "audit";
+                        /** @default [] */
+                        departmentIds?: string[];
+                        /** @default false */
+                        crossDepartmentAccess?: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description Pre-provisioned tenant user with exactly one role */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["SystemUser"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/system/users/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        name?: string;
+                        /** @enum {string} */
+                        role?: "requestor" | "administrator" | "system_administrator" | "audit";
+                        departmentIds?: string[];
+                        crossDepartmentAccess?: boolean;
+                        /** @enum {string} */
+                        status?: "active" | "disabled";
+                    };
+                };
+            };
+            responses: {
+                /** @description User updated; role/status changes terminate active sessions */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["SystemUser"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/system/personas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Effective active persona catalog for department mapping */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["SystemPersona"][];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/system/departments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Tenant department/persona mappings */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["SystemDepartment"][];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        name: string;
+                        /** @default [] */
+                        personaIds?: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Department created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["SystemDepartment"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/system/departments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        name?: string;
+                        /** @default [] */
+                        personaIds?: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Department/persona mapping updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["SystemDepartment"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/system/dr/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description External backup/PITR evidence and readiness against NFR-06 targets */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["DrStatus"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        provider?: string;
+                        backupsEnabled?: boolean;
+                        lastBackupAt?: string | null;
+                        lastRestoreDrillAt?: string | null;
+                        /** @enum {string} */
+                        lastRestoreDrillOutcome?: "passed" | "failed";
+                        /** Format: uri */
+                        evidenceRef?: string | null;
+                    };
+                };
+            };
+            responses: {
+                /** @description Operator-recorded external DR evidence; audited */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["DrStatus"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/system/conformance/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Scan all stored tenant assessments and flag schema/invariant failures (FR-30) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["ConformanceRun"];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/system/conformance/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Last 30 conformance scans */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["ConformanceRun"][];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/system/conformance/flags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    includeResolved?: "true" | "false";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Current or historical assessment conformance flags */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                [key: string]: unknown;
+                            }[];
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/system/retention/run": {
         parameters: {
             query?: never;
@@ -4930,6 +5676,67 @@ export interface components {
             };
             updatedAt?: string;
         };
+        SystemUser: {
+            _id: string;
+            /** Format: email */
+            email: string;
+            name: string;
+            /** @enum {string} */
+            role: "requestor" | "administrator" | "system_administrator" | "audit";
+            departmentIds: string[];
+            crossDepartmentAccess: boolean;
+            mfaEnrolled: boolean;
+            /** @enum {string} */
+            status: "active" | "disabled";
+            lastLoginAt: string | null;
+        };
+        SystemPersona: {
+            _id: string;
+            key: string;
+            name: string;
+            sector: string;
+            /** @enum {string} */
+            source: "tenant" | "shared";
+        };
+        SystemDepartment: {
+            _id: string;
+            name: string;
+            personaIds: string[];
+        };
+        DrStatus: {
+            provider: string | null;
+            backupsEnabled: boolean;
+            lastBackupAt: string | null;
+            lastRestoreDrillAt: string | null;
+            /** @enum {string|null} */
+            lastRestoreDrillOutcome: "passed" | "failed" | null;
+            evidenceRef: string | null;
+            targets: {
+                backupFrequencyHours: number;
+                rpoHours: number;
+                rtoHours: number;
+                drillFrequencyDays: number;
+            };
+            checks: {
+                backupFresh: boolean;
+                drillCurrent: boolean;
+                externalEvidenceRecorded: boolean;
+            };
+            /** @enum {string} */
+            readiness: "ready" | "attention_required";
+            updatedAt: string | null;
+        };
+        ConformanceRun: {
+            tenantId: string;
+            slug: string;
+            ranAt: string;
+            trigger: string;
+            scanned: number;
+            valid: number;
+            flagged: number;
+            resolved: number;
+            durationMs: number;
+        };
         RetentionRunResult: {
             tenantId: string;
             slug: string;
@@ -4938,6 +5745,8 @@ export interface components {
             policy: {
                 assessmentDays: number;
                 auditDays: number;
+                evidenceDays: number;
+                datasetHistoryDays: number;
                 graceDays: number;
             };
             flagged: number;

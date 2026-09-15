@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { assessments, type Assessment, type Message } from '@/lib/assessments';
 import { toApiError } from '@/lib/api/client';
 
-const LABEL: Record<string, string> = { monitor_only: 'Monitor Only', risk: 'Risk', elevated_risk: 'Elevated Risk', issue: 'Issue' };
 
 /**
  * Read-only view of one assessment for reviewers who do not decide (administrators, auditors):
@@ -13,6 +13,10 @@ const LABEL: Record<string, string> = { monitor_only: 'Monitor Only', risk: 'Ris
  * Decisions are recorded only by requestors through ResultCard (FR-22, Overview.md roles).
  */
 export function AssessmentDetail({ id }: { id: string }) {
+  const locale = useLocale();
+  const t = useTranslations('assessmentDetail');
+  const classification = useTranslations('classification');
+  const status = useTranslations('status');
   const [a, setA] = useState<Assessment | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +37,7 @@ export function AssessmentDetail({ id }: { id: string }) {
   }, [id, unmask]);
 
   if (error) return <p className="text-sm text-destructive">{error}</p>;
-  if (!a) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  if (!a) return <p className="text-sm text-muted-foreground">{t('loading')}</p>;
   const r = a.result;
   const flagged = a.facts.filter((f) => f.flagged);
 
@@ -42,40 +46,40 @@ export function AssessmentDetail({ id }: { id: string }) {
       {a.masked && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed p-2 text-xs text-muted-foreground">
           <span>
-            Free text is masked ({a.masked.toUpperCase()}, SEC-05). Unmasking is recorded in the audit log with your name.
+            {t('masked', { plan: a.masked.toUpperCase() })}
           </span>
           <button type="button" className="underline" onClick={() => setUnmask(true)}>
-            Unmask (logged)
+            {t('unmask')}
           </button>
         </div>
       )}
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="outline">{a.status.replace(/_/g, ' ')}</Badge>
+        <Badge variant="outline">{status.has(a.status) ? status(a.status) : a.status}</Badge>
         <span className="text-muted-foreground">
-          {a.personaKey?.replace(/_/g, ' ')} · {a.scenarioKey?.replace(/_/g, ' ')} · started {new Date(a.createdAt).toLocaleString()}
+          {a.personaKey?.replace(/_/g, ' ')} · {a.scenarioKey?.replace(/_/g, ' ')} · {t('started', { date: new Date(a.createdAt).toLocaleString(locale) })}
         </span>
       </div>
       {r ? (
         <div className="space-y-2 rounded-md border p-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xl font-semibold">{r.score}/100</span>
-            <Badge>{LABEL[r.classification] ?? r.classification}</Badge>
-            {r.ruleDriven && <Badge variant="outline">Rule-driven: {r.ruleName ?? r.ruleKey}</Badge>}
-            <Badge variant="outline">Confidence {r.confidence}%</Badge>
-            {r.mandatoryReview && <Badge variant="destructive">Mandatory review</Badge>}
-            {r.professionalConsult && <Badge variant="secondary">Professional consult</Badge>}
+            <Badge>{classification.has(r.classification) ? classification(r.classification) : r.classification}</Badge>
+            {r.ruleDriven && <Badge variant="outline">{t('result.ruleDriven', { rule: r.ruleName ?? r.ruleKey ?? '' })}</Badge>}
+            <Badge variant="outline">{t('result.confidence', { value: r.confidence })}</Badge>
+            {r.mandatoryReview && <Badge variant="destructive">{t('result.mandatoryReview')}</Badge>}
+            {r.professionalConsult && <Badge variant="secondary">{t('result.professionalConsult')}</Badge>}
           </div>
           <p>{r.explanation}</p>
           <p className="text-muted-foreground">
-            Recommended action: <span className="font-medium text-foreground">{r.recommendedAction}</span>
+            {t('result.recommendedAction')}: <span className="font-medium text-foreground">{r.recommendedAction}</span>
           </p>
-          {r.keyDrivers?.length > 0 && <p className="text-xs text-muted-foreground">Key drivers: {r.keyDrivers.join('; ')}</p>}
+          {r.keyDrivers?.length > 0 && <p className="text-xs text-muted-foreground">{t('result.keyDrivers')}: {r.keyDrivers.join('; ')}</p>}
         </div>
       ) : (
-        <p className="text-muted-foreground">No result yet — intake in progress.</p>
+        <p className="text-muted-foreground">{t('result.empty')}</p>
       )}
       <div>
-        <div className="mb-1 font-medium">Facts ({a.facts.length}{flagged.length ? `, ${flagged.length} low-confidence` : ''})</div>
+        <div className="mb-1 font-medium">{t('facts.title', { count: a.facts.length })}{flagged.length ? ` ${t('facts.lowConfidence', { count: flagged.length })}` : ''}</div>
         <table className="w-full text-xs">
           <tbody>
             {a.facts.map((f) => (
@@ -92,16 +96,16 @@ export function AssessmentDetail({ id }: { id: string }) {
       {a.decision && (
         <div className="rounded-md bg-muted p-3">
           <div className="font-medium">
-            Decision: {a.decision.type}
-            {a.decision.overriddenTo ? ` → ${LABEL[a.decision.overriddenTo] ?? a.decision.overriddenTo}` : ''}
+            {t('decision.label')}: {t.has(`decision.types.${a.decision.type}`) ? t(`decision.types.${a.decision.type}`) : a.decision.type}
+            {a.decision.overriddenTo ? ` → ${classification.has(a.decision.overriddenTo) ? classification(a.decision.overriddenTo) : a.decision.overriddenTo}` : ''}
             {a.status === 'escalated' && a.escalatedTo ? ` → ${a.escalatedTo.name}` : ''}
           </div>
           {a.decision.reason && <div className="text-muted-foreground">{a.decision.reason}</div>}
-          <div className="text-xs text-muted-foreground">{new Date(a.decision.decidedAt).toLocaleString()}</div>
+          <div className="text-xs text-muted-foreground">{new Date(a.decision.decidedAt).toLocaleString(locale)}</div>
         </div>
       )}
       <details className="text-xs text-muted-foreground">
-        <summary className="cursor-pointer">Transcript ({messages.length})</summary>
+        <summary className="cursor-pointer">{t('transcript', { count: messages.length })}</summary>
         <ol className="mt-2 space-y-1">
           {messages.map((m) => (
             <li key={m._id}>

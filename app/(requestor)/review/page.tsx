@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,34 +12,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { api, toApiError } from '@/lib/api/client';
 import { assessments, type AssessmentCounts, type AssessmentListItem, type AssessmentListQuery, type Department } from '@/lib/assessments';
 
-const CLASS_LABEL: Record<string, string> = { monitor_only: 'Monitor Only', risk: 'Risk', elevated_risk: 'Elevated Risk', issue: 'Issue' };
-const STATUS_LABEL: Record<string, string> = {
-  in_progress: 'In progress',
-  intake_complete: 'Ready to submit',
-  awaiting_decision: 'Awaiting decision',
-  escalated: 'Escalated',
-  closed: 'Closed',
-  error_review: 'Error review',
-};
 const PENDING = new Set(['awaiting_decision', 'escalated', 'error_review']);
-const TABS: { key: keyof AssessmentCounts; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'pending', label: 'Pending' },
-  { key: 'awaiting_decision', label: STATUS_LABEL.awaiting_decision! },
-  { key: 'escalated', label: STATUS_LABEL.escalated! },
-  { key: 'error_review', label: STATUS_LABEL.error_review! },
-  { key: 'in_progress', label: STATUS_LABEL.in_progress! },
-  { key: 'closed', label: STATUS_LABEL.closed! },
-];
+const TAB_KEYS: (keyof AssessmentCounts)[] = ['all', 'pending', 'awaiting_decision', 'escalated', 'error_review', 'in_progress', 'closed'];
 const PAGE_SIZES = ['10', '25', '50', '100'];
 const ANY = '__any';
 type Option = { value: string; label: string };
-const CLASS_OPTIONS: Option[] = [{ value: ANY, label: 'Any classification' }, ...Object.entries(CLASS_LABEL).map(([value, label]) => ({ value, label }))];
-const SORT_OPTIONS: Option[] = [
-  { value: 'pending_first', label: 'Pending first' },
-  { value: 'newest', label: 'Newest first' },
-  { value: 'oldest', label: 'Oldest first' },
-];
+const CLASS_KEYS = ['monitor_only', 'risk', 'elevated_risk', 'issue'] as const;
+const SORT_KEYS = ['pending_first', 'newest', 'oldest'] as const;
 const PAGE_SIZE_OPTIONS: Option[] = PAGE_SIZES.map((n) => ({ value: n, label: n }));
 
 type Filters = {
@@ -57,7 +37,7 @@ function readFilters(sp: URLSearchParams): Filters {
   const sort = sp.get('sort');
   const limit = Number(sp.get('limit'));
   return {
-    tab: (TABS.find((t) => t.key === sp.get('tab'))?.key ?? 'all') as keyof AssessmentCounts,
+    tab: (TAB_KEYS.find((key) => key === sp.get('tab')) ?? 'all') as keyof AssessmentCounts,
     classification: sp.get('classification') ?? '',
     personaKey: sp.get('personaKey') ?? '',
     departmentId: sp.get('departmentId') ?? '',
@@ -89,6 +69,10 @@ function toQuery(f: Filters): AssessmentListQuery {
  * filter state so a filtered view can be bookmarked or shared with a colleague in the same department.
  */
 function ReviewDashboard() {
+  const locale = useLocale();
+  const t = useTranslations('reviewDashboard');
+  const classification = useTranslations('classification');
+  const status = useTranslations('status');
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -153,8 +137,11 @@ function ReviewDashboard() {
     [filters, pathname, router],
   );
 
-  const personaOptions = useMemo<Option[]>(() => [{ value: ANY, label: 'Any persona' }, ...personas.map((p) => ({ value: p.key, label: p.name }))], [personas]);
-  const departmentOptions = useMemo<Option[]>(() => [{ value: ANY, label: 'Any department' }, ...departments.map((d) => ({ value: d._id, label: d.name }))], [departments]);
+  const tabs = TAB_KEYS.map((key) => ({ key, label: t(`tabs.${key}`) }));
+  const classOptions: Option[] = [{ value: ANY, label: t('filters.anyClassification') }, ...CLASS_KEYS.map((value) => ({ value, label: classification(value) }))];
+  const sortOptions: Option[] = SORT_KEYS.map((value) => ({ value, label: t(`sort.${value}`) }));
+  const personaOptions = useMemo<Option[]>(() => [{ value: ANY, label: t('filters.anyPersona') }, ...personas.map((p) => ({ value: p.key, label: p.name }))], [personas, t]);
+  const departmentOptions = useMemo<Option[]>(() => [{ value: ANY, label: t('filters.anyDepartment') }, ...departments.map((d) => ({ value: d._id, label: d.name }))], [departments, t]);
   const hasFilters = Boolean(filters.classification || filters.personaKey || filters.departmentId || filters.from || filters.to);
   const personaName = (key?: string) => personas.find((p) => p.key === key)?.name ?? key?.replace(/_/g, ' ') ?? '—';
   const first = total === 0 ? 0 : (filters.page - 1) * filters.limit + 1;
@@ -164,21 +151,18 @@ function ReviewDashboard() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">Assessments</h1>
-          <p className="text-sm text-muted-foreground">
-            {reviewer ? 'Your assessments and those of your department. ' : 'Your assessments. '}
-            Pending decisions come first — open one to review the recommendation and record your decision.
-          </p>
+          <h1 className="text-xl font-semibold">{t('title')}</h1>
+          <p className="text-sm text-muted-foreground">{reviewer ? t('descriptionReviewer') : t('descriptionRequestor')}</p>
         </div>
-        <Button onClick={() => router.push('/chat')}>New assessment</Button>
+        <Button onClick={() => router.push('/chat')}>{t('newAssessment')}</Button>
       </div>
 
-      <div className="flex flex-wrap gap-1 border-b pb-2" role="tablist" aria-label="Status">
-        {TABS.map((t) => {
-          const n = counts ? counts[t.key] : undefined;
+      <div className="flex flex-wrap gap-1 border-b pb-2" role="tablist" aria-label={t('statusTabsLabel')}>
+        {tabs.map((tab) => {
+          const n = counts ? counts[tab.key] : undefined;
           return (
-            <Button key={t.key} role="tab" aria-selected={filters.tab === t.key} size="sm" variant={filters.tab === t.key ? 'default' : 'ghost'} onClick={() => update({ tab: t.key })}>
-              {t.label}
+            <Button key={tab.key} role="tab" aria-selected={filters.tab === tab.key} size="sm" variant={filters.tab === tab.key ? 'default' : 'ghost'} onClick={() => update({ tab: tab.key })}>
+              {tab.label}
               {n !== undefined && <span className="ml-1.5 rounded-full bg-background/60 px-1.5 text-xs tabular-nums text-inherit">{n}</span>}
             </Button>
           );
@@ -187,10 +171,10 @@ function ReviewDashboard() {
 
       <div className="grid gap-3 rounded-md border bg-muted/20 p-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
         <div className="space-y-1">
-          <Label className="text-xs">Persona</Label>
+          <Label className="text-xs">{t('filters.persona')}</Label>
           <Select items={personaOptions} value={filters.personaKey || ANY} onValueChange={(v) => update({ personaKey: v && v !== ANY ? v : '' })}>
             <SelectTrigger size="sm" className="w-full">
-              <SelectValue placeholder="Any" />
+              <SelectValue placeholder={t('filters.any')} />
             </SelectTrigger>
             <SelectContent>
               {personaOptions.map((o) => (
@@ -203,10 +187,10 @@ function ReviewDashboard() {
         </div>
         {departments.length > 0 && (
           <div className="space-y-1">
-            <Label className="text-xs">Department</Label>
+            <Label className="text-xs">{t('filters.department')}</Label>
             <Select items={departmentOptions} value={filters.departmentId || ANY} onValueChange={(v) => update({ departmentId: v && v !== ANY ? v : '' })}>
               <SelectTrigger size="sm" className="w-full">
-                <SelectValue placeholder="Any" />
+                <SelectValue placeholder={t('filters.any')} />
               </SelectTrigger>
               <SelectContent>
                 {departmentOptions.map((o) => (
@@ -219,13 +203,13 @@ function ReviewDashboard() {
           </div>
         )}
         <div className="space-y-1">
-          <Label className="text-xs">Classification</Label>
-          <Select items={CLASS_OPTIONS} value={filters.classification || ANY} onValueChange={(v) => update({ classification: v && v !== ANY ? v : '' })}>
+          <Label className="text-xs">{t('filters.classification')}</Label>
+          <Select items={classOptions} value={filters.classification || ANY} onValueChange={(v) => update({ classification: v && v !== ANY ? v : '' })}>
             <SelectTrigger size="sm" className="w-full">
-              <SelectValue placeholder="Any" />
+              <SelectValue placeholder={t('filters.any')} />
             </SelectTrigger>
             <SelectContent>
-              {CLASS_OPTIONS.map((o) => (
+              {classOptions.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}
                 </SelectItem>
@@ -235,24 +219,24 @@ function ReviewDashboard() {
         </div>
         <div className="space-y-1">
           <Label htmlFor="from" className="text-xs">
-            From
+            {t('filters.from')}
           </Label>
           <Input id="from" type="date" value={filters.from} max={filters.to || undefined} onChange={(e) => update({ from: e.target.value })} />
         </div>
         <div className="space-y-1">
           <Label htmlFor="to" className="text-xs">
-            To
+            {t('filters.to')}
           </Label>
           <Input id="to" type="date" value={filters.to} min={filters.from || undefined} onChange={(e) => update({ to: e.target.value })} />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Sort</Label>
-          <Select items={SORT_OPTIONS} value={filters.sort} onValueChange={(v) => update({ sort: (v as Filters['sort']) ?? 'pending_first' })}>
+          <Label className="text-xs">{t('filters.sort')}</Label>
+          <Select items={sortOptions} value={filters.sort} onValueChange={(v) => update({ sort: (v as Filters['sort']) ?? 'pending_first' })}>
             <SelectTrigger size="sm" className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {SORT_OPTIONS.map((o) => (
+              {sortOptions.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}
                 </SelectItem>
@@ -263,7 +247,7 @@ function ReviewDashboard() {
         {hasFilters && (
           <div className="sm:col-span-2 md:col-span-3 xl:col-span-6">
             <Button size="sm" variant="link" className="h-auto p-0" onClick={() => update({ classification: '', personaKey: '', departmentId: '', from: '', to: '' })}>
-              Clear filters
+              {t('filters.clear')}
             </Button>
           </div>
         )}
@@ -275,15 +259,15 @@ function ReviewDashboard() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Started</TableHead>
-              {reviewer && <TableHead>Requestor</TableHead>}
-              {reviewer && <TableHead>Department</TableHead>}
-              <TableHead>Persona / scenario</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Classification</TableHead>
-              <TableHead>Confidence</TableHead>
-              <TableHead>Recommended action</TableHead>
-              <TableHead>Decision</TableHead>
+              <TableHead>{t('columns.started')}</TableHead>
+              {reviewer && <TableHead>{t('columns.requestor')}</TableHead>}
+              {reviewer && <TableHead>{t('columns.department')}</TableHead>}
+              <TableHead>{t('columns.personaScenario')}</TableHead>
+              <TableHead>{t('columns.status')}</TableHead>
+              <TableHead>{t('columns.classification')}</TableHead>
+              <TableHead>{t('columns.confidence')}</TableHead>
+              <TableHead>{t('columns.recommendedAction')}</TableHead>
+              <TableHead>{t('columns.decision')}</TableHead>
               <TableHead />
             </TableRow>
           </TableHeader>
@@ -291,13 +275,13 @@ function ReviewDashboard() {
             {!loading && items.length === 0 && (
               <TableRow>
                 <TableCell colSpan={reviewer ? 10 : 8} className="text-center text-muted-foreground">
-                  {hasFilters || filters.tab !== 'all' ? 'No assessments match these filters.' : 'No assessments yet.'}
+                  {hasFilters || filters.tab !== 'all' ? t('empty.filtered') : t('empty.default')}
                 </TableCell>
               </TableRow>
             )}
             {items.map((a) => (
               <TableRow key={a._id} className={PENDING.has(a.status) ? 'bg-primary/5' : undefined}>
-                <TableCell className="whitespace-nowrap">{new Date(a.createdAt).toLocaleString()}</TableCell>
+                <TableCell className="whitespace-nowrap">{new Date(a.createdAt).toLocaleString(locale)}</TableCell>
                 {reviewer && <TableCell className="whitespace-nowrap">{a.requestor?.name ?? '—'}</TableCell>}
                 {reviewer && <TableCell className="whitespace-nowrap">{a.department?.name ?? '—'}</TableCell>}
                 <TableCell>
@@ -305,15 +289,15 @@ function ReviewDashboard() {
                   <div className="text-xs text-muted-foreground">{a.scenarioKey?.replace(/_/g, ' ') ?? '—'}</div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={PENDING.has(a.status) ? 'default' : 'secondary'}>{STATUS_LABEL[a.status] ?? a.status}</Badge>
+                  <Badge variant={PENDING.has(a.status) ? 'default' : 'secondary'}>{status.has(a.status) ? status(a.status) : a.status}</Badge>
                 </TableCell>
                 <TableCell>
                   {a.result ? (
                     <span className="inline-flex flex-wrap items-center gap-1">
-                      {CLASS_LABEL[a.result.classification] ?? a.result.classification}
+                      {classification.has(a.result.classification) ? classification(a.result.classification) : a.result.classification}
                       {a.result.ruleDriven && (
-                        <Badge variant="outline" title="A hard rule set this classification (FR-17)">
-                          rule-driven
+                        <Badge variant="outline" title={t('ruleDrivenTitle')}>
+                          {t('ruleDriven')}
                         </Badge>
                       )}
                     </span>
@@ -323,7 +307,7 @@ function ReviewDashboard() {
                 </TableCell>
                 <TableCell className="tabular-nums">
                   {a.result ? (
-                    <span title={a.result.professionalConsult ? 'Below 60 %: Professional Consult recommended (FR-20)' : undefined}>
+                    <span title={a.result.professionalConsult ? t('professionalConsultTitle') : undefined}>
                       {a.result.confidence}%{a.result.professionalConsult ? ' ⚠' : ''}
                     </span>
                   ) : (
@@ -340,12 +324,12 @@ function ReviewDashboard() {
                   )}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
-                  {a.decision ? `${a.decision.type}${a.decision.overriddenTo ? ` → ${CLASS_LABEL[a.decision.overriddenTo] ?? a.decision.overriddenTo}` : ''}` : '—'}
-                  {a.status === 'escalated' && a.escalatedTo && <div className="text-xs text-muted-foreground">to {a.escalatedTo.name}</div>}
+                  {a.decision ? `${a.decision.type}${a.decision.overriddenTo ? ` → ${classification.has(a.decision.overriddenTo) ? classification(a.decision.overriddenTo) : a.decision.overriddenTo}` : ''}` : '—'}
+                  {a.status === 'escalated' && a.escalatedTo && <div className="text-xs text-muted-foreground">{t('routedTo', { name: a.escalatedTo.name })}</div>}
                 </TableCell>
                 <TableCell className="text-right">
                   <Button size="sm" variant="outline" onClick={() => router.push(`/chat/${a._id}`)}>
-                    {PENDING.has(a.status) ? 'Review' : 'Open'}
+                    {PENDING.has(a.status) ? t('actions.review') : t('actions.open')}
                   </Button>
                 </TableCell>
               </TableRow>
@@ -356,10 +340,10 @@ function ReviewDashboard() {
 
       <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
         <div>
-          {loading ? 'Loading…' : total === 0 ? '0 assessments' : `${first}–${last} of ${total}`}
+          {loading ? t('loading') : total === 0 ? t('pagination.zero') : t('pagination.range', { first, last, total })}
         </div>
         <div className="flex items-center gap-2">
-          <Label className="text-xs">Per page</Label>
+          <Label className="text-xs">{t('pagination.perPage')}</Label>
           <Select items={PAGE_SIZE_OPTIONS} value={String(filters.limit)} onValueChange={(v) => update({ limit: Number(v ?? 25) })}>
             <SelectTrigger size="sm" className="w-20">
               <SelectValue />
@@ -373,13 +357,13 @@ function ReviewDashboard() {
             </SelectContent>
           </Select>
           <Button size="sm" variant="outline" disabled={filters.page <= 1 || loading} onClick={() => update({ page: filters.page - 1 })}>
-            Previous
+            {t('pagination.previous')}
           </Button>
           <span className="tabular-nums">
-            Page {filters.page} of {pages}
+            {t('pagination.page', { page: filters.page, pages })}
           </span>
           <Button size="sm" variant="outline" disabled={filters.page >= pages || loading} onClick={() => update({ page: filters.page + 1 })}>
-            Next
+            {t('pagination.next')}
           </Button>
         </div>
       </div>

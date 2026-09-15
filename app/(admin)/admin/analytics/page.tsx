@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { BarChart, ChartStyles, LineChart, STATUS, StatTile, StatusBars } from '@/components/analytics/Charts';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -12,19 +13,21 @@ import { fmtCell, fmtSeconds, reports, saveBlob, type ReportQuery, type ReportRe
 
 const ANY = '__any';
 const RANGES = [
-  { value: '30d', label: 'Last 30 days', days: 30, interval: 'day' as const },
-  { value: '90d', label: 'Last 90 days', days: 90, interval: 'week' as const },
-  { value: '12m', label: 'Last 12 months', days: 365, interval: 'month' as const },
+  { value: '30d', key: 'days30', days: 30, interval: 'day' as const },
+  { value: '90d', key: 'days90', days: 90, interval: 'week' as const },
+  { value: '12m', key: 'months12', days: 365, interval: 'month' as const },
 ];
 const BY = [
-  { value: 'department', label: 'Department' },
-  { value: 'persona', label: 'Persona' },
-  { value: 'scenario', label: 'Scenario' },
+  { value: 'department', key: 'department' },
+  { value: 'persona', key: 'persona' },
+  { value: 'scenario', key: 'scenario' },
 ];
 const TYPES: ReportType[] = ['volume', 'classification', 'override-rate', 'assessment-time'];
 
 /** One report block: chart / table toggle + CSV / PDF export (FR-28: the export is the table view). */
 function ReportPanel({ type, title, description, result, query, children }: { type: ReportType; title: string; description: string; result: ReportResult | null; query: ReportQuery; children: React.ReactNode }) {
+  const locale = useLocale();
+  const t = useTranslations('admin.analytics');
   const [view, setView] = useState<'chart' | 'table'>('chart');
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -49,10 +52,10 @@ function ReportPanel({ type, title, description, result, query, children }: { ty
         </div>
         <div className="flex items-center gap-1">
           <Button size="sm" variant={view === 'chart' ? 'default' : 'ghost'} onClick={() => setView('chart')}>
-            Chart
+            {t('views.chart')}
           </Button>
           <Button size="sm" variant={view === 'table' ? 'default' : 'ghost'} onClick={() => setView('table')}>
-            Table
+            {t('views.table')}
           </Button>
           <Button size="sm" variant="outline" disabled={busy !== null || !result} onClick={() => void download('csv')}>
             {busy === 'csv' ? '…' : 'CSV'}
@@ -64,7 +67,7 @@ function ReportPanel({ type, title, description, result, query, children }: { ty
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
       {!result ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{t('loading')}</p>
       ) : view === 'chart' ? (
         children
       ) : (
@@ -95,7 +98,7 @@ function ReportPanel({ type, title, description, result, query, children }: { ty
       )}
       {result && (
         <p className="text-[11px] text-muted-foreground">
-          {result.cached ? 'Cached' : 'Computed'} {new Date(result.generatedAt).toLocaleTimeString()} · {result.computeMs} ms
+          {result.cached ? t('cache.cached') : t('cache.computed')} {new Date(result.generatedAt).toLocaleTimeString(locale)} · {result.computeMs} {t('milliseconds')}
         </p>
       )}
     </section>
@@ -104,6 +107,7 @@ function ReportPanel({ type, title, description, result, query, children }: { ty
 
 /** DASH-03 analytics dashboard (PAID `reports`): the four FR-26 standard reports + FR-27 trends, with filters and exports. */
 export default function AnalyticsPage() {
+  const t = useTranslations('admin.analytics');
   const [range, setRange] = useState('12m');
   const [by, setBy] = useState<'department' | 'persona' | 'scenario'>('department');
   const [departmentId, setDepartmentId] = useState(ANY);
@@ -156,31 +160,33 @@ export default function AnalyticsPage() {
     return { periods, series };
   }, [trends]);
 
-  const departmentOptions = [{ value: ANY, label: 'All departments' }, ...departments.map((d) => ({ value: d._id, label: d.name }))];
-  const personaOptions = [{ value: ANY, label: 'All personas' }, ...personas.map((p) => ({ value: p.key, label: p.name }))];
+  const rangeOptions = RANGES.map((option) => ({ ...option, label: t(`ranges.${option.key}`) }));
+  const byOptions = BY.map((option) => ({ ...option, label: t(`groups.${option.key}`) }));
+  const departmentOptions = [{ value: ANY, label: t('filters.allDepartments') }, ...departments.map((d) => ({ value: d._id, label: d.name }))];
+  const personaOptions = [{ value: ANY, label: t('filters.allPersonas') }, ...personas.map((p) => ({ value: p.key, label: p.name }))];
 
   return (
     <div className="space-y-4">
       <ChartStyles />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold">Analytics</h1>
-          <p className="text-sm text-muted-foreground">Standard reports (volume, classification, override rate, assessment time) and trends. Cached for an hour; exports match the table view exactly.</p>
+          <h1 className="text-xl font-semibold">{t('title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('description')}</p>
         </div>
         <Button size="sm" variant="outline" onClick={() => load(true)}>
-          Refresh
+          {t('refresh')}
         </Button>
       </div>
 
       <div className="grid gap-3 rounded-md border bg-muted/20 p-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-1">
-          <Label className="text-xs">Period</Label>
-          <Select items={RANGES} value={range} onValueChange={(v) => setRange(v ?? '12m')}>
+          <Label className="text-xs">{t('filters.period')}</Label>
+          <Select items={rangeOptions} value={range} onValueChange={(v) => setRange(v ?? '12m')}>
             <SelectTrigger size="sm" className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {RANGES.map((o) => (
+              {rangeOptions.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}
                 </SelectItem>
@@ -189,7 +195,7 @@ export default function AnalyticsPage() {
           </Select>
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Department</Label>
+          <Label className="text-xs">{t('filters.department')}</Label>
           <Select items={departmentOptions} value={departmentId} onValueChange={(v) => setDepartmentId(v ?? ANY)}>
             <SelectTrigger size="sm" className="w-full">
               <SelectValue />
@@ -204,7 +210,7 @@ export default function AnalyticsPage() {
           </Select>
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Persona</Label>
+          <Label className="text-xs">{t('filters.persona')}</Label>
           <Select items={personaOptions} value={personaKey} onValueChange={(v) => setPersonaKey(v ?? ANY)}>
             <SelectTrigger size="sm" className="w-full">
               <SelectValue />
@@ -219,13 +225,13 @@ export default function AnalyticsPage() {
           </Select>
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Trends by</Label>
-          <Select items={BY} value={by} onValueChange={(v) => setBy((v as typeof by) ?? 'department')}>
+          <Label className="text-xs">{t('filters.trendsBy')}</Label>
+          <Select items={byOptions} value={by} onValueChange={(v) => setBy((v as typeof by) ?? 'department')}>
             <SelectTrigger size="sm" className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {BY.map((o) => (
+              {byOptions.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}
                 </SelectItem>
@@ -237,34 +243,34 @@ export default function AnalyticsPage() {
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <StatTile label="Started" value={vol ? Number(vol.summary.started).toLocaleString() : '—'} hint={vol ? `${vol.summary.closed} closed · ${vol.summary.escalated} escalated` : undefined} />
-        <StatTile label="Scored" value={cls ? Number(cls.summary.scored).toLocaleString() : '—'} hint={cls ? `${cls.summary.ruleDriven} rule-driven · ${cls.summary.professionalConsult} professional consult` : undefined} />
-        <StatTile label="Override rate" value={ovr && ovr.summary.overrideRate !== null ? `${ovr.summary.overrideRate}%` : '—'} hint={ovr ? `${ovr.summary.overridden} of ${Number(ovr.summary.accepted) + Number(ovr.summary.overridden)} decided` : undefined} />
-        <StatTile label="Accept rate" value={ovr && ovr.summary.acceptRate !== null ? `${ovr.summary.acceptRate}%` : '—'} hint="Accuracy proxy (BRD §12, target 75%)" />
-        <StatTile label="Median time" value={tim ? fmtSeconds(tim.summary.medianTotalSec as number | null) : '—'} hint={tim ? `p95 ${fmtSeconds(tim.summary.p95TotalSec as number | null)} · intake ${fmtSeconds(tim.summary.avgIntakeSec as number | null)}` : undefined} />
+        <StatTile label={t('stats.started')} value={vol ? Number(vol.summary.started).toLocaleString() : '—'} hint={vol ? t('stats.startedHint', { closed: Number(vol.summary.closed), escalated: Number(vol.summary.escalated) }) : undefined} />
+        <StatTile label={t('stats.scored')} value={cls ? Number(cls.summary.scored).toLocaleString() : '—'} hint={cls ? t('stats.scoredHint', { ruleDriven: Number(cls.summary.ruleDriven), professionalConsult: Number(cls.summary.professionalConsult) }) : undefined} />
+        <StatTile label={t('stats.overrideRate')} value={ovr && ovr.summary.overrideRate !== null ? `${ovr.summary.overrideRate}%` : '—'} hint={ovr ? t('stats.overrideHint', { overridden: Number(ovr.summary.overridden), decided: Number(ovr.summary.accepted) + Number(ovr.summary.overridden) }) : undefined} />
+        <StatTile label={t('stats.acceptRate')} value={ovr && ovr.summary.acceptRate !== null ? `${ovr.summary.acceptRate}%` : '—'} hint={t('stats.acceptHint')} />
+        <StatTile label={t('stats.medianTime')} value={tim ? fmtSeconds(tim.summary.medianTotalSec as number | null) : '—'} hint={tim ? t('stats.timeHint', { p95: fmtSeconds(tim.summary.p95TotalSec as number | null), intake: fmtSeconds(tim.summary.avgIntakeSec as number | null) }) : undefined} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <ReportPanel type="volume" title="Assessment volume" description="Assessments started per period; the table splits them by current status." result={vol ?? null} query={query}>
-          {vol && <BarChart title="Assessments started per period" data={vol.rows.map((r) => ({ label: String(r.period), value: Number(r.started) }))} />}
+        <ReportPanel type="volume" title={t('reports.volume.title')} description={t('reports.volume.description')} result={vol ?? null} query={query}>
+          {vol && <BarChart title={t('reports.volume.chartTitle')} data={vol.rows.map((r) => ({ label: String(r.period), value: Number(r.started) }))} />}
         </ReportPanel>
-        <ReportPanel type="classification" title="Classification distribution" description="Final class (a human override wins over the AI recommendation)." result={cls ?? null} query={query}>
+        <ReportPanel type="classification" title={t('reports.classification.title')} description={t('reports.classification.description')} result={cls ?? null} query={query}>
           {cls && <StatusBars rows={cls.rows.map((r) => ({ key: String(r.classification), count: Number(r.count), share: r.share === null ? null : Number(r.share) }))} />}
-          {cls && <p className="mt-2 text-xs text-muted-foreground">{Object.values(STATUS).map((s) => `${s.icon} ${s.label}`).join(' · ')} — ordered by severity.</p>}
+          {cls && <p className="mt-2 text-xs text-muted-foreground">{Object.entries(STATUS).map(([key, value]) => `${value.icon} ${t(`classifications.${key}`)}`).join(' · ')} — {t('reports.classification.ordered')}</p>}
         </ReportPanel>
-        <ReportPanel type="override-rate" title="Override rate" description="Share of decided assessments where the human changed the classification. Override reasons (FR-23) are in the table export." result={ovr ?? null} query={query}>
-          {ovr && <LineChart title="Override rate per period" unit="%" periods={ovr.rows.map((r) => String(r.period))} series={[{ name: 'Override rate', values: ovr.rows.map((r) => (r.overrideRate === null ? null : Number(r.overrideRate))) }]} format={(v) => `${v}%`} />}
+        <ReportPanel type="override-rate" title={t('reports.override.title')} description={t('reports.override.description')} result={ovr ?? null} query={query}>
+          {ovr && <LineChart title={t('reports.override.chartTitle')} unit="%" periods={ovr.rows.map((r) => String(r.period))} series={[{ name: t('reports.override.series'), values: ovr.rows.map((r) => (r.overrideRate === null ? null : Number(r.overrideRate))) }]} format={(v) => `${v}%`} />}
         </ReportPanel>
-        <ReportPanel type="assessment-time" title="Assessment time" description="Median and p95 total duration from start to close, per period." result={tim ?? null} query={query}>
+        <ReportPanel type="assessment-time" title={t('reports.time.title')} description={t('reports.time.description')} result={tim ?? null} query={query}>
           {tim && (
             <LineChart
-              title="Assessment duration per period (minutes)"
+              title={t('reports.time.chartTitle')}
               periods={tim.rows.map((r) => String(r.period))}
               series={[
-                { name: 'Median', values: tim.rows.map((r) => (r.medianTotalSec === null ? null : Number(r.medianTotalSec) / 60)) },
+                { name: t('reports.time.median'), values: tim.rows.map((r) => (r.medianTotalSec === null ? null : Number(r.medianTotalSec) / 60)) },
                 { name: 'p95', values: tim.rows.map((r) => (r.p95TotalSec === null ? null : Number(r.p95TotalSec) / 60)) },
               ]}
-              format={(v) => `${Math.round(v)} min`}
+              format={(v) => t('minutesShort', { value: Math.round(v) })}
             />
           )}
         </ReportPanel>
@@ -272,21 +278,21 @@ export default function AnalyticsPage() {
 
       <section className="space-y-2 rounded-md border p-4">
         <div>
-          <h2 className="font-semibold">Trends by {by}</h2>
-          <p className="text-xs text-muted-foreground">Assessments per period for each {by} (top 8; the rest folded into “other”). Cached for an hour (FR-27).</p>
+          <h2 className="font-semibold">{t('trends.title', { group: t(`groups.${by}`) })}</h2>
+          <p className="text-xs text-muted-foreground">{t('trends.description', { group: t(`groups.${by}`).toLocaleLowerCase() })}</p>
         </div>
         {trends ? (
           trendSeries.series.length ? (
-            <LineChart title={`Assessments per period by ${by}`} periods={trendSeries.periods} series={trendSeries.series} />
+            <LineChart title={t('trends.chartTitle', { group: t(`groups.${by}`).toLocaleLowerCase() })} periods={trendSeries.periods} series={trendSeries.series} />
           ) : (
-            <p className="text-sm text-muted-foreground">No assessments in this range.</p>
+            <p className="text-sm text-muted-foreground">{t('trends.empty')}</p>
           )
         ) : (
-          <p className="text-sm text-muted-foreground">Loading…</p>
+          <p className="text-sm text-muted-foreground">{t('loading')}</p>
         )}
         {trends && (
           <details className="text-xs">
-            <summary className="cursor-pointer text-muted-foreground">Table view</summary>
+            <summary className="cursor-pointer text-muted-foreground">{t('views.tableView')}</summary>
             <div className="mt-2 overflow-x-auto">
               <Table>
                 <TableHeader>

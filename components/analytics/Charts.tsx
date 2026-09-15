@@ -1,6 +1,7 @@
 'use client';
 
 import { useId, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 
 /**
  * Minimal inline-SVG charts for DASH-03 (no chart library). Colors come from the validated reference
@@ -11,11 +12,11 @@ import { useId, useState } from 'react';
 export const SERIES_LIGHT = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948', '#898781'];
 export const SERIES_DARK = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767', '#898781'];
 /** Classification = ordered status: monitor_only → good, risk → warning, elevated_risk → serious, issue → critical. */
-export const STATUS: Record<string, { color: string; icon: string; label: string }> = {
-  monitor_only: { color: '#0ca30c', icon: '●', label: 'Monitor Only' },
-  risk: { color: '#fab219', icon: '▲', label: 'Risk' },
-  elevated_risk: { color: '#ec835a', icon: '◆', label: 'Elevated Risk' },
-  issue: { color: '#d03b3b', icon: '■', label: 'Issue' },
+export const STATUS: Record<string, { color: string; icon: string }> = {
+  monitor_only: { color: '#0ca30c', icon: '●' },
+  risk: { color: '#fab219', icon: '▲' },
+  elevated_risk: { color: '#ec835a', icon: '◆' },
+  issue: { color: '#d03b3b', icon: '■' },
 };
 
 export function ChartStyles() {
@@ -182,21 +183,24 @@ export function LineChart({ periods, series, format = (v) => String(v), title, u
 
 /** Classification distribution: horizontal bars in status colors with icon + label (never color alone). */
 export function StatusBars({ rows }: { rows: { key: string; count: number; share: number | null }[] }) {
+  const locale = useLocale();
+  const classification = useTranslations('classification');
   const max = Math.max(1, ...rows.map((r) => r.count));
   return (
     <div className="viz space-y-2 rounded-md p-2" style={{ background: 'var(--viz-surface)' }}>
       {rows.map((r) => {
-        const st = STATUS[r.key] ?? { color: 'var(--s9)', icon: '●', label: r.key };
+        const st = STATUS[r.key] ?? { color: 'var(--s9)', icon: '●' };
+        const label = classification.has(r.key) ? classification(r.key) : r.key;
         return (
-          <div key={r.key} className="flex items-center gap-3 text-sm" title={`${st.label}: ${r.count} (${r.share ?? 0}%)`}>
+          <div key={r.key} className="flex items-center gap-3 text-sm" title={`${label}: ${r.count} (${r.share ?? 0}%)`}>
             <span className="w-32 shrink-0" style={{ color: 'var(--viz-ink)' }}>
-              <span style={{ color: st.color }}>{st.icon}</span> {st.label}
+              <span style={{ color: st.color }}>{st.icon}</span> {label}
             </span>
             <div className="h-3 flex-1 overflow-hidden rounded" style={{ background: 'var(--viz-grid)' }}>
               <div className="h-3 rounded" style={{ width: `${(r.count / max) * 100}%`, background: st.color }} />
             </div>
             <span className="w-24 shrink-0 text-right tabular-nums" style={{ color: 'var(--viz-ink2)' }}>
-              {r.count.toLocaleString()} · {r.share ?? 0}%
+              {r.count.toLocaleString(locale)} · {r.share ?? 0}%
             </span>
           </div>
         );

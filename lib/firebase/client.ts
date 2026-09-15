@@ -9,9 +9,12 @@ import { getApps, initializeApp, type FirebaseApp } from 'firebase/app';
 import {
   GoogleAuthProvider,
   OAuthProvider,
+  SAMLAuthProvider,
   createUserWithEmailAndPassword,
   getAuth,
   onAuthStateChanged,
+  reload,
+  sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -20,7 +23,8 @@ import {
   type Auth,
   type User,
 } from 'firebase/auth';
-import { setIdTokenProvider } from '../api/client';
+import { completeInitialAuthState, markAuthBridgeUnavailable, setIdTokenProvider } from '../api/client';
+import { runVerificationRecovery, type VerificationRecoveryResult } from './verification-recovery';
 
 const config = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -52,16 +56,31 @@ function requireAuth(): Auth {
  */
 export function initAuthBridge(): () => void {
   const auth = getFirebaseAuth();
-  if (!auth) return () => {};
-  const apply = (user: User | null) => setIdTokenProvider(user ? () => user.getIdToken() : null);
-  apply(auth.currentUser);
-  return onAuthStateChanged(auth, apply);
+  if (!auth) {
+    markAuthBridgeUnavailable();
+    return () => {};
+  }
+  let initialStatePending = true;
+  return onAuthStateChanged(
+    auth,
+    (user) => {
+      const provider = user ? () => user.getIdToken() : null;
+      if (initialStatePending) {
+        initialStatePending = false;
+        completeInitialAuthState(provider);
+      } else {
+        setIdTokenProvider(provider);
+      }
+    },
+    () => markAuthBridgeUnavailable(),
+  );
 }
 
 export async function signInWithGoogle(): Promise<User> {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
   const cred = await signInWithPopup(requireAuth(), provider);
+  setIdTokenProvider(() => cred.user.getIdToken());
   return cred.user;
 }
 
@@ -71,22 +90,43 @@ export async function signInWithGoogle(): Promise<User> {
  * our email OTP for non-privileged roles (backend decides).
  */
 export async function signInWithSso(providerId: string, loginHint?: string): Promise<User> {
-  const provider = new OAuthProvider(providerId);
+  const provider = providerId.startsWith('saml.') ? new SAMLAuthProvider(providerId) : new OAuthProvider(providerId);
   if (loginHint) provider.setCustomParameters({ login_hint: loginHint });
   const cred = await signInWithPopup(requireAuth(), provider);
+  setIdTokenProvider(() => cred.user.getIdToken());
   return cred.user;
 }
 
 export async function signInWithPassword(email: string, password: string): Promise<User> {
   const cred = await signInWithEmailAndPassword(requireAuth(), email, password);
+  setIdTokenProvider(() => cred.user.getIdToken());
   return cred.user;
 }
 
-/** FREE self-signup: the account is created in Firebase; the backend provisions it as a requestor on first session. */
-export async function signUpWithPassword(email: string, password: string, name: string): Promise<User> {
-  const cred = await createUserWithEmailAndPassword(requireAuth(), email, password);
+/** FREE self-signup: verify the Firebase email before the backend may provision the first session. */
+export async function signUpWithPassword(email: string, password: string, name: string): Promise<void> {
+  const auth = requireAuth();
+  const cred = await createUserWithEmailAndPassword(auth, email, password);
   if (name.trim()) await updateProfile(cred.user, { displayName: name.trim() });
-  return cred.user;
+  await sendEmailVerification(cred.user, { url: `${window.location.origin}/login` });
+  await signOut(auth);
+  setIdTokenProvider(null);
+}
+
+/**
+ * Recover an existing password account without creating an application session. The temporary
+ * Firebase identity is always signed out, including when reload or email delivery fails.
+ */
+export async function resendPasswordVerification(email: string, password: string): Promise<VerificationRecoveryResult> {
+  const auth = requireAuth();
+  return runVerificationRecovery({
+    signIn: async () => (await signInWithEmailAndPassword(auth, email, password)).user,
+    reload: (user) => reload(user),
+    isEmailVerified: (user) => user.emailVerified,
+    sendVerification: (user) => sendEmailVerification(user, { url: `${window.location.origin}/login` }),
+    signOut: () => signOut(auth),
+    clearTokenProvider: () => setIdTokenProvider(null),
+  });
 }
 
 export async function sendPasswordReset(email: string): Promise<void> {

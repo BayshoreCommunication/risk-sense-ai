@@ -1,17 +1,17 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
-import { getLocale, getMessages } from 'next-intl/server';
+import { getLocale, getMessages, getTranslations } from 'next-intl/server';
 import { AuthBridge } from '@/components/auth/AuthBridge';
 import './globals.css';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
 
-export const metadata: Metadata = {
-  title: 'RiskSense AI',
-  description: 'AI-powered conversational risk assessment',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('metadata');
+  return { title: t('title'), description: t('description') };
+}
 
 /** NFR-08: locale from the `rs_locale` cookie (or Accept-Language); every client component may call `useTranslations`. */
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

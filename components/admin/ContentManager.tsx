@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -9,24 +10,26 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import { StructuredFieldEditor, type StructuredFieldKind, validateStructuredField } from '@/components/admin/StructuredFieldEditor';
 import type { EntityApi, Item } from '@/lib/admin/content';
 import { toApiError } from '@/lib/api/client';
 
 /**
  * Generic Administrator CRUD screen (DASH-02, NFR-08 "no code deploy"). Driven by a field spec so
- * personas, scenarios and questions share one implementation. Complex nested values (flows, options,
- * actions) are edited as JSON for now — dedicated editors come with T-027's second pass.
+ * personas, scenarios and questions share one implementation. Nested domain values use dedicated,
+ * validated editors so administrators do not need to write JSON (T-027).
  */
 export type FieldSpec =
   | { name: string; label: string; kind: 'text' | 'textarea' | 'number' | 'boolean'; required?: boolean; help?: string; immutable?: boolean }
   | { name: string; label: string; kind: 'select'; options: string[]; required?: boolean; help?: string; immutable?: boolean }
   | { name: string; label: string; kind: 'list'; required?: boolean; help?: string } // semicolon-separated → string[]
-  | { name: string; label: string; kind: 'json'; required?: boolean; help?: string; example?: unknown }; // nested object/array
+  | { name: string; label: string; kind: 'json'; required?: boolean; help?: string; example?: unknown }
+  | { name: string; label: string; kind: StructuredFieldKind; required?: boolean; help?: string; defaultValue?: unknown };
 
 export interface ContentManagerProps {
   title: string;
   description: string;
-  entity: 'persona' | 'scenario' | 'question';
+  entity: string;
   apiClient: EntityApi;
   fields: FieldSpec[];
   columns: { key: string; label: string; render?: (item: Item) => React.ReactNode }[];
@@ -55,29 +58,52 @@ function toFormValues(item: Item | null, fields: FieldSpec[]): Record<string, st
     const v = item ? getPath(item, f.name) : undefined;
     if (f.kind === 'list') out[f.name] = Array.isArray(v) ? (v as string[]).join('; ') : '';
     else if (f.kind === 'json') out[f.name] = v === undefined ? (f.example !== undefined ? JSON.stringify(f.example, null, 2) : '') : JSON.stringify(v, null, 2);
+    else if (isStructuredKind(f.kind)) {
+      const defaultValue = 'defaultValue' in f ? f.defaultValue : undefined;
+      out[f.name] = v === undefined ? (defaultValue === undefined ? '' : JSON.stringify(defaultValue)) : JSON.stringify(v);
+    }
     else if (f.kind === 'boolean') out[f.name] = v === undefined ? 'true' : String(v);
     else out[f.name] = v === undefined || v === null ? '' : String(v);
   }
   return out;
 }
 
-function fromFormValues(values: Record<string, string>, fields: FieldSpec[], editing: boolean): Record<string, unknown> {
+function isStructuredKind(kind: FieldSpec['kind']): kind is StructuredFieldKind {
+  return ['flow', 'actions', 'options', 'branch', 'condition', 'factors', 'thresholds', 'confidence'].includes(kind);
+}
+
+function fromFormValues(
+  values: Record<string, string>,
+  fields: FieldSpec[],
+  editing: boolean,
+  message: (key: 'required' | 'needsEntry' | 'invalid' | 'mustBeNumber', values: { field: string }) => string,
+  structuredMessage: (key: string, values?: Record<string, string | number>) => string,
+): Record<string, unknown> {
   const body: Record<string, unknown> = {};
   for (const f of fields) {
     if (editing && 'immutable' in f && f.immutable) continue;
     const raw = values[f.name] ?? '';
     let v: unknown;
-    if (f.kind === 'list') v = raw.split(';').map((s) => s.trim()).filter(Boolean);
-    else if (f.kind === 'json') {
+    if (f.required && !raw.trim()) throw new Error(message('required', { field: f.label }));
+    if (f.kind === 'list') {
+      const list = raw.split(';').map((s) => s.trim()).filter(Boolean);
+      if (f.required && list.length === 0) throw new Error(message('needsEntry', { field: f.label }));
+      v = list;
+    } else if (f.kind === 'json' || isStructuredKind(f.kind)) {
       if (!raw.trim()) continue;
       try {
         v = JSON.parse(raw);
       } catch {
-        throw new Error(`${f.label}: invalid JSON`);
+        throw new Error(message('invalid', { field: f.label }));
+      }
+      if (isStructuredKind(f.kind)) {
+        const validationErrors = validateStructuredField(f.kind, v, values, structuredMessage);
+        if (validationErrors.length > 0) throw new Error(`${f.label}: ${validationErrors[0]}`);
       }
     } else if (f.kind === 'number') {
       if (raw === '') continue;
       v = Number(raw);
+      if (!Number.isFinite(v)) throw new Error(message('mustBeNumber', { field: f.label }));
     } else if (f.kind === 'boolean') v = raw === 'true';
     else {
       if (raw === '' && !f.required) continue;
@@ -96,7 +122,12 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'dest
   retired: 'outline',
 };
 
+type LifecycleAction = 'approve' | 'activate' | 'deactivate' | 'retire';
+type PendingAction = { action: LifecycleAction; item: Item; run: (changeRef?: string) => Promise<unknown> };
+
 export function ContentManager(props: ContentManagerProps) {
+  const t = useTranslations('contentManager');
+  const structuredValidation = useTranslations('structured.validation');
   const { title, description, apiClient, fields, columns, versioned, defaultQuery, approval } = props;
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,8 +136,13 @@ export function ContentManager(props: ContentManagerProps) {
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [history, setHistory] = useState<Item[] | null>(null);
   const [filter, setFilter] = useState('');
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [actionBusy, setActionBusy] = useState(false);
+  const [changeRef, setChangeRef] = useState('');
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -133,11 +169,13 @@ export function ContentManager(props: ContentManagerProps) {
   function openCreate() {
     setEditing(null);
     setValues(toFormValues(null, fields));
+    setFormError(null);
     setOpen(true);
   }
   function openEdit(item: Item) {
     setEditing(item);
     setValues(toFormValues(item, fields));
+    setFormError(null);
     setOpen(true);
   }
 
@@ -153,18 +191,52 @@ export function ContentManager(props: ContentManagerProps) {
 
   async function save() {
     setSaving(true);
-    setError(null);
+    setFormError(null);
     try {
-      const body = fromFormValues(values, fields, Boolean(editing));
+      const body = fromFormValues(
+        values,
+        fields,
+        Boolean(editing),
+        (key, interpolation) => t(`validation.${key}`, interpolation),
+        (key, interpolation) => structuredValidation(key, interpolation),
+      );
       if (editing) await apiClient.update(editing._id, body);
       else await apiClient.create(body);
       setOpen(false);
       await reload();
     } catch (e) {
-      setError(e instanceof Error && !(e as { code?: string }).code ? e.message : toApiError(e).message);
+      setFormError(e instanceof Error && !(e as { code?: string }).code ? e.message : toApiError(e).message);
     } finally {
       setSaving(false);
     }
+  }
+
+  async function confirmAction() {
+    if (!pendingAction) return;
+    const selected = pendingAction;
+    if (selected.action === 'approve' && !changeRef.trim()) {
+      setActionError(t('confirm.changeRefRequired'));
+      return;
+    }
+    setActionBusy(true);
+    setActionError(null);
+    setError(null);
+    try {
+      await selected.run(selected.action === 'approve' ? changeRef.trim() : undefined);
+      await reload();
+      setPendingAction(null);
+      setChangeRef('');
+    } catch (e) {
+      setActionError(toApiError(e).message);
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
+  function askForConfirmation(action: LifecycleAction, item: Item, run: (changeRef?: string) => Promise<unknown>) {
+    setChangeRef('');
+    setActionError(null);
+    setPendingAction({ action, item, run });
   }
 
   return (
@@ -175,12 +247,12 @@ export function ContentManager(props: ContentManagerProps) {
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Input placeholder="Filter…" value={filter} onChange={(e) => setFilter(e.target.value)} className="w-48" />
-          <Button onClick={openCreate}>New</Button>
+          <Input aria-label={t('filter')} placeholder={t('filterPlaceholder')} value={filter} onChange={(e) => setFilter(e.target.value)} className="w-48" />
+          <Button onClick={openCreate}>{t('actions.new')}</Button>
         </div>
       </div>
 
-      {error && <p className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm text-destructive">{error}</p>}
+      {error ? <p className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm text-destructive" role="alert">{error}</p> : null}
 
       <div className="rounded-md border">
         <Table>
@@ -189,23 +261,23 @@ export function ContentManager(props: ContentManagerProps) {
               {columns.map((c) => (
                 <TableHead key={c.key}>{c.label}</TableHead>
               ))}
-              {versioned && <TableHead>Version</TableHead>}
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              {versioned ? <TableHead>{t('version')}</TableHead> : null}
+              <TableHead>{t('status')}</TableHead>
+              <TableHead className="text-right">{t('actions.label')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading && (
               <TableRow>
-                <TableCell colSpan={columns.length + 3} className="text-center text-muted-foreground">
-                  Loading…
+                <TableCell colSpan={columns.length + (versioned ? 3 : 2)} className="text-center text-muted-foreground">
+                  {t('loading')}
                 </TableCell>
               </TableRow>
             )}
             {!loading && visible.length === 0 && (
               <TableRow>
-                <TableCell colSpan={columns.length + 3} className="text-center text-muted-foreground">
-                  Nothing yet. Click New, or upload a dataset (T-024).
+                <TableCell colSpan={columns.length + (versioned ? 3 : 2)} className="text-center text-muted-foreground">
+                  {t('empty')}
                 </TableCell>
               </TableRow>
             )}
@@ -217,7 +289,7 @@ export function ContentManager(props: ContentManagerProps) {
                 {versioned && (
                   <TableCell>
                     v{String(item.version ?? 1)}
-                    {item.isCurrent ? <span className="ml-1 text-xs text-muted-foreground">(current)</span> : null}
+                    {item.isCurrent ? <span className="ml-1 text-xs text-muted-foreground">({t('current')})</span> : null}
                   </TableCell>
                 )}
                 <TableCell>
@@ -226,32 +298,32 @@ export function ContentManager(props: ContentManagerProps) {
                 <TableCell className="space-x-1 text-right">
                   {item.status !== 'retired' && item.status !== 'deactivated' && (
                     <Button size="sm" variant="outline" onClick={() => openEdit(item)}>
-                      Edit
+                      {t('actions.edit')}
                     </Button>
                   )}
                   {approval && item.status === 'draft' && !item.approvedBy && apiClient.approve && (
-                    <Button size="sm" variant="secondary" onClick={() => void act(() => apiClient.approve!(item._id))}>
-                      Approve
+                    <Button size="sm" variant="secondary" onClick={() => askForConfirmation('approve', item, (reference) => apiClient.approve!(item._id, reference ?? ''))}>
+                      {t('actions.approve')}
                     </Button>
                   )}
                   {apiClient.activate && (item.status === 'approved' || (item.status === 'draft' && (!approval || Boolean(item.approvedBy)))) && (
-                    <Button size="sm" onClick={() => void act(() => apiClient.activate!(item._id))}>
-                      Activate
+                    <Button size="sm" onClick={() => askForConfirmation('activate', item, () => apiClient.activate!(item._id))}>
+                      {t('actions.activate')}
                     </Button>
                   )}
                   {versioned && item.status === 'active' && apiClient.deactivate && (
-                    <Button size="sm" variant="destructive" onClick={() => void act(() => apiClient.deactivate!(item._id))}>
-                      Deactivate
+                    <Button size="sm" variant="destructive" onClick={() => askForConfirmation('deactivate', item, () => apiClient.deactivate!(item._id))}>
+                      {t('actions.deactivate')}
                     </Button>
                   )}
-                  {!versioned && (item.status === 'active' || item.status === 'approved') && apiClient.retire && (
-                    <Button size="sm" variant="destructive" onClick={() => void act(() => apiClient.retire!(item._id))}>
-                      Retire
+                  {(item.status === 'active' || item.status === 'approved') && apiClient.retire && (
+                    <Button size="sm" variant="destructive" onClick={() => askForConfirmation('retire', item, () => apiClient.retire!(item._id))}>
+                      {t('actions.retire')}
                     </Button>
                   )}
                   {versioned && apiClient.history && (
                     <Button size="sm" variant="ghost" onClick={() => void act(async () => setHistory(await apiClient.history!(item._id)))}>
-                      History
+                      {t('actions.history')}
                     </Button>
                   )}
                 </TableCell>
@@ -262,15 +334,20 @@ export function ContentManager(props: ContentManagerProps) {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing ? `Edit ${props.entity} (v${String(editing.version ?? 1)}, ${editing.status})` : `New ${props.entity}`}</DialogTitle>
+            <DialogTitle>
+              {editing
+                ? t('form.editTitle', { entity: props.entity, version: String(editing.version ?? 1), status: editing.status })
+                : t('form.newTitle', { entity: props.entity })}
+            </DialogTitle>
             <DialogDescription>
               {editing && versioned && editing.status === 'active'
-                ? 'This version is active and will not be modified: saving creates a new draft version.'
-                : 'Lists use ; as separator. Nested values are JSON.'}
+                ? t('form.activeVersionHelp')
+                : t('form.help')}
             </DialogDescription>
           </DialogHeader>
+          {formError ? <p className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm text-destructive" role="alert">{formError}</p> : null}
           <div className="grid gap-3">
             {fields.map((f) => {
               const disabled = Boolean(editing && 'immutable' in f && f.immutable);
@@ -281,7 +358,13 @@ export function ContentManager(props: ContentManagerProps) {
                     {f.label}
                     {f.required ? ' *' : ''}
                   </Label>
-                  {f.kind === 'textarea' || f.kind === 'list' || f.kind === 'json' ? (
+                  {isStructuredKind(f.kind) ? (
+                    <StructuredFieldEditor
+                      kind={f.kind}
+                      value={values[f.name] ?? ''}
+                      onChange={(next) => setValues((current) => ({ ...current, [f.name]: next }))}
+                    />
+                  ) : f.kind === 'textarea' || f.kind === 'list' || f.kind === 'json' ? (
                     <Textarea
                       {...common}
                       rows={f.kind === 'json' ? 6 : 3}
@@ -292,7 +375,7 @@ export function ContentManager(props: ContentManagerProps) {
                   ) : f.kind === 'select' ? (
                     <Select value={values[f.name] ?? ''} onValueChange={(val) => setValues((v) => ({ ...v, [f.name]: val ?? '' }))} disabled={disabled}>
                       <SelectTrigger id={f.name}>
-                        <SelectValue placeholder="Select…" />
+                        <SelectValue placeholder={t('selectPlaceholder')} />
                       </SelectTrigger>
                       <SelectContent>
                         {f.options.map((o) => (
@@ -308,24 +391,62 @@ export function ContentManager(props: ContentManagerProps) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="true">true</SelectItem>
-                        <SelectItem value="false">false</SelectItem>
+                        <SelectItem value="true">{t('boolean.true')}</SelectItem>
+                        <SelectItem value="false">{t('boolean.false')}</SelectItem>
                       </SelectContent>
                     </Select>
                   ) : (
                     <Input {...common} type={f.kind === 'number' ? 'number' : 'text'} value={values[f.name] ?? ''} onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))} />
                   )}
-                  {f.help && <p className="text-xs text-muted-foreground">{f.help}</p>}
+                  {f.help ? <p className="text-xs text-muted-foreground">{f.help}</p> : null}
                 </div>
               );
             })}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('actions.cancel')}
             </Button>
             <Button onClick={() => void save()} disabled={saving}>
-              {saving ? 'Saving…' : editing ? 'Save' : 'Create draft'}
+              {saving ? t('actions.saving') : editing ? t('actions.save') : t('actions.createDraft')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={pendingAction !== null} onOpenChange={(nextOpen) => !nextOpen && !actionBusy && setPendingAction(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{pendingAction ? t(`confirm.title.${pendingAction.action}`) : ''}</DialogTitle>
+            <DialogDescription>
+              {pendingAction ? t(`confirm.description.${pendingAction.action}`, { item: String(pendingAction.item.name ?? pendingAction.item.key) }) : ''}
+            </DialogDescription>
+          </DialogHeader>
+          {pendingAction?.action === 'approve' ? (
+            <div className="space-y-1">
+              <Label htmlFor="change-reference">{t('confirm.changeRef')}</Label>
+              <Input
+                id="change-reference"
+                value={changeRef}
+                onChange={(event) => setChangeRef(event.target.value)}
+                placeholder={t('confirm.changeRefPlaceholder')}
+                disabled={actionBusy}
+              />
+              <p className="text-xs text-muted-foreground">{t('confirm.changeRefHelp')}</p>
+            </div>
+          ) : null}
+          {actionError ? <p className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm text-destructive" role="alert">{actionError}</p> : null}
+          <DialogFooter>
+            <Button type="button" variant="outline" disabled={actionBusy} onClick={() => setPendingAction(null)}>
+              {t('actions.cancel')}
+            </Button>
+            <Button
+              type="button"
+              variant={pendingAction?.action === 'deactivate' || pendingAction?.action === 'retire' ? 'destructive' : 'default'}
+              disabled={actionBusy}
+              onClick={() => void confirmAction()}
+            >
+              {actionBusy ? t('actions.working') : pendingAction ? t(`confirm.button.${pendingAction.action}`) : ''}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -334,8 +455,8 @@ export function ContentManager(props: ContentManagerProps) {
       <Dialog open={history !== null} onOpenChange={(o) => !o && setHistory(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Version history</DialogTitle>
-            <DialogDescription>Older versions stay readable because assessments pin them (AI-04).</DialogDescription>
+            <DialogTitle>{t('history.title')}</DialogTitle>
+            <DialogDescription>{t('history.description')}</DialogDescription>
           </DialogHeader>
           <ul className="space-y-1 text-sm">
             {(history ?? []).map((h) => (

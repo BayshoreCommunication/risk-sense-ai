@@ -1,41 +1,46 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { ContentManager, type FieldSpec } from '@/components/admin/ContentManager';
 import { rulesApi } from '@/lib/admin/content';
 
-const fields: FieldSpec[] = [
-  { name: 'key', label: 'Key', kind: 'text', required: true, immutable: true, help: 'e.g. confirmed_fraud' },
-  { name: 'name', label: 'Name', kind: 'text', required: true },
-  { name: 'description', label: 'Description', kind: 'textarea' },
+function ruleFields(t: ReturnType<typeof useTranslations>): FieldSpec[] {
+  return [
+  { name: 'key', label: t('fields.key'), kind: 'text', required: true, immutable: true, help: t('help.key') },
+  { name: 'name', label: t('fields.name'), kind: 'text', required: true },
+  { name: 'description', label: t('fields.description'), kind: 'textarea' },
   {
     name: 'trigger',
-    label: 'Trigger condition (JSON)',
-    kind: 'json',
+    label: t('fields.trigger'),
+    kind: 'condition',
     required: true,
-    help: 'Leaf: { factKey, op, value } with op eq|ne|gt|gte|lt|lte|in|exists. Group: { all: [...] } or { any: [...] } (FR-16)',
-    example: { factKey: 'fraud_confirmed', op: 'eq', value: 'confirmed' },
+    help: t('help.trigger'),
+    defaultValue: { factKey: '', op: 'eq', value: '' },
   },
-  { name: 'forcedClassification', label: 'Forced classification', kind: 'select', options: ['monitor_only', 'risk', 'elevated_risk', 'issue'], required: true },
-  { name: 'forcedAction', label: 'Forced action', kind: 'text', help: 'Optional recommended action shown with the rule-driven result' },
-  { name: 'priority', label: 'Priority', kind: 'number', help: 'Lower wins when several rules fire; ties → most severe' },
-  { name: 'sectors', label: 'Sectors', kind: 'list', help: 'Empty = all sectors' },
-];
+  { name: 'forcedClassification', label: t('fields.forcedClassification'), kind: 'select', options: ['monitor_only', 'risk', 'elevated_risk', 'issue'], required: true },
+  { name: 'forcedAction', label: t('fields.forcedAction'), kind: 'text', help: t('help.forcedAction') },
+  { name: 'priority', label: t('fields.priority'), kind: 'number', help: t('help.priority') },
+  { name: 'sectors', label: t('fields.sectors'), kind: 'list', help: t('help.sectors') },
+  ];
+}
 
 export default function RulesPage() {
+  const t = useTranslations('admin.rules');
+  const fields = ruleFields(t);
   return (
     <ContentManager
-      title="Hard rules"
-      description="Rules that override the computed score when their trigger matches (FR-16, FR-17). Change control: draft → approved by another administrator → active (AI-05). Any edit returns a rule to draft."
-      entity="question"
+      title={t('title')}
+      description={t('description')}
+      entity={t('entity')}
       apiClient={rulesApi}
       fields={fields}
       columns={[
-        { key: 'priority', label: 'Priority' },
-        { key: 'key', label: 'Key' },
-        { key: 'name', label: 'Name' },
-        { key: 'forcedClassification', label: 'Forces' },
+        { key: 'priority', label: t('fields.priority') },
+        { key: 'key', label: t('fields.key') },
+        { key: 'name', label: t('fields.name') },
+        { key: 'forcedClassification', label: t('columns.forces') },
       ]}
-      versioned={false}
+      versioned
       approval
     />
   );

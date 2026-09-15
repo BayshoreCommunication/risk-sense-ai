@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { assessments, type Assessment, type DecisionInput, type EscalationTarget } from '@/lib/assessments';
 
-const LABEL: Record<string, string> = { monitor_only: 'Monitor Only', risk: 'Risk', elevated_risk: 'Elevated Risk', issue: 'Issue' };
 const VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = { monitor_only: 'secondary', risk: 'default', elevated_risk: 'default', issue: 'destructive' };
 const NOBODY = '__nobody';
 
@@ -17,6 +17,10 @@ const NOBODY = '__nobody';
  * without one of the three decisions — the backend enforces it; this card just offers them.
  */
 export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (d: DecisionInput) => void; busy: boolean }) {
+  const locale = useLocale();
+  const t = useTranslations('resultCard');
+  const classification = useTranslations('classification');
+  const status = useTranslations('status');
   const r = a.result!;
   const [mode, setMode] = useState<'none' | 'override' | 'escalate'>('none');
   const [reason, setReason] = useState('');
@@ -41,7 +45,7 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (d:
       .then(setTargets)
       .catch(() => setTargets([]));
   }, [mode, targets, a._id]);
-  const targetOptions = [{ value: NOBODY, label: 'No specific reviewer' }, ...(targets ?? []).map((t) => ({ value: t._id, label: `${t.name}${t.crossDepartmentAccess ? ' (cross-department)' : ''}` }))];
+  const targetOptions = [{ value: NOBODY, label: t('routing.noSpecificReviewer') }, ...(targets ?? []).map((target) => ({ value: target._id, label: `${target.name}${target.crossDepartmentAccess ? ` ${t('routing.crossDepartmentSuffix')}` : ''}` }))];
 
   return (
     <Card className="border-2">
@@ -49,33 +53,33 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (d:
         <div className="flex flex-wrap items-center gap-2">
           <CardTitle className="text-2xl">{r.score}/100</CardTitle>
           <Badge variant={VARIANT[r.classification] ?? 'default'} className="text-sm">
-            {LABEL[r.classification] ?? r.classification}
+            {classification.has(r.classification) ? classification(r.classification) : r.classification}
           </Badge>
-          {r.ruleDriven && <Badge variant="outline">Rule-driven: {r.ruleName ?? r.ruleKey}</Badge>}
-          {isError && <Badge variant="destructive">Error review — score 0</Badge>}
-          <Badge variant="outline">Confidence {r.confidence}%</Badge>
-          {r.professionalConsult && <Badge variant="secondary">Professional consult recommended</Badge>}
+          {r.ruleDriven && <Badge variant="outline">{t('ruleDriven', { rule: r.ruleName ?? r.ruleKey ?? '' })}</Badge>}
+          {isError && <Badge variant="destructive">{t('errorReview')}</Badge>}
+          <Badge variant="outline">{t('confidence', { value: r.confidence })}</Badge>
+          {r.professionalConsult && <Badge variant="secondary">{t('professionalConsult')}</Badge>}
         </div>
         <CardDescription>
-          Recommended action: <span className="font-medium text-foreground">{r.recommendedAction}</span>
-          {r.nextSteps?.length ? ` · Next steps: ${r.nextSteps.join(', ')}` : ''}
+          {t('recommendedAction')}: <span className="font-medium text-foreground">{r.recommendedAction}</span>
+          {r.nextSteps?.length ? ` · ${t('nextSteps')}: ${r.nextSteps.join(', ')}` : ''}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
         <p>{r.explanation}</p>
         {r.ruleDriven && r.computedClassification !== r.classification && (
-          <p className="text-xs text-muted-foreground">Without the rule, the computed classification would have been {LABEL[r.computedClassification]}.</p>
+          <p className="text-xs text-muted-foreground">{t('computedWithoutRule', { classification: classification.has(r.computedClassification) ? classification(r.computedClassification) : r.computedClassification })}</p>
         )}
         <details className="text-xs text-muted-foreground">
-          <summary className="cursor-pointer">Factor breakdown</summary>
+          <summary className="cursor-pointer">{t('factors.title')}</summary>
           <table className="mt-2 w-full">
             <tbody>
               {Object.entries(r.factors ?? {}).map(([k, f]) => (
                 <tr key={k} className="border-t">
                   <td className="py-1">{k}</td>
-                  <td>value {f.value}</td>
+                  <td>{t('factors.value', { value: f.value })}</td>
                   <td>{f.weight}%</td>
-                  <td>{f.contribution.toFixed(1)} pts</td>
+                  <td>{t('factors.points', { value: f.contribution.toFixed(1) })}</td>
                 </tr>
               ))}
             </tbody>
@@ -85,32 +89,32 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (d:
         {decided ? (
           <div className="rounded-md bg-muted p-3">
             <div className="font-medium">
-              Decision: {a.decision!.type}
-              {a.decision!.overriddenTo ? ` → ${LABEL[a.decision!.overriddenTo]}` : ''}
+              {t('decision.label')}: {t(`decision.types.${a.decision!.type}`)}
+              {a.decision!.overriddenTo ? ` → ${classification.has(a.decision!.overriddenTo) ? classification(a.decision!.overriddenTo) : a.decision!.overriddenTo}` : ''}
             </div>
             {a.decision!.reason && <div className="text-muted-foreground">{a.decision!.reason}</div>}
             <div className="text-xs text-muted-foreground">
-              {new Date(a.decision!.decidedAt).toLocaleString()} · status {a.status}
+              {new Date(a.decision!.decidedAt).toLocaleString(locale)} · {t('decision.status', { status: status.has(a.status) ? status(a.status) : a.status })}
             </div>
           </div>
         ) : (
           <div className="space-y-3">
             {a.status === 'escalated' && (
               <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
-                Escalated{a.escalatedTo ? ` to ${a.escalatedTo.name}` : ''}
-                {a.decision?.reason ? ` — ${a.decision.reason}` : ''} · {new Date(a.decision!.decidedAt).toLocaleString()}. Still open until a reviewer accepts or overrides.
+                {a.escalatedTo ? t('escalated.toReviewer', { name: a.escalatedTo.name }) : t('escalated.label')}
+                {a.decision?.reason ? ` — ${a.decision.reason}` : ''} · {new Date(a.decision!.decidedAt).toLocaleString(locale)}. {t('escalated.stillOpen')}
               </div>
             )}
-            <p className="text-xs text-muted-foreground">The AI does not decide. Record your decision to close this assessment (FR-22).</p>
+            <p className="text-xs text-muted-foreground">{t('decision.notice')}</p>
             <div className="flex flex-wrap gap-2">
               <Button disabled={busy || isError} onClick={() => onDecide({ type: 'accept' })}>
-                Accept recommendation
+                {t('actions.accept')}
               </Button>
               <Button variant="outline" disabled={busy} onClick={() => setMode(mode === 'override' ? 'none' : 'override')}>
-                Override…
+                {t('actions.override')}
               </Button>
               <Button variant="outline" disabled={busy} onClick={() => setMode(mode === 'escalate' ? 'none' : 'escalate')}>
-                Escalate…
+                {t('actions.escalate')}
               </Button>
             </div>
             {mode !== 'none' && (
@@ -118,12 +122,12 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (d:
                 {mode === 'override' && (
                   <Select value={to} onValueChange={(v) => setTo(v ?? '')}>
                     <SelectTrigger>
-                      <SelectValue placeholder="New classification" />
+                      <SelectValue placeholder={t('override.classificationPlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
                       {a.classifications.map((c) => (
                         <SelectItem key={c} value={c}>
-                          {LABEL[c]}
+                          {classification.has(c) ? classification(c) : c}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -132,7 +136,7 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (d:
                 {mode === 'escalate' && targets !== null && targets.length > 0 && (
                   <Select items={targetOptions} value={target} onValueChange={(v) => setTarget(v ?? NOBODY)}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Route to a reviewer" />
+                      <SelectValue placeholder={t('routing.placeholder')} />
                     </SelectTrigger>
                     <SelectContent>
                       {targetOptions.map((o) => (
@@ -144,13 +148,13 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (d:
                   </Select>
                 )}
                 {mode === 'escalate' && targets !== null && targets.length === 0 && (
-                  <p className="text-xs text-muted-foreground">No reviewer routing on this plan — the escalation stays open for you or your department to decide.</p>
+                  <p className="text-xs text-muted-foreground">{t('routing.unavailable')}</p>
                 )}
                 <Textarea
                   rows={3}
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  placeholder={mode === 'override' ? 'Reason (at least 25 characters, kept for reporting — FR-23)' : 'Why are you escalating? (optional)'}
+                  placeholder={mode === 'override' ? t('override.reasonPlaceholder') : t('escalated.reasonPlaceholder')}
                 />
                 <Button
                   disabled={busy || (mode === 'override' && (!to || reason.trim().length < 25))}
@@ -162,7 +166,7 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (d:
                     )
                   }
                 >
-                  {mode === 'override' ? 'Record override' : 'Escalate'}
+                  {mode === 'override' ? t('actions.recordOverride') : t('actions.escalateSubmit')}
                 </Button>
               </div>
             )}

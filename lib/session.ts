@@ -1,6 +1,6 @@
 /**
  * Client-side session helpers. The app session (SEC-02) is issued by the backend; the frontend only
- * carries `sessionId` + identity and routes by role. Cookies are readable by `middleware.ts` for the
+ * carries `sessionId` + identity and routes by role. Cookies are readable by `proxy.ts` for the
  * role guard; the backend re-checks everything on every request (frontend guards are UX, not security).
  */
 export const ROLES = ['requestor', 'administrator', 'system_administrator', 'audit'] as const;
@@ -30,10 +30,12 @@ export function isRole(value: unknown): value is Role {
 }
 
 function setCookie(name: string, value: string, maxAgeSec = 60 * 60 * 12) {
-  document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAgeSec}; SameSite=Lax`;
+  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAgeSec}; SameSite=Lax${secure}`;
 }
 function clearCookie(name: string) {
-  document.cookie = `${name}=; Path=/; Max-Age=0; SameSite=Lax`;
+  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `${name}=; Path=/; Max-Age=0; SameSite=Lax${secure}`;
 }
 export function readCookie(name: string): string | undefined {
   if (typeof document === 'undefined') return undefined;
@@ -45,6 +47,12 @@ export function storeSession(input: { sessionId: string; role: Role; devUser?: s
   setCookie(COOKIE_SESSION, input.sessionId);
   setCookie(COOKIE_ROLE, input.role);
   if (input.devUser) setCookie(COOKIE_DEV_USER, input.devUser);
+  else clearCookie(COOKIE_DEV_USER);
+}
+
+/** Refresh the UX-only role hint after GET /me returns the backend-authoritative role. */
+export function storeRole(role: Role) {
+  setCookie(COOKIE_ROLE, role);
 }
 
 export function clearSession() {

@@ -18,7 +18,7 @@ function unwrap<T>(res: { data?: { data: T }; error?: unknown }): T {
 
 export interface EntityApi {
   list(query?: Record<string, string>): Promise<Item[]>;
-  approve?(id: string): Promise<Item>;
+  approve?(id: string, changeRef: string): Promise<Item>;
   create(body: unknown): Promise<Item>;
   update(id: string, body: unknown): Promise<Item>;
   activate?(id: string): Promise<Item>;
@@ -59,16 +59,17 @@ export const rulesApi: EntityApi = {
   list: async (query) => unwrap(await api.GET('/rules', { params: { query: query as never } })) as Item[],
   create: async (body) => unwrap(await api.POST('/rules', { body: body as RuleCreate })) as Item,
   update: async (id, body) => unwrap(await api.PATCH('/rules/{id}', { params: { path: { id } }, body: body as Partial<RuleCreate> })) as Item,
-  approve: async (id) => unwrap(await api.POST('/rules/{id}/approve', { params: { path: { id } }, body: {} })) as Item,
+  approve: async (id, changeRef) => unwrap(await api.POST('/rules/{id}/approve', { params: { path: { id } }, body: { changeRef } })) as Item,
   activate: async (id) => unwrap(await api.POST('/rules/{id}/activate', { params: { path: { id } } })) as Item,
   retire: async (id) => unwrap(await api.POST('/rules/{id}/retire', { params: { path: { id } } })) as Item,
+  history: async (id) => unwrap(await api.GET('/rules/{id}/history', { params: { path: { id } } })) as Item[],
 };
 
 export const matricesApi: EntityApi = {
   list: async (query) => unwrap(await api.GET('/scoring-matrices', { params: { query: query as never } })) as Item[],
   create: async (body) => unwrap(await api.POST('/scoring-matrices', { body: body as MatrixCreate })) as Item,
   update: async (id, body) => unwrap(await api.PATCH('/scoring-matrices/{id}', { params: { path: { id } }, body: body as Partial<MatrixCreate> })) as Item,
-  approve: async (id) => unwrap(await api.POST('/scoring-matrices/{id}/approve', { params: { path: { id } }, body: {} })) as Item,
+  approve: async (id, changeRef) => unwrap(await api.POST('/scoring-matrices/{id}/approve', { params: { path: { id } }, body: { changeRef } })) as Item,
   activate: async (id) => unwrap(await api.POST('/scoring-matrices/{id}/activate', { params: { path: { id } } })) as Item,
   deactivate: async (id) => unwrap(await api.POST('/scoring-matrices/{id}/deactivate', { params: { path: { id } } })) as Item,
   history: async (id) => unwrap(await api.GET('/scoring-matrices/{id}/history', { params: { path: { id } } })) as Item[],

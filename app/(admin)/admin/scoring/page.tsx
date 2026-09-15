@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ContentManager, type FieldSpec } from '@/components/admin/ContentManager';
 import { Badge } from '@/components/ui/badge';
@@ -11,17 +12,18 @@ import { toApiError } from '@/lib/api/client';
 
 const factorExample = { weight: 25, scale: { min: 1, max: 5 }, mapping: [{ when: { factKey: 'amount_usd', op: 'gt', value: 100000 }, value: 5 }] };
 
-const fields: FieldSpec[] = [
-  { name: 'key', label: 'Key', kind: 'text', required: true, immutable: true, help: '"default" is used when no sector matrix exists' },
-  { name: 'name', label: 'Name', kind: 'text', required: true },
-  { name: 'sector', label: 'Sector', kind: 'select', options: ['financial', 'healthcare', 'it', 'general'] },
+function matrixFields(t: ReturnType<typeof useTranslations>): FieldSpec[] {
+  return [
+  { name: 'key', label: t('fields.key'), kind: 'text', required: true, immutable: true, help: t('help.key') },
+  { name: 'name', label: t('fields.name'), kind: 'text', required: true },
+  { name: 'sector', label: t('fields.sector'), kind: 'select', options: ['financial', 'healthcare', 'it', 'general'] },
   {
     name: 'factors',
-    label: 'Factors (JSON)',
-    kind: 'json',
+    label: t('fields.factors'),
+    kind: 'factors',
     required: true,
-    help: 'Six factors; weights sum to 100; mapping = first matching condition → value within scale (FR-18)',
-    example: {
+    help: t('help.factors'),
+    defaultValue: {
       impact: factorExample,
       likelihood: { ...factorExample, weight: 20, mapping: [] },
       severity: { ...factorExample, weight: 20, mapping: [] },
@@ -32,14 +34,21 @@ const fields: FieldSpec[] = [
   },
   {
     name: 'thresholds',
-    label: 'Thresholds (JSON)',
-    kind: 'json',
+    label: t('fields.thresholds'),
+    kind: 'thresholds',
     required: true,
-    help: 'Contiguous ranges covering 0–100 (FR-19)',
-    example: { monitor_only: { min: 0, max: 25 }, risk: { min: 26, max: 50 }, elevated_risk: { min: 51, max: 75 }, issue: { min: 76, max: 100 } },
+    help: t('help.thresholds'),
+    defaultValue: { monitor_only: { min: 0, max: 25 }, risk: { min: 26, max: 50 }, elevated_risk: { min: 51, max: 75 }, issue: { min: 76, max: 100 } },
   },
-  { name: 'confidence', label: 'Confidence policy (JSON)', kind: 'json', example: { professionalConsultBelow: 60, mandatoryReviewBelow: 40 }, help: 'FR-20 / AI-03' },
-];
+  {
+    name: 'confidence',
+    label: t('fields.confidence'),
+    kind: 'confidence',
+    defaultValue: { professionalConsultBelow: 60, mandatoryReviewBelow: 40 },
+    help: t('help.confidence'),
+  },
+  ];
+}
 
 type SimResult = {
   score: number;
@@ -56,6 +65,7 @@ type SimResult = {
 };
 
 function Simulator() {
+  const t = useTranslations('admin.scoring.simulator');
   const [facts, setFacts] = useState('{\n  "amount_usd": 250000,\n  "authorized": false,\n  "controls_bypassed": true,\n  "incident_status": "active"\n}');
   const [required, setRequired] = useState('amount_usd; authorized; controls_bypassed; incident_status');
   const [result, setResult] = useState<SimResult | null>(null);
@@ -75,7 +85,7 @@ function Simulator() {
       });
       setResult(res as unknown as SimResult);
     } catch (e) {
-      setError(e instanceof SyntaxError ? 'Facts must be valid JSON' : toApiError(e).message);
+      setError(e instanceof SyntaxError ? t('invalidFacts') : toApiError(e).message);
     } finally {
       setBusy(false);
     }
@@ -84,46 +94,46 @@ function Simulator() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Simulate (FR-18 test harness)</CardTitle>
-        <CardDescription>Runs the exact production functions against the current active matrix and active hard rules. Nothing is stored.</CardDescription>
+        <CardTitle className="text-base">{t('title')}</CardTitle>
+        <CardDescription>{t('description')}</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="facts">
-            Facts (JSON)
+            {t('facts')}
           </label>
           <Textarea id="facts" rows={10} className="font-mono text-xs" value={facts} onChange={(e) => setFacts(e.target.value)} />
           <label className="text-sm font-medium" htmlFor="req">
-            Required fact keys (for confidence)
+            {t('requiredFacts')}
           </label>
           <Textarea id="req" rows={2} value={required} onChange={(e) => setRequired(e.target.value)} />
           <Button onClick={() => void run()} disabled={busy}>
-            {busy ? 'Scoring…' : 'Run'}
+            {busy ? t('scoring') : t('run')}
           </Button>
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
         <div className="space-y-2 text-sm">
-          {!result && <p className="text-muted-foreground">Result appears here.</p>}
+          {!result ? <p className="text-muted-foreground">{t('empty')}</p> : null}
           {result && (
             <>
               <div className="flex items-center gap-2">
                 <span className="text-2xl font-semibold">{result.score}</span>
                 <Badge variant={result.classification === 'issue' ? 'destructive' : 'default'}>{result.classification}</Badge>
-                {result.ruleDriven && <Badge variant="outline">rule-driven: {result.rule?.ruleKey}</Badge>}
-                {result.errorReview && <Badge variant="destructive">error review (score 0)</Badge>}
+                {result.ruleDriven ? <Badge variant="outline">{t('ruleDriven')}: {result.rule?.ruleKey}</Badge> : null}
+                {result.errorReview ? <Badge variant="destructive">{t('errorReview')}</Badge> : null}
               </div>
               <div className="text-muted-foreground">
-                computed: {result.computedClassification} · confidence {result.confidence}% {result.professionalConsult ? '· Professional Consult' : ''}{' '}
-                {result.mandatoryReview ? '· mandatory review' : ''} · matrix {result.matrix.key} v{result.matrix.version}
+                {t('computed')}: {result.computedClassification} · {t('confidence')} {result.confidence}% {result.professionalConsult ? `· ${t('professionalConsult')}` : ''}{' '}
+                {result.mandatoryReview ? `· ${t('mandatoryReview')}` : ''} · {t('matrix')} {result.matrix.key} v{result.matrix.version}
               </div>
               <table className="w-full text-xs">
                 <thead>
                   <tr className="text-left text-muted-foreground">
-                    <th>Factor</th>
-                    <th>Value</th>
-                    <th>Weight</th>
-                    <th>Points</th>
-                    <th>Mapping</th>
+                    <th>{t('columns.factor')}</th>
+                    <th>{t('columns.value')}</th>
+                    <th>{t('columns.weight')}</th>
+                    <th>{t('columns.points')}</th>
+                    <th>{t('columns.mapping')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -133,7 +143,7 @@ function Simulator() {
                       <td>{f.value}</td>
                       <td>{f.weight}%</td>
                       <td>{f.contribution.toFixed(1)}</td>
-                      <td>{f.matchedMapping === null ? 'default (min)' : `#${f.matchedMapping + 1}`}</td>
+                      <td>{f.matchedMapping === null ? t('defaultMinimum') : `#${f.matchedMapping + 1}`}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -147,19 +157,21 @@ function Simulator() {
 }
 
 export default function ScoringPage() {
+  const t = useTranslations('admin.scoring');
+  const fields = matrixFields(t);
   return (
     <div className="space-y-8">
       <ContentManager
-        title="Scoring matrices"
-        description="Weights, fact→factor mappings, thresholds and confidence policy (FR-18, FR-19). Versioned; a draft needs approval by another administrator before activation (AI-05)."
-        entity="persona"
+        title={t('title')}
+        description={t('description')}
+        entity={t('entity')}
         apiClient={matricesApi}
         fields={fields}
         columns={[
-          { key: 'key', label: 'Key' },
-          { key: 'name', label: 'Name' },
-          { key: 'sector', label: 'Sector' },
-          { key: 'approvedBy', label: 'Approved', render: (it) => (it.approvedBy ? 'yes' : '—') },
+          { key: 'key', label: t('fields.key') },
+          { key: 'name', label: t('fields.name') },
+          { key: 'sector', label: t('fields.sector') },
+          { key: 'approvedBy', label: t('columns.approved'), render: (it) => (it.approvedBy ? t('yes') : '—') },
         ]}
         versioned
         approval

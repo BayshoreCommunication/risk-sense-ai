@@ -1,0 +1,221 @@
+import { expect, test } from '@playwright/test';
+import { applyAuthHeaders, AuthBridgeState } from '../lib/api/auth-state';
+import { runVerificationRecovery } from '../lib/firebase/verification-recovery';
+
+const nextTurn = () => new Promise<void>((resolve) => setTimeout(resolve, 10));
+
+test('persisted Firebase restoration gates the first protected request until its bearer exists [SEC-02]', async () => {
+  for (const devAuthEnabled of [false, true]) {
+    const state = new AuthBridgeState();
+    state.setIdTokenProvider(null); // A cold-start `currentUser === null` must not settle restoration.
+
+    const request = new Request('http://risk-sense.test/me');
+    let dispatched = false;
+    const firstMe = applyAuthHeaders(
+      request,
+      { sessionId: 'persisted-session', devAuthEnabled },
+      state,
+    ).then((authorizedRequest) => {
+      dispatched = true;
+      return authorizedRequest;
+    });
+
+    await nextTurn();
+    expect(dispatched).toBe(false);
+
+    state.completeInitialState(async () => 'persisted-id-token');
+    const authorizedRequest = await firstMe;
+    expect(authorizedRequest.headers.get('Authorization')).toBe('Bearer persisted-id-token');
+    expect(authorizedRequest.headers.get('X-Session-Id')).toBe('persisted-session');
+  }
+});
+
+test('public requests do not wait and explicit sign-in tokens are immediately usable [SEC-02]', async () => {
+  const state = new AuthBridgeState();
+  const publicRequest = await applyAuthHeaders(
+    new Request('http://risk-sense.test/auth/sso/lookup'),
+    { devAuthEnabled: false },
+    state,
+  );
+  expect(publicRequest.headers.get('Authorization')).toBeNull();
+
+  state.setIdTokenProvider(async () => 'fresh-sign-in-token');
+  const protectedRequest = await applyAuthHeaders(
+    new Request('http://risk-sense.test/me'),
+    { sessionId: 'new-session', devAuthEnabled: false },
+    state,
+  );
+  expect(protectedRequest.headers.get('Authorization')).toBe('Bearer fresh-sign-in-token');
+
+  const devRequest = await applyAuthHeaders(
+    new Request('http://risk-sense.test/me'),
+    { sessionId: 'dev-session', devAuthEnabled: true, devUser: 'requestor@dev.local' },
+    new AuthBridgeState(),
+  );
+  expect(devRequest.headers.get('Authorization')).toBeNull();
+  expect(devRequest.headers.get('X-Dev-User')).toBe('requestor@dev.local');
+  expect(devRequest.headers.get('X-Session-Id')).toBe('dev-session');
+});
+
+test('verification delivery failure signs out and a retry can resend without an app session [FR-01, SEC-02]', async () => {
+  const user = { emailVerified: false };
+  const events: string[] = [];
+  let sendAttempts = 0;
+  const operations = {
+    signIn: async () => {
+      events.push('sign-in');
+      return user;
+    },
+    reload: async () => {
+      events.push('reload');
+    },
+    isEmailVerified: () => user.emailVerified,
+    sendVerification: async () => {
+      events.push('send-verification');
+      sendAttempts += 1;
+      if (sendAttempts === 1) throw new Error('mail provider unavailable');
+    },
+    signOut: async () => {
+      events.push('sign-out');
+    },
+    clearTokenProvider: () => {
+      events.push('clear-token');
+    },
+  };
+
+  let firstError: unknown;
+  try {
+    await runVerificationRecovery(operations);
+  } catch (error) {
+    firstError = error;
+  }
+  expect(firstError).toEqual(new Error('mail provider unavailable'));
+  expect(events).toEqual(['sign-in', 'reload', 'send-verification', 'sign-out', 'clear-token']);
+
+  events.length = 0;
+  await expect(runVerificationRecovery(operations)).resolves.toBe('sent');
+  expect(events).toEqual(['sign-in', 'reload', 'send-verification', 'sign-out', 'clear-token']);
+});
+
+test('already-verified recovery skips delivery but still signs out [FR-01, SEC-02]', async () => {
+  const events: string[] = [];
+  await expect(
+    runVerificationRecovery({
+      signIn: async () => {
+        events.push('sign-in');
+        return { emailVerified: true };
+      },
+      reload: async () => {
+        events.push('reload');
+      },
+      isEmailVerified: (user) => user.emailVerified,
+      sendVerification: async () => {
+        events.push('send-verification');
+      },
+      signOut: async () => {
+        events.push('sign-out');
+      },
+      clearTokenProvider: () => {
+        events.push('clear-token');
+      },
+    }),
+  ).resolves.toBe('already-verified');
+  expect(events).toEqual(['sign-in', 'reload', 'sign-out', 'clear-token']);
+});
+
+test('unverified password account sees a retryable resend flow without an application-session call [FR-01, SEC-02, NFR-08]', async ({ page }, testInfo) => {
+  test.skip(testInfo.config.metadata.frontendMocks !== true, 'requires the isolated mocked-Firebase frontend build');
+  const email = 'unverified@example.test';
+  const now = Math.floor(Date.now() / 1_000);
+  const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url');
+  const idToken = `${encode({ alg: 'none', typ: 'JWT' })}.${encode({
+    aud: 'frontend-test',
+    auth_time: now,
+    email,
+    email_verified: false,
+    exp: now + 3_600,
+    firebase: { identities: { email: [email] }, sign_in_provider: 'password' },
+    iat: now,
+    iss: 'https://securetoken.google.com/frontend-test',
+    sub: 'firebase-user-1',
+    user_id: 'firebase-user-1',
+  })}.test-signature`;
+  let deliveryAttempts = 0;
+  const backendCalls: string[] = [];
+
+  await page.route('https://identitytoolkit.googleapis.com/**', async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname.endsWith('/accounts:signInWithPassword')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          displayName: '',
+          email,
+          expiresIn: '3600',
+          idToken,
+          kind: 'identitytoolkit#VerifyPasswordResponse',
+          localId: 'firebase-user-1',
+          refreshToken: 'test-refresh-token',
+          registered: true,
+        }),
+      });
+      return;
+    }
+    if (url.pathname.endsWith('/accounts:lookup')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          kind: 'identitytoolkit#GetAccountInfoResponse',
+          users: [{
+            createdAt: String(now * 1_000),
+            email,
+            emailVerified: false,
+            lastLoginAt: String(now * 1_000),
+            localId: 'firebase-user-1',
+            providerUserInfo: [{ email, federatedId: email, providerId: 'password' }],
+            validSince: '0',
+          }],
+        }),
+      });
+      return;
+    }
+    if (url.pathname.endsWith('/accounts:sendOobCode')) {
+      deliveryAttempts += 1;
+      if (deliveryAttempts === 1) {
+        await route.fulfill({
+          status: 400,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: { code: 400, message: 'TOO_MANY_ATTEMPTS_TRY_LATER' } }),
+        });
+      } else {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ email }) });
+      }
+      return;
+    }
+    await route.abort('failed');
+  });
+  await page.route('**/test-api/**', async (route) => {
+    backendCalls.push(new URL(route.request().url()).pathname);
+    await route.fulfill({ status: 500, contentType: 'application/json', body: '{}' });
+  });
+
+  await page.goto('/login');
+  await page.getByLabel('Work email').fill(email);
+  await page.getByLabel('Password').fill('correct-horse-battery-staple');
+  await page.getByRole('button', { name: 'Resend verification email' }).click();
+
+  await expect(page.locator('p[role="alert"]')).toContainText('auth/too-many-requests');
+  await expect(page.getByLabel('Work email')).toHaveValue(email);
+  await expect(page.getByLabel('Password')).toHaveValue('correct-horse-battery-staple');
+
+  await page.getByRole('button', { name: 'Resend verification email' }).click();
+  await expect(page.getByRole('status')).toContainText(`We sent a new verification link to ${email}`);
+  expect(deliveryAttempts).toBe(2);
+  expect(backendCalls).toEqual([]);
+
+  await page.context().addCookies([{ name: 'rs_locale', value: 'bn', url: 'http://127.0.0.1:3100' }]);
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'যাচাইকরণ ইমেইল আবার পাঠান' })).toBeVisible();
+});

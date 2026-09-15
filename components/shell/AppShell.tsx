@@ -3,17 +3,22 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { api } from '@/lib/api/client';
+import { api, toApiError } from '@/lib/api/client';
+import type { components } from '@/lib/api/types';
 import { firebaseSignOut } from '@/lib/firebase/client';
-import { clearSession, type Role } from '@/lib/session';
+import { clearSession, ROLE_HOME, storeRole, type Role } from '@/lib/session';
 
-type Me = { user: { name: string; email: string; role: Role }; tenant: { slug: string; plan: 'free' | 'paid' } };
+type AuthUser = components['schemas']['AuthUser'];
+type AuthTenant = components['schemas']['AuthTenant'];
+type Me = { user: AuthUser; tenant: AuthTenant; sessionId: string };
+type Feature = keyof AuthTenant['features'];
+type NavItem = { href: string; key: string; feature?: Feature };
 
 /** Nav entries per role; labels are message keys under `nav.<role>` (messages/*.json). */
-const NAV: Record<Role, { href: string; key: string }[]> = {
+const NAV: Record<Role, NavItem[]> = {
   requestor: [
     { href: '/chat', key: 'chat' },
     { href: '/review', key: 'review' },
@@ -27,7 +32,7 @@ const NAV: Record<Role, { href: string; key: string }[]> = {
     { href: '/admin/datasets', key: 'datasets' },
     { href: '/admin/rules', key: 'rules' },
     { href: '/admin/scoring', key: 'scoring' },
-    { href: '/admin/analytics', key: 'analytics' },
+    { href: '/admin/analytics', key: 'analytics', feature: 'reports' },
   ],
   system_administrator: [
     { href: '/system', key: 'overview' },
@@ -36,6 +41,7 @@ const NAV: Record<Role, { href: string; key: string }[]> = {
     { href: '/system/tenant', key: 'tenant' },
     { href: '/system/retention', key: 'retention' },
     { href: '/system/dr', key: 'dr' },
+    { href: '/system/conformance', key: 'conformance' },
   ],
   audit: [
     { href: '/audit', key: 'overview' },
@@ -46,12 +52,13 @@ const NAV: Record<Role, { href: string; key: string }[]> = {
 
 const LOCALES = ['en', 'bn'] as const;
 function setLocaleCookie(locale: string) {
-  document.cookie = `rs_locale=${locale}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `rs_locale=${locale}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax${secure}`;
 }
 
 /**
- * Role-scoped shell: sidebar links come from the role returned by GET /me, never from the URL.
- * A user has exactly one role (FR-02), so there is no role switcher here in production.
+ * Role-scoped shell. The cookie and route-group role are routing hints only: protected content and
+ * navigation are withheld until GET /me verifies the backend-authoritative role and feature map.
  */
 export function AppShell({ role, children }: { role: Role; children: React.ReactNode }) {
   const pathname = usePathname();
@@ -59,17 +66,38 @@ export function AppShell({ role, children }: { role: Role; children: React.React
   const t = useTranslations();
   const locale = useLocale();
   const [me, setMe] = useState<Me | null>(null);
+  const [state, setState] = useState<'loading' | 'ready' | 'redirecting' | 'error'>('loading');
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  useEffect(() => {
-    api.GET('/me').then((res) => {
-      if (res.error || !res.data) {
-        clearSession();
-        router.replace('/login');
+  const verifySession = useCallback(async () => {
+    setState('loading');
+    setLoadError(null);
+
+    try {
+      const res = await api.GET('/me');
+      if (!res.data) throw new Error(t('app.sessionVerifyFailed'));
+
+      const trustedMe = res.data.data;
+      const trustedRole = trustedMe.user.role;
+      storeRole(trustedRole);
+
+      if (trustedRole !== role) {
+        setState('redirecting');
+        router.replace(ROLE_HOME[trustedRole]);
         return;
       }
-      setMe(res.data.data as Me);
-    });
-  }, [router]);
+
+      setMe(trustedMe);
+      setState('ready');
+    } catch (error) {
+      setLoadError(toApiError(error).message);
+      setState('error');
+    }
+  }, [role, router, t]);
+
+  useEffect(() => {
+    void verifySession();
+  }, [verifySession]);
 
   async function logout() {
     await api.DELETE('/auth/session').catch(() => undefined);
@@ -78,47 +106,67 @@ export function AppShell({ role, children }: { role: Role; children: React.React
     router.replace('/login');
   }
 
+  if (state !== 'ready' || !me) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-6">
+        {state === 'error' ? (
+          <div className="max-w-md space-y-3 text-center" role="alert">
+            <p className="text-sm text-destructive">{loadError ?? t('app.sessionVerifyFailed')}</p>
+            <Button variant="outline" onClick={() => void verifySession()}>
+              {t('common.retry')}
+            </Button>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">{state === 'redirecting' ? t('app.openingWorkspace') : t('app.loading')}</p>
+        )}
+      </div>
+    );
+  }
+
+  const trustedRole = me.user.role;
+  const navigation = NAV[trustedRole].filter((item) => !item.feature || me.tenant.features[item.feature]);
+
   return (
     <div className="flex min-h-screen">
       <aside className="w-60 shrink-0 border-r bg-muted/20 p-4">
         <div className="mb-6">
           <div className="text-lg font-semibold">{t('app.name')}</div>
           <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-            <Badge variant="outline">{t(`roles.${role}`)}</Badge>
-            {me && <Badge variant={me.tenant.plan === 'paid' ? 'default' : 'secondary'}>{me.tenant.plan.toUpperCase()}</Badge>}
+            <Badge variant="outline">{t(`roles.${trustedRole}`)}</Badge>
+            <Badge variant={me.tenant.plan === 'paid' ? 'default' : 'secondary'}>{me.tenant.plan.toUpperCase()}</Badge>
           </div>
         </div>
         <nav className="space-y-1">
-          {NAV[role].map((item) => (
+          {navigation.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={`block rounded-md px-3 py-2 text-sm hover:bg-muted ${pathname === item.href ? 'bg-muted font-medium' : ''}`}
             >
-              {t(`nav.${role}.${item.key}`)}
+              {t(`nav.${trustedRole}.${item.key}`)}
             </Link>
           ))}
         </nav>
         <div className="mt-6 flex items-center gap-1 text-xs text-muted-foreground">
           <span>{t('locale.label')}:</span>
-          {LOCALES.map((l) => (
+          {LOCALES.map((nextLocale) => (
             <button
-              key={l}
+              key={nextLocale}
               type="button"
-              className={`rounded px-1.5 py-0.5 ${locale === l ? 'bg-muted font-medium text-foreground' : 'hover:bg-muted'}`}
+              className={`rounded px-1.5 py-0.5 ${locale === nextLocale ? 'bg-muted font-medium text-foreground' : 'hover:bg-muted'}`}
               onClick={() => {
-                setLocaleCookie(l);
-                window.location.reload(); // the locale is resolved on the server per request; a refresh() keeps the cached client messages
+                setLocaleCookie(nextLocale);
+                window.location.reload();
               }}
             >
-              {t(`locale.${l}`)}
+              {t(`locale.${nextLocale}`)}
             </button>
           ))}
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-14 items-center justify-between border-b px-6">
-          <div className="text-sm text-muted-foreground">{me ? `${me.user.name} · ${me.user.email}` : t('app.loading')}</div>
+          <div className="text-sm text-muted-foreground">{`${me.user.name} · ${me.user.email}`}</div>
           <Button variant="outline" size="sm" onClick={() => void logout()}>
             {t('app.signOut')}
           </Button>

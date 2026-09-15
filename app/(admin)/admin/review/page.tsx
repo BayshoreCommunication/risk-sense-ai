@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { AssessmentDetail } from '@/components/review/AssessmentDetail';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toApiError } from '@/lib/api/client';
 import { assessments, type AssessmentListItem, type AssessmentListResult } from '@/lib/assessments';
 
-const LABEL: Record<string, string> = { monitor_only: 'Monitor Only', risk: 'Risk', elevated_risk: 'Elevated Risk', issue: 'Issue' };
 const LIMIT = 25;
 
 /**
@@ -18,6 +18,9 @@ const LIMIT = 25;
  * and follow up with the requestor / TAC content fixes; they do not record the decision (Overview.md roles).
  */
 export default function MandatoryReviewQueuePage() {
+  const locale = useLocale();
+  const t = useTranslations('admin.reviewQueue');
+  const classification = useTranslations('classification');
   const [tab, setTab] = useState<'pending' | 'all'>('pending');
   const [page, setPage] = useState(1);
   const [data, setData] = useState<AssessmentListResult | null>(null);
@@ -38,17 +41,15 @@ export default function MandatoryReviewQueuePage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold">Mandatory review queue</h1>
-        <p className="text-sm text-muted-foreground">
-          Assessments flagged because their confidence fell below the matrix threshold (AI-03). Oldest first. Open one to check the extracted facts and the explanation; the requestor or their reviewer records the decision.
-        </p>
+        <h1 className="text-xl font-semibold">{t('title')}</h1>
+        <p className="text-sm text-muted-foreground">{t('description')}</p>
       </div>
       <div className="flex gap-1 border-b pb-2">
         <Button size="sm" variant={tab === 'pending' ? 'default' : 'ghost'} onClick={() => { setTab('pending'); setPage(1); }}>
-          Awaiting decision{data ? ` ${data.counts.pending}` : ''}
+          {t('tabs.pending')}{data ? ` ${data.counts.pending}` : ''}
         </Button>
         <Button size="sm" variant={tab === 'all' ? 'default' : 'ghost'} onClick={() => { setTab('all'); setPage(1); }}>
-          All flagged{data ? ` ${data.counts.all}` : ''}
+          {t('tabs.all')}{data ? ` ${data.counts.all}` : ''}
         </Button>
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
@@ -56,13 +57,13 @@ export default function MandatoryReviewQueuePage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Started</TableHead>
-              <TableHead>Requestor</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Persona / scenario</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Classification</TableHead>
-              <TableHead>Confidence</TableHead>
+              <TableHead>{t('columns.started')}</TableHead>
+              <TableHead>{t('columns.requestor')}</TableHead>
+              <TableHead>{t('columns.department')}</TableHead>
+              <TableHead>{t('columns.personaScenario')}</TableHead>
+              <TableHead>{t('columns.status')}</TableHead>
+              <TableHead>{t('columns.classification')}</TableHead>
+              <TableHead>{t('columns.confidence')}</TableHead>
               <TableHead />
             </TableRow>
           </TableHeader>
@@ -70,13 +71,13 @@ export default function MandatoryReviewQueuePage() {
             {data && items.length === 0 && (
               <TableRow>
                 <TableCell colSpan={8} className="text-center text-muted-foreground">
-                  Nothing flagged for mandatory review.
+                  {t('empty')}
                 </TableCell>
               </TableRow>
             )}
             {items.map((a) => (
               <TableRow key={a._id}>
-                <TableCell className="whitespace-nowrap">{new Date(a.createdAt).toLocaleString()}</TableCell>
+                <TableCell className="whitespace-nowrap">{new Date(a.createdAt).toLocaleString(locale)}</TableCell>
                 <TableCell className="whitespace-nowrap">{a.requestor?.name ?? '—'}</TableCell>
                 <TableCell className="whitespace-nowrap">{a.department?.name ?? '—'}</TableCell>
                 <TableCell>
@@ -86,11 +87,11 @@ export default function MandatoryReviewQueuePage() {
                 <TableCell>
                   <Badge variant="secondary">{a.status.replace(/_/g, ' ')}</Badge>
                 </TableCell>
-                <TableCell>{a.result ? LABEL[a.result.classification] ?? a.result.classification : '—'}</TableCell>
+                <TableCell>{a.result ? classification.has(a.result.classification) ? classification(a.result.classification) : a.result.classification : '—'}</TableCell>
                 <TableCell className="tabular-nums">{a.result ? `${a.result.confidence}%` : '—'}</TableCell>
                 <TableCell className="text-right">
                   <Button size="sm" variant="outline" onClick={() => setOpen(a)}>
-                    Inspect
+                    {t('inspect')}
                   </Button>
                 </TableCell>
               </TableRow>
@@ -99,24 +100,24 @@ export default function MandatoryReviewQueuePage() {
         </Table>
       </div>
       <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>{data ? `${data.total} flagged` : 'Loading…'}</span>
+        <span>{data ? t('flagged', { count: data.total }) : t('loading')}</span>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-            Previous
+            {t('pagination.previous')}
           </Button>
           <span>
-            Page {page} of {pages}
+            {t('pagination.page', { page, pages })}
           </span>
           <Button size="sm" variant="outline" disabled={page >= pages} onClick={() => setPage(page + 1)}>
-            Next
+            {t('pagination.next')}
           </Button>
         </div>
       </div>
       <Dialog open={open !== null} onOpenChange={(o) => !o && setOpen(null)}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Assessment {open?._id.slice(-6)}</DialogTitle>
-            <DialogDescription>Read-only. Decisions are recorded by the requestor or the reviewer it was escalated to.</DialogDescription>
+            <DialogTitle>{t('dialog.title', { id: open?._id.slice(-6) ?? '' })}</DialogTitle>
+            <DialogDescription>{t('dialog.description')}</DialogDescription>
           </DialogHeader>
           {open && <AssessmentDetail id={open._id} />}
         </DialogContent>

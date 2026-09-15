@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Suspense, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,23 +9,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { api, toApiError } from '@/lib/api/client';
-import { firebaseConfigured, firebaseSignOut, sendPasswordReset, signInWithGoogle, signInWithPassword, signInWithSso, signUpWithPassword } from '@/lib/firebase/client';
+import { DEV_AUTH_ENABLED } from '@/lib/environment';
+import {
+  firebaseConfigured,
+  firebaseSignOut,
+  resendPasswordVerification,
+  sendPasswordReset,
+  signInWithGoogle,
+  signInWithPassword,
+  signInWithSso,
+  signUpWithPassword,
+} from '@/lib/firebase/client';
 import { ROLE_HOME, isRole, storeSession } from '@/lib/session';
 
 const DEV_ACCOUNTS = [
-  { email: 'requestor@dev.local', label: 'Requestor (FREE)' },
-  { email: 'admin@dev.local', label: 'Administrator (TAC)' },
-  { email: 'sysadmin@dev.local', label: 'System Administrator (Bayshore)' },
-  { email: 'audit@dev.local', label: 'Audit (read-only)' },
-  { email: 'requestor@paid.local', label: 'Requestor (PAID · Acme Finance)' },
+  { email: 'requestor@dev.local', labelKey: 'devAccounts.requestorFree' },
+  { email: 'admin@dev.local', labelKey: 'devAccounts.administrator' },
+  { email: 'sysadmin@dev.local', labelKey: 'devAccounts.systemAdministrator' },
+  { email: 'audit@dev.local', labelKey: 'devAccounts.audit' },
+  { email: 'requestor@paid.local', labelKey: 'devAccounts.requestorPaid' },
 ];
-
-const isProdBuild = process.env.NEXT_PUBLIC_ENV === 'production';
 
 type Step = 'credentials' | 'otp';
 type Mode = 'signin' | 'signup';
 
 function LoginForm() {
+  const t = useTranslations('login');
   const router = useRouter();
   const params = useSearchParams();
   const hasFirebase = firebaseConfigured();
@@ -38,7 +48,12 @@ function LoginForm() {
   const [otpInfo, setOtpInfo] = useState<{ sentTo: string; expiresAt: string; devCode?: string } | null>(null);
   const [devEmail, setDevEmail] = useState('requestor@dev.local');
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(() => {
+    const reason = params.get('reason');
+    if (reason === 'session_expired') return t('sessionExpired');
+    if (reason === 'session_invalid') return t('sessionInvalid');
+    return null;
+  });
   const [busy, setBusy] = useState(false);
 
   async function run(fn: () => Promise<void>, { signOutOnError = false } = {}) {
@@ -60,7 +75,7 @@ function LoginForm() {
     const res = await api.POST('/auth/session', { ...(body ? { body } : {}), ...(headers ? { headers } : {}) });
     if (res.error || !res.data) throw res.error;
     const { sessionId, user } = res.data.data;
-    if (!isRole(user.role)) throw new Error('Unknown role');
+    if (!isRole(user.role)) throw new Error(t('unknownRole'));
     storeSession({ sessionId, role: user.role, devUser });
     const next = params.get('next');
     router.replace(next && next !== '/' ? next : ROLE_HOME[user.role]);
@@ -92,10 +107,10 @@ function LoginForm() {
         if (!lookup.data) throw toApiError((lookup as { error?: unknown }).error);
         const { providerId, tenant } = lookup.data.data;
         if (!providerId) {
-          setNotice('No company SSO is configured for this email domain. Sign in with your password or Google.');
+          setNotice(t('ssoNone'));
           return;
         }
-        setNotice(`Redirecting to ${tenant}'s identity provider…`);
+        setNotice(t('ssoRedirect', { tenant: tenant ?? '' }));
         await signInWithSso(providerId, email.trim());
         try {
           await exchangeForSession();
@@ -110,15 +125,17 @@ function LoginForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle className="text-2xl">RiskSense AI</CardTitle>
+        <CardTitle className="text-2xl">{t('title')}</CardTitle>
         <CardDescription>
           {step === 'otp'
-            ? `Enter the 6-digit code we emailed to ${otpInfo?.sentTo ?? 'your address'}.`
+            ? t('otpPrompt', { email: otpInfo?.sentTo ?? t('yourAddress') })
             : hasFirebase
               ? mode === 'signin'
-                ? 'Sign in to start or review a risk assessment.'
-                : 'Create your account. You will confirm your email with a code.'
-              : 'Firebase is not configured — development sign-in only.'}
+                ? t('signInPrompt')
+                : t('signUpPrompt')
+              : DEV_AUTH_ENABLED
+                ? t('noFirebase')
+                : t('authNotConfigured')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -128,21 +145,34 @@ function LoginForm() {
               className="space-y-3"
               onSubmit={(e) => {
                 e.preventDefault();
-                void firstFactor(() => (mode === 'signin' ? signInWithPassword(email.trim(), password) : signUpWithPassword(email.trim(), password, name)));
+                if (mode === 'signin') {
+                  void firstFactor(() => signInWithPassword(email.trim(), password));
+                } else {
+                  void run(
+                    async () => {
+                      const normalizedEmail = email.trim();
+                      await signUpWithPassword(normalizedEmail, password, name);
+                      setMode('signin');
+                      setPassword('');
+                      setNotice(t('verificationEmailSent', { email: normalizedEmail }));
+                    },
+                    { signOutOnError: true },
+                  );
+                }
               }}
             >
               {mode === 'signup' && (
                 <div className="space-y-1">
-                  <Label htmlFor="name">Full name</Label>
+                  <Label htmlFor="name">{t('fullName')}</Label>
                   <Input id="name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
                 </div>
               )}
               <div className="space-y-1">
-                <Label htmlFor="email">Work email</Label>
+                <Label htmlFor="email">{t('workEmail')}</Label>
                 <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('password')}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -154,35 +184,59 @@ function LoginForm() {
                 />
               </div>
               <Button type="submit" className="w-full" disabled={busy || !email || password.length < 8}>
-                {busy ? 'Please wait…' : mode === 'signin' ? 'Continue' : 'Create account'}
+                {busy ? t('pleaseWait') : mode === 'signin' ? t('continue') : t('createAccount')}
               </Button>
               <div className="flex justify-between text-xs text-muted-foreground">
-                <button type="button" className="underline" onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}>
-                  {mode === 'signin' ? 'New here? Create an account' : 'Already have an account? Sign in'}
+                <button type="button" className="underline" disabled={busy} onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}>
+                  {mode === 'signin' ? t('switchToSignUp') : t('switchToSignIn')}
                 </button>
                 {mode === 'signin' && (
                   <button
                     type="button"
                     className="underline"
-                    disabled={!email}
+                    disabled={busy || !email}
                     onClick={() =>
                       void run(async () => {
                         await sendPasswordReset(email.trim());
-                        setNotice(`Password reset email sent to ${email.trim()}.`);
+                        setNotice(t('resetSent', { email: email.trim() }));
                       })
                     }
                   >
-                    Forgot password?
+                    {t('forgotPassword')}
                   </button>
                 )}
               </div>
+              {mode === 'signin' && (
+                <p className="text-xs text-muted-foreground">
+                  {t('resendVerificationHint')}{' '}
+                  <button
+                    type="button"
+                    className="underline"
+                    disabled={busy || !email.includes('@') || password.length < 8}
+                    title={email.includes('@') && password.length >= 8 ? undefined : t('resendVerificationNeedsCredentials')}
+                    onClick={() =>
+                      void run(async () => {
+                        const normalizedEmail = email.trim();
+                        const result = await resendPasswordVerification(normalizedEmail, password);
+                        setNotice(
+                          result === 'already-verified'
+                            ? t('verificationAlreadyComplete', { email: normalizedEmail })
+                            : t('verificationResent', { email: normalizedEmail }),
+                        );
+                      })
+                    }
+                  >
+                    {t('resendVerification')}
+                  </button>
+                </p>
+              )}
             </form>
-            <div className="text-center text-xs text-muted-foreground">or</div>
+            <div className="text-center text-xs text-muted-foreground">{t('or')}</div>
             <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={() => void firstFactor(signInWithGoogle)}>
-              Continue with Google
+              {t('google')}
             </Button>
-            <Button type="button" variant="outline" className="w-full" disabled={busy || !email.includes('@')} title={email.includes('@') ? undefined : 'Enter your work email first'} onClick={() => void ssoSignIn()}>
-              Continue with company SSO
+            <Button type="button" variant="outline" className="w-full" disabled={busy || !email.includes('@')} title={email.includes('@') ? undefined : t('ssoNeedsEmail')} onClick={() => void ssoSignIn()}>
+              {t('sso')}
             </Button>
           </div>
         )}
@@ -196,7 +250,7 @@ function LoginForm() {
             }}
           >
             <div className="space-y-1">
-              <Label htmlFor="otp">Verification code</Label>
+              <Label htmlFor="otp">{t('code')}</Label>
               <Input
                 id="otp"
                 inputMode="numeric"
@@ -208,18 +262,18 @@ function LoginForm() {
                 autoComplete="one-time-code"
                 autoFocus
               />
-              {otpInfo?.devCode && !isProdBuild && (
+              {otpInfo?.devCode && DEV_AUTH_ENABLED && (
                 <p className="text-xs text-muted-foreground">
-                  Dev mail provider — your code is <code className="font-mono">{otpInfo.devCode}</code>
+                  {t('devCode')} <code className="font-mono">{otpInfo.devCode}</code>
                 </p>
               )}
             </div>
             <Button type="submit" className="w-full" disabled={busy || otp.length !== 6}>
-              {busy ? 'Verifying…' : 'Verify and sign in'}
+              {busy ? t('verifying') : t('verify')}
             </Button>
             <div className="flex justify-between text-xs text-muted-foreground">
               <button type="button" className="underline" onClick={() => void run(startSecondFactor)}>
-                Resend code
+                {t('resend')}
               </button>
               <button
                 type="button"
@@ -231,15 +285,15 @@ function LoginForm() {
                   })
                 }
               >
-                Use a different account
+                {t('differentAccount')}
               </button>
             </div>
           </form>
         )}
 
-        {!isProdBuild && step === 'credentials' && (
+        {DEV_AUTH_ENABLED && step === 'credentials' && (
           <details className="rounded-md border p-3" open={!hasFirebase}>
-            <summary className="cursor-pointer text-sm font-medium">Development sign-in (seeded accounts, no OTP)</summary>
+            <summary className="cursor-pointer text-sm font-medium">{t('devTitle')}</summary>
             <form
               className="mt-3 space-y-3"
               onSubmit={(e) => {
@@ -248,11 +302,11 @@ function LoginForm() {
               }}
             >
               <div className="space-y-1">
-                <Label htmlFor="dev-email">Seeded dev user</Label>
+                <Label htmlFor="dev-email">{t('devUser')}</Label>
                 <Input id="dev-email" value={devEmail} onChange={(e) => setDevEmail(e.target.value)} autoComplete="off" />
               </div>
               <Button type="submit" variant="secondary" className="w-full" disabled={busy}>
-                Sign in (dev bypass)
+                {t('devSignIn')}
               </Button>
               <div className="flex flex-wrap gap-2 pt-1">
                 {DEV_ACCOUNTS.map((a) => (
@@ -265,7 +319,7 @@ function LoginForm() {
                       void run(() => exchangeForSession(undefined, { 'X-Dev-User': a.email }, a.email));
                     }}
                   >
-                    <Badge variant="secondary">{a.label}</Badge>
+                    <Badge variant="secondary">{t(a.labelKey)}</Badge>
                   </button>
                 ))}
               </div>
@@ -273,9 +327,9 @@ function LoginForm() {
           </details>
         )}
 
-        {isProdBuild && !hasFirebase && <p className="text-sm text-destructive">Authentication is not configured for this deployment.</p>}
-        {notice && <p className="text-sm text-muted-foreground">{notice}</p>}
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {!DEV_AUTH_ENABLED && !hasFirebase && <p className="text-sm text-destructive">{t('authNotConfigured')}</p>}
+        {notice && <p role="status" className="text-sm text-muted-foreground">{notice}</p>}
+        {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       </CardContent>
     </Card>
   );

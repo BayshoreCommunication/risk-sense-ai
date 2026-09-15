@@ -1,53 +1,53 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { ContentManager, type FieldSpec } from '@/components/admin/ContentManager';
 import { scenariosApi } from '@/lib/admin/content';
 
-const fields: FieldSpec[] = [
-  { name: 'key', label: 'Key', kind: 'text', required: true, immutable: true, help: 'e.g. fin_unauthorized_transaction' },
-  { name: 'personaKey', label: 'Persona key', kind: 'text', required: true, immutable: true },
-  { name: 'name', label: 'Name', kind: 'text', required: true, help: 'Shown to the user before scenario questions (FR-05)' },
-  { name: 'description', label: 'Description', kind: 'textarea', required: true },
-  { name: 'businessContext', label: 'Business context', kind: 'textarea', required: true },
-  { name: 'learningObjective', label: 'Learning objective', kind: 'textarea' },
-  { name: 'riskIndicators', label: 'Risk indicators', kind: 'list' },
+function scenarioFields(t: ReturnType<typeof useTranslations>): FieldSpec[] {
+  return [
+  { name: 'key', label: t('fields.key'), kind: 'text', required: true, immutable: true, help: t('help.key') },
+  { name: 'personaKey', label: t('fields.personaKey'), kind: 'text', required: true, immutable: true },
+  { name: 'name', label: t('fields.name'), kind: 'text', required: true, help: t('help.name') },
+  { name: 'description', label: t('fields.description'), kind: 'textarea', required: true },
+  { name: 'businessContext', label: t('fields.businessContext'), kind: 'textarea', required: true },
+  { name: 'learningObjective', label: t('fields.learningObjective'), kind: 'textarea' },
+  { name: 'riskIndicators', label: t('fields.riskIndicators'), kind: 'list' },
   {
     name: 'conversationFlow',
-    label: 'Conversation flow (JSON)',
-    kind: 'json',
+    label: t('fields.conversationFlow'),
+    kind: 'flow',
     required: true,
-    help: 'Ordered question keys. Branch follow-ups are configured on the question itself (FR-07).',
-    example: [{ questionKey: 'fin_q01_process' }, { questionKey: 'fin_q04_authorized' }],
+    help: t('help.conversationFlow'),
+    defaultValue: [],
   },
-  { name: 'requiredFactKeys', label: 'Required fact keys', kind: 'list', help: 'Must be answered before submit (FR-03); activation checks a question produces each' },
-  { name: 'expectedClassification', label: 'Expected classification', kind: 'select', options: ['monitor_only', 'risk', 'elevated_risk', 'issue'] },
-  { name: 'reasoningExample', label: 'Reasoning example', kind: 'textarea', help: 'How the explanation should read (AI-02)' },
+  { name: 'requiredFactKeys', label: t('fields.requiredFactKeys'), kind: 'list', help: t('help.requiredFactKeys') },
+  { name: 'expectedClassification', label: t('fields.expectedClassification'), kind: 'select', options: ['monitor_only', 'risk', 'elevated_risk', 'issue'] },
+  { name: 'reasoningExample', label: t('fields.reasoningExample'), kind: 'textarea', help: t('help.reasoningExample') },
   {
     name: 'recommendedActions',
-    label: 'Recommended actions (JSON)',
-    kind: 'json',
-    example: {
-      monitor_only: { decisionRecommendation: 'No further action', nextSteps: ['Monitor'] },
-      risk: { decisionRecommendation: 'Manage the Risk', nextSteps: ['Manage the Risk'] },
-      elevated_risk: { decisionRecommendation: 'Further Professional Risk Guidance Needed', nextSteps: ['Disclose/Report Issue'] },
-      issue: { decisionRecommendation: 'Contact Law Enforcement', nextSteps: ['Disclose/Report Issue'] },
-    },
+    label: t('fields.recommendedActions'),
+    kind: 'actions',
+    defaultValue: {},
   },
-];
+  ];
+}
 
 export default function ScenariosPage() {
+  const t = useTranslations('admin.scenarios');
+  const fields = scenarioFields(t);
   return (
     <ContentManager
-      title="Scenarios"
-      description="Risk situations per persona (FR-11). Activation requires an active persona, existing active questions in the flow and coverage of every required fact (FR-12, FR-03)."
-      entity="scenario"
+      title={t('title')}
+      description={t('description')}
+      entity={t('entity')}
       apiClient={scenariosApi}
       fields={fields}
       columns={[
-        { key: 'personaKey', label: 'Persona' },
-        { key: 'key', label: 'Key' },
-        { key: 'name', label: 'Name' },
-        { key: 'conversationFlow', label: 'Questions', render: (it) => String((it.conversationFlow as unknown[] | undefined)?.length ?? 0) },
+        { key: 'personaKey', label: t('columns.persona') },
+        { key: 'key', label: t('fields.key') },
+        { key: 'name', label: t('fields.name') },
+        { key: 'conversationFlow', label: t('columns.questions'), render: (it) => String((it.conversationFlow as unknown[] | undefined)?.length ?? 0) },
       ]}
       versioned
     />
