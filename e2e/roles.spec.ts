@@ -43,7 +43,7 @@ test.describe('requestor', () => {
     await page.getByRole('button', { name: 'Accept recommendation' }).click();
     await expect(page.getByText(/Decision recorded: accept/)).toBeVisible();
     await page.goto('/review');
-    await expect(page.getByRole('heading', { name: 'Assessments' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Assessments', exact: true })).toBeVisible();
     await expect(page.getByText('Closed').first()).toBeVisible();
   });
 
@@ -66,7 +66,7 @@ test.describe('administrator', () => {
     await expect(page.getByRole('heading', { name: 'Mandatory review queue' })).toBeVisible();
     await page.goto('/admin/analytics');
     await expect(page.getByRole('heading', { name: 'Analytics' })).toBeVisible();
-    await expect(page.getByText('Assessment volume')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Assessment volume' })).toBeVisible();
     await expect(page.getByText(/Started/).first()).toBeVisible();
     await page.getByRole('button', { name: 'Table' }).first().click();
     await expect(page.getByRole('columnheader', { name: 'Period' })).toBeVisible();
@@ -102,7 +102,9 @@ test.describe('system administrator', () => {
 
 test.describe('audit', () => {
   test('reads assessments, reconstructs one from the audit log, verifies the chain [FR-26, SEC-07]', async ({ page }) => {
-    await devLogin(page, ACCOUNTS.audit);
+    // Privileged seed roles live in the `tac` tenant, which carries no assessment history; reconstruction and chain
+    // verification need the demo tenant's auditor.
+    await devLogin(page, ACCOUNTS.paidAudit);
     await expect(page).toHaveURL(/\/audit$/);
     await expect(page.getByRole('link', { name: 'Assessments', exact: true })).toBeVisible();
     await page.getByRole('link', { name: 'Assessments', exact: true }).click();

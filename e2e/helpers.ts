@@ -23,4 +23,6 @@ export const ACCOUNTS = {
   paidAdmin: 'admin@paid.local',
   sysadmin: 'sysadmin@dev.local',
   audit: 'audit@dev.local',
+  // The demo tenant holds the assessment history; an auditor there can exercise reconstruction (FR-26, SEC-07).
+  paidAudit: 'audit@paid.local',
 };
