@@ -1,9 +1,19 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { BarChart3, ChartNoAxesColumn, ChartPie, FileDown, RefreshCw, SlidersHorizontal, Table2 } from 'lucide-react';
-import { BarChart, ChartStyles, LineChart, PieChart, STATUS, StatTile, StatusBars } from '@/components/analytics/Charts';
+import {
+  BarChart,
+  ChartStyles,
+  LineChart,
+  PieChart,
+  STATUS,
+  StackedClassificationChart,
+  StatTile,
+  StatusBars,
+  type StackedClassificationMonth,
+} from '@/components/analytics/Charts';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -24,9 +34,40 @@ const BY = [
   { value: 'scenario', key: 'scenario' },
 ];
 const TYPES: ReportType[] = ['volume', 'classification', 'override-rate', 'assessment-time'];
+const CLASSIFICATION_KEYS = ['monitor_only', 'risk', 'elevated_risk', 'issue'] as const;
+type ClassificationKey = (typeof CLASSIFICATION_KEYS)[number];
+type MonthlyClassificationResult = { key: string; total: number | null; values: Record<ClassificationKey, number | null> };
+
+function lastFiveCompleteMonths(reference = new Date()) {
+  const currentMonth = new Date(Date.UTC(reference.getUTCFullYear(), reference.getUTCMonth(), 1));
+  return Array.from({ length: 5 }, (_, index) => {
+    const from = new Date(Date.UTC(currentMonth.getUTCFullYear(), currentMonth.getUTCMonth() - (5 - index), 1));
+    const next = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth() + 1, 1));
+    return {
+      key: from.toISOString().slice(0, 7),
+      from: from.toISOString(),
+      to: new Date(next.getTime() - 1).toISOString(),
+    };
+  });
+}
+
+function finiteNumber(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function normalizeClassificationMonth(key: string, result: ReportResult): MonthlyClassificationResult {
+  const rowsByClassification = new Map(result.rows.map((row) => [String(row.classification), row]));
+  return {
+    key,
+    total: finiteNumber(result.summary.scored),
+    values: Object.fromEntries(
+      CLASSIFICATION_KEYS.map((classification) => [classification, finiteNumber(rowsByClassification.get(classification)?.count)]),
+    ) as Record<ClassificationKey, number | null>,
+  };
+}
 
 /** One report block: chart / table toggle + CSV / PDF export (FR-28: the export is the table view). */
-function ReportPanel({ type, title, description, result, query, children, pie }: { type: ReportType; title: string; description: string; result: ReportResult | null; query: ReportQuery; children: React.ReactNode; pie?: React.ReactNode }) {
+function ReportPanel({ id, type, title, description, result, query, children, pie }: { id: string; type: ReportType; title: string; description: string; result: ReportResult | null; query: ReportQuery; children: React.ReactNode; pie?: React.ReactNode }) {
   const t = useTranslations('admin.analytics');
   const [view, setView] = useState<'chart' | 'pie' | 'table'>('chart');
   const [busy, setBusy] = useState<string | null>(null);
@@ -44,7 +85,7 @@ function ReportPanel({ type, title, description, result, query, children, pie }:
     }
   }
   return (
-    <section className="data-panel">
+    <section id={id} className="data-panel scroll-mt-20">
       <div className="flex flex-col gap-3 border-b border-border/60 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="max-w-xl">
           <h2 className="font-heading font-semibold">{title}</h2>
@@ -124,6 +165,7 @@ function ReportPanel({ type, title, description, result, query, children, pie }:
 /** DASH-03 analytics dashboard (PAID `reports`): the four FR-26 standard reports + FR-27 trends, with filters and exports. */
 export default function AnalyticsPage() {
   const t = useTranslations('admin.analytics');
+  const locale = useLocale();
   const [range, setRange] = useState('12m');
   const [by, setBy] = useState<'department' | 'persona' | 'scenario'>('department');
   const [departmentId, setDepartmentId] = useState(ANY);
@@ -131,6 +173,9 @@ export default function AnalyticsPage() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [personas, setPersonas] = useState<{ key: string; name: string }[]>([]);
   const [data, setData] = useState<Partial<Record<ReportType | 'trends', ReportResult>>>({});
+  const [monthlyClassification, setMonthlyClassification] = useState<MonthlyClassificationResult[] | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const [selectedClassification, setSelectedClassification] = useState<ClassificationKey | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [trendView, setTrendView] = useState<'chart' | 'table'>('chart');
 
@@ -141,6 +186,17 @@ export default function AnalyticsPage() {
     return { from: from.toISOString(), to: to.toISOString(), interval: r.interval, ...(departmentId !== ANY ? { departmentId } : {}), ...(personaKey !== ANY ? { personaKey } : {}) };
   }, [range, departmentId, personaKey]);
 
+  const classificationMonthQueries = useMemo(() => {
+    const scope = {
+      ...(departmentId !== ANY ? { departmentId } : {}),
+      ...(personaKey !== ANY ? { personaKey } : {}),
+    };
+    return lastFiveCompleteMonths().map((month) => ({
+      key: month.key,
+      query: { from: month.from, to: month.to, interval: 'month' as const, ...scope },
+    }));
+  }, [departmentId, personaKey]);
+
   useEffect(() => {
     assessments.departments().then(setDepartments).catch(() => setDepartments([]));
     assessments.personas().then(setPersonas).catch(() => setPersonas([]));
@@ -149,12 +205,28 @@ export default function AnalyticsPage() {
   const load = useCallback(
     (refresh = false) => {
       setData({});
+      setMonthlyClassification(null);
       setError(null);
       const q: ReportQuery = refresh ? { ...query, refresh: 'true' } : query;
       for (const t of TYPES) reports.get(t, q).then((r) => setData((d) => ({ ...d, [t]: r }))).catch((e) => setError(toApiError(e).message));
       reports.trends({ ...q, by }).then((r) => setData((d) => ({ ...d, trends: r }))).catch((e) => setError(toApiError(e).message));
+      Promise.all(
+        classificationMonthQueries.map(({ key, query: monthQuery }) =>
+          reports
+            .get('classification', refresh ? { ...monthQuery, refresh: 'true' } : monthQuery)
+            .then((result) => normalizeClassificationMonth(key, result)),
+        ),
+      )
+        .then((months) => {
+          setMonthlyClassification(months);
+          setSelectedMonth((current) => (current && months.some((month) => month.key === current) ? current : (months.at(-1)?.key ?? null)));
+        })
+        .catch((e) => {
+          setMonthlyClassification([]);
+          setError(toApiError(e).message);
+        });
     },
-    [query, by],
+    [query, by, classificationMonthQueries],
   );
   useEffect(() => load(), [load]);
 
@@ -163,6 +235,25 @@ export default function AnalyticsPage() {
   const ovr = data['override-rate'];
   const tim = data['assessment-time'];
   const trends = data.trends;
+  const monthFormatter = useMemo(
+    () => new Intl.DateTimeFormat(locale, { month: 'short', year: 'numeric', timeZone: 'UTC' }),
+    [locale],
+  );
+  const stackedClassificationMonths = useMemo<StackedClassificationMonth[]>(
+    () =>
+      (monthlyClassification ?? []).map((month) => ({
+        key: month.key,
+        label: monthFormatter.format(new Date(`${month.key}-01T00:00:00.000Z`)),
+        total: month.total,
+        segments: CLASSIFICATION_KEYS.map((classification) => ({
+          key: classification,
+          label: t(`classifications.${classification}`),
+          value: month.values[classification],
+        })),
+      })),
+    [monthlyClassification, monthFormatter, t],
+  );
+  const selectedMonthData = stackedClassificationMonths.find((month) => month.key === selectedMonth) ?? stackedClassificationMonths.at(-1) ?? null;
   const trendSeries = useMemo(() => {
     if (!trends) return { periods: [] as string[], series: [] as { name: string; values: (number | null)[] }[] };
     const names = String(trends.summary.series ?? '').split('|').filter(Boolean);
@@ -280,11 +371,83 @@ export default function AnalyticsPage() {
         <StatTile label={t('stats.medianTime')} value={tim ? fmtSeconds(tim.summary.medianTotalSec as number | null) : '—'} hint={tim ? t('stats.timeHint', { p95: fmtSeconds(tim.summary.p95TotalSec as number | null), intake: fmtSeconds(tim.summary.avgIntakeSec as number | null) }) : undefined} />
       </div>
 
+      <section id="monthly-classification" className="data-panel scroll-mt-20">
+        <div className="flex flex-col gap-3 border-b border-border/60 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="max-w-2xl">
+            <h2 className="font-heading font-semibold">{t('monthly.title')}</h2>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('monthly.description')}</p>
+          </div>
+          <span className="w-fit rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-800">
+            {t('monthly.window')}
+          </span>
+        </div>
+        <div className="p-4">
+          {monthlyClassification === null ? (
+            <div className="grid h-64 place-items-center rounded-xl bg-muted/20" role="status">
+              <div className="space-y-2 text-center">
+                <span className="mx-auto block size-7 animate-pulse rounded-full border-2 border-primary/25 border-t-primary" aria-hidden="true" />
+                <p className="text-sm text-muted-foreground">{t('loading')}</p>
+              </div>
+            </div>
+          ) : selectedMonthData ? (
+            <>
+              <div className="mb-5 flex flex-col gap-4 rounded-xl border border-border/70 bg-muted/20 p-3.5 lg:flex-row lg:items-center lg:justify-between">
+                <div className="shrink-0">
+                  <p className="text-xs font-medium text-muted-foreground">{t('monthly.selectedMonth', { month: selectedMonthData.label })}</p>
+                  <p className="mt-1 font-heading text-2xl font-semibold tabular-nums">
+                    {selectedMonthData.total === null ? '—' : selectedMonthData.total.toLocaleString(locale)}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">{t('monthly.scored')}</p>
+                </div>
+                <div className="grid flex-1 gap-2 sm:grid-cols-2 xl:grid-cols-4" role="group" aria-label={t('monthly.selectedMonth', { month: selectedMonthData.label })}>
+                  {selectedMonthData.segments.map((segment) => {
+                    const status = STATUS[segment.key] ?? { color: 'var(--s9)', icon: '●' };
+                    const count = segment.value === null ? t('monthly.notAvailable') : segment.value.toLocaleString(locale);
+                    return (
+                      <button
+                        key={segment.key}
+                        type="button"
+                        className="rounded-lg border px-3 py-2 text-left outline-none transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring"
+                        style={{ borderColor: `color-mix(in srgb, ${status.color} 30%, transparent)`, background: `color-mix(in srgb, ${status.color} 7%, transparent)` }}
+                        aria-label={t('monthly.segmentDetail', { classification: segment.label, month: selectedMonthData.label, count })}
+                        aria-pressed={selectedClassification === segment.key}
+                        onClick={() => setSelectedClassification((current) => (current === segment.key ? null : (segment.key as ClassificationKey)))}
+                      >
+                        <span className="flex items-center gap-1.5 text-[11px] font-medium" style={{ color: status.color }}>
+                          <span aria-hidden="true">{status.icon}</span>
+                          <span className="text-foreground">{segment.label}</span>
+                        </span>
+                        <strong className="mt-1 block text-lg tabular-nums" style={{ color: status.color }}>{count}</strong>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <StackedClassificationChart
+                months={stackedClassificationMonths}
+                title={t('monthly.chartTitle')}
+                selectedMonth={selectedMonthData.key}
+                selectedClassification={selectedClassification}
+                onMonthSelect={setSelectedMonth}
+                onSegmentSelect={(month, classification) => {
+                  setSelectedMonth(month);
+                  setSelectedClassification((current) => (current === classification && selectedMonthData.key === month ? null : (classification as ClassificationKey)));
+                }}
+                selectMonthLabel={(month, total) => t('monthly.selectMonth', { month, total })}
+              />
+            </>
+          ) : (
+            <p className="grid h-64 place-items-center text-sm text-muted-foreground" role="status">{t('monthly.empty')}</p>
+          )}
+        </div>
+      </section>
+
       <div className="grid gap-4 lg:grid-cols-2">
-        <ReportPanel type="volume" title={t('reports.volume.title')} description={t('reports.volume.description')} result={vol ?? null} query={query}>
+        <ReportPanel id="report-volume" type="volume" title={t('reports.volume.title')} description={t('reports.volume.description')} result={vol ?? null} query={query}>
           {vol && <BarChart title={t('reports.volume.chartTitle')} data={vol.rows.map((r) => ({ label: String(r.period), value: Number(r.started) }))} />}
         </ReportPanel>
         <ReportPanel
+          id="report-classification"
           type="classification"
           title={t('reports.classification.title')}
           description={t('reports.classification.description')}
@@ -295,10 +458,10 @@ export default function AnalyticsPage() {
           {cls && <StatusBars rows={cls.rows.map((r) => ({ key: String(r.classification), count: Number(r.count), share: r.share === null ? null : Number(r.share) }))} />}
           {cls && <p className="mt-2 text-xs text-muted-foreground">{Object.entries(STATUS).map(([key, value]) => `${value.icon} ${t(`classifications.${key}`)}`).join(' · ')} — {t('reports.classification.ordered')}</p>}
         </ReportPanel>
-        <ReportPanel type="override-rate" title={t('reports.override.title')} description={t('reports.override.description')} result={ovr ?? null} query={query}>
+        <ReportPanel id="report-override" type="override-rate" title={t('reports.override.title')} description={t('reports.override.description')} result={ovr ?? null} query={query}>
           {ovr && <LineChart title={t('reports.override.chartTitle')} periods={ovr.rows.map((r) => String(r.period))} series={[{ name: t('reports.override.series'), values: ovr.rows.map((r) => (r.overrideRate === null ? null : Number(r.overrideRate))) }]} format={(v) => `${v}%`} />}
         </ReportPanel>
-        <ReportPanel type="assessment-time" title={t('reports.time.title')} description={t('reports.time.description')} result={tim ?? null} query={query}>
+        <ReportPanel id="report-time" type="assessment-time" title={t('reports.time.title')} description={t('reports.time.description')} result={tim ?? null} query={query}>
           {tim && (
             <LineChart
               title={t('reports.time.chartTitle')}

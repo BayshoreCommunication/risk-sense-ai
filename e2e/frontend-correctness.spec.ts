@@ -242,6 +242,24 @@ test('analytics supports pie, table and persistent period drill-down views [DASH
       return true;
     }
     if (path === '/reports/classification') {
+      const search = new URL(route.request().url()).searchParams;
+      const from = search.get('from') ?? '';
+      const to = search.get('to') ?? '';
+      const isCompleteMonth = from.endsWith('-01T00:00:00.000Z') && to.endsWith('T23:59:59.999Z');
+      if (isCompleteMonth) {
+        const monthNumber = Number(from.slice(5, 7));
+        await ok(route, {
+          columns: [{ key: 'classification', label: 'Classification', kind: 'text' }, { key: 'count', label: 'Count', kind: 'number' }],
+          rows: [
+            { classification: 'monitor_only', count: monthNumber, share: null },
+            { classification: 'risk', count: 2, share: null },
+            { classification: 'elevated_risk', count: 1, share: null },
+            { classification: 'issue', count: 0, share: null },
+          ],
+          summary: { scored: monthNumber + 3, ruleDriven: 0, professionalConsult: 0 },
+        });
+        return true;
+      }
       await ok(route, {
         columns: [{ key: 'classification', label: 'Classification', kind: 'text' }, { key: 'count', label: 'Count', kind: 'number' }],
         rows: [
@@ -286,7 +304,24 @@ test('analytics supports pie, table and persistent period drill-down views [DASH
   await page.getByRole('button', { name: '2026-08: 12' }).click();
   await expect(page.getByRole('status').filter({ hasText: '2026-08' })).toContainText('12');
 
-  const classificationPanel = page.locator('section.data-panel').filter({ has: page.getByRole('heading', { name: 'Classification distribution' }) });
+  const monthlyPanel = page.locator('section.data-panel').filter({ has: page.getByRole('heading', { name: 'Monthly classification distribution', exact: true }) });
+  const monthSelectors = monthlyPanel.getByRole('button', { name: /^Select / });
+  await expect(monthSelectors).toHaveCount(5);
+  await monthSelectors.first().click();
+  await expect(monthSelectors.first()).toHaveAttribute('aria-pressed', 'true');
+  const selectedMonthSummary = monthlyPanel.getByRole('group', { name: /classification totals$/ });
+  const riskSummary = selectedMonthSummary.getByRole('button', { name: /^Risk in .*: 2$/ });
+  await riskSummary.click();
+  await expect(riskSummary).toHaveAttribute('aria-pressed', 'true');
+  const monthlyChart = monthlyPanel.getByRole('group', { name: 'Final classifications by month' });
+  await expect(monthlyChart.getByRole('button', { name: / · Risk: 2$/ }).first()).toBeVisible();
+
+  await expect(page.locator('#report-volume')).toBeVisible();
+  await expect(page.locator('#report-classification')).toBeVisible();
+  await expect(page.locator('#report-override')).toBeVisible();
+  await expect(page.locator('#report-time')).toBeVisible();
+
+  const classificationPanel = page.locator('section.data-panel').filter({ has: page.getByRole('heading', { name: 'Classification distribution', exact: true }) });
   await classificationPanel.getByRole('button', { name: 'Pie' }).click();
   const pie = classificationPanel.getByRole('group', { name: 'Classification distribution as a pie chart' });
   await expect(pie).toBeVisible();
@@ -300,6 +335,9 @@ test('analytics supports pie, table and persistent period drill-down views [DASH
 
   await classificationPanel.getByRole('button', { name: 'Table' }).click();
   await expect(classificationPanel.getByRole('columnheader', { name: 'Classification' })).toBeVisible();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
 test('system navigation exposes every implemented operational workspace [DASH-04, FR-02, FR-10, NFR-06, FR-30]', async ({ page }) => {

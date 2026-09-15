@@ -19,6 +19,13 @@ export const STATUS: Record<string, { color: string; icon: string }> = {
   issue: { color: '#d03b3b', icon: '■' },
 };
 
+export interface StackedClassificationMonth {
+  key: string;
+  label: string;
+  total: number | null;
+  segments: { key: string; label: string; value: number | null }[];
+}
+
 export function ChartStyles() {
   return (
     <style>{`
@@ -354,6 +361,112 @@ export function StatusBars({ rows }: { rows: { key: string; count: number; share
           </button>
         );
       })}
+    </div>
+  );
+}
+
+/**
+ * Five-month classification composition. Bars share one zero baseline and every non-zero segment is
+ * a native button, so month and classification drill-down remain keyboard-operable and never depend
+ * on color alone.
+ */
+export function StackedClassificationChart({
+  months,
+  title,
+  selectedMonth,
+  selectedClassification,
+  onMonthSelect,
+  onSegmentSelect,
+  selectMonthLabel,
+}: {
+  months: StackedClassificationMonth[];
+  title: string;
+  selectedMonth: string | null;
+  selectedClassification: string | null;
+  onMonthSelect: (month: string) => void;
+  onSegmentSelect: (month: string, classification: string) => void;
+  selectMonthLabel: (month: string, total: string) => string;
+}) {
+  const locale = useLocale();
+  const observedTotal = (month: StackedClassificationMonth) => {
+    if (typeof month.total === 'number') return month.total;
+    if (month.segments.some((segment) => segment.value === null)) return null;
+    return month.segments.reduce((sum, segment) => sum + (segment.value ?? 0), 0);
+  };
+  const maxTotal = Math.max(1, ...months.map((month) => observedTotal(month) ?? 0));
+  const tickValues = [maxTotal, Math.round(maxTotal / 2), 0];
+
+  return (
+    <div className="viz" role="group" aria-label={title}>
+      <div className="overflow-x-auto pb-2">
+        <div className="min-w-[34rem]">
+          <div className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-3">
+            <div className="flex h-60 flex-col justify-between pb-px text-right text-[10px] tabular-nums text-muted-foreground" aria-hidden="true">
+              {tickValues.map((tick, index) => (
+                <span key={`${tick}-${index}`}>{tick.toLocaleString(locale)}</span>
+              ))}
+            </div>
+            <div className="relative h-60 border-b border-border/80">
+              <div className="pointer-events-none absolute inset-0 flex flex-col justify-between" aria-hidden="true">
+                {tickValues.map((tick, index) => (
+                  <span key={`${tick}-${index}`} className="block border-t border-dashed border-border/65 first:border-solid" />
+                ))}
+              </div>
+              <div className="absolute inset-0 flex items-end justify-around gap-5 px-5">
+                {months.map((month) => {
+                  const total = observedTotal(month);
+                  const isSelectedMonth = selectedMonth === month.key;
+                  return (
+                    <div
+                      key={month.key}
+                      className={`relative flex h-full min-w-12 flex-1 flex-col-reverse justify-start overflow-hidden rounded-t-lg border-x border-t transition-shadow ${isSelectedMonth ? 'ring-2 ring-primary/45 ring-offset-2' : 'border-border/60'}`}
+                      aria-label={`${month.label}: ${total === null ? '—' : total.toLocaleString(locale)}`}
+                    >
+                      {month.segments.map((segment, index) => {
+                        const status = STATUS[segment.key] ?? { color: `var(--s${index + 1})`, icon: '●' };
+                        const value = typeof segment.value === 'number' && segment.value > 0 ? segment.value : null;
+                        const dimmed = selectedClassification !== null && selectedClassification !== segment.key;
+                        if (value === null) return null;
+                        const height = (value / maxTotal) * 100;
+                        return (
+                          <button
+                            key={segment.key}
+                            type="button"
+                            className="group relative w-full border-t border-white/45 outline-none transition-[opacity,filter] first:border-0 hover:brightness-105 focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
+                            style={{ height: `${height}%`, minHeight: '0.45rem', background: status.color, opacity: dimmed ? 0.2 : isSelectedMonth ? 1 : 0.72 }}
+                            title={`${month.label} · ${status.icon} ${segment.label}: ${value.toLocaleString(locale)}`}
+                            aria-label={`${month.label} · ${segment.label}: ${value.toLocaleString(locale)}`}
+                            aria-pressed={isSelectedMonth && selectedClassification === segment.key}
+                            onClick={() => onSegmentSelect(month.key, segment.key)}
+                          />
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+          <div className="ml-[3.5rem] grid grid-cols-5 gap-2 pt-2">
+            {months.map((month) => {
+              const total = observedTotal(month);
+              return (
+                <button
+                  key={month.key}
+                  type="button"
+                  className={`rounded-lg px-1.5 py-1.5 text-center text-xs outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring ${selectedMonth === month.key ? 'bg-primary/10 font-semibold text-primary' : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'}`}
+                  aria-label={selectMonthLabel(month.label, total === null ? '—' : total.toLocaleString(locale))}
+                  aria-pressed={selectedMonth === month.key}
+                  onClick={() => onMonthSelect(month.key)}
+                >
+                  <span className="block truncate">{month.label}</span>
+                  <span className="mt-0.5 block text-[10px] font-medium tabular-nums">{total === null ? '—' : total.toLocaleString(locale)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
