@@ -17,12 +17,12 @@ The redesign uses the existing tasks T-020, T-027, T-038, T-056, T-062, T-063, T
 | `app/(requestor)/review/page.tsx` | Added status summaries, richer filter presentation, scenario and mandatory-review filters, days-open context, retry handling and responsive cards/tables. | Brings DASH-01 information density and filtering in line with the Figma dashboard while keeping backend scope authoritative. |
 | `app/(admin)/admin/page.tsx` | Rebuilt the Administrator landing surface with operational summaries, content/review actions and feature-gated analytics navigation. | Reflects the Figma configuration workspace without exposing unavailable PAID features. |
 | `app/(admin)/admin/review/page.tsx` | Restyled the mandatory-review queue with clearer evidence, confidence and status presentation. | Improves review triage while preserving read-only Administrator behavior. |
-| `app/(admin)/admin/datasets/page.tsx` | Added dataset lifecycle summaries, validation presentation and a computed Content rows column. | Implements the Figma inventory/table intent using existing counts instead of inventing file-byte data. |
+| `app/(admin)/admin/datasets/page.tsx` | Added dataset lifecycle summaries, named author/reviewer provenance, validation presentation and a computed Content rows column using the generated Dataset contract. | Implements the Figma inventory/table intent using existing evidence instead of inventing file-byte data or maintaining a drifting handwritten API type. |
 | `app/(admin)/admin/scoring/page.tsx` | Added structured scoring summaries and clearer matrix/simulator presentation. | Exposes deterministic scoring configuration without moving scoring into the AI layer. |
 | `app/(admin)/admin/analytics/page.tsx` | Added polished report controls, explicit chart/table switching, exports and semantic period/classification emphasis. | Addresses accessible alternate views and monthly trend readability from the Figma feedback. |
 | `app/(audit)/audit/page.tsx` | Reworked the Audit landing page around immutable evidence, reconstruction and chain verification. | Makes the read-only Audit role and evidence boundaries explicit. |
-| `app/(audit)/audit/assessments/page.tsx` | Restyled the assessment evidence table and reconstruction actions. | Improves lifecycle scanning without changing masked/unmasked access rules. |
-| `app/(audit)/audit/logs/page.tsx` | Added operational summaries, payload disclosure and a computed Event size column. | Addresses Figma comment 55 using the already returned event data; no API field was invented. |
+| `app/(audit)/audit/assessments/page.tsx` | Restyled the assessment evidence table and reconstruction actions while retaining the human decision in mobile cards. | Improves lifecycle scanning without changing masked/unmasked access rules or dropping evidence at constrained widths. |
+| `app/(audit)/audit/logs/page.tsx` | Added operational summaries, payload disclosure, a computed Event size column and full hashes on mobile. | Addresses Figma comment 55 using the already returned event data; no API field was invented and responsive presentation does not abbreviate integrity evidence. |
 | `app/(system)/system/page.tsx` | Reworked the System Administrator overview into an operational control plane. | Surfaces tenant, access, retention, DR, conformance and archive responsibilities. |
 | `app/(system)/system/users/page.tsx` | Added account/role/MFA policy summaries and clearer directory metrics/table treatment. | Makes one-account/one-role and plan-aware MFA semantics visible. |
 | `app/(system)/system/departments/page.tsx` | Added access-mapping context and more legible mapping controls. | Clarifies how department-to-persona scope works. |
@@ -73,11 +73,11 @@ Implementation status and Figma comment-thread state are intentionally separate.
 |---|---|---|
 | 44 | FREE public access is described as Requestor-only. | Pending confirmed resolution |
 | 45 | Managed Administrator, System Administrator and Audit roles are described as PAID capabilities. | Pending confirmed resolution |
-| 46 | MFA copy follows implemented role/tenant policy: administrators and system administrators always complete RiskSense OTP; PAID requestors use configured SSO/IdP factors; audit and other non-privileged paths follow tenant OTP policy. | Pending confirmed resolution |
+| 46 | MFA copy and session enforcement cover every PAID account: a current Firebase-signed second-factor claim may satisfy a requestor login; provider match alone never does, so RiskSense requires its OTP otherwise. Administrators, system administrators and PAID audit users always complete the RiskSense-controlled factor. Historical enrollment never substitutes for current-login assurance. | Pending confirmed resolution |
 | 47 | No replacement example was invented because the requested target text is incomplete. | Open / ambiguous |
 | 48 | Account/session language avoids presenting password lockout as a material risk classification and instead explains the configured access policy. | Pending confirmed resolution |
 | 49 | DR target/status cards use semantic state color and recency context. | Pending confirmed resolution |
-| 50 | Analytics reports and trends expose user-selectable Chart and Table views. | Pending confirmed resolution |
+| 50 | Classification analytics expose user-selectable Chart, Pie and Table views; period bars/points retain a labeled color drill-down after selection. | Pending confirmed resolution |
 | 51 | System and login copy now explains the role-aware SSO/OTP policy without claiming a control the backend does not enforce for every PAID role. | Pending confirmed resolution |
 | 52 | User administration and tenant policy state that one person uses one account with exactly one role. | Pending confirmed resolution |
 | 53 | “Life + 3 years” is replaced with explicit dataset-history days measured after version retirement. | Pending confirmed resolution |
@@ -108,8 +108,8 @@ Verified against the current working tree:
 
 - `npm audit --omit=dev --audit-level=moderate` — zero vulnerabilities.
 - `npm run lint` and `npm run typecheck` — passed without errors or warnings.
-- English/Bengali JSON parsing, key-set and ICU-variable comparison — 1,114 / 1,114 with no mismatch.
-- `npm run e2e:frontend` — 31/31 mocked browser cases passed across four configured files.
+- English/Bengali JSON parsing, key-set and ICU-variable comparison — 1,165 / 1,165 with no mismatch.
+- `npm run e2e:frontend` — 37/37 mocked browser cases passed across four configured files, including analytics view selection, mobile evidence parity and positive archive export.
 - `npm run build` — Next.js 16.3.5 production build passed, generating 27/27 routes including `/system/audit`.
 - Role-by-role desktop/mobile/state review, keyboard/focus checks, responsive recheck and the independent high-severity diff review — passed; see `design-qa.md`.
 - Plain `/chat/[id]` production transfer fell from 775 KB with eager specialty plugins to 442 KB after their removal. Core Streamdown remains a documented P3 optimization candidate (ISS-028), not a release-blocking regression.
