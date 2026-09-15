@@ -207,6 +207,90 @@ test('system navigation exposes every implemented operational workspace [DASH-04
   await expect(page.getByRole('link', { name: 'Conformance', exact: true })).toBeVisible();
 });
 
+test('mobile workspace navigation traps focus and returns it to the trigger [NFR-07, NFR-08]', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await authenticate(page, 'requestor');
+  await mockApi(page, () => currentUser('requestor'), async ({ route, path }) => {
+    if (path === '/personas') {
+      await ok(route, []);
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/chat');
+  const navigationTrigger = page.getByRole('button', { name: 'Open navigation' });
+  await navigationTrigger.click();
+
+  const drawer = page.getByRole('dialog', { name: 'Workspace navigation' });
+  await expect(drawer).toBeVisible();
+  await expect(drawer.getByRole('button', { name: 'Close navigation' })).toBeFocused();
+
+  await page.keyboard.press('Shift+Tab');
+  await expect(drawer.getByRole('button', { name: 'Sign out' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(drawer.getByRole('button', { name: 'Close navigation' })).toBeFocused();
+
+  await page.keyboard.press('Escape');
+  await expect(drawer).toBeHidden();
+  await expect(navigationTrigger).toBeFocused();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+test('a long chat transcript scrolls internally and keeps the composer visible [FR-06, NFR-07]', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await authenticate(page, 'requestor');
+  const currentAssessment = assessment();
+  const longMessages = Array.from({ length: 50 }, (_, index) => ({
+    _id: `message-${index}`,
+    role: index % 2 === 0 ? 'assistant' : 'user',
+    kind: 'info',
+    content: `Transcript entry ${index + 1}. This intentionally exercises a long, auditable assessment history.`,
+    createdAt: '2026-09-14T00:00:00.000Z',
+  }));
+  longMessages.push({
+    _id: 'message-question',
+    role: 'assistant',
+    kind: 'question',
+    content: 'How much?',
+    questionKey: 'amount',
+    question: { key: 'amount', text: 'How much?', type: 'number', factKey: 'amount', required: true },
+    createdAt: '2026-09-14T00:00:00.000Z',
+  } as (typeof longMessages)[number]);
+
+  await mockApi(page, () => currentUser('requestor'), async ({ route, path, method }) => {
+    if (path === '/assessments/assessment-1' && method === 'GET') {
+      await ok(route, currentAssessment);
+      return true;
+    }
+    if (path === '/assessments/assessment-1/messages' && method === 'GET') {
+      await ok(route, longMessages);
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/chat/assessment-1');
+  const composer = page.getByTestId('composer');
+  await expect(composer).toBeVisible();
+  const metrics = await page.evaluate(() => {
+    const log = document.querySelector<HTMLElement>('[role="log"]');
+    const scrollArea = log?.firstElementChild as HTMLElement | null;
+    const composerElement = document.querySelector<HTMLElement>('[data-testid="composer"]');
+    return {
+      viewportHeight: window.innerHeight,
+      bodyHeight: document.documentElement.scrollHeight,
+      composerTop: composerElement?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY,
+      clientHeight: scrollArea?.clientHeight ?? 0,
+      scrollHeight: scrollArea?.scrollHeight ?? 0,
+    };
+  });
+
+  expect(metrics.composerTop).toBeLessThan(metrics.viewportHeight);
+  expect(metrics.scrollHeight).toBeGreaterThan(metrics.clientHeight);
+  expect(metrics.bodyHeight).toBeLessThan(metrics.viewportHeight * 1.5);
+});
+
 test('pressing Enter on a number question sends a structured number [FR-06, NFR-01]', async ({ page }) => {
   let submitted: unknown;
   const numberQuestion = { key: 'amount', text: 'How much?', type: 'number', factKey: 'amount', required: true };
@@ -246,6 +330,85 @@ test('pressing Enter on a number question sends a structured number [FR-06, NFR-
   await input.fill('1250');
   await input.press('Enter');
   await expect.poll(() => submitted).toEqual({ value: 1250 });
+});
+
+test('the free-text composer sends each intended answer once and keeps newline or composition input local [FR-06, NFR-01]', async ({ page }) => {
+  let postCount = 0;
+  const submitted: unknown[] = [];
+  const freeTextQuestion = { key: 'context', text: 'What happened?', type: 'free_text', factKey: 'context', required: true };
+  const currentAssessment = assessment({ currentQuestionKey: 'context' });
+  const currentMessages = [
+    {
+      _id: 'message-1',
+      role: 'assistant',
+      kind: 'question',
+      content: 'What happened?',
+      questionKey: 'context',
+      question: freeTextQuestion,
+      createdAt: '2026-09-14T00:00:00.000Z',
+    },
+  ];
+
+  await authenticate(page, 'requestor');
+  await mockApi(page, () => currentUser('requestor'), async ({ route, path, method }) => {
+    if (path === '/assessments/assessment-1' && method === 'GET') {
+      await ok(route, currentAssessment);
+      return true;
+    }
+    if (path === '/assessments/assessment-1/messages' && method === 'GET') {
+      await ok(route, currentMessages);
+      return true;
+    }
+    if (path === '/assessments/assessment-1/messages' && method === 'POST') {
+      postCount += 1;
+      submitted.push(route.request().postDataJSON());
+      // Keep the request in flight long enough to exercise the synchronous busy-ref guard.
+      await new Promise<void>((resolve) => setTimeout(resolve, 200));
+      await ok(route, currentAssessment);
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/chat/assessment-1');
+  const composer = page.getByTestId('composer');
+  const input = page.getByPlaceholder(/^Type your answer/);
+
+  await input.fill('First line');
+  await input.press('Shift+Enter');
+  await expect(input).toHaveValue('First line\n');
+  await page.waitForTimeout(50);
+  expect(postCount).toBe(0);
+
+  await input.fill('Still composing');
+  await input.evaluate((element) => {
+    const event = new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true, cancelable: true, isComposing: true });
+    if (!event.isComposing) throw new Error('The browser did not create a composing keyboard event');
+    element.dispatchEvent(event);
+  });
+  await page.waitForTimeout(50);
+  expect(postCount).toBe(0);
+
+  await input.fill('Final answer');
+  await input.evaluate((element) => {
+    const enter = () => element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true, cancelable: true }));
+    enter();
+    enter();
+  });
+  await expect.poll(() => postCount).toBe(1);
+  await expect(composer).toHaveAttribute('data-busy', 'false');
+  expect(submitted).toEqual([{ text: 'Final answer' }]);
+
+  await input.fill('Button answer');
+  const send = composer.getByRole('button', { name: 'Send' });
+  await send.evaluate((element) => {
+    const click = () => element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    click();
+    click();
+  });
+  await expect.poll(() => postCount).toBe(2);
+  await expect(composer).toHaveAttribute('data-busy', 'false');
+  expect(submitted).toEqual([{ text: 'Final answer' }, { text: 'Button answer' }]);
 });
 
 test('a low-confidence persona choice uses the explicit persona endpoint [FR-04]', async ({ page }) => {

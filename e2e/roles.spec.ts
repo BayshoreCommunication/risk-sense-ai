@@ -102,6 +102,9 @@ test.describe('system administrator', () => {
 test.describe('audit', () => {
   test('reads assessments, reconstructs one from the audit log, verifies the chain [FR-26, SEC-07]', async ({ page }) => {
     await devLogin(page, ACCOUNTS.audit);
+    await expect(page).toHaveURL(/\/audit$/);
+    await expect(page.getByRole('link', { name: 'Assessments', exact: true })).toBeVisible();
+    await page.getByRole('link', { name: 'Assessments', exact: true }).click();
     await expect(page).toHaveURL(/\/audit\/assessments/);
     await expect(page.getByRole('heading', { name: 'Assessments (audit view)' })).toBeVisible();
     await page.getByRole('button', { name: 'Reconstruct' }).first().click();
