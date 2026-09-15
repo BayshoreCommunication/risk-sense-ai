@@ -82,6 +82,10 @@ test('a system administrator provisions a requestor with department scope [FR-02
       await ok(route, [{ _id: financeId, name: 'Finance', personaIds: [] }]);
       return true;
     }
+    if (path === '/system/tenant' && method === 'GET') {
+      await ok(route, { ...me.tenant, name: 'Test tenant', retentionPolicy: {}, authPolicy: { otpRequired: true }, sso: { providerId: null, domain: null } });
+      return true;
+    }
     if (path === '/system/users' && method === 'POST') {
       posted = route.request().postDataJSON();
       await ok(
@@ -125,6 +129,79 @@ test('a system administrator provisions a requestor with department scope [FR-02
   await expect(page.getByText('All departments').first()).toBeVisible();
 });
 
+test('user role controls stay disabled when the tenant plan cannot be verified [FR-02, SEC-02]', async ({ page }) => {
+  await mockApi(page, async ({ route, path, method }) => {
+    if (path === '/system/users' && method === 'GET') {
+      await ok(route, [{
+        _id: '64b000000000000000000032',
+        email: 'audit@example.test',
+        name: 'Audit User',
+        role: 'audit',
+        departmentIds: [],
+        crossDepartmentAccess: false,
+        mfaEnrolled: false,
+        status: 'active',
+        lastLoginAt: null,
+      }]);
+      return true;
+    }
+    if (path === '/system/departments' && method === 'GET') {
+      await ok(route, []);
+      return true;
+    }
+    if (path === '/system/tenant' && method === 'GET') {
+      await apiError(route, 503, 'UNAVAILABLE', 'Tenant plan unavailable');
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/system/users');
+  await expect(page.getByText('The tenant plan is unavailable. Role controls remain disabled until it can be verified.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Provision user' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Edit' })).toBeDisabled();
+  await expect(page.getByText('FREE public access is requestor-only.')).toHaveCount(0);
+  await expect(page.getByRole('alert').filter({ hasText: 'Tenant plan unavailable' })).toBeVisible();
+});
+
+test('a verified FREE plan preserves a legacy current role while offering requestor-only correction [FR-02]', async ({ page }) => {
+  await mockApi(page, async ({ route, path, method }) => {
+    if (path === '/system/users' && method === 'GET') {
+      await ok(route, [{
+        _id: '64b000000000000000000033',
+        email: 'audit@example.test',
+        name: 'Legacy Audit User',
+        role: 'audit',
+        departmentIds: [],
+        crossDepartmentAccess: false,
+        mfaEnrolled: true,
+        status: 'active',
+        lastLoginAt: null,
+      }]);
+      return true;
+    }
+    if (path === '/system/departments' && method === 'GET') {
+      await ok(route, []);
+      return true;
+    }
+    if (path === '/system/tenant' && method === 'GET') {
+      await ok(route, { ...me.tenant, plan: 'free', name: 'Test tenant', retentionPolicy: {}, authPolicy: { otpRequired: false }, sso: { providerId: null, domain: null } });
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/system/users');
+  await expect(page.getByText('FREE requestors sign in without the PAID MFA step. Managed operator roles are unavailable in FREE workspaces.')).toBeVisible();
+  await page.getByRole('button', { name: 'Edit' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByLabel('Role')).toContainText('audit');
+  await dialog.getByLabel('Role').click();
+  await expect(page.getByRole('option', { name: 'Audit' })).toBeVisible();
+  await expect(page.getByRole('option', { name: 'Requestor' })).toBeVisible();
+  await expect(page.getByRole('option', { name: 'Administrator', exact: true })).toHaveCount(0);
+});
+
 test('mobile user cards preserve access and last-login evidence without inferring an SSO factor [FR-02, SEC-03, NFR-08]', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await mockApi(page, async ({ route, path, method }) => {
@@ -160,6 +237,43 @@ test('mobile user cards preserve access and last-login evidence without inferrin
   await expect(card).not.toContainText('Via SSO');
 });
 
+test('mobile retention policy presents configured lifetimes as evidence cards [SEC-06, NFR-08]', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await mockApi(page, async ({ route, path, method }) => {
+    if (path === '/system/retention/runs' && method === 'GET') {
+      await ok(route, []);
+      return true;
+    }
+    if (path === '/system/tenant' && method === 'GET') {
+      await ok(route, {
+        ...me.tenant,
+        name: 'Test tenant',
+        retentionPolicy: {
+          assessmentDays: 2555,
+          evidenceDays: 2555,
+          auditDays: 2555,
+          datasetHistoryDays: 3650,
+          graceDays: 7,
+        },
+        authPolicy: { otpRequired: true },
+        sso: { providerId: null, domain: null },
+      });
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/system/retention');
+  const main = page.locator('main');
+  await expect(main.getByRole('heading', { name: 'Assessment records' })).toBeVisible();
+  await expect(main.getByRole('heading', { name: 'Evidence and attachments' })).toBeVisible();
+  await expect(main.getByRole('heading', { name: 'Audit trail' })).toBeVisible();
+  await expect(main.getByRole('heading', { name: 'Training dataset versions' })).toBeVisible();
+  const datasetCard = main.locator('article').filter({ hasText: 'Training dataset versions' });
+  await expect(datasetCard.getByText('10 yr (3,650 days) after retirement', { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
 test('role changes require confirmation and surface backend self-lockout protection [FR-02, SEC-02]', async ({ page }) => {
   let patchCount = 0;
   let patchBody: unknown;
@@ -181,6 +295,10 @@ test('role changes require confirmation and surface backend self-lockout protect
     }
     if (path === '/system/departments' && method === 'GET') {
       await ok(route, []);
+      return true;
+    }
+    if (path === '/system/tenant' && method === 'GET') {
+      await ok(route, { ...me.tenant, name: 'Test tenant', retentionPolicy: {}, authPolicy: { otpRequired: true }, sso: { providerId: 'oidc.test', domain: 'example.test' } });
       return true;
     }
     if (path === `/system/users/${user._id}` && method === 'PATCH') {

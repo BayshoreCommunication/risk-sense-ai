@@ -19,6 +19,7 @@ type Department = components['schemas']['SystemDepartment'];
 type UserCreate = NonNullable<paths['/system/users']['post']['requestBody']>['content']['application/json'];
 type UserPatch = NonNullable<paths['/system/users/{id}']['patch']['requestBody']>['content']['application/json'];
 type Role = SystemUser['role'];
+type PlanState = 'loading' | 'ready' | 'error';
 
 type UserDraft = {
   email: string;
@@ -65,27 +66,31 @@ export default function UsersPage() {
   const [saving, setSaving] = useState(false);
   const [confirmAccessChange, setConfirmAccessChange] = useState(false);
   const [plan, setPlan] = useState<'free' | 'paid' | null>(null);
+  const [planState, setPlanState] = useState<PlanState>('loading');
   const [otpRequired, setOtpRequired] = useState<boolean | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setPageError(null);
+    setPlan(null);
+    setPlanState('loading');
+    setOtpRequired(null);
     const [usersResult, departmentsResult, tenantResult] = await Promise.all([api.GET('/system/users'), api.GET('/system/departments'), api.GET('/system/tenant')]);
     setLoading(false);
-    if (!usersResult.data) {
-      setPageError(errorMessage(usersResult as { error?: unknown }));
-      return;
-    }
-    if (!departmentsResult.data) {
-      setPageError(errorMessage(departmentsResult as { error?: unknown }));
-      return;
-    }
-    setUsers(sortUsers(usersResult.data.data));
-    setDepartments(departmentsResult.data.data);
+    const errors: string[] = [];
+    if (usersResult.data) setUsers(sortUsers(usersResult.data.data));
+    else errors.push(errorMessage(usersResult as { error?: unknown }));
+    if (departmentsResult.data) setDepartments(departmentsResult.data.data);
+    else errors.push(errorMessage(departmentsResult as { error?: unknown }));
     if (tenantResult.data) {
       setPlan(tenantResult.data.data.plan);
       setOtpRequired(tenantResult.data.data.authPolicy.otpRequired);
+      setPlanState('ready');
+    } else {
+      errors.push(errorMessage(tenantResult as { error?: unknown }));
+      setPlanState('error');
     }
+    setPageError(errors.length > 0 ? [...new Set(errors)].join(' ') : null);
   }, []);
 
   useEffect(() => {
@@ -100,6 +105,13 @@ export default function UsersPage() {
     (plan === 'paid' && user.role === 'audit') ||
     (otpRequired === true && !(plan === 'paid' && user.role === 'requestor'));
   const pendingMfa = users.filter((user) => !user.mfaEnrolled && requiresRecordedMfa(user)).length;
+  const availableRoles: Role[] =
+    plan === 'paid'
+      ? ROLES
+      : plan === 'free' && draft.role !== 'requestor'
+        ? [draft.role, 'requestor']
+        : ['requestor'];
+  const controlsDisabled = planState !== 'ready' || pageError !== null;
 
   function updateDraft(next: Partial<UserDraft>) {
     setDraft((current) => ({ ...current, ...next }));
@@ -108,6 +120,7 @@ export default function UsersPage() {
   }
 
   function openCreate() {
+    if (controlsDisabled) return;
     setEditor({ mode: 'create', user: null });
     setDraft(EMPTY_USER);
     setFormError(null);
@@ -115,6 +128,7 @@ export default function UsersPage() {
   }
 
   function openEdit(user: SystemUser) {
+    if (controlsDisabled) return;
     setEditor({ mode: 'edit', user });
     setDraft({
       email: user.email,
@@ -209,22 +223,24 @@ export default function UsersPage() {
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('description')}</p>
           </div>
-          <Button onClick={openCreate}><UserPlus aria-hidden="true" />{t('provision')}</Button>
+          <Button onClick={openCreate} disabled={controlsDisabled}><UserPlus aria-hidden="true" />{t('provision')}</Button>
         </div>
       </header>
 
       <div className="grid overflow-hidden rounded-xl sm:grid-cols-3">
         <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.total')}</CardDescription><CardTitle className="metric-value">{users.length}</CardTitle></CardHeader></Card>
         <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.active')}</CardDescription><CardTitle className="metric-value">{activeUsers}</CardTitle></CardHeader></Card>
-        <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.mfaPending')}</CardDescription><CardTitle className={pendingMfa > 0 && plan === 'paid' ? 'metric-value text-destructive' : 'metric-value'}>{pendingMfa}</CardTitle></CardHeader></Card>
+        <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.mfaPending')}</CardDescription><CardTitle className={pendingMfa > 0 && plan === 'paid' ? 'metric-value text-destructive' : 'metric-value'}>{planState === 'ready' ? pendingMfa : '—'}</CardTitle></CardHeader></Card>
       </div>
 
       <Card>
         <CardHeader className="border-b">
           <CardTitle className="flex items-center gap-2"><KeyRound className="size-4 text-primary" aria-hidden="true" />{t('accessPolicy.title')}</CardTitle>
-          <CardDescription id="user-role-policy">{plan === 'free' ? t('accessPolicy.free') : plan === 'paid' ? t('accessPolicy.paid') : t('accessPolicy.default')}</CardDescription>
+          <CardDescription id="user-role-policy">
+            {planState === 'loading' ? t('accessPolicy.loading') : planState === 'error' ? t('accessPolicy.error') : plan === 'free' ? t('accessPolicy.free') : t('accessPolicy.paid')}
+          </CardDescription>
         </CardHeader>
-        <CardContent className="flex items-start gap-2 pt-1 text-xs leading-5 text-muted-foreground"><BadgeCheck className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" />{plan === 'paid' ? t('accessPolicy.paidMfa') : t('accessPolicy.freeMfa')}</CardContent>
+        <CardContent className="flex items-start gap-2 pt-1 text-xs leading-5 text-muted-foreground"><BadgeCheck className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" />{planState === 'loading' ? t('accessPolicy.mfaLoading') : planState === 'error' ? t('accessPolicy.mfaError') : plan === 'paid' ? t('accessPolicy.paidMfa') : t('accessPolicy.freeMfa')}</CardContent>
       </Card>
 
       {pageError && (
@@ -274,10 +290,10 @@ export default function UsersPage() {
                       ? t('scope.allDepartments')
                       : user.departmentIds.map((id) => departmentNames.get(id) ?? id).join(', ') || t('scope.ownOnly')}
                 </TableCell>
-                <TableCell><Badge variant={user.mfaEnrolled ? 'outline' : plan === 'paid' && user.role === 'requestor' ? 'secondary' : requiresRecordedMfa(user) ? 'destructive' : 'secondary'}>{user.mfaEnrolled ? t('mfa.enrolled') : plan === 'paid' && user.role === 'requestor' ? t('mfa.signIn') : requiresRecordedMfa(user) ? t('mfa.pending') : t('mfa.notRequired')}</Badge></TableCell>
+                <TableCell><Badge variant={user.mfaEnrolled ? 'outline' : planState !== 'ready' ? 'secondary' : plan === 'paid' && user.role === 'requestor' ? 'secondary' : requiresRecordedMfa(user) ? 'destructive' : 'secondary'}>{user.mfaEnrolled ? t('mfa.enrolled') : planState !== 'ready' ? t('mfa.unavailable') : plan === 'paid' && user.role === 'requestor' ? t('mfa.signIn') : requiresRecordedMfa(user) ? t('mfa.pending') : t('mfa.notRequired')}</Badge></TableCell>
                 <TableCell><Badge variant={user.status === 'active' ? 'outline' : 'destructive'}>{status.has(user.status) ? status(user.status) : user.status}</Badge></TableCell>
                 <TableCell>{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString(locale) : t('never')}</TableCell>
-                <TableCell className="text-right"><Button size="sm" variant="outline" onClick={() => openEdit(user)}>{t('edit')}</Button></TableCell>
+                <TableCell className="text-right"><Button size="sm" variant="outline" onClick={() => openEdit(user)} disabled={controlsDisabled}>{t('edit')}</Button></TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -295,11 +311,11 @@ export default function UsersPage() {
             </div>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
               <div><dt className="text-muted-foreground">{t('columns.role')}</dt><dd className="mt-0.5 font-medium">{roles.has(user.role) ? roles(user.role) : user.role}</dd></div>
-              <div><dt className="text-muted-foreground">{t('columns.mfa')}</dt><dd className="mt-0.5 font-medium">{user.mfaEnrolled ? t('mfa.enrolled') : plan === 'paid' && user.role === 'requestor' ? t('mfa.signIn') : requiresRecordedMfa(user) ? t('mfa.pending') : t('mfa.notRequired')}</dd></div>
+              <div><dt className="text-muted-foreground">{t('columns.mfa')}</dt><dd className="mt-0.5 font-medium">{user.mfaEnrolled ? t('mfa.enrolled') : planState !== 'ready' ? t('mfa.unavailable') : plan === 'paid' && user.role === 'requestor' ? t('mfa.signIn') : requiresRecordedMfa(user) ? t('mfa.pending') : t('mfa.notRequired')}</dd></div>
               <div className="col-span-2"><dt className="text-muted-foreground">{t('columns.departments')}</dt><dd className="mt-0.5 font-medium">{user.role !== 'requestor' ? t('scope.notApplicable') : user.crossDepartmentAccess ? t('scope.allDepartments') : user.departmentIds.map((id) => departmentNames.get(id) ?? id).join(', ') || t('scope.ownOnly')}</dd></div>
               <div className="col-span-2"><dt className="text-muted-foreground">{t('columns.lastLogin')}</dt><dd className="mt-0.5 font-medium">{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString(locale) : t('never')}</dd></div>
             </dl>
-            <Button className="w-full" size="sm" variant="outline" onClick={() => openEdit(user)}>{t('edit')}</Button>
+            <Button className="w-full" size="sm" variant="outline" onClick={() => openEdit(user)} disabled={controlsDisabled}>{t('edit')}</Button>
           </article>
         ))}
       </div>
@@ -332,12 +348,12 @@ export default function UsersPage() {
               </div>
               <div className="space-y-1">
                 <Label htmlFor="user-role">{t('fields.role')}</Label>
-                <Select value={draft.role} onValueChange={(value) => {
+                <Select disabled={planState !== 'ready'} value={draft.role} onValueChange={(value) => {
                     const role = (value ?? 'requestor') as Role;
                     updateDraft({ role, ...(role === 'requestor' ? {} : { departmentIds: [], crossDepartmentAccess: false }) });
                   }}>
                   <SelectTrigger id="user-role" className="w-full" aria-describedby="user-role-policy"><SelectValue /></SelectTrigger>
-                  <SelectContent>{ROLES.map((role) => <SelectItem key={role} value={role}>{roles(role)}</SelectItem>)}</SelectContent>
+                  <SelectContent>{availableRoles.map((role) => <SelectItem key={role} value={role}>{roles(role)}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               {editor?.mode === 'edit' && (
@@ -383,7 +399,7 @@ export default function UsersPage() {
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeEditor} disabled={saving}>{t('cancel')}</Button>
-              <Button type="submit" variant={confirmAccessChange ? 'destructive' : 'default'} disabled={saving}>
+              <Button type="submit" variant={confirmAccessChange ? 'destructive' : 'default'} disabled={saving || planState !== 'ready'}>
                 {saving ? t('saving') : confirmAccessChange ? t('confirmation.submit') : editor?.mode === 'edit' ? t('saveChanges') : t('provision')}
               </Button>
             </DialogFooter>

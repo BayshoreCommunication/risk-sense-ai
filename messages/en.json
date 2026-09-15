@@ -9,6 +9,7 @@
     "secureWorkspace": "Decision intelligence",
     "navigation": "Workspace navigation",
     "roleNavigation": "{role} workspace",
+    "advancedOperations": "Advanced operations",
     "openNavigation": "Open navigation",
     "closeNavigation": "Close navigation",
     "signOut": "Sign out",
@@ -23,24 +24,25 @@
     "audit": "audit"
   },
   "nav": {
-    "requestor": { "chat": "New assessment", "review": "Review" },
+    "requestor": { "chat": "New assessment", "review": "My assessments" },
     "administrator": {
-      "overview": "Overview",
-      "review": "Review queue",
+      "overview": "Configuration home",
+      "review": "Mandatory review",
       "personas": "Personas",
-      "scenarios": "Scenarios",
-      "questions": "Questions",
-      "datasets": "Datasets",
-      "rules": "Rules",
-      "scoring": "Scoring",
-      "analytics": "Analytics"
+      "scenarios": "Scenario library",
+      "questions": "Question bank",
+      "datasets": "Training datasets",
+      "rules": "Rule engine",
+      "scoring": "Scoring matrix",
+      "analytics": "Analytics",
+      "reports": "Standard reports"
     },
     "system_administrator": {
-      "overview": "Overview",
-      "users": "Users",
+      "overview": "Configuration home",
+      "users": "User & role provisioning",
       "departments": "Departments",
-      "tenant": "Tenant",
-      "retention": "Retention",
+      "tenant": "SSO & integration",
+      "retention": "Retention policy",
       "dr": "Disaster recovery",
       "conformance": "Conformance",
       "audit": "Audit archive"
@@ -48,7 +50,7 @@
     "audit": {
       "overview": "Overview",
       "assessments": "Assessments",
-      "logs": "Audit logs"
+      "logs": "Audit log viewer"
     }
   },
   "locale": { "label": "Language", "en": "English", "bn": "বাংলা" },
@@ -59,6 +61,14 @@
     "heroDescription": "A guided workspace for capturing facts, applying deterministic policy, and recording accountable human decisions.",
     "governanceNote": "The assistant structures and explains. Rules and scoring stay deterministic, and only an authorized person records the final decision.",
     "planNote": "Free accounts are requestors. Paid workspaces add managed roles and tenant SSO; RiskSense email OTP follows role and tenant policy.",
+    "planPolicyLabel": "Plan-aware sign-in policy",
+    "plans": {
+      "freeTitle": "Requestor access",
+      "freeDescription": "Every user is a requestor. Managed-role MFA is not required in the free web version.",
+      "paidTitle": "Managed workspace",
+      "paidDescription": "Managed roles and organization SSO are available, and every paid account must satisfy current-login MFA."
+    },
+    "recoveryNote": "MFA or SSO did not complete? Refresh your identity-provider access and try again, or contact your administrator.",
     "steps": { "identity": "Identity", "verify": "Verification" },
     "assurance": {
       "guided": "Guided, scenario-aware risk intake",
@@ -135,8 +145,41 @@
   },
   "admin": {
     "overview": {
-      "title": "Administrator workspace",
-      "description": "Maintain assessment content, review low-confidence cases, and manage controlled scoring changes.",
+      "eyebrow": "Administrator",
+      "title": "Configuration home",
+      "description": "Manage personas, scenarios, questions, deterministic rules, scoring matrices and approved training datasets from one controlled workspace.",
+      "roleBadge": "Administrator",
+      "configurationLabel": "Configuration portfolio",
+      "configurationNote": "All configuration is managed through this dashboard. Active content changes remain versioned and audited; direct database or code edits are not part of this workflow.",
+      "partialError": "Some live data is unavailable ({count} sources). Available cards still show current tenant data.",
+      "retry": "Retry unavailable data",
+      "metrics": {
+        "loading": "Loading current tenant data…",
+        "unavailable": "Current data is unavailable",
+        "active": "{total} total records",
+        "personas": "Across {total} active personas",
+        "questionsActive": "{total} available for new assessments",
+        "rulesActive": "Active deterministic rules",
+        "sectorConfigurations": "Active sector configurations",
+        "datasetState": "Latest dataset is {status}",
+        "noDataset": "No dataset uploaded"
+      },
+      "operations": {
+        "title": "Operational tools",
+        "description": "Requirement-backed review, analytics and reporting remain available without cluttering content configuration.",
+        "analytics": {
+          "title": "Analytics dashboard",
+          "description": "Explore live risk and assessment trends."
+        },
+        "reports": {
+          "title": "Standard reports",
+          "description": "Open report views and matching exports."
+        },
+        "review": {
+          "title": "Mandatory review queue",
+          "description": "Inspect low-confidence cases that need attention."
+        }
+      },
       "areas": {
         "review": {
           "title": "Mandatory review queue",
@@ -147,23 +190,23 @@
           "description": "Maintain role profiles, vocabulary, responsibilities, and scenario defaults."
         },
         "scenarios": {
-          "title": "Scenarios",
+          "title": "Scenario library",
           "description": "Build guided conversations, required facts, and recommended actions."
         },
         "questions": {
-          "title": "Questions",
+          "title": "Question bank",
           "description": "Manage reusable question wording, answer options, tags, and branches."
         },
         "datasets": {
-          "title": "Datasets",
+          "title": "Training datasets",
           "description": "Upload, validate, approve, and activate controlled content workbooks."
         },
         "rules": {
-          "title": "Rules",
+          "title": "Rule engine",
           "description": "Manage versioned hard rules with approval and retirement controls."
         },
         "scoring": {
-          "title": "Scoring",
+          "title": "Scoring matrices",
           "description": "Configure versioned scoring matrices and test them with sample facts."
         }
       }
@@ -270,7 +313,13 @@
         "sectors": "Optional semicolon-separated sector restrictions."
       },
       "display": { "and": "AND", "or": "OR", "in": "in", "exists": "exists" },
-      "columns": { "forces": "Forces" }
+      "columns": { "forces": "Forces" },
+      "lockoutExample": {
+        "title": "Corrected low-risk authoring example",
+        "notActive": "Example · not active",
+        "description": "A password lockout can be authored as a low-risk, Monitor Only example. It does not replace or weaken the active confirmed-fraud rule, and becomes executable only after save, independent approval and activation.",
+        "condition": "password_locked = true"
+      }
     },
     "scoring": {
       "title": "Scoring matrices",
@@ -321,6 +370,14 @@
     "datasets": {
       "title": "Datasets",
       "description": "Upload the content workbook for validation. A different administrator must approve it before activation versions the content.",
+      "summary": {
+        "label": "Dataset status summary",
+        "total": "Total datasets",
+        "active": "Active",
+        "review": "Awaiting review",
+        "activation": "Awaiting activation",
+        "unavailable": "Rejected or failed"
+      },
       "downloadTemplate": "Download template",
       "upload": {
         "title": "Upload workbook",
@@ -455,11 +512,64 @@
         "elevated_risk": "Elevated Risk",
         "issue": "Issue"
       },
+      "monthly": {
+        "title": "Monthly classification distribution",
+        "description": "Final classifications for the five most recently completed UTC months. Select a month to inspect every classification, or select a colored classification to trace it across months.",
+        "window": "Last 5 complete months",
+        "chartTitle": "Final classifications by month",
+        "selectedMonth": "{month} classification totals",
+        "scored": "Scored assessments",
+        "notAvailable": "Not available",
+        "segmentDetail": "{classification} in {month}: {count}",
+        "selectMonth": "Select {month}: {total} scored assessments",
+        "empty": "Monthly classification data is unavailable for this window."
+      },
       "trends": {
         "title": "Trends by {group}",
         "description": "Assessments per period for each {group}; the eight largest groups are shown and the rest are combined as “other”.",
         "chartTitle": "Assessments per period by {group}",
         "empty": "No assessments in this range."
+      }
+    },
+    "standardReports": {
+      "eyebrow": "Administrator · Reporting",
+      "title": "Standard reports",
+      "description": "Open a governed report, choose its chart or table view, and export the exact filtered result as CSV or PDF.",
+      "listLabel": "Available standard reports",
+      "formatsLabel": "Export formats",
+      "open": "Open report",
+      "note": "Reports support filter windows up to 12 months. Each export is generated from the same scoped result used by the on-screen table; target performance remains subject to deployment validation.",
+      "featureGate": {
+        "loadingTitle": "Verifying reporting access",
+        "loadingDescription": "RiskSense is checking the current tenant feature policy before loading report data.",
+        "deniedTitle": "Reports are not available",
+        "deniedDescription": "Standard reports are not enabled for this tenant. Ask a system administrator to review the tenant feature policy.",
+        "errorTitle": "Reporting access could not be verified",
+        "errorDescription": "RiskSense could not verify the tenant feature policy.",
+        "back": "Back to configuration",
+        "retry": "Try again"
+      },
+      "reports": {
+        "volume": {
+          "title": "Assessment volume",
+          "scope": "Counts by day, persona and department.",
+          "description": "Includes trends and volume breakdowns."
+        },
+        "classification": {
+          "title": "Classification distribution",
+          "scope": "Breakdown by risk level.",
+          "description": "Monitor risk levels across all assessments."
+        },
+        "override": {
+          "title": "Requestor override rates",
+          "scope": "Overrides with reasons, per requestor.",
+          "description": "Understand override patterns and reasons."
+        },
+        "time": {
+          "title": "Average assessment time",
+          "scope": "Intake to close, by scenario.",
+          "description": "Track efficiency and identify bottlenecks."
+        }
       }
     }
   },
@@ -740,15 +850,16 @@
     "title": "New risk assessment",
     "description": "Describe what happened in your own words. The assistant will pick the matching scenario and ask guided questions. Nothing is scored until you submit.",
     "assistantTitle": "Tell us what happened",
-    "assistantDescription": "Start with the details you already know. You can confirm the suggested role before guided questions begin.",
+    "assistantDescription": "Start with the details you already know. You can confirm the suggested assessment persona before guided questions begin.",
     "privateSession": "Protected intake",
     "incidentLabel": "Incident or decision context",
     "placeholder": "e.g. A vendor wire of $250,000 went out yesterday without the second approval…",
     "characterHint": "{count} characters",
     "privacyNote": "Use the facts needed for the assessment. Sensitive text is protected by role-aware access and retention controls.",
-    "rolePrompt": "Your role (optional — leave empty to let the assistant infer it)",
-    "roleHint": "Select one now, or let the assistant suggest the best match for you to confirm.",
-    "loadingRoles": "Loading available roles…",
+    "rolePrompt": "Assessment persona (optional)",
+    "roleHint": "Select the context that best matches this assessment, or let the assistant suggest one for you to confirm.",
+    "personaGroupLabel": "Available assessment personas",
+    "loadingPersonas": "Loading available personas…",
     "starting": "Starting…",
     "start": "Start"
   },
@@ -766,8 +877,10 @@
     "currentStage": "Current stage",
     "workflow": "Assessment workflow",
     "assessmentContext": "Assessment context",
-    "role": "Role",
+    "role": "Assessment persona",
     "scenario": "Scenario",
+    "selectedScenario": "Selected scenario",
+    "scenarioSources": { "ai": "AI selected", "default": "Default" },
     "progress": "Assessment progress",
     "capturedFacts": "Captured facts",
     "factConfidence": "confidence",
@@ -775,28 +888,28 @@
     "governanceNote": "The assistant structures and explains; deterministic rules calculate the result, and a human records the final decision.",
     "stages": {
       "loading": "Loading",
-      "persona": "Confirm role",
+      "persona": "Confirm persona",
       "describe": "Describe scenario",
       "questions": "Guided questions",
       "done": "Ready to submit",
       "review": "Review & submit",
       "decision": "Decision"
     },
-    "aiSuggestedRole": "AI-suggested role",
+    "aiSuggestedRole": "AI-suggested persona",
     "factsCaptured": "{count} facts captured",
     "factsFlagged": "some flagged for review",
     "messageKinds": { "info": "info", "clarification": "clarification" },
     "persona": {
-      "confirmTitle": "Confirm your role",
-      "confirmDescription": "Choose the role that best matches your work. This sets the questions used for the assessment.",
-      "current": "Role: {role}",
+      "confirmTitle": "Confirm the assessment persona",
+      "confirmDescription": "Choose the persona that best matches this assessment. This sets the questions used for the assessment.",
+      "current": "Persona: {role}",
       "changeHint": "You can change it before the guided questions begin.",
-      "loading": "Loading roles…",
-      "change": "Change role",
-      "locked": "The AI-suggested role can no longer be changed after guided questions begin.",
+      "loading": "Loading personas…",
+      "change": "Change persona",
+      "locked": "The AI-suggested persona can no longer be changed after guided questions begin.",
       "startNew": "Start a new assessment",
       "ifIncorrect": "if it is incorrect.",
-      "empty": "No available roles could be loaded.",
+      "empty": "No available personas could be loaded.",
       "suggestedSuffix": "(suggested)"
     },
     "submission": {
@@ -883,6 +996,8 @@
     "descriptionRequestor": "Your assessments. Pending decisions come first — open one to review the recommendation and record your decision.",
     "newAssessment": "New assessment",
     "statusTabsLabel": "Status",
+    "summaryLabel": "Assessment summary",
+    "averageConfidence": "Average confidence",
     "tabs": {
       "all": "All",
       "pending": "Pending",
@@ -926,6 +1041,7 @@
       "status": "Status",
       "classification": "Classification",
       "confidence": "Confidence",
+      "recommendationDecision": "Recommendation / decision",
       "recommendedAction": "Recommended action",
       "decision": "Decision"
     },
@@ -1017,6 +1133,7 @@
     },
     "logs": {
       "eyebrow": "Tamper-evident ledger",
+      "scopeBadge": "Audit",
       "title": "Audit log",
       "description": "This ledger is append-only and tamper-evident. No role can edit or delete entries; “Verify chain” checks every recorded link.",
       "loading": "Loading audit entries…",
@@ -1034,11 +1151,14 @@
       "columns": {
         "sequence": "Seq",
         "when": "When",
+        "timestamp": "Timestamp",
         "category": "Category",
         "action": "Action",
         "actor": "Actor",
+        "user": "User",
         "entity": "Entity",
-        "size": "Event size",
+        "record": "Record",
+        "size": "Log size",
         "sizeHint": "Approximate UTF-8 JSON size of the visible audit entry",
         "hash": "Hash"
       },
@@ -1048,6 +1168,9 @@
       },
       "visibleCount": "{count} entries on this page",
       "empty": "No entries.",
+      "systemActor": "System",
+      "sequenceValue": "seq {value}",
+      "previousHashLabel": "Previous hash",
       "previousHash": "prev {hash}",
       "newest": "Newest",
       "older": "Older"
@@ -1210,8 +1333,12 @@
         "free": "FREE public access is requestor-only. Each person uses one account with exactly one role.",
         "paid": "PAID workspaces support managed requestor, administrator, system administrator, and audit roles. Each account has exactly one role.",
         "default": "Each person uses one account with exactly one role.",
+        "loading": "Loading the tenant plan before role controls are enabled.",
+        "error": "The tenant plan is unavailable. Role controls remain disabled until it can be verified.",
         "paidMfa": "Every PAID account completes MFA. Requestors use the tenant identity provider; administrators, system administrators and audit users also complete the RiskSense verification step required for their role.",
-        "freeMfa": "FREE requestor verification follows tenant policy. Managed operator roles are available only in PAID workspaces."
+        "freeMfa": "FREE requestors sign in without the PAID MFA step. Managed operator roles are unavailable in FREE workspaces.",
+        "mfaLoading": "MFA requirements will appear after the tenant plan is verified.",
+        "mfaError": "MFA requirements cannot be determined while the tenant plan is unavailable."
       },
       "provision": "Provision user",
       "retry": "Retry",
@@ -1231,7 +1358,7 @@
         "allDepartments": "All departments",
         "ownOnly": "Own assessments only"
       },
-      "mfa": { "enrolled": "Enrolled", "pending": "Pending", "signIn": "Enforced at sign-in", "notRequired": "Not required" },
+      "mfa": { "enrolled": "Enrolled", "pending": "Pending", "signIn": "Enforced at sign-in", "notRequired": "Not required", "unavailable": "Plan unavailable" },
       "never": "Never",
       "edit": "Edit",
       "dialog": {
@@ -1322,7 +1449,7 @@
         "paidTitle": "Role-aware MFA policy",
         "paidDescription": "Every PAID account completes MFA. Requestors use the configured identity provider, but RiskSense accepts its second factor only when the Firebase session explicitly proves it; otherwise an email code is required. Managed operators always complete the RiskSense verification step required for their role.",
         "freeTitle": "FREE authentication policy",
-        "freeDescription": "FREE public users are requestors. Their email code follows tenant policy; any privileged operator account always completes the RiskSense verification step."
+        "freeDescription": "FREE public users are requestors and sign in without the PAID MFA step. Managed operator accounts are not available on FREE."
       },
       "features": {
         "sso": {
@@ -1354,8 +1481,7 @@
         "title": "Single sign-on",
         "description": "Connect an OIDC, OAuth, or supported SAML identity provider. People on the approved domain are provisioned into this tenant on first sign-in. Provider match alone does not prove MFA: a requestor's Firebase session must explicitly prove a second factor, otherwise RiskSense sends an email code.",
         "providerId": "Identity provider ID",
-        "domain": "Email domain",
-        "requireOtp": "Require an email verification code on every non-SSO sign-in. Privileged operators always complete this step."
+        "domain": "Email domain"
       },
       "policy": {
         "title": "Sessions & retention",
@@ -1388,6 +1514,23 @@
         "freeDescription": "FREE uses the public retention windows shown in Tenant settings. Expired records are reduced after the seven-day grace period.",
         "paidTitle": "Configurable PAID retention",
         "paidDescription": "PAID windows can be configured per tenant. Full records are archived before the live copy is reduced."
+      },
+      "policyTable": {
+        "title": "Retention policy",
+        "description": "The active tenant values are shown below. Coverage states distinguish enforced lifecycle behavior from policy values that are recorded or reported only.",
+        "columns": { "record": "Record type", "window": "Retention window", "expiry": "At expiry", "coverage": "Coverage" },
+        "records": { "assessments": "Assessment records", "evidence": "Evidence and attachments", "audit": "Audit trail", "datasets": "Training dataset versions" },
+        "actions": {
+          "reduce": "Reduce after the 7-day grace period",
+          "archiveReduce": "Archive, then reduce after the 7-day grace period",
+          "followAssessment": "Follows the assessment lifecycle",
+          "preserve": "Report records past the window; never delete the audit ledger",
+          "retainHistory": "Retain reproducible version history"
+        },
+        "coverage": { "enforced": "Enforced", "recorded": "Policy recorded", "reported": "Reported only" },
+        "years": "{years} yr ({days} days)",
+        "days": "{days} days",
+        "afterRetirement": "{duration} after retirement"
       },
       "history": {
         "title": "Run history",

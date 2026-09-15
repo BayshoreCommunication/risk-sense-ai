@@ -155,8 +155,13 @@ export default function DatasetsPage() {
     );
   }
 
+  const activeCount = items.filter((dataset) => dataset.status === 'active').length;
+  const reviewCount = items.filter((dataset) => dataset.status === 'validated').length;
+  const activationCount = items.filter((dataset) => dataset.status === 'approved').length;
+  const unavailableCount = items.filter((dataset) => dataset.status === 'rejected' || dataset.status === 'failed').length;
+
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
+    <div className="page-shell">
       <header className="workspace-header">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-3xl">
@@ -172,6 +177,14 @@ export default function DatasetsPage() {
           </Button>
         </div>
       </header>
+
+      <section className="grid overflow-hidden rounded-xl sm:grid-cols-2 xl:grid-cols-5" aria-label={t('summary.label')}>
+        <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.total')}</CardDescription><CardTitle className="metric-value">{loading ? '—' : items.length}</CardTitle></CardHeader></Card>
+        <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.active')}</CardDescription><CardTitle className="metric-value text-emerald-700">{loading ? '—' : activeCount}</CardTitle></CardHeader></Card>
+        <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.review')}</CardDescription><CardTitle className="metric-value text-amber-700">{loading ? '—' : reviewCount}</CardTitle></CardHeader></Card>
+        <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.activation')}</CardDescription><CardTitle className="metric-value text-blue-700">{loading ? '—' : activationCount}</CardTitle></CardHeader></Card>
+        <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.unavailable')}</CardDescription><CardTitle className="metric-value text-slate-600">{loading ? '—' : unavailableCount}</CardTitle></CardHeader></Card>
+      </section>
 
       <Card className="shadow-none">
         <CardHeader className="border-b pb-4">

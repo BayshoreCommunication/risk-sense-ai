@@ -36,7 +36,7 @@ function currentUser(role: Role, featureOverrides: Partial<Features> = {}) {
     tenant: {
       id: 'tenant-1',
       slug: 'test',
-      plan: featureOverrides.reports ? 'paid' : 'free',
+      plan: role === 'requestor' && !featureOverrides.reports ? 'free' : 'paid',
       features: { ...defaultFeatures, ...featureOverrides },
       sessionPolicy: { idleTimeoutMin: 15, maxConcurrentSessions: 1 },
     },
@@ -210,19 +210,101 @@ test('dataset history shows named provenance in a responsive evidence row [FR-14
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
+test('dataset summary separates validation review from approved activation [FR-13, FR-14]', async ({ page }) => {
+  await authenticate(page, 'administrator');
+  await mockApi(page, () => currentUser('administrator'), async ({ route, path, method }) => {
+    if (path === '/datasets' && method === 'GET') {
+      const dataset = (seq: number, status: 'active' | 'validated' | 'approved' | 'rejected') => ({
+        _id: `dataset-${seq}`,
+        seq,
+        fileName: `content-${seq}.xlsx`,
+        format: 'xlsx',
+        status,
+        counts: { personas: 1, scenarios: 1, questions: 1, scoring: 1, skippedRows: 0 },
+        validationErrors: [],
+        authorId: 'author-id',
+        reviewerId: null,
+        author: { id: 'author-id', name: 'Uploader' },
+        reviewer: null,
+        createdAt: '2026-09-14T08:30:00.000Z',
+      });
+      await ok(route, [dataset(1, 'active'), dataset(2, 'validated'), dataset(3, 'approved'), dataset(4, 'rejected')]);
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/admin/datasets');
+  const summary = page.getByRole('region', { name: 'Dataset status summary' });
+  await expect(summary.locator('[data-slot="card"]').filter({ hasText: 'Awaiting review' }).locator('[data-slot="card-title"]')).toHaveText('1');
+  await expect(summary.locator('[data-slot="card"]').filter({ hasText: 'Awaiting activation' }).locator('[data-slot="card-title"]')).toHaveText('1');
+});
+
 test('administrator landing is useful and reports navigation follows /me features [DASH-02, DASH-03]', async ({ page }) => {
   let reports = false;
   await authenticate(page, 'administrator');
   await mockApi(page, () => currentUser('administrator', { reports }));
 
   await page.goto('/admin');
-  await expect(page.getByRole('heading', { name: 'Administrator workspace' })).toBeVisible();
-  await expect(page.getByRole('link', { name: /Mandatory review/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Configuration home' })).toBeVisible();
+  await expect(page.locator('a[href="/admin/review"]').last()).toBeVisible();
   await expect(page.getByRole('link', { name: 'Analytics', exact: true })).toHaveCount(0);
 
   reports = true;
   await page.reload();
   await expect(page.getByRole('link', { name: 'Analytics', exact: true })).toBeVisible();
+});
+
+test('administrator metrics keep successful live data distinct from unavailable sources [DASH-02]', async ({ page }) => {
+  let recovered = false;
+  await authenticate(page, 'administrator');
+  await mockApi(page, () => currentUser('administrator'), async ({ route, path, method }) => {
+    if (method !== 'GET') return false;
+    if (path === '/personas') {
+      await ok(route, [
+        { _id: 'persona-1', key: 'finance', status: 'active' },
+        { _id: 'persona-2', key: 'legal', status: 'draft' },
+      ]);
+      return true;
+    }
+    if (['/scenarios', '/questions', '/rules', '/scoring-matrices', '/datasets'].includes(path)) {
+      if (recovered) await ok(route, []);
+      else await apiError(route, 503, 'UNAVAILABLE', `${path} unavailable`);
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/admin');
+  const personaCard = page.locator('a[href="/admin/personas"]').last();
+  const scenarioCard = page.locator('a[href="/admin/scenarios"]').last();
+  await expect(personaCard.locator('[data-slot="card-title"]')).toHaveText('1');
+  await expect(personaCard).toContainText('2 total records');
+  await expect(scenarioCard.locator('[data-slot="card-title"]')).toHaveText('—');
+  await expect(scenarioCard).toContainText('Current data is unavailable');
+  const partialDataAlert = page.getByRole('alert').filter({ hasText: 'Some live data is unavailable' });
+  await expect(partialDataAlert).toContainText('5 sources');
+
+  recovered = true;
+  await page.getByRole('button', { name: 'Retry unavailable data' }).click();
+  await expect(partialDataAlert).toHaveCount(0);
+  await expect(personaCard.locator('[data-slot="card-title"]')).toHaveText('1');
+  await expect(scenarioCard.locator('[data-slot="card-title"]')).toHaveText('0');
+});
+
+test('direct standard reports access follows the authoritative tenant feature [FR-26, FR-28]', async ({ page }) => {
+  let reports = false;
+  await authenticate(page, 'administrator');
+  await mockApi(page, () => currentUser('administrator', { reports }));
+
+  await page.goto('/admin/reports');
+  await expect(page.getByRole('heading', { name: 'Reports are not available' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Standard reports' })).toHaveCount(0);
+
+  reports = true;
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Standard reports' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Open report' })).toHaveCount(4);
 });
 
 test('analytics supports pie, table and persistent period drill-down views [DASH-03, FR-27, FR-28]', async ({ page }) => {
@@ -352,10 +434,64 @@ test('system navigation exposes every implemented operational workspace [DASH-04
 
   await page.goto('/system/retention');
   await expect(page.getByRole('heading', { name: 'Retention' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Users', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'User & role provisioning', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Departments', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Disaster recovery', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Conformance', exact: true })).toBeVisible();
+});
+
+test('assessment rows retain the scoped recommendation, explanation and recorded decision [DASH-01, FR-21]', async ({ page }) => {
+  await authenticate(page, 'requestor');
+  await mockApi(page, () => currentUser('requestor'), async ({ route, path, method }) => {
+    if (path === '/personas' && method === 'GET') {
+      await ok(route, [{ key: 'finance_officer', name: 'Finance Officer' }]);
+      return true;
+    }
+    if (path === '/departments' && method === 'GET') {
+      await ok(route, []);
+      return true;
+    }
+    if (path === '/assessments' && method === 'GET') {
+      await ok(route, {
+        items: [{
+          _id: '64b000000000000000000099',
+          status: 'closed',
+          phase: 'done',
+          personaKey: 'finance_officer',
+          scenarioKey: 'unauthorized_wire',
+          requestorId: 'user-1',
+          createdAt: '2026-09-15T08:00:00.000Z',
+          timing: { startedAt: '2026-09-15T08:00:00.000Z', closedAt: '2026-09-15T08:10:00.000Z' },
+          result: {
+            score: 36,
+            classification: 'risk',
+            confidence: 94,
+            ruleDriven: false,
+            professionalConsult: false,
+            mandatoryReview: false,
+            recommendedAction: 'Manage the payment risk',
+            explanation: 'The approval evidence is incomplete and requires owner follow-up.',
+            computedAt: '2026-09-15T08:09:00.000Z',
+          },
+          decision: { type: 'accept', decidedAt: '2026-09-15T08:10:00.000Z' },
+        }],
+        total: 1,
+        page: 1,
+        limit: 25,
+        pages: 1,
+        counts: { in_progress: 0, intake_complete: 0, awaiting_decision: 0, escalated: 0, closed: 1, error_review: 0, pending: 0, all: 1 },
+        summary: { averageConfidence: 94 },
+      });
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/review');
+  const row = page.getByRole('row').filter({ hasText: 'unauthorized wire' });
+  await expect(row).toContainText('Manage the payment risk');
+  await expect(row).toContainText('The approval evidence is incomplete and requires owner follow-up.');
+  await expect(row).toContainText('accept');
 });
 
 test('mobile audit cards retain hash and human-decision evidence [FR-22, FR-26, SEC-07, NFR-08]', async ({ page }) => {
@@ -409,7 +545,7 @@ test('mobile audit cards retain hash and human-decision evidence [FR-22, FR-26, 
 
   await page.goto('/audit/logs');
   await expect(page.getByText(fullHash, { exact: true })).toBeVisible();
-  await expect(page.getByText('Event size', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Log size', { exact: true }).first()).toBeVisible();
 
   await page.goto('/audit/assessments');
   await expect(page.getByText('Decision', { exact: true }).first()).toBeVisible();
@@ -434,6 +570,7 @@ test('mobile workspace navigation traps focus and returns it to the trigger [NFR
   const drawer = page.getByRole('dialog', { name: 'Workspace navigation' });
   await expect(drawer).toBeVisible();
   await expect(drawer.getByRole('button', { name: 'Close navigation' })).toBeFocused();
+  expect(await page.locator('header').evaluate((header) => Boolean(header.closest('[inert][aria-hidden="true"]')))).toBe(true);
 
   await page.keyboard.press('Shift+Tab');
   await expect(drawer.getByRole('button', { name: 'Sign out' })).toBeFocused();
@@ -660,7 +797,7 @@ test('a low-confidence persona choice uses the explicit persona endpoint [FR-04]
   });
 
   await page.goto('/chat/assessment-1');
-  await expect(page.getByText('Confirm your role')).toBeVisible();
+  await expect(page.getByText('Confirm the assessment persona')).toBeVisible();
   await page.getByTestId('persona-option').filter({ hasText: 'IT Support' }).click();
   await expect.poll(() => submitted).toEqual({ personaKey: 'it_support' });
 });
@@ -697,7 +834,7 @@ test('a confident AI persona pauses for explicit confirmation without a next que
   });
 
   await page.goto('/chat/assessment-1');
-  await expect(page.getByText('Confirm your role')).toBeVisible();
+  await expect(page.getByText('Confirm the assessment persona')).toBeVisible();
   await page.getByRole('button', { name: 'Finance Officer (suggested)' }).click();
   await expect.poll(() => submitted).toEqual({ personaKey: 'finance_officer' });
 });
@@ -742,7 +879,7 @@ test('a requestor can change a chosen persona before questions begin [FR-04]', a
   });
 
   await page.goto('/chat/assessment-1');
-  await page.getByRole('button', { name: 'Change role' }).click();
+  await page.getByRole('button', { name: 'Change persona' }).click();
   await page.getByTestId('persona-option').filter({ hasText: 'IT Support' }).click();
   await expect.poll(() => submitted).toEqual({ personaKey: 'it_support' });
 });
