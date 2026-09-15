@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { Database, FileSearch, History, ShieldCheck } from 'lucide-react';
 import { AssessmentDetail } from '@/components/review/AssessmentDetail';
 import { ReconstructionView } from '@/components/review/ReconstructionView';
 import { Badge } from '@/components/ui/badge';
@@ -23,24 +24,44 @@ export default function AuditAssessmentsPage() {
   const [data, setData] = useState<AssessmentListResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<{ item: AssessmentListItem; mode: 'stored' | 'reconstruct' } | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const load = useCallback(() => {
+    setLoading(true);
+    setError(null);
     assessments
       .list({ sort: 'newest', limit: LIMIT, page })
       .then(setData)
-      .catch((e) => setError(toApiError(e).message));
+      .catch((e) => setError(toApiError(e).message))
+      .finally(() => setLoading(false));
   }, [page]);
   useEffect(load, [load]);
 
   const items = data?.items ?? [];
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-semibold">{t('title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('description')}</p>
-      </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      <div className="overflow-x-auto rounded-md border">
+    <div className="mx-auto max-w-7xl space-y-5">
+      <header className="relative overflow-hidden rounded-2xl border bg-card px-5 py-6 shadow-sm sm:px-7">
+        <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-primary/10 to-transparent" />
+        <div className="relative max-w-3xl">
+          <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+            <FileSearch className="size-4" aria-hidden="true" />
+            {t('eyebrow')}
+          </div>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('description')}</p>
+        </div>
+      </header>
+
+      {data && (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="flex items-center gap-3 rounded-2xl border bg-card p-4 shadow-sm"><span className="grid size-10 place-items-center rounded-xl bg-blue-500/10 text-blue-700"><Database className="size-5" aria-hidden="true" /></span><p className="text-sm font-medium">{t('count', { count: data.total })}</p></div>
+          <div className="flex items-center gap-3 rounded-2xl border bg-card p-4 shadow-sm"><span className="grid size-10 place-items-center rounded-xl bg-amber-500/10 text-amber-700"><History className="size-5" aria-hidden="true" /></span><p className="text-sm font-medium"><span className="mr-1 text-xl tabular-nums">{data.counts.pending}</span>{t('summary.pending')}</p></div>
+          <div className="flex items-center gap-3 rounded-2xl border bg-card p-4 shadow-sm"><span className="grid size-10 place-items-center rounded-xl bg-emerald-500/10 text-emerald-700"><ShieldCheck className="size-5" aria-hidden="true" /></span><p className="text-sm font-medium"><span className="mr-1 text-xl tabular-nums">{data.counts.closed}</span>{status('closed')}</p></div>
+        </div>
+      )}
+
+      {error && <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</div>}
+      <div className="overflow-x-auto rounded-2xl border bg-card shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
@@ -56,14 +77,19 @@ export default function AuditAssessmentsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data && items.length === 0 && (
+            {loading && (
+              <TableRow>
+                <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">{t('loading')}</TableCell>
+              </TableRow>
+            )}
+            {!loading && data && items.length === 0 && (
               <TableRow>
                 <TableCell colSpan={9} className="text-center text-muted-foreground">
                   {t('empty')}
                 </TableCell>
               </TableRow>
             )}
-            {items.map((a) => (
+            {!loading && items.map((a) => (
               <TableRow key={a._id}>
                 <TableCell className="whitespace-nowrap">{new Date(a.createdAt).toLocaleString(locale)}</TableCell>
                 <TableCell className="whitespace-nowrap">{a.requestor?.name ?? '—'}</TableCell>
@@ -80,10 +106,10 @@ export default function AuditAssessmentsPage() {
                 <TableCell className="whitespace-nowrap">{a.decision ? `${t.has(`decisionTypes.${a.decision.type}`) ? t(`decisionTypes.${a.decision.type}`) : a.decision.type}${a.decision.overriddenTo ? ` → ${classification.has(a.decision.overriddenTo) ? classification(a.decision.overriddenTo) : a.decision.overriddenTo}` : ''}` : '—'}</TableCell>
                 <TableCell className="whitespace-nowrap text-right">
                   <Button size="sm" variant="outline" className="mr-1" onClick={() => setOpen({ item: a, mode: 'stored' })}>
-                    {t('actions.stored')}
+                    <Database aria-hidden="true" />{t('actions.stored')}
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => setOpen({ item: a, mode: 'reconstruct' })}>
-                    {t('actions.reconstruct')}
+                    <History aria-hidden="true" />{t('actions.reconstruct')}
                   </Button>
                 </TableCell>
               </TableRow>
@@ -91,7 +117,7 @@ export default function AuditAssessmentsPage() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
         <span>{data ? t('count', { count: data.total }) : t('loading')}</span>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(page - 1)}>

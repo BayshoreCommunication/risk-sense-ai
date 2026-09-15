@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { CheckCircle2, FileWarning, History, ScanSearch } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -83,22 +84,26 @@ export default function ConformancePage() {
   const summary = lastRun ?? runs[0] ?? null;
 
   return (
-    <div className="max-w-6xl space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">{t('title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('description')}</p>
-        </div>
-        {!confirmRun ? (
-          <Button onClick={() => setConfirmRun(true)} disabled={running}>{t('runScan')}</Button>
-        ) : (
-          <div className="flex flex-wrap items-center justify-end gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-2">
-            <span className="text-xs">{t('confirmation')}</span>
-            <Button size="sm" onClick={() => void runScan()} disabled={running}>{running ? t('scanning') : t('confirmScan')}</Button>
-            <Button size="sm" variant="ghost" onClick={() => setConfirmRun(false)} disabled={running}>{t('cancel')}</Button>
+    <div className="mx-auto max-w-7xl space-y-5">
+      <header className="relative overflow-hidden rounded-2xl border bg-card px-5 py-6 shadow-sm sm:px-7">
+        <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-primary/10 to-transparent" />
+        <div className="relative flex flex-wrap items-start justify-between gap-4">
+          <div className="max-w-3xl">
+            <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary"><ScanSearch className="size-4" aria-hidden="true" />{t('eyebrow')}</div>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('description')}</p>
           </div>
-        )}
-      </div>
+          {!confirmRun ? (
+            <Button onClick={() => setConfirmRun(true)} disabled={running}><ScanSearch aria-hidden="true" />{t('runScan')}</Button>
+          ) : (
+            <div className="flex max-w-xl flex-wrap items-center justify-end gap-2 rounded-xl border border-amber-500/40 bg-amber-500/5 p-2">
+              <span className="text-xs">{t('confirmation')}</span>
+              <Button size="sm" onClick={() => void runScan()} disabled={running}>{running ? t('scanning') : t('confirmScan')}</Button>
+              <Button size="sm" variant="ghost" onClick={() => setConfirmRun(false)} disabled={running}>{t('cancel')}</Button>
+            </div>
+          )}
+        </div>
+      </header>
 
       {error && (
         <div className="flex items-center justify-between gap-3 rounded-md border border-destructive/40 bg-destructive/5 p-3" role="alert">
@@ -109,16 +114,16 @@ export default function ConformancePage() {
 
       {summary ? (
         <div className="grid gap-3 sm:grid-cols-4">
-          <Card size="sm"><CardHeader><CardTitle>{summary.scanned}</CardTitle><CardDescription>{t('summary.scanned')}</CardDescription></CardHeader></Card>
-          <Card size="sm"><CardHeader><CardTitle>{summary.valid}</CardTitle><CardDescription>{t('summary.valid')}</CardDescription></CardHeader></Card>
-          <Card size="sm"><CardHeader><CardTitle className={summary.flagged ? 'text-destructive' : ''}>{summary.flagged}</CardTitle><CardDescription>{t('summary.flagged')}</CardDescription></CardHeader></Card>
-          <Card size="sm"><CardHeader><CardTitle>{summary.resolved}</CardTitle><CardDescription>{t('summary.resolved')}</CardDescription></CardHeader></Card>
+          <Card size="sm"><CardHeader><CardTitle className="text-2xl tabular-nums">{summary.scanned}</CardTitle><CardDescription>{t('summary.scanned')}</CardDescription></CardHeader></Card>
+          <Card size="sm"><CardHeader><div className="flex items-center justify-between"><CardTitle className="text-2xl tabular-nums">{summary.valid}</CardTitle><CheckCircle2 className="size-4 text-emerald-700" aria-hidden="true" /></div><CardDescription>{t('summary.valid')}</CardDescription></CardHeader></Card>
+          <Card size="sm"><CardHeader><div className="flex items-center justify-between"><CardTitle className={summary.flagged ? 'text-destructive text-2xl tabular-nums' : 'text-2xl tabular-nums'}>{summary.flagged}</CardTitle><FileWarning className="size-4 text-rose-700" aria-hidden="true" /></div><CardDescription>{t('summary.flagged')}</CardDescription></CardHeader></Card>
+          <Card size="sm"><CardHeader><CardTitle className="text-2xl tabular-nums">{summary.resolved}</CardTitle><CardDescription>{t('summary.resolved')}</CardDescription></CardHeader></Card>
         </div>
       ) : !loading ? (
         <Card size="sm"><CardContent className="text-sm text-muted-foreground">{t('summary.empty')}</CardContent></Card>
       ) : null}
 
-      <section className="space-y-3">
+      <section className="space-y-3 rounded-2xl border bg-card p-4 shadow-sm sm:p-5">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="font-medium">{t('flags.title')}</h2>
@@ -129,7 +134,7 @@ export default function ConformancePage() {
             {t('flags.includeResolved')}
           </label>
         </div>
-        <div className="rounded-md border">
+        <div className="overflow-x-auto rounded-xl border">
           <Table>
             <TableHeader>
               <TableRow>
@@ -166,12 +171,12 @@ export default function ConformancePage() {
         </div>
       </section>
 
-      <section className="space-y-3">
+      <section className="space-y-3 rounded-2xl border bg-card p-4 shadow-sm sm:p-5">
         <div>
-          <h2 className="font-medium">{t('runs.title')}</h2>
+          <h2 className="flex items-center gap-2 font-medium"><History className="size-4 text-primary" aria-hidden="true" />{t('runs.title')}</h2>
           <p className="text-xs text-muted-foreground">{t('runs.description')}</p>
         </div>
-        <div className="rounded-md border">
+        <div className="overflow-x-auto rounded-xl border">
           <Table>
             <TableHeader><TableRow><TableHead>{t('runs.columns.when')}</TableHead><TableHead>{t('runs.columns.trigger')}</TableHead><TableHead className="text-right">{t('runs.columns.scanned')}</TableHead><TableHead className="text-right">{t('runs.columns.valid')}</TableHead><TableHead className="text-right">{t('runs.columns.flagged')}</TableHead><TableHead className="text-right">{t('runs.columns.resolved')}</TableHead><TableHead className="text-right">{t('runs.columns.duration')}</TableHead></TableRow></TableHeader>
             <TableBody>

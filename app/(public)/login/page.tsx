@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Suspense, useState } from 'react';
+import { ArrowRight, CheckCircle2, Fingerprint, KeyRound, LockKeyhole, ShieldCheck, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -123,10 +124,18 @@ function LoginForm() {
     );
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle className="text-2xl">{t('title')}</CardTitle>
-        <CardDescription>
+    <Card className="w-full max-w-xl border-white/80 bg-white/94 shadow-[0_28px_80px_rgba(16,44,84,0.16)] backdrop-blur-xl">
+      <CardHeader className="border-b border-border/65 pb-5">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            {step === 'otp' ? <KeyRound className="size-5" /> : <Fingerprint className="size-5" />}
+          </div>
+          <Badge variant="outline" className="bg-background/80">
+            {step === 'otp' ? t('steps.verify') : t('steps.identity')}
+          </Badge>
+        </div>
+        <CardTitle className="text-2xl sm:text-3xl">{t('title')}</CardTitle>
+        <CardDescription className="max-w-md leading-6">
           {step === 'otp'
             ? t('otpPrompt', { email: otpInfo?.sentTo ?? t('yourAddress') })
             : hasFirebase
@@ -138,7 +147,7 @@ function LoginForm() {
                 : t('authNotConfigured')}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 pt-1">
         {hasFirebase && step === 'credentials' && (
           <div className="space-y-4">
             <form
@@ -183,8 +192,9 @@ function LoginForm() {
                   autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={busy || !email || password.length < 8}>
+              <Button type="submit" size="lg" className="w-full" disabled={busy || !email || password.length < 8}>
                 {busy ? t('pleaseWait') : mode === 'signin' ? t('continue') : t('createAccount')}
+                {!busy && <ArrowRight data-icon="inline-end" className="size-4" />}
               </Button>
               <div className="flex justify-between text-xs text-muted-foreground">
                 <button type="button" className="underline" disabled={busy} onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}>
@@ -231,13 +241,19 @@ function LoginForm() {
                 </p>
               )}
             </form>
-            <div className="text-center text-xs text-muted-foreground">{t('or')}</div>
-            <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={() => void firstFactor(signInWithGoogle)}>
-              {t('google')}
-            </Button>
-            <Button type="button" variant="outline" className="w-full" disabled={busy || !email.includes('@')} title={email.includes('@') ? undefined : t('ssoNeedsEmail')} onClick={() => void ssoSignIn()}>
-              {t('sso')}
-            </Button>
+            <div className="flex items-center gap-3 text-center text-[0.68rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+              <span className="h-px flex-1 bg-border" />
+              {t('or')}
+              <span className="h-px flex-1 bg-border" />
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={() => void firstFactor(signInWithGoogle)}>
+                {t('google')}
+              </Button>
+              <Button type="button" variant="outline" className="w-full" disabled={busy || !email.includes('@')} title={email.includes('@') ? undefined : t('ssoNeedsEmail')} onClick={() => void ssoSignIn()}>
+                {t('sso')}
+              </Button>
+            </div>
           </div>
         )}
 
@@ -268,8 +284,9 @@ function LoginForm() {
                 </p>
               )}
             </div>
-            <Button type="submit" className="w-full" disabled={busy || otp.length !== 6}>
+            <Button type="submit" size="lg" className="w-full" disabled={busy || otp.length !== 6}>
               {busy ? t('verifying') : t('verify')}
+              {!busy && <ShieldCheck data-icon="inline-end" className="size-4" />}
             </Button>
             <div className="flex justify-between text-xs text-muted-foreground">
               <button type="button" className="underline" onClick={() => void run(startSecondFactor)}>
@@ -292,8 +309,8 @@ function LoginForm() {
         )}
 
         {DEV_AUTH_ENABLED && step === 'credentials' && (
-          <details className="rounded-md border p-3" open={!hasFirebase}>
-            <summary className="cursor-pointer text-sm font-medium">{t('devTitle')}</summary>
+          <details className="rounded-xl border border-dashed bg-muted/30 p-3.5" open={!hasFirebase}>
+            <summary className="cursor-pointer text-sm font-semibold">{t('devTitle')}</summary>
             <form
               className="mt-3 space-y-3"
               onSubmit={(e) => {
@@ -327,20 +344,70 @@ function LoginForm() {
           </details>
         )}
 
-        {!DEV_AUTH_ENABLED && !hasFirebase && <p className="text-sm text-destructive">{t('authNotConfigured')}</p>}
-        {notice && <p role="status" className="text-sm text-muted-foreground">{notice}</p>}
-        {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+        {!DEV_AUTH_ENABLED && !hasFirebase && <p className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">{t('authNotConfigured')}</p>}
+        {notice && (
+          <p role="status" className="flex items-start gap-2 rounded-xl border border-primary/15 bg-primary/5 p-3 text-sm text-foreground">
+            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+            {notice}
+          </p>
+        )}
+        {error && <p role="alert" className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">{error}</p>}
+        <div className="flex items-start gap-2 border-t pt-4 text-xs leading-5 text-muted-foreground">
+          <LockKeyhole className="mt-0.5 size-3.5 shrink-0 text-primary" />
+          <span>{t('planNote')}</span>
+        </div>
       </CardContent>
     </Card>
   );
 }
 
 export default function LoginPage() {
+  const t = useTranslations('login');
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/30 p-6">
-      <Suspense>
-        <LoginForm />
-      </Suspense>
+    <main className="relative min-h-screen overflow-hidden bg-background">
+      <div aria-hidden="true" className="subtle-grid absolute inset-0 opacity-45" />
+      <div className="relative mx-auto grid min-h-screen max-w-[1560px] lg:grid-cols-[minmax(0,0.88fr)_minmax(32rem,1.12fr)]">
+        <section className="relative hidden overflow-hidden bg-sidebar px-12 py-14 text-sidebar-foreground lg:flex lg:flex-col lg:justify-between xl:px-16 xl:py-16">
+          <div aria-hidden="true" className="absolute -top-40 -left-36 size-[32rem] rounded-full bg-primary/20 blur-3xl" />
+          <div aria-hidden="true" className="absolute right-0 bottom-0 size-[26rem] translate-x-1/3 translate-y-1/3 rounded-full bg-cyan-400/10 blur-3xl" />
+          <div className="relative flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-sidebar-primary text-sm font-bold shadow-xl shadow-blue-950/30">R</div>
+            <div>
+              <div className="font-semibold">{t('title')}</div>
+              <div className="text-[0.66rem] font-semibold tracking-[0.14em] text-sidebar-foreground/60 uppercase">{t('eyebrow')}</div>
+            </div>
+          </div>
+
+          <div className="relative max-w-xl space-y-7 py-12">
+            <Badge className="border-sidebar-border bg-sidebar-accent/70 text-sidebar-primary" variant="outline">
+              <Sparkles className="size-3" />
+              {t('eyebrow')}
+            </Badge>
+            <div className="space-y-4">
+              <h1 className="max-w-lg text-4xl leading-[1.08] font-semibold tracking-[-0.045em] xl:text-5xl">{t('heroTitle')}</h1>
+              <p className="max-w-lg text-base leading-7 text-sidebar-foreground/63">{t('heroDescription')}</p>
+            </div>
+            <div className="grid gap-3">
+              {(['guided', 'deterministic', 'auditable'] as const).map((key) => (
+                <div key={key} className="flex items-center gap-3 rounded-xl border border-sidebar-border bg-sidebar-accent/35 px-4 py-3 text-sm text-sidebar-foreground/82">
+                  <span className="flex size-7 items-center justify-center rounded-lg bg-sidebar-primary/15 text-sidebar-primary">
+                    <CheckCircle2 className="size-4" />
+                  </span>
+                  {t(`assurance.${key}`)}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <p className="relative max-w-lg text-xs leading-5 text-sidebar-foreground/65">{t('governanceNote')}</p>
+        </section>
+
+        <section className="flex min-h-screen items-center justify-center px-4 py-8 sm:px-8 lg:px-12">
+          <Suspense>
+            <LoginForm />
+          </Suspense>
+        </section>
+      </div>
     </main>
   );
 }

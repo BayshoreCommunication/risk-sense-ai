@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { BadgeCheck, KeyRound, UserPlus, UsersRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -64,11 +66,13 @@ export default function UsersPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [confirmAccessChange, setConfirmAccessChange] = useState(false);
+  const [plan, setPlan] = useState<'free' | 'paid' | null>(null);
+  const [otpRequired, setOtpRequired] = useState<boolean | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setPageError(null);
-    const [usersResult, departmentsResult] = await Promise.all([api.GET('/system/users'), api.GET('/system/departments')]);
+    const [usersResult, departmentsResult, tenantResult] = await Promise.all([api.GET('/system/users'), api.GET('/system/departments'), api.GET('/system/tenant')]);
     setLoading(false);
     if (!usersResult.data) {
       setPageError(errorMessage(usersResult as { error?: unknown }));
@@ -80,6 +84,10 @@ export default function UsersPage() {
     }
     setUsers(sortUsers(usersResult.data.data));
     setDepartments(departmentsResult.data.data);
+    if (tenantResult.data) {
+      setPlan(tenantResult.data.data.plan);
+      setOtpRequired(tenantResult.data.data.authPolicy.otpRequired);
+    }
   }, []);
 
   useEffect(() => {
@@ -87,6 +95,12 @@ export default function UsersPage() {
   }, [load]);
 
   const departmentNames = useMemo(() => new Map(departments.map((department) => [department._id, department.name])), [departments]);
+  const activeUsers = users.filter((user) => user.status === 'active').length;
+  const requiresRecordedMfa = (user: SystemUser) =>
+    user.role === 'administrator' ||
+    user.role === 'system_administrator' ||
+    (otpRequired === true && !(plan === 'paid' && user.role === 'requestor'));
+  const pendingMfa = users.filter((user) => !user.mfaEnrolled && requiresRecordedMfa(user)).length;
 
   function updateDraft(next: Partial<UserDraft>) {
     setDraft((current) => ({ ...current, ...next }));
@@ -188,14 +202,32 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="max-w-6xl space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">{t('title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('description')}</p>
+    <div className="mx-auto max-w-7xl space-y-5">
+      <header className="relative overflow-hidden rounded-2xl border bg-card px-5 py-6 shadow-sm sm:px-7">
+        <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-primary/10 to-transparent" />
+        <div className="relative flex flex-wrap items-start justify-between gap-4">
+          <div className="max-w-3xl">
+            <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary"><UsersRound className="size-4" aria-hidden="true" />{t('eyebrow')}</div>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('description')}</p>
+          </div>
+          <Button onClick={openCreate}><UserPlus aria-hidden="true" />{t('provision')}</Button>
         </div>
-        <Button onClick={openCreate}>{t('provision')}</Button>
+      </header>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Card size="sm"><CardHeader><CardDescription>{t('summary.total')}</CardDescription><CardTitle className="text-2xl tabular-nums">{users.length}</CardTitle></CardHeader></Card>
+        <Card size="sm"><CardHeader><CardDescription>{t('summary.active')}</CardDescription><CardTitle className="text-2xl tabular-nums">{activeUsers}</CardTitle></CardHeader></Card>
+        <Card size="sm"><CardHeader><CardDescription>{t('summary.mfaPending')}</CardDescription><CardTitle className={pendingMfa > 0 && plan === 'paid' ? 'text-destructive text-2xl tabular-nums' : 'text-2xl tabular-nums'}>{pendingMfa}</CardTitle></CardHeader></Card>
       </div>
+
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle className="flex items-center gap-2"><KeyRound className="size-4 text-primary" aria-hidden="true" />{t('accessPolicy.title')}</CardTitle>
+          <CardDescription id="user-role-policy">{plan === 'free' ? t('accessPolicy.free') : plan === 'paid' ? t('accessPolicy.paid') : t('accessPolicy.default')}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-start gap-2 pt-1 text-xs leading-5 text-muted-foreground"><BadgeCheck className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" />{plan === 'paid' ? t('accessPolicy.paidMfa') : t('accessPolicy.freeMfa')}</CardContent>
+      </Card>
 
       {pageError && (
         <div className="flex items-center justify-between gap-3 rounded-md border border-destructive/40 bg-destructive/5 p-3" role="alert">
@@ -206,7 +238,7 @@ export default function UsersPage() {
         </div>
       )}
 
-      <div className="rounded-md border">
+      <div className="overflow-x-auto rounded-2xl border bg-card shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
@@ -244,7 +276,7 @@ export default function UsersPage() {
                       ? t('scope.allDepartments')
                       : user.departmentIds.map((id) => departmentNames.get(id) ?? id).join(', ') || t('scope.ownOnly')}
                 </TableCell>
-                <TableCell><Badge variant={user.mfaEnrolled ? 'outline' : 'secondary'}>{user.mfaEnrolled ? t('mfa.enrolled') : t('mfa.pending')}</Badge></TableCell>
+                <TableCell><Badge variant={user.mfaEnrolled ? 'outline' : requiresRecordedMfa(user) ? 'destructive' : 'secondary'}>{user.mfaEnrolled ? t('mfa.enrolled') : requiresRecordedMfa(user) ? t('mfa.pending') : t('mfa.notRequired')}</Badge></TableCell>
                 <TableCell><Badge variant={user.status === 'active' ? 'outline' : 'destructive'}>{status.has(user.status) ? status(user.status) : user.status}</Badge></TableCell>
                 <TableCell>{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString(locale) : t('never')}</TableCell>
                 <TableCell className="text-right"><Button size="sm" variant="outline" onClick={() => openEdit(user)}>{t('edit')}</Button></TableCell>
@@ -285,6 +317,7 @@ export default function UsersPage() {
                 <select
                   id="user-role"
                   className={selectClassName}
+                  aria-describedby="user-role-policy"
                   value={draft.role}
                   onChange={(event) => {
                     const role = event.target.value as Role;
@@ -306,7 +339,7 @@ export default function UsersPage() {
             </div>
 
             {draft.role === 'requestor' && (
-              <fieldset className="space-y-2 rounded-md border p-3">
+              <fieldset className="space-y-2 rounded-xl border bg-muted/20 p-3">
                 <legend className="px-1 text-sm font-medium">{t('departmentScope.title')}</legend>
                 {departments.length === 0 ? (
                   <p className="text-xs text-muted-foreground">{t('departmentScope.empty')}</p>

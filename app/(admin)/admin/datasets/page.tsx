@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { CheckCircle2, ChevronDown, ChevronUp, Download, FileSpreadsheet, Power, UploadCloud } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -59,19 +60,27 @@ async function authHeaders(): Promise<Record<string, string>> {
 export default function DatasetsPage() {
   const locale = useLocale();
   const t = useTranslations('admin.datasets');
+  const statusT = useTranslations('status');
+  const commonT = useTranslations('contentManager');
   const [items, setItems] = useState<Dataset[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
-    const res = (await api.GET('/datasets')) as { data?: { data: unknown }; error?: unknown };
-    if (!res.data) {
-      setError(toApiError(res.error).message);
-      return;
+    setLoading(true);
+    try {
+      const res = (await api.GET('/datasets')) as { data?: { data: unknown }; error?: unknown };
+      if (!res.data) {
+        setError(toApiError(res.error).message);
+        return;
+      }
+      setItems(res.data.data as Dataset[]);
+    } finally {
+      setLoading(false);
     }
-    setItems(res.data.data as Dataset[]);
   }, []);
 
   useEffect(() => {
@@ -115,83 +124,117 @@ export default function DatasetsPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold">{t('title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('description')}</p>
+    <div className="space-y-6">
+      <header className="flex flex-col gap-4 rounded-2xl border border-border/70 bg-card/80 px-5 py-5 shadow-sm sm:flex-row sm:items-start sm:justify-between sm:px-6">
+        <div className="max-w-3xl">
+          <h1 className="font-heading text-2xl font-semibold tracking-tight">{t('title')}</h1>
+          <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{t('description')}</p>
         </div>
-        <Button variant="outline" onClick={() => void run(downloadTemplate)} disabled={busy}>
+        <Button variant="outline" onClick={() => void run(downloadTemplate)} disabled={busy} className="shrink-0 bg-background shadow-sm">
+          <Download data-icon="inline-start" aria-hidden="true" />
           {t('downloadTemplate')}
         </Button>
-      </div>
+      </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t('upload.title')}</CardTitle>
-          <CardDescription>{t('upload.description')}</CardDescription>
+      <Card className="border-0 bg-card shadow-sm ring-1 ring-foreground/8">
+        <CardHeader className="border-b border-border/60 pb-4">
+          <div className="flex items-start gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+              <UploadCloud className="size-5" aria-hidden="true" />
+            </span>
+            <div>
+              <CardTitle className="text-base">{t('upload.title')}</CardTitle>
+              <CardDescription className="mt-1 leading-5">{t('upload.description')}</CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="flex items-center gap-3">
-          <Input aria-label={t('upload.fileLabel')} type="file" accept=".xlsx" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="max-w-sm" />
-          <Button onClick={() => void run(upload)} disabled={!file || busy}>
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative w-full max-w-xl rounded-xl border border-dashed border-primary/25 bg-primary/[0.025] p-2">
+            <Input aria-label={t('upload.fileLabel')} type="file" accept=".xlsx" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="w-full border-0 bg-transparent shadow-none" />
+          </div>
+          <Button onClick={() => void run(upload)} disabled={!file || busy} className="shrink-0 shadow-sm">
+            <FileSpreadsheet data-icon="inline-start" aria-hidden="true" />
             {busy ? t('upload.working') : t('upload.submit')}
           </Button>
         </CardContent>
       </Card>
 
-      {error && <p className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm text-destructive">{error}</p>}
+      {error && <p className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</p>}
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
+      <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm" aria-busy={loading}>
+        <Table className="min-w-[860px]">
+          <TableHeader className="bg-muted/45">
             <TableRow>
               <TableHead>#</TableHead>
               <TableHead>{t('columns.file')}</TableHead>
-              <TableHead>{t('columns.personas')}</TableHead>
-              <TableHead>{t('columns.scenarios')}</TableHead>
-              <TableHead>{t('columns.questions')}</TableHead>
-              <TableHead>{t('columns.errors')}</TableHead>
+              <TableHead className="text-right">{t('columns.personas')}</TableHead>
+              <TableHead className="text-right">{t('columns.scenarios')}</TableHead>
+              <TableHead className="text-right">{t('columns.questions')}</TableHead>
+              <TableHead className="text-right">{t('columns.rows')}</TableHead>
+              <TableHead className="text-right">{t('columns.errors')}</TableHead>
               <TableHead>{t('columns.status')}</TableHead>
               <TableHead className="text-right">{t('columns.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items.length === 0 && (
+            {loading && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground">
+                <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
+                  {commonT('loading')}
+                </TableCell>
+              </TableRow>
+            )}
+            {!loading && items.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
                   {t('empty')}
                 </TableCell>
               </TableRow>
             )}
             {items.map((d) => (
               <TableRow key={d._id}>
-                <TableCell>{d.seq}</TableCell>
+                <TableCell className="font-medium tabular-nums">{d.seq}</TableCell>
                 <TableCell>
-                  <div>{d.fileName}</div>
-                  <div className="text-xs text-muted-foreground">{new Date(d.createdAt).toLocaleString(locale)}</div>
+                  <div className="flex items-center gap-2 font-medium">
+                    <FileSpreadsheet className="size-4 text-emerald-600" aria-hidden="true" />
+                    {d.fileName}
+                  </div>
+                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                    <Badge variant="outline" className="h-5 rounded-md px-1.5 uppercase">{d.format}</Badge>
+                    <span>{new Date(d.createdAt).toLocaleString(locale)}</span>
+                  </div>
                 </TableCell>
-                <TableCell>{d.counts.personas}</TableCell>
-                <TableCell>{d.counts.scenarios}</TableCell>
-                <TableCell>{d.counts.questions}</TableCell>
-                <TableCell>
+                <TableCell className="text-right tabular-nums">{d.counts.personas}</TableCell>
+                <TableCell className="text-right tabular-nums">{d.counts.scenarios}</TableCell>
+                <TableCell className="text-right tabular-nums">{d.counts.questions}</TableCell>
+                <TableCell className="text-right font-medium tabular-nums">{d.counts.personas + d.counts.scenarios + d.counts.questions + d.counts.scoring}</TableCell>
+                <TableCell className="text-right tabular-nums">
                   {d.validationErrors.length > 0 ? (
-                    <button className="underline" onClick={() => setExpanded(expanded === d._id ? null : d._id)}>
+                    <button
+                      className="inline-flex items-center gap-1 rounded-lg px-2 py-1 font-medium text-destructive underline-offset-4 hover:bg-destructive/10 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      onClick={() => setExpanded(expanded === d._id ? null : d._id)}
+                      aria-expanded={expanded === d._id}
+                      aria-controls={`dataset-errors-${d._id}`}
+                    >
                       {d.validationErrors.length}
+                      {expanded === d._id ? <ChevronUp className="size-3.5" aria-hidden="true" /> : <ChevronDown className="size-3.5" aria-hidden="true" />}
                     </button>
                   ) : (
                     '0'
                   )}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={STATUS_VARIANT[d.status]}>{d.status}</Badge>
+                  <Badge variant={STATUS_VARIANT[d.status]}>{statusT.has(d.status) ? statusT(d.status) : d.status}</Badge>
                   {d.failure && <div className="mt-1 text-xs text-destructive">{d.failure}</div>}
                 </TableCell>
-                <TableCell className="space-x-1 text-right">
+                <TableCell>
+                  <div className="flex min-w-max justify-end gap-1.5">
                   {d.status === 'validated' && (
                     <Button size="sm" variant="outline" disabled={busy} onClick={() => void run(async () => {
                       const res = await api.POST('/datasets/{id}/approve', { params: { path: { id: d._id } } });
                       if (res.error) throw res.error;
                     })}>
+                      <CheckCircle2 data-icon="inline-start" aria-hidden="true" />
                       {t('actions.approve')}
                     </Button>
                   )}
@@ -200,25 +243,27 @@ export default function DatasetsPage() {
                       const res = await api.POST('/datasets/{id}/activate', { params: { path: { id: d._id } } });
                       if (res.error) throw res.error;
                     })}>
+                      <Power data-icon="inline-start" aria-hidden="true" />
                       {t('actions.activate')}
                     </Button>
                   )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      </div>
+      </section>
 
       {expanded && items.find((d) => d._id === expanded)?.validationErrors.length ? (
-        <Card>
-          <CardHeader>
+        <Card id={`dataset-errors-${expanded}`} className="border-0 bg-card shadow-sm ring-1 ring-destructive/15">
+          <CardHeader className="border-b border-border/60 pb-4">
             <CardTitle className="text-base">{t('validation.title', { sequence: items.find((d) => d._id === expanded)?.seq ?? '' })}</CardTitle>
-            <CardDescription>{t('validation.description')}</CardDescription>
+            <CardDescription className="leading-5">{t('validation.description')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
+            <Table className="min-w-[620px]">
+              <TableHeader className="bg-muted/45">
                 <TableRow>
                   <TableHead>{t('validation.columns.sheet')}</TableHead>
                   <TableHead>{t('validation.columns.row')}</TableHead>

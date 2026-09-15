@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { CloudCog, DatabaseBackup, FileCheck2, RotateCcw, TimerReset } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -186,17 +187,28 @@ export default function DisasterRecoveryPage() {
   const evidenceHref = safeEvidenceHref(status.evidenceRef);
 
   return (
-    <div className="max-w-5xl space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">{t('title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('description')}</p>
+    <div className="mx-auto max-w-7xl space-y-5">
+      <header className="relative overflow-hidden rounded-2xl border bg-card px-5 py-6 shadow-sm sm:px-7">
+        <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-primary/10 to-transparent" />
+        <div className="relative flex flex-wrap items-start justify-between gap-4">
+          <div className="max-w-3xl">
+            <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary"><CloudCog className="size-4" aria-hidden="true" />{t('eyebrow')}</div>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('description')}</p>
+          </div>
+          <Badge className="px-3 py-1" variant={status.readiness === 'ready' ? 'outline' : 'destructive'}>{status.readiness === 'ready' ? t('readiness.ready') : t('readiness.attention')}</Badge>
         </div>
-        <Badge variant={status.readiness === 'ready' ? 'outline' : 'destructive'}>{status.readiness === 'ready' ? t('readiness.ready') : t('readiness.attention')}</Badge>
+      </header>
+
+      <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
+        <span className="font-medium">{t('operatorNotice.title')}:</span> {t('operatorNotice.description')}
       </div>
 
-      <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
-        <span className="font-medium">{t('operatorNotice.title')}:</span> {t('operatorNotice.description')}
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <Card size="sm"><CardHeader><div className="mb-2 flex items-center justify-between"><CardDescription>{t('targets.rto')}</CardDescription><TimerReset className="size-4 text-blue-700" aria-hidden="true" /></div><CardTitle className="text-2xl tabular-nums">{t('targets.hours', { value: status.targets.rtoHours })}</CardTitle></CardHeader></Card>
+        <Card size="sm"><CardHeader><div className="mb-2 flex items-center justify-between"><CardDescription>{t('targets.rpo')}</CardDescription><RotateCcw className="size-4 text-violet-700" aria-hidden="true" /></div><CardTitle className="text-2xl tabular-nums">{t('targets.hours', { value: status.targets.rpoHours })}</CardTitle></CardHeader></Card>
+        <Card size="sm"><CardHeader><div className="mb-2 flex items-center justify-between"><CardDescription>{t('targets.backup')}</CardDescription><DatabaseBackup className="size-4 text-emerald-700" aria-hidden="true" /></div><CardTitle className="text-2xl tabular-nums">{t('targets.hours', { value: status.targets.backupFrequencyHours })}</CardTitle></CardHeader></Card>
+        <Card size="sm"><CardHeader><div className="mb-2 flex items-center justify-between"><CardDescription>{t('targets.drill')}</CardDescription><FileCheck2 className="size-4 text-amber-700" aria-hidden="true" /></div><CardTitle className="text-2xl tabular-nums">{t('targets.days', { value: status.targets.drillFrequencyDays })}</CardTitle></CardHeader></Card>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
@@ -227,17 +239,16 @@ export default function DisasterRecoveryPage() {
         </CardContent>
       </Card>
 
+      <Card>
       <form
-        className="space-y-4 rounded-md border p-4"
+        className="space-y-4"
         onSubmit={(event) => {
           event.preventDefault();
           void save();
         }}
       >
-        <div>
-          <h2 className="font-medium">{t('form.title')}</h2>
-          <p className="text-xs text-muted-foreground">{t('form.description')}</p>
-        </div>
+        <CardHeader className="border-b"><CardTitle>{t('form.title')}</CardTitle><CardDescription>{t('form.description')}</CardDescription></CardHeader>
+        <CardContent className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
             <Label htmlFor="dr-provider">{t('form.provider')}</Label>
@@ -281,7 +292,9 @@ export default function DisasterRecoveryPage() {
           <Button type="submit" disabled={!dirty || !attested || saving}>{saving ? t('saving') : t('save')}</Button>
           <Button type="button" variant="outline" disabled={!dirty || saving} onClick={() => { setForm(toForm(status)); setAttested(false); setError(null); }}>{t('discard')}</Button>
         </div>
+        </CardContent>
       </form>
+      </Card>
     </div>
   );
 }

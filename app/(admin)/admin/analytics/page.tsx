@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { BarChart3, ChartNoAxesColumn, FileDown, RefreshCw, SlidersHorizontal, Table2 } from 'lucide-react';
 import { BarChart, ChartStyles, LineChart, STATUS, StatTile, StatusBars } from '@/components/analytics/Charts';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -44,36 +45,48 @@ function ReportPanel({ type, title, description, result, query, children }: { ty
     }
   }
   return (
-    <section className="space-y-2 rounded-md border p-4">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h2 className="font-semibold">{title}</h2>
-          <p className="text-xs text-muted-foreground">{description}</p>
+    <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-border/60 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="max-w-xl">
+          <h2 className="font-heading font-semibold">{title}</h2>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">{description}</p>
         </div>
-        <div className="flex items-center gap-1">
-          <Button size="sm" variant={view === 'chart' ? 'default' : 'ghost'} onClick={() => setView('chart')}>
-            {t('views.chart')}
-          </Button>
-          <Button size="sm" variant={view === 'table' ? 'default' : 'ghost'} onClick={() => setView('table')}>
-            {t('views.table')}
-          </Button>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <div className="inline-flex rounded-lg bg-muted/60 p-0.5">
+            <Button size="sm" variant={view === 'chart' ? 'default' : 'ghost'} aria-pressed={view === 'chart'} onClick={() => setView('chart')}>
+              <ChartNoAxesColumn data-icon="inline-start" aria-hidden="true" />
+              {t('views.chart')}
+            </Button>
+            <Button size="sm" variant={view === 'table' ? 'default' : 'ghost'} aria-pressed={view === 'table'} onClick={() => setView('table')}>
+              <Table2 data-icon="inline-start" aria-hidden="true" />
+              {t('views.table')}
+            </Button>
+          </div>
           <Button size="sm" variant="outline" disabled={busy !== null || !result} onClick={() => void download('csv')}>
+            <FileDown data-icon="inline-start" aria-hidden="true" />
             {busy === 'csv' ? '…' : 'CSV'}
           </Button>
           <Button size="sm" variant="outline" disabled={busy !== null || !result} onClick={() => void download('pdf')}>
+            <FileDown data-icon="inline-start" aria-hidden="true" />
             {busy === 'pdf' ? '…' : 'PDF'}
           </Button>
         </div>
       </div>
-      {error && <p className="text-xs text-destructive">{error}</p>}
-      {!result ? (
-        <p className="text-sm text-muted-foreground">{t('loading')}</p>
-      ) : view === 'chart' ? (
-        children
-      ) : (
-        <div className="overflow-x-auto">
+      <div className="p-4">
+        {error && <p className="mb-3 rounded-lg border border-destructive/25 bg-destructive/5 p-2 text-xs text-destructive" role="alert">{error}</p>}
+        {!result ? (
+          <div className="grid h-60 place-items-center rounded-xl bg-muted/20" role="status">
+            <div className="space-y-2 text-center">
+              <span className="mx-auto block size-7 animate-pulse rounded-full border-2 border-primary/25 border-t-primary" aria-hidden="true" />
+              <p className="text-sm text-muted-foreground">{t('loading')}</p>
+            </div>
+          </div>
+        ) : view === 'chart' ? (
+          children
+        ) : (
+          <div className="overflow-hidden rounded-xl border border-border/70">
           <Table>
-            <TableHeader>
+            <TableHeader className="bg-muted/45">
               <TableRow>
                 {result.columns.map((c) => (
                   <TableHead key={c.key} className={c.kind === 'text' ? '' : 'text-right'}>
@@ -94,13 +107,14 @@ function ReportPanel({ type, title, description, result, query, children }: { ty
               ))}
             </TableBody>
           </Table>
-        </div>
-      )}
-      {result && (
-        <p className="text-[11px] text-muted-foreground">
-          {result.cached ? t('cache.cached') : t('cache.computed')} {new Date(result.generatedAt).toLocaleTimeString(locale)} · {result.computeMs} {t('milliseconds')}
-        </p>
-      )}
+          </div>
+        )}
+        {result && (
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            {result.cached ? t('cache.cached') : t('cache.computed')} {new Date(result.generatedAt).toLocaleTimeString(locale)} · {result.computeMs} {t('milliseconds')}
+          </p>
+        )}
+      </div>
     </section>
   );
 }
@@ -116,6 +130,7 @@ export default function AnalyticsPage() {
   const [personas, setPersonas] = useState<{ key: string; name: string }[]>([]);
   const [data, setData] = useState<Partial<Record<ReportType | 'trends', ReportResult>>>({});
   const [error, setError] = useState<string | null>(null);
+  const [trendView, setTrendView] = useState<'chart' | 'table'>('chart');
 
   const query = useMemo<ReportQuery>(() => {
     const r = RANGES.find((x) => x.value === range) ?? RANGES[2]!;
@@ -166,19 +181,32 @@ export default function AnalyticsPage() {
   const personaOptions = [{ value: ANY, label: t('filters.allPersonas') }, ...personas.map((p) => ({ value: p.key, label: p.name }))];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <ChartStyles />
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">{t('title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('description')}</p>
+      <header className="relative overflow-hidden rounded-2xl border border-indigo-200/60 bg-[linear-gradient(125deg,rgba(99,102,241,0.11),var(--card)_62%)] px-5 py-6 shadow-sm sm:px-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex max-w-3xl items-start gap-3">
+            <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-500/12 text-indigo-700">
+              <BarChart3 className="size-5" aria-hidden="true" />
+            </span>
+            <div>
+              <h1 className="font-heading text-2xl font-semibold tracking-tight">{t('title')}</h1>
+              <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{t('description')}</p>
+            </div>
+          </div>
+          <Button size="sm" variant="outline" className="shrink-0 bg-background/90 shadow-sm" onClick={() => load(true)}>
+            <RefreshCw data-icon="inline-start" aria-hidden="true" />
+            {t('refresh')}
+          </Button>
         </div>
-        <Button size="sm" variant="outline" onClick={() => load(true)}>
-          {t('refresh')}
-        </Button>
-      </div>
+      </header>
 
-      <div className="grid gap-3 rounded-md border bg-muted/20 p-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
+        <div className="mb-3 flex items-center gap-2 text-sm font-medium">
+          <SlidersHorizontal className="size-4 text-primary" aria-hidden="true" />
+          <span>{t('filters.period')}</span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-1">
           <Label className="text-xs">{t('filters.period')}</Label>
           <Select items={rangeOptions} value={range} onValueChange={(v) => setRange(v ?? '12m')}>
@@ -239,8 +267,9 @@ export default function AnalyticsPage() {
             </SelectContent>
           </Select>
         </div>
-      </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+        </div>
+      </section>
+      {error && <p className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</p>}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <StatTile label={t('stats.started')} value={vol ? Number(vol.summary.started).toLocaleString() : '—'} hint={vol ? t('stats.startedHint', { closed: Number(vol.summary.closed), escalated: Number(vol.summary.escalated) }) : undefined} />
@@ -276,47 +305,59 @@ export default function AnalyticsPage() {
         </ReportPanel>
       </div>
 
-      <section className="space-y-2 rounded-md border p-4">
-        <div>
-          <h2 className="font-semibold">{t('trends.title', { group: t(`groups.${by}`) })}</h2>
-          <p className="text-xs text-muted-foreground">{t('trends.description', { group: t(`groups.${by}`).toLocaleLowerCase() })}</p>
+      <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-border/60 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="font-heading font-semibold">{t('trends.title', { group: t(`groups.${by}`) })}</h2>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('trends.description', { group: t(`groups.${by}`).toLocaleLowerCase() })}</p>
+          </div>
+          <div className="inline-flex self-start rounded-lg bg-muted/60 p-0.5">
+            <Button size="sm" variant={trendView === 'chart' ? 'default' : 'ghost'} aria-pressed={trendView === 'chart'} onClick={() => setTrendView('chart')}>
+              <ChartNoAxesColumn data-icon="inline-start" aria-hidden="true" />
+              {t('views.chart')}
+            </Button>
+            <Button size="sm" variant={trendView === 'table' ? 'default' : 'ghost'} aria-pressed={trendView === 'table'} onClick={() => setTrendView('table')}>
+              <Table2 data-icon="inline-start" aria-hidden="true" />
+              {t('views.table')}
+            </Button>
+          </div>
         </div>
-        {trends ? (
-          trendSeries.series.length ? (
-            <LineChart title={t('trends.chartTitle', { group: t(`groups.${by}`).toLocaleLowerCase() })} periods={trendSeries.periods} series={trendSeries.series} />
-          ) : (
-            <p className="text-sm text-muted-foreground">{t('trends.empty')}</p>
-          )
-        ) : (
-          <p className="text-sm text-muted-foreground">{t('loading')}</p>
-        )}
-        {trends && (
-          <details className="text-xs">
-            <summary className="cursor-pointer text-muted-foreground">{t('views.tableView')}</summary>
-            <div className="mt-2 overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {trends.columns.map((c) => (
-                      <TableHead key={c.key}>{c.label}</TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {trends.rows
-                    .filter((r) => Number(r.count) > 0)
-                    .map((r, i) => (
-                      <TableRow key={i}>
+        <div className="p-4">
+          {trends ? (
+            trendSeries.series.length ? (
+              trendView === 'chart' ? (
+                <LineChart title={t('trends.chartTitle', { group: t(`groups.${by}`).toLocaleLowerCase() })} periods={trendSeries.periods} series={trendSeries.series} />
+              ) : (
+                <div className="overflow-hidden rounded-xl border border-border/70">
+                  <Table>
+                    <TableHeader className="bg-muted/45">
+                      <TableRow>
                         {trends.columns.map((c) => (
-                          <TableCell key={c.key}>{fmtCell(r[c.key], c.kind)}</TableCell>
+                          <TableHead key={c.key}>{c.label}</TableHead>
                         ))}
                       </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </div>
-          </details>
-        )}
+                    </TableHeader>
+                    <TableBody>
+                      {trends.rows
+                        .filter((r) => Number(r.count) > 0)
+                        .map((r, i) => (
+                          <TableRow key={i}>
+                            {trends.columns.map((c) => (
+                              <TableCell key={c.key}>{fmtCell(r[c.key], c.kind)}</TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )
+            ) : (
+              <p className="grid h-56 place-items-center text-sm text-muted-foreground">{t('trends.empty')}</p>
+            )
+          ) : (
+            <p className="grid h-56 place-items-center text-sm text-muted-foreground" role="status">{t('loading')}</p>
+          )}
+        </div>
       </section>
     </div>
   );

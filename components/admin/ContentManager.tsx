@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { Archive, CheckCircle2, History, Pencil, Plus, Power, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -122,11 +123,20 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'dest
   retired: 'outline',
 };
 
+const STATUS_CLASS: Record<string, string> = {
+  active: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  approved: 'border-sky-200 bg-sky-50 text-sky-700',
+  draft: 'border-amber-200 bg-amber-50 text-amber-700',
+  deactivated: 'border-slate-200 bg-slate-50 text-slate-600',
+  retired: 'border-slate-200 bg-slate-50 text-slate-600',
+};
+
 type LifecycleAction = 'approve' | 'activate' | 'deactivate' | 'retire';
 type PendingAction = { action: LifecycleAction; item: Item; run: (changeRef?: string) => Promise<unknown> };
 
 export function ContentManager(props: ContentManagerProps) {
   const t = useTranslations('contentManager');
+  const statusT = useTranslations('status');
   const structuredValidation = useTranslations('structured.validation');
   const { title, description, apiClient, fields, columns, versioned, defaultQuery, approval } = props;
   const [items, setItems] = useState<Item[]>([]);
@@ -240,23 +250,29 @@ export function ContentManager(props: ContentManagerProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold">{title}</h1>
-          <p className="text-sm text-muted-foreground">{description}</p>
+    <div className="space-y-6">
+      <header className="flex flex-col gap-4 rounded-2xl border border-border/70 bg-card/80 px-5 py-5 shadow-sm sm:flex-row sm:items-start sm:justify-between sm:px-6">
+        <div className="max-w-3xl">
+          <h1 className="font-heading text-2xl font-semibold tracking-tight">{title}</h1>
+          <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{description}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Input aria-label={t('filter')} placeholder={t('filterPlaceholder')} value={filter} onChange={(e) => setFilter(e.target.value)} className="w-48" />
-          <Button onClick={openCreate}>{t('actions.new')}</Button>
+        <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
+          <div className="relative min-w-0 sm:w-56">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Input aria-label={t('filter')} placeholder={t('filterPlaceholder')} value={filter} onChange={(e) => setFilter(e.target.value)} className="w-full pl-8" />
+          </div>
+          <Button onClick={openCreate} className="shadow-sm">
+            <Plus data-icon="inline-start" aria-hidden="true" />
+            {t('actions.new')}
+          </Button>
         </div>
-      </div>
+      </header>
 
       {error ? <p className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm text-destructive" role="alert">{error}</p> : null}
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
+      <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm" aria-busy={loading}>
+        <Table className="min-w-[760px]">
+          <TableHeader className="bg-muted/45">
             <TableRow>
               {columns.map((c) => (
                 <TableHead key={c.key}>{c.label}</TableHead>
@@ -269,74 +285,86 @@ export function ContentManager(props: ContentManagerProps) {
           <TableBody>
             {loading && (
               <TableRow>
-                <TableCell colSpan={columns.length + (versioned ? 3 : 2)} className="text-center text-muted-foreground">
+                <TableCell colSpan={columns.length + (versioned ? 3 : 2)} className="h-32 text-center text-muted-foreground">
                   {t('loading')}
                 </TableCell>
               </TableRow>
             )}
             {!loading && visible.length === 0 && (
               <TableRow>
-                <TableCell colSpan={columns.length + (versioned ? 3 : 2)} className="text-center text-muted-foreground">
+                <TableCell colSpan={columns.length + (versioned ? 3 : 2)} className="h-32 text-center text-muted-foreground">
                   {t('empty')}
                 </TableCell>
               </TableRow>
             )}
             {visible.map((item) => (
-              <TableRow key={item._id}>
+              <TableRow key={item._id} className="group/row">
                 {columns.map((c) => (
-                  <TableCell key={c.key}>{c.render ? c.render(item) : String(getPath(item, c.key) ?? '')}</TableCell>
+                  <TableCell key={c.key} className="max-w-72 whitespace-normal leading-5">
+                    {c.render ? c.render(item) : String(getPath(item, c.key) ?? '')}
+                  </TableCell>
                 ))}
                 {versioned && (
-                  <TableCell>
-                    v{String(item.version ?? 1)}
-                    {item.isCurrent ? <span className="ml-1 text-xs text-muted-foreground">({t('current')})</span> : null}
+                  <TableCell className="tabular-nums">
+                    <span className="font-medium">v{String(item.version ?? 1)}</span>
+                    {item.isCurrent ? <span className="ml-1.5 text-xs text-muted-foreground">({t('current')})</span> : null}
                   </TableCell>
                 )}
                 <TableCell>
-                  <Badge variant={STATUS_VARIANT[item.status] ?? 'secondary'}>{item.status}</Badge>
+                  <Badge variant={STATUS_VARIANT[item.status] ?? 'secondary'} className={STATUS_CLASS[item.status]}>
+                    {statusT.has(item.status) ? statusT(item.status) : item.status}
+                  </Badge>
                 </TableCell>
-                <TableCell className="space-x-1 text-right">
+                <TableCell>
+                  <div className="flex min-w-max flex-wrap justify-end gap-1.5">
                   {item.status !== 'retired' && item.status !== 'deactivated' && (
                     <Button size="sm" variant="outline" onClick={() => openEdit(item)}>
+                      <Pencil data-icon="inline-start" aria-hidden="true" />
                       {t('actions.edit')}
                     </Button>
                   )}
                   {approval && item.status === 'draft' && !item.approvedBy && apiClient.approve && (
                     <Button size="sm" variant="secondary" onClick={() => askForConfirmation('approve', item, (reference) => apiClient.approve!(item._id, reference ?? ''))}>
+                      <CheckCircle2 data-icon="inline-start" aria-hidden="true" />
                       {t('actions.approve')}
                     </Button>
                   )}
                   {apiClient.activate && (item.status === 'approved' || (item.status === 'draft' && (!approval || Boolean(item.approvedBy)))) && (
                     <Button size="sm" onClick={() => askForConfirmation('activate', item, () => apiClient.activate!(item._id))}>
+                      <Power data-icon="inline-start" aria-hidden="true" />
                       {t('actions.activate')}
                     </Button>
                   )}
                   {versioned && item.status === 'active' && apiClient.deactivate && (
                     <Button size="sm" variant="destructive" onClick={() => askForConfirmation('deactivate', item, () => apiClient.deactivate!(item._id))}>
+                      <Power data-icon="inline-start" aria-hidden="true" />
                       {t('actions.deactivate')}
                     </Button>
                   )}
                   {(item.status === 'active' || item.status === 'approved') && apiClient.retire && (
                     <Button size="sm" variant="destructive" onClick={() => askForConfirmation('retire', item, () => apiClient.retire!(item._id))}>
+                      <Archive data-icon="inline-start" aria-hidden="true" />
                       {t('actions.retire')}
                     </Button>
                   )}
                   {versioned && apiClient.history && (
                     <Button size="sm" variant="ghost" onClick={() => void act(async () => setHistory(await apiClient.history!(item._id)))}>
+                      <History data-icon="inline-start" aria-hidden="true" />
                       {t('actions.history')}
                     </Button>
                   )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      </div>
+      </section>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-[min(72rem,calc(100vw-3rem))]">
+          <DialogHeader className="border-b border-border/70 pb-4 pr-8">
+            <DialogTitle className="text-xl">
               {editing
                 ? t('form.editTitle', { entity: props.entity, version: String(editing.version ?? 1), status: editing.status })
                 : t('form.newTitle', { entity: props.entity })}
@@ -348,12 +376,15 @@ export function ContentManager(props: ContentManagerProps) {
             </DialogDescription>
           </DialogHeader>
           {formError ? <p className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm text-destructive" role="alert">{formError}</p> : null}
-          <div className="grid gap-3">
+          <div className="grid gap-4 py-1 lg:grid-cols-2">
             {fields.map((f) => {
               const disabled = Boolean(editing && 'immutable' in f && f.immutable);
               const common = { id: f.name, disabled };
               return (
-                <div key={f.name} className="space-y-1">
+                <div
+                  key={f.name}
+                  className={isStructuredKind(f.kind) || f.kind === 'textarea' || f.kind === 'list' || f.kind === 'json' ? 'space-y-1.5 lg:col-span-2' : 'space-y-1.5'}
+                >
                   <Label htmlFor={f.name}>
                     {f.label}
                     {f.required ? ' *' : ''}
@@ -458,13 +489,15 @@ export function ContentManager(props: ContentManagerProps) {
             <DialogTitle>{t('history.title')}</DialogTitle>
             <DialogDescription>{t('history.description')}</DialogDescription>
           </DialogHeader>
-          <ul className="space-y-1 text-sm">
+          <ul className="space-y-2 text-sm">
             {(history ?? []).map((h) => (
-              <li key={h._id} className="flex items-center justify-between rounded border px-2 py-1">
+              <li key={h._id} className="flex items-center justify-between rounded-xl border border-border/70 bg-muted/20 px-3 py-2.5">
                 <span>
                   v{String(h.version)} · {String(h.name ?? h.key)}
                 </span>
-                <Badge variant={STATUS_VARIANT[h.status] ?? 'secondary'}>{h.status}</Badge>
+                <Badge variant={STATUS_VARIANT[h.status] ?? 'secondary'} className={STATUS_CLASS[h.status]}>
+                  {statusT.has(h.status) ? statusT(h.status) : h.status}
+                </Badge>
               </li>
             ))}
           </ul>

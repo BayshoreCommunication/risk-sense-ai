@@ -1,144 +1,1516 @@
 {
-  "metadata": { "title": "RiskSense AI", "description": "Guided risk assessment and decision support" },
+  "metadata": {
+    "title": "RiskSense AI",
+    "description": "Guided risk assessment and decision support"
+  },
   "common": { "close": "Close", "retry": "Retry" },
-  "app": { "name": "RiskSense AI", "signOut": "Sign out", "loading": "Loading…", "openingWorkspace": "Opening your workspace…", "sessionVerifyFailed": "Your session could not be verified. Please sign in again." },
-  "roles": { "requestor": "requestor", "administrator": "administrator", "system_administrator": "system administrator", "audit": "audit" },
+  "app": {
+    "name": "RiskSense AI",
+    "secureWorkspace": "Decision intelligence",
+    "navigation": "Workspace navigation",
+    "roleNavigation": "{role} workspace",
+    "openNavigation": "Open navigation",
+    "closeNavigation": "Close navigation",
+    "signOut": "Sign out",
+    "loading": "Loading…",
+    "openingWorkspace": "Opening your workspace…",
+    "sessionVerifyFailed": "Your session could not be verified. Please sign in again."
+  },
+  "roles": {
+    "requestor": "requestor",
+    "administrator": "administrator",
+    "system_administrator": "system administrator",
+    "audit": "audit"
+  },
   "nav": {
     "requestor": { "chat": "New assessment", "review": "Review" },
-    "administrator": { "overview": "Overview", "review": "Review queue", "personas": "Personas", "scenarios": "Scenarios", "questions": "Questions", "datasets": "Datasets", "rules": "Rules", "scoring": "Scoring", "analytics": "Analytics" },
-    "system_administrator": { "overview": "Overview", "users": "Users", "departments": "Departments", "tenant": "Tenant", "retention": "Retention", "dr": "Disaster recovery", "conformance": "Conformance" },
-    "audit": { "overview": "Overview", "assessments": "Assessments", "logs": "Audit logs" }
+    "administrator": {
+      "overview": "Overview",
+      "review": "Review queue",
+      "personas": "Personas",
+      "scenarios": "Scenarios",
+      "questions": "Questions",
+      "datasets": "Datasets",
+      "rules": "Rules",
+      "scoring": "Scoring",
+      "analytics": "Analytics"
+    },
+    "system_administrator": {
+      "overview": "Overview",
+      "users": "Users",
+      "departments": "Departments",
+      "tenant": "Tenant",
+      "retention": "Retention",
+      "dr": "Disaster recovery",
+      "conformance": "Conformance",
+      "audit": "Audit archive"
+    },
+    "audit": {
+      "overview": "Overview",
+      "assessments": "Assessments",
+      "logs": "Audit logs"
+    }
   },
   "locale": { "label": "Language", "en": "English", "bn": "বাংলা" },
   "login": {
-    "title": "RiskSense AI", "otpPrompt": "Enter the 6-digit code we emailed to {email}.", "signInPrompt": "Sign in to start or review a risk assessment.", "signUpPrompt": "Create your account. You must verify your email before signing in.", "verificationEmailSent": "We sent a verification link to {email}. Open it, verify your email, then sign in. The app may ask for an email code next.", "verificationResent": "We sent a new verification link to {email}. Open it, verify your email, then sign in.", "verificationAlreadyComplete": "{email} is already verified. Sign in to continue.", "resendVerificationHint": "Already created an account but did not receive the verification link?", "resendVerification": "Resend verification email", "resendVerificationNeedsCredentials": "Enter your email and password first", "noFirebase": "Firebase is not configured — development sign-in only.", "authNotConfigured": "Authentication is not configured. Contact your administrator.", "sessionExpired": "Your session expired. Sign in again to continue.", "sessionInvalid": "Your session is no longer active. Sign in again to continue.", "unknownRole": "Your account has an unsupported role.", "yourAddress": "your address", "fullName": "Full name", "workEmail": "Work email", "password": "Password", "continue": "Continue", "createAccount": "Create account", "pleaseWait": "Please wait…", "switchToSignUp": "New here? Create an account", "switchToSignIn": "Already have an account? Sign in", "forgotPassword": "Forgot password?", "resetSent": "Password reset email sent to {email}.", "or": "or", "google": "Continue with Google", "sso": "Continue with company SSO", "ssoNeedsEmail": "Enter your work email first", "ssoNone": "No company SSO is configured for this email domain. Sign in with your password or Google.", "ssoRedirect": "Redirecting to {tenant}'s identity provider…", "code": "Verification code", "devCode": "Dev mail provider — your code is", "verify": "Verify and sign in", "verifying": "Verifying…", "resend": "Resend code", "differentAccount": "Use a different account", "devTitle": "Development sign-in (seeded accounts, no OTP)", "devUser": "Seeded dev user", "devSignIn": "Sign in (dev bypass)",
-    "devAccounts": { "requestorFree": "Requestor · FREE", "administrator": "Administrator", "systemAdministrator": "System administrator", "audit": "Audit", "requestorPaid": "Requestor · PAID" }
+    "title": "RiskSense AI",
+    "eyebrow": "Secure decision intelligence",
+    "heroTitle": "Turn uncertain incidents into auditable decisions.",
+    "heroDescription": "A guided workspace for capturing facts, applying deterministic policy, and recording accountable human decisions.",
+    "governanceNote": "The assistant structures and explains. Rules and scoring stay deterministic, and only an authorized person records the final decision.",
+    "planNote": "Free accounts are requestors. Paid workspaces add managed roles and tenant SSO; RiskSense email OTP follows role and tenant policy.",
+    "steps": { "identity": "Identity", "verify": "Verification" },
+    "assurance": {
+      "guided": "Guided, scenario-aware risk intake",
+      "deterministic": "Deterministic rules and scoring",
+      "auditable": "Tamper-evident decision history"
+    },
+    "otpPrompt": "Enter the 6-digit code we emailed to {email}.",
+    "signInPrompt": "Sign in to start or review a risk assessment.",
+    "signUpPrompt": "Create your account. You must verify your email before signing in.",
+    "verificationEmailSent": "We sent a verification link to {email}. Open it, verify your email, then sign in. The app may ask for an email code next.",
+    "verificationResent": "We sent a new verification link to {email}. Open it, verify your email, then sign in.",
+    "verificationAlreadyComplete": "{email} is already verified. Sign in to continue.",
+    "resendVerificationHint": "Already created an account but did not receive the verification link?",
+    "resendVerification": "Resend verification email",
+    "resendVerificationNeedsCredentials": "Enter your email and password first",
+    "noFirebase": "Firebase is not configured — development sign-in only.",
+    "authNotConfigured": "Authentication is not configured. Contact your administrator.",
+    "sessionExpired": "Your session expired. Sign in again to continue.",
+    "sessionInvalid": "Your session is no longer active. Sign in again to continue.",
+    "unknownRole": "Your account has an unsupported role.",
+    "yourAddress": "your address",
+    "fullName": "Full name",
+    "workEmail": "Work email",
+    "password": "Password",
+    "continue": "Continue",
+    "createAccount": "Create account",
+    "pleaseWait": "Please wait…",
+    "switchToSignUp": "New here? Create an account",
+    "switchToSignIn": "Already have an account? Sign in",
+    "forgotPassword": "Forgot password?",
+    "resetSent": "Password reset email sent to {email}.",
+    "or": "or",
+    "google": "Continue with Google",
+    "sso": "Continue with company SSO",
+    "ssoNeedsEmail": "Enter your work email first",
+    "ssoNone": "No company SSO is configured for this email domain. Sign in with your password or Google.",
+    "ssoRedirect": "Redirecting to {tenant}'s identity provider…",
+    "code": "Verification code",
+    "devCode": "Dev mail provider — your code is",
+    "verify": "Verify and sign in",
+    "verifying": "Verifying…",
+    "resend": "Resend code",
+    "differentAccount": "Use a different account",
+    "devTitle": "Development sign-in (seeded accounts, no OTP)",
+    "devUser": "Seeded dev user",
+    "devSignIn": "Sign in (dev bypass)",
+    "devAccounts": {
+      "requestorFree": "Requestor · FREE",
+      "administrator": "Administrator",
+      "systemAdministrator": "System administrator",
+      "audit": "Audit",
+      "requestorPaid": "Requestor · PAID"
+    }
   },
-  "classification": { "monitor_only": "Monitor Only", "risk": "Risk", "elevated_risk": "Elevated Risk", "issue": "Issue" },
-  "status": { "in_progress": "In progress", "intake_complete": "Ready to submit", "awaiting_decision": "Awaiting decision", "escalated": "Escalated", "closed": "Closed", "error_review": "Error review", "active": "Active", "disabled": "Disabled", "draft": "Draft", "approved": "Approved", "deactivated": "Deactivated", "retired": "Retired" },
+  "classification": {
+    "monitor_only": "Monitor Only",
+    "risk": "Risk",
+    "elevated_risk": "Elevated Risk",
+    "issue": "Issue"
+  },
+  "status": {
+    "in_progress": "In progress",
+    "intake_complete": "Ready to submit",
+    "awaiting_decision": "Awaiting decision",
+    "escalated": "Escalated",
+    "closed": "Closed",
+    "error_review": "Error review",
+    "active": "Active",
+    "disabled": "Disabled",
+    "draft": "Draft",
+    "approved": "Approved",
+    "deactivated": "Deactivated",
+    "retired": "Retired"
+  },
   "admin": {
     "overview": {
-      "title": "Administrator workspace", "description": "Maintain assessment content, review low-confidence cases, and manage controlled scoring changes.",
+      "title": "Administrator workspace",
+      "description": "Maintain assessment content, review low-confidence cases, and manage controlled scoring changes.",
       "areas": {
-        "review": { "title": "Mandatory review queue", "description": "Inspect low-confidence assessments that require administrator attention." },
-        "personas": { "title": "Personas", "description": "Maintain role profiles, vocabulary, responsibilities, and scenario defaults." },
-        "scenarios": { "title": "Scenarios", "description": "Build guided conversations, required facts, and recommended actions." },
-        "questions": { "title": "Questions", "description": "Manage reusable question wording, answer options, tags, and branches." },
-        "datasets": { "title": "Datasets", "description": "Upload, validate, approve, and activate controlled content workbooks." },
-        "rules": { "title": "Rules", "description": "Manage versioned hard rules with approval and retirement controls." },
-        "scoring": { "title": "Scoring", "description": "Configure versioned scoring matrices and test them with sample facts." }
+        "review": {
+          "title": "Mandatory review queue",
+          "description": "Inspect low-confidence assessments that require administrator attention."
+        },
+        "personas": {
+          "title": "Personas",
+          "description": "Maintain role profiles, vocabulary, responsibilities, and scenario defaults."
+        },
+        "scenarios": {
+          "title": "Scenarios",
+          "description": "Build guided conversations, required facts, and recommended actions."
+        },
+        "questions": {
+          "title": "Questions",
+          "description": "Manage reusable question wording, answer options, tags, and branches."
+        },
+        "datasets": {
+          "title": "Datasets",
+          "description": "Upload, validate, approve, and activate controlled content workbooks."
+        },
+        "rules": {
+          "title": "Rules",
+          "description": "Manage versioned hard rules with approval and retirement controls."
+        },
+        "scoring": {
+          "title": "Scoring",
+          "description": "Configure versioned scoring matrices and test them with sample facts."
+        }
       }
     },
     "personas": {
-      "title": "Personas", "description": "Versioned role profiles used to guide scenario selection and intake language.", "entity": "persona",
-      "fields": { "key": "Key", "name": "Name", "sector": "Sector", "description": "Description", "responsibilities": "Responsibilities", "activities": "Activities", "commonRisks": "Common risks", "vocabulary": "Vocabulary", "policies": "Policies", "detectHints": "Detection hints", "defaultScenarioKey": "Default scenario key" },
-      "help": { "key": "Stable lowercase identifier; it cannot change after creation.", "separator": "Enter multiple values separated by semicolons.", "detectHints": "Phrases the assistant can use when inferring this role.", "defaultScenarioKey": "Optional fallback scenario for this persona." }
+      "title": "Personas",
+      "description": "Versioned role profiles used to guide scenario selection and intake language.",
+      "entity": "persona",
+      "fields": {
+        "key": "Key",
+        "name": "Name",
+        "sector": "Sector",
+        "description": "Description",
+        "responsibilities": "Responsibilities",
+        "activities": "Activities",
+        "commonRisks": "Common risks",
+        "vocabulary": "Vocabulary",
+        "policies": "Policies",
+        "detectHints": "Detection hints",
+        "defaultScenarioKey": "Default scenario key"
+      },
+      "help": {
+        "key": "Stable lowercase identifier; it cannot change after creation.",
+        "separator": "Enter multiple values separated by semicolons.",
+        "detectHints": "Phrases the assistant can use when inferring this role.",
+        "defaultScenarioKey": "Optional fallback scenario for this persona."
+      }
     },
     "scenarios": {
-      "title": "Scenarios", "description": "Versioned assessment journeys with structured question flow and outcome guidance.", "entity": "scenario",
-      "fields": { "key": "Key", "personaKey": "Persona key", "name": "Name", "description": "Description", "businessContext": "Business context", "learningObjective": "Learning objective", "riskIndicators": "Risk indicators", "conversationFlow": "Conversation flow", "requiredFactKeys": "Required fact keys", "expectedClassification": "Expected classification", "reasoningExample": "Reasoning example", "recommendedActions": "Recommended actions" },
-      "help": { "key": "Stable lowercase identifier; it cannot change after creation.", "name": "A concise user-facing scenario name.", "conversationFlow": "Add and order question keys; optional visibility rules use already captured facts.", "requiredFactKeys": "Semicolon-separated fact keys required before submission.", "reasoningExample": "An example for content authors; it is not returned as an automated decision." },
+      "title": "Scenarios",
+      "description": "Versioned assessment journeys with structured question flow and outcome guidance.",
+      "entity": "scenario",
+      "fields": {
+        "key": "Key",
+        "personaKey": "Persona key",
+        "name": "Name",
+        "description": "Description",
+        "businessContext": "Business context",
+        "learningObjective": "Learning objective",
+        "riskIndicators": "Risk indicators",
+        "conversationFlow": "Conversation flow",
+        "requiredFactKeys": "Required fact keys",
+        "expectedClassification": "Expected classification",
+        "reasoningExample": "Reasoning example",
+        "recommendedActions": "Recommended actions"
+      },
+      "help": {
+        "key": "Stable lowercase identifier; it cannot change after creation.",
+        "name": "A concise user-facing scenario name.",
+        "conversationFlow": "Add and order question keys; optional visibility rules use already captured facts.",
+        "requiredFactKeys": "Semicolon-separated fact keys required before submission.",
+        "reasoningExample": "An example for content authors; it is not returned as an automated decision."
+      },
       "columns": { "persona": "Persona", "questions": "Questions" }
     },
     "questions": {
-      "title": "Questions", "description": "Reusable guided-intake questions with structured choices and optional follow-up branches.", "entity": "question",
-      "fields": { "key": "Key", "questionText": "Question text", "type": "Type", "options": "Options", "factKey": "Fact key", "required": "Required", "personaKeys": "Persona keys", "scenarioKeys": "Scenario keys", "sectors": "Sectors", "category": "Category", "branchTrigger": "Branch trigger", "scoringHint": "Scoring hint" },
-      "help": { "key": "Stable lowercase identifier; it cannot change after creation.", "options": "Multiple-choice questions need at least two structured choices; other types must not have choices.", "factKey": "The normalized fact this answer stores.", "scenarioKeys": "Optional semicolon-separated scenario restrictions.", "category": "Optional reporting or content-management category.", "branchTrigger": "When this answer matches, append the specified follow-up question keys.", "scoringHint": "Optional authoring hint for scoring reviewers." },
+      "title": "Questions",
+      "description": "Reusable guided-intake questions with structured choices and optional follow-up branches.",
+      "entity": "question",
+      "fields": {
+        "key": "Key",
+        "questionText": "Question text",
+        "type": "Type",
+        "options": "Options",
+        "factKey": "Fact key",
+        "required": "Required",
+        "personaKeys": "Persona keys",
+        "scenarioKeys": "Scenario keys",
+        "sectors": "Sectors",
+        "category": "Category",
+        "branchTrigger": "Branch trigger",
+        "scoringHint": "Scoring hint"
+      },
+      "help": {
+        "key": "Stable lowercase identifier; it cannot change after creation.",
+        "options": "Multiple-choice questions need at least two structured choices; other types must not have choices.",
+        "factKey": "The normalized fact this answer stores.",
+        "scenarioKeys": "Optional semicolon-separated scenario restrictions.",
+        "category": "Optional reporting or content-management category.",
+        "branchTrigger": "When this answer matches, append the specified follow-up question keys.",
+        "scoringHint": "Optional authoring hint for scoring reviewers."
+      },
       "columns": { "text": "Question", "personas": "Personas" }
     },
     "rules": {
-      "title": "Rules", "description": "Versioned hard rules that can force a classification before matrix scoring is presented.", "entity": "rule",
-      "fields": { "key": "Key", "name": "Name", "description": "Description", "trigger": "Trigger conditions", "forcedClassification": "Forced classification", "forcedAction": "Forced action", "priority": "Priority", "sectors": "Sectors" },
-      "help": { "key": "Stable lowercase identifier; it cannot change after creation.", "trigger": "Build a fact comparison or nested AND/OR condition group.", "forcedAction": "Optional action shown when the rule matches.", "priority": "Lower numbers are evaluated first.", "sectors": "Optional semicolon-separated sector restrictions." },
+      "title": "Rules",
+      "description": "Versioned hard rules that can force a classification before matrix scoring is presented.",
+      "entity": "rule",
+      "fields": {
+        "key": "Key",
+        "name": "Name",
+        "description": "Description",
+        "trigger": "Trigger conditions",
+        "forcedClassification": "Forced classification",
+        "forcedAction": "Forced action",
+        "priority": "Priority",
+        "sectors": "Sectors"
+      },
+      "help": {
+        "key": "Stable lowercase identifier; it cannot change after creation.",
+        "trigger": "Build a fact comparison or nested AND/OR condition group.",
+        "forcedAction": "Optional action shown when the rule matches.",
+        "priority": "Lower numbers are evaluated first.",
+        "sectors": "Optional semicolon-separated sector restrictions."
+      },
       "columns": { "forces": "Forces" }
     },
     "scoring": {
-      "title": "Scoring matrices", "description": "Versioned factor weights, mappings, classification thresholds, and confidence gates.", "entity": "scoring matrix",
-      "fields": { "key": "Key", "name": "Name", "sector": "Sector", "factors": "Factors", "thresholds": "Thresholds", "confidence": "Confidence gates" },
-      "help": { "key": "Stable lowercase identifier; it cannot change after creation.", "factors": "Weights must total exactly 100%. Each mapping assigns a value inside that factor's scale.", "thresholds": "Ranges must be contiguous from 0 through 100.", "confidence": "Professional-consult and mandatory-review cutoffs, from 0 to 100." },
-      "columns": { "approved": "Approved" }, "yes": "Yes",
-      "simulator": { "title": "Scoring simulator", "description": "Test the active matrix and rules with sample facts. Nothing is saved.", "facts": "Facts (JSON)", "requiredFacts": "Required fact keys (semicolon-separated)", "run": "Run simulation", "scoring": "Scoring…", "invalidFacts": "Facts must be valid JSON.", "empty": "Run a simulation to see the computed result.", "ruleDriven": "Rule-driven", "errorReview": "Error review", "computed": "Computed", "confidence": "confidence", "professionalConsult": "professional consult", "mandatoryReview": "mandatory review", "matrix": "matrix", "defaultMinimum": "default minimum", "columns": { "factor": "Factor", "value": "Value", "weight": "Weight", "points": "Points", "mapping": "Mapping" } }
+      "title": "Scoring matrices",
+      "description": "Versioned factor weights, mappings, classification thresholds, and confidence gates.",
+      "entity": "scoring matrix",
+      "fields": {
+        "key": "Key",
+        "name": "Name",
+        "sector": "Sector",
+        "factors": "Factors",
+        "thresholds": "Thresholds",
+        "confidence": "Confidence gates"
+      },
+      "help": {
+        "key": "Stable lowercase identifier; it cannot change after creation.",
+        "factors": "Weights must total exactly 100%. Each mapping assigns a value inside that factor's scale.",
+        "thresholds": "Ranges must be contiguous from 0 through 100.",
+        "confidence": "Professional-consult and mandatory-review cutoffs, from 0 to 100."
+      },
+      "columns": { "approved": "Approved" },
+      "yes": "Yes",
+      "simulator": {
+        "title": "Scoring simulator",
+        "description": "Test the active matrix and rules with sample facts. Nothing is saved.",
+        "facts": "Facts (JSON)",
+        "requiredFacts": "Required fact keys (semicolon-separated)",
+        "run": "Run simulation",
+        "scoring": "Scoring…",
+        "invalidFacts": "Facts must be valid JSON.",
+        "empty": "Run a simulation to see the computed result.",
+        "ruleDriven": "Rule-driven",
+        "errorReview": "Error review",
+        "computed": "Computed",
+        "confidence": "confidence",
+        "professionalConsult": "professional consult",
+        "mandatoryReview": "mandatory review",
+        "matrix": "matrix",
+        "defaultMinimum": "default minimum",
+        "columns": {
+          "factor": "Factor",
+          "value": "Value",
+          "weight": "Weight",
+          "points": "Points",
+          "mapping": "Mapping"
+        }
+      }
     },
     "datasets": {
-      "title": "Datasets", "description": "Upload the content workbook (personas, scenarios, questions, scoring). Rows are validated first; a second administrator approves; activation versions the content (FR-13, AI-06).", "downloadTemplate": "Download template",
-      "upload": { "title": "Upload workbook", "description": ".xlsx in the template layout. Nothing is applied until approved and activated.", "fileLabel": "Workbook file", "working": "Working…", "submit": "Upload and validate" },
-      "columns": { "file": "File", "personas": "Personas", "scenarios": "Scenarios", "questions": "Questions", "errors": "Errors", "status": "Status", "actions": "Actions" }, "empty": "No uploads yet.", "actions": { "approve": "Approve", "activate": "Activate" },
-      "validation": { "title": "Validation errors — upload #{sequence}", "description": "Fix these rows in the workbook and upload again. Nothing from this file was applied.", "columns": { "sheet": "Sheet", "row": "Row", "column": "Column", "message": "Message" } }
+      "title": "Datasets",
+      "description": "Upload the content workbook (personas, scenarios, questions, scoring). Rows are validated first; a second administrator approves; activation versions the content (FR-13, AI-06).",
+      "downloadTemplate": "Download template",
+      "upload": {
+        "title": "Upload workbook",
+        "description": ".xlsx in the template layout. Nothing is applied until approved and activated.",
+        "fileLabel": "Workbook file",
+        "working": "Working…",
+        "submit": "Upload and validate"
+      },
+      "columns": {
+        "file": "File",
+        "personas": "Personas",
+        "scenarios": "Scenarios",
+        "questions": "Questions",
+        "rows": "Content rows",
+        "errors": "Errors",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "empty": "No uploads yet.",
+      "actions": { "approve": "Approve", "activate": "Activate" },
+      "validation": {
+        "title": "Validation errors — upload #{sequence}",
+        "description": "Fix these rows in the workbook and upload again. Nothing from this file was applied.",
+        "columns": {
+          "sheet": "Sheet",
+          "row": "Row",
+          "column": "Column",
+          "message": "Message"
+        }
+      }
     },
     "reviewQueue": {
-      "title": "Mandatory review queue", "description": "Assessments flagged because their confidence fell below the matrix threshold (AI-03). Oldest first. Open one to check the extracted facts and the explanation; the requestor or their reviewer records the decision.", "tabs": { "pending": "Awaiting decision", "all": "All flagged" },
-      "columns": { "started": "Started", "requestor": "Requestor", "department": "Department", "personaScenario": "Persona / scenario", "status": "Status", "classification": "Classification", "confidence": "Confidence" }, "empty": "Nothing flagged for mandatory review.", "inspect": "Inspect", "flagged": "{count} flagged", "loading": "Loading…", "pagination": { "previous": "Previous", "page": "Page {page} of {pages}", "next": "Next" }, "dialog": { "title": "Assessment {id}", "description": "Read-only. Decisions are recorded by the requestor or the reviewer it was escalated to." }
+      "title": "Mandatory review queue",
+      "description": "Assessments flagged because their confidence fell below the matrix threshold (AI-03). Oldest first. Open one to check the extracted facts and the explanation; the requestor or their reviewer records the decision.",
+      "tabs": { "pending": "Awaiting decision", "all": "All flagged" },
+      "columns": {
+        "started": "Started",
+        "requestor": "Requestor",
+        "department": "Department",
+        "personaScenario": "Persona / scenario",
+        "status": "Status",
+        "classification": "Classification",
+        "confidence": "Confidence"
+      },
+      "empty": "Nothing flagged for mandatory review.",
+      "inspect": "Inspect",
+      "flagged": "{count} flagged",
+      "loading": "Loading…",
+      "pagination": {
+        "previous": "Previous",
+        "page": "Page {page} of {pages}",
+        "next": "Next"
+      },
+      "dialog": {
+        "title": "Assessment {id}",
+        "description": "Read-only. Decisions are recorded by the requestor or the reviewer it was escalated to."
+      }
     },
     "analytics": {
-      "title": "Analytics", "description": "Standard reports (volume, classification, override rate, assessment time) and trends. Cached for an hour; exports match the table view exactly.", "refresh": "Refresh", "loading": "Loading…", "milliseconds": "ms", "minutesShort": "{value} min",
-      "ranges": { "days30": "Last 30 days", "days90": "Last 90 days", "months12": "Last 12 months" }, "groups": { "department": "Department", "persona": "Persona", "scenario": "Scenario" }, "filters": { "period": "Period", "department": "Department", "persona": "Persona", "trendsBy": "Trends by", "allDepartments": "All departments", "allPersonas": "All personas" }, "views": { "chart": "Chart", "table": "Table", "tableView": "Table view" }, "cache": { "cached": "Cached", "computed": "Computed" },
-      "stats": { "started": "Started", "startedHint": "{closed} closed · {escalated} escalated", "scored": "Scored", "scoredHint": "{ruleDriven} rule-driven · {professionalConsult} professional consult", "overrideRate": "Override rate", "overrideHint": "{overridden} of {decided} decided", "acceptRate": "Accept rate", "acceptHint": "Accuracy proxy (BRD §12, target 75%)", "medianTime": "Median time", "timeHint": "p95 {p95} · intake {intake}" },
-      "reports": { "volume": { "title": "Assessment volume", "description": "Assessments started per period; the table splits them by current status.", "chartTitle": "Assessments started per period" }, "classification": { "title": "Classification distribution", "description": "Final class (a human override wins over the AI recommendation).", "ordered": "ordered by severity." }, "override": { "title": "Override rate", "description": "Share of decided assessments where the human changed the classification. Override reasons (FR-23) are in the table export.", "chartTitle": "Override rate per period", "series": "Override rate" }, "time": { "title": "Assessment time", "description": "Median and p95 total duration from start to close, per period.", "chartTitle": "Assessment duration per period (minutes)", "median": "Median" } },
-      "classifications": { "monitor_only": "Monitor Only", "risk": "Risk", "elevated_risk": "Elevated Risk", "issue": "Issue" }, "trends": { "title": "Trends by {group}", "description": "Assessments per period for each {group} (top 8; the rest folded into “other”). Cached for an hour (FR-27).", "chartTitle": "Assessments per period by {group}", "empty": "No assessments in this range." }
+      "title": "Analytics",
+      "description": "Standard reports (volume, classification, override rate, assessment time) and trends. Cached for an hour; exports match the table view exactly.",
+      "refresh": "Refresh",
+      "loading": "Loading…",
+      "milliseconds": "ms",
+      "minutesShort": "{value} min",
+      "ranges": {
+        "days30": "Last 30 days",
+        "days90": "Last 90 days",
+        "months12": "Last 12 months"
+      },
+      "groups": {
+        "department": "Department",
+        "persona": "Persona",
+        "scenario": "Scenario"
+      },
+      "filters": {
+        "period": "Period",
+        "department": "Department",
+        "persona": "Persona",
+        "trendsBy": "Trends by",
+        "allDepartments": "All departments",
+        "allPersonas": "All personas"
+      },
+      "views": {
+        "chart": "Chart",
+        "table": "Table",
+        "tableView": "Table view"
+      },
+      "cache": { "cached": "Cached", "computed": "Computed" },
+      "stats": {
+        "started": "Started",
+        "startedHint": "{closed} closed · {escalated} escalated",
+        "scored": "Scored",
+        "scoredHint": "{ruleDriven} rule-driven · {professionalConsult} professional consult",
+        "overrideRate": "Override rate",
+        "overrideHint": "{overridden} of {decided} decided",
+        "acceptRate": "Accept rate",
+        "acceptHint": "Accuracy proxy (BRD §12, target 75%)",
+        "medianTime": "Median time",
+        "timeHint": "p95 {p95} · intake {intake}"
+      },
+      "reports": {
+        "volume": {
+          "title": "Assessment volume",
+          "description": "Assessments started per period; the table splits them by current status.",
+          "chartTitle": "Assessments started per period"
+        },
+        "classification": {
+          "title": "Classification distribution",
+          "description": "Final class (a human override wins over the AI recommendation).",
+          "ordered": "ordered by severity."
+        },
+        "override": {
+          "title": "Override rate",
+          "description": "Share of decided assessments where the human changed the classification. Override reasons (FR-23) are in the table export.",
+          "chartTitle": "Override rate per period",
+          "series": "Override rate"
+        },
+        "time": {
+          "title": "Assessment time",
+          "description": "Median and p95 total duration from start to close, per period.",
+          "chartTitle": "Assessment duration per period (minutes)",
+          "median": "Median"
+        }
+      },
+      "classifications": {
+        "monitor_only": "Monitor Only",
+        "risk": "Risk",
+        "elevated_risk": "Elevated Risk",
+        "issue": "Issue"
+      },
+      "trends": {
+        "title": "Trends by {group}",
+        "description": "Assessments per period for each {group} (top 8; the rest folded into “other”). Cached for an hour (FR-27).",
+        "chartTitle": "Assessments per period by {group}",
+        "empty": "No assessments in this range."
+      }
     }
   },
   "contentManager": {
-    "filter": "Filter content", "filterPlaceholder": "Filter…", "version": "Version", "current": "current", "status": "Status", "loading": "Loading…", "empty": "No matching content.", "selectPlaceholder": "Select a value", "boolean": { "true": "True", "false": "False" },
-    "actions": { "label": "Actions", "new": "New", "edit": "Edit", "approve": "Approve", "activate": "Activate", "deactivate": "Deactivate", "retire": "Retire", "history": "History", "cancel": "Cancel", "saving": "Saving…", "save": "Save changes", "createDraft": "Create draft", "working": "Working…" },
-    "form": { "newTitle": "New {entity}", "editTitle": "Edit {entity} · v{version} · {status}", "help": "Complete the fields below. Required fields are marked with an asterisk.", "activeVersionHelp": "Saving an active version creates a new draft; the active version remains unchanged." },
-    "validation": { "required": "{field} is required.", "needsEntry": "{field} needs at least one entry.", "invalid": "{field} contains invalid data.", "mustBeNumber": "{field} must be a number." },
-    "confirm": { "title": { "approve": "Confirm approve", "activate": "Confirm activate", "deactivate": "Confirm deactivate", "retire": "Confirm retire" }, "description": { "approve": "Approve {item} for activation? The change reference will be recorded in the audit trail.", "activate": "Activate {item}? It will become the current version used for new assessments.", "deactivate": "Deactivate {item}? New assessments will no longer use it.", "retire": "Retire {item}? This controlled version will no longer be available for activation." }, "button": { "approve": "Confirm Approve", "activate": "Confirm Activate", "deactivate": "Confirm Deactivate", "retire": "Confirm Retire" }, "changeRef": "Change reference", "changeRefPlaceholder": "e.g. CHG-2026-1042", "changeRefHelp": "Required for approval. Use the ticket, change request, or signed review reference.", "changeRefRequired": "Enter a change reference before approving." },
-    "history": { "title": "Version history", "description": "All versions returned for this content key, newest first." }
-  },
-  "structured": {
-    "scalar": { "type": "Value type", "typeFor": "{label} value type", "text": "Text", "number": "Number", "boolean": "True / false", "null": "Empty / null", "true": "True", "false": "False" },
-    "condition": { "type": "Condition type", "factComparison": "Fact comparison", "all": "All conditions (AND)", "any": "Any condition (OR)", "remove": "Remove condition", "factKey": "Fact key", "operator": "Operator", "operatorLabel": "Condition operator", "existsHelp": "This operator checks whether the fact exists; no comparison value is needed.", "acceptedValues": "Accepted values", "comparisonValue": "Comparison value", "addComparison": "Add comparison", "addCondition": "Add condition" },
-    "list": { "empty": "No entries yet.", "remove": "Remove", "add": "Add entry" },
-    "flow": { "empty": "No questions in this flow yet.", "question": "Question {number}", "questionKey": "Question key", "moveUp": "Move up", "moveDown": "Move down", "remove": "Remove question", "visibility": "Visibility", "visibilityFor": "Question {number} visibility", "always": "Always ask", "conditional": "Only when a fact matches", "factKey": "Fact key to check", "mustEqual": "Must equal", "addQuestion": "Add question" },
-    "actions": { "classification": { "monitor_only": "Monitor Only", "risk": "Risk", "elevated_risk": "Elevated Risk", "issue": "Issue" }, "recommendation": "Decision recommendation", "nextSteps": "Next steps", "remove": "Remove {classification} action", "configure": "Configure action" },
-    "options": { "empty": "No choices yet.", "choice": "Choice {number}", "id": "Choice ID", "label": "User-facing label", "factValue": "Stored fact value", "remove": "Remove choice", "add": "Add choice" },
-    "branch": { "empty": "No branch trigger configured.", "add": "Add branch trigger", "answer": "Trigger answer", "questionKeys": "Follow-up question keys", "help": "The follow-up questions are appended when the stored answer equals the trigger answer." },
-    "factors": { "totalWeight": "Total factor weight: {total}%", "valid": "(valid)", "invalidTotal": "(must equal 100%)", "names": { "impact": "Impact", "likelihood": "Likelihood", "severity": "Severity", "controlEffectiveness": "Control effectiveness", "regulatorySensitivity": "Regulatory sensitivity", "duration": "Duration" }, "weight": "Weight (%)", "scaleMin": "Scale minimum", "scaleMax": "Scale maximum", "mappings": "Conditional mappings", "emptyMappings": "No mappings; the scale minimum is used by default.", "mapping": "Mapping {number}", "factorValue": "Factor value", "removeMapping": "Remove mapping", "addMapping": "Add mapping" },
-    "thresholds": { "classification": { "monitor_only": "Monitor Only", "risk": "Risk", "elevated_risk": "Elevated Risk", "issue": "Issue" }, "minimum": "Minimum", "maximum": "Maximum" },
-    "confidence": { "consult": "Professional consultation below (%)", "review": "Mandatory review below (%)" },
+    "filter": "Filter content",
+    "filterPlaceholder": "Filter…",
+    "version": "Version",
+    "current": "current",
+    "status": "Status",
+    "loading": "Loading…",
+    "empty": "No matching content.",
+    "selectPlaceholder": "Select a value",
+    "boolean": { "true": "True", "false": "False" },
+    "actions": {
+      "label": "Actions",
+      "new": "New",
+      "edit": "Edit",
+      "approve": "Approve",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "retire": "Retire",
+      "history": "History",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "save": "Save changes",
+      "createDraft": "Create draft",
+      "working": "Working…"
+    },
+    "form": {
+      "newTitle": "New {entity}",
+      "editTitle": "Edit {entity} · v{version} · {status}",
+      "help": "Complete the fields below. Required fields are marked with an asterisk.",
+      "activeVersionHelp": "Saving an active version creates a new draft; the active version remains unchanged."
+    },
     "validation": {
-      "keyFormat": "{path} must start with a lowercase letter and contain only lowercase letters, numbers, and underscores.", "scalar": "{path} must be text, a number, true/false, or null.", "finite": "{path} must be a finite number.",
-      "condition": { "invalid": "{path} must be a condition.", "exclusive": "{path} must be either one condition group or one fact comparison.", "groupEmpty": "{path} needs at least one child condition.", "depth": "{path} is nested too deeply.", "operator": "{path} has an invalid operator.", "inValue": "{path} needs at least one accepted value.", "comparison": "{path} needs one comparison value." },
-      "paths": { "condition": "{path}, condition {number}", "factKey": "{path} fact key", "acceptedValue": "{path}, accepted value {number}", "comparisonValue": "{path} comparison value", "question": "Question {number}", "questionKey": "{question} key", "visibilityFact": "{question} visibility fact key", "visibilityValue": "{question} visibility value", "choice": "Choice {number}", "storedValue": "{choice} stored value", "branchAnswer": "Branch trigger answer", "followUp": "Follow-up question {number}", "trigger": "Rule trigger", "mapping": "{factor} mapping {number}" },
-      "flow": { "list": "Conversation flow must be a list.", "questionInvalid": "{question} must be an object.", "duplicate": "{question} repeats question key {key}.", "visibilityInvalid": "{question} has an invalid visibility condition." },
-      "actions": { "object": "Recommended actions must be an object.", "invalid": "{classification} action must be an object.", "recommendation": "{classification} action needs a decision recommendation.", "steps": "{classification} next steps must be a list of non-empty text entries." },
-      "options": { "list": "Question options must be a list.", "mcqMinimum": "Multiple-choice questions need at least two choices.", "mcqOnly": "Only multiple-choice questions may have choices.", "invalid": "{choice} must be an object.", "id": "{choice} needs a choice ID.", "label": "{choice} needs a user-facing label." },
-      "branch": { "invalid": "Branch trigger must be an object.", "minimum": "Branch trigger needs at least one follow-up question key." },
-      "factors": { "invalid": "Factors must be an object.", "names": { "impact": "Impact", "likelihood": "Likelihood", "severity": "Severity", "controlEffectiveness": "Control effectiveness", "regulatorySensitivity": "Regulatory sensitivity", "duration": "Duration" }, "missing": "{factor} is required.", "weight": "{factor} weight must be from 0 to 100.", "scale": "{factor} needs a scale.", "scaleOrder": "{factor} scale maximum must be greater than its minimum.", "mappings": "{factor} mappings must be a list.", "mappingInvalid": "{mapping} must be an object.", "mappingValue": "{mapping} value must be from {min} to {max}.", "total": "Factor weights must total 100%; current total is {total}%." },
-      "thresholds": { "invalid": "Thresholds must be an object.", "missing": "{classification} threshold is required.", "range": "{classification} must use whole numbers from 0 to 100, with maximum not below minimum.", "start": "{classification} must start at {minimum} so ranges stay contiguous.", "end": "Issue threshold must end at 100." },
-      "confidence": { "invalid": "Confidence gates must be an object.", "consult": "Professional-consult cutoff must be from 0 to 100.", "review": "Mandatory-review cutoff must be from 0 to 100.", "order": "Mandatory-review cutoff cannot be higher than professional-consult cutoff." },
-      "classification": { "monitor_only": "Monitor Only", "risk": "Risk", "elevated_risk": "Elevated Risk", "issue": "Issue" }
+      "required": "{field} is required.",
+      "needsEntry": "{field} needs at least one entry.",
+      "invalid": "{field} contains invalid data.",
+      "mustBeNumber": "{field} must be a number."
+    },
+    "confirm": {
+      "title": {
+        "approve": "Confirm approve",
+        "activate": "Confirm activate",
+        "deactivate": "Confirm deactivate",
+        "retire": "Confirm retire"
+      },
+      "description": {
+        "approve": "Approve {item} for activation? The change reference will be recorded in the audit trail.",
+        "activate": "Activate {item}? It will become the current version used for new assessments.",
+        "deactivate": "Deactivate {item}? New assessments will no longer use it.",
+        "retire": "Retire {item}? This controlled version will no longer be available for activation."
+      },
+      "button": {
+        "approve": "Confirm Approve",
+        "activate": "Confirm Activate",
+        "deactivate": "Confirm Deactivate",
+        "retire": "Confirm Retire"
+      },
+      "changeRef": "Change reference",
+      "changeRefPlaceholder": "e.g. CHG-2026-1042",
+      "changeRefHelp": "Required for approval. Use the ticket, change request, or signed review reference.",
+      "changeRefRequired": "Enter a change reference before approving."
+    },
+    "history": {
+      "title": "Version history",
+      "description": "All versions returned for this content key, newest first."
     }
   },
-  "newAssessment": { "title": "New risk assessment", "description": "Describe what happened in your own words. The assistant will pick the matching scenario and ask guided questions. Nothing is scored until you submit.", "placeholder": "e.g. A vendor wire of $250,000 went out yesterday without the second approval…", "rolePrompt": "Your role (optional — leave empty to let the assistant infer it)", "starting": "Starting…", "start": "Start" },
+  "structured": {
+    "scalar": {
+      "type": "Value type",
+      "typeFor": "{label} value type",
+      "text": "Text",
+      "number": "Number",
+      "boolean": "True / false",
+      "null": "Empty / null",
+      "true": "True",
+      "false": "False"
+    },
+    "condition": {
+      "type": "Condition type",
+      "factComparison": "Fact comparison",
+      "all": "All conditions (AND)",
+      "any": "Any condition (OR)",
+      "remove": "Remove condition",
+      "factKey": "Fact key",
+      "operator": "Operator",
+      "operatorLabel": "Condition operator",
+      "existsHelp": "This operator checks whether the fact exists; no comparison value is needed.",
+      "acceptedValues": "Accepted values",
+      "comparisonValue": "Comparison value",
+      "addComparison": "Add comparison",
+      "addCondition": "Add condition"
+    },
+    "list": {
+      "empty": "No entries yet.",
+      "remove": "Remove",
+      "add": "Add entry"
+    },
+    "flow": {
+      "empty": "No questions in this flow yet.",
+      "question": "Question {number}",
+      "questionKey": "Question key",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "remove": "Remove question",
+      "visibility": "Visibility",
+      "visibilityFor": "Question {number} visibility",
+      "always": "Always ask",
+      "conditional": "Only when a fact matches",
+      "factKey": "Fact key to check",
+      "mustEqual": "Must equal",
+      "addQuestion": "Add question"
+    },
+    "actions": {
+      "classification": {
+        "monitor_only": "Monitor Only",
+        "risk": "Risk",
+        "elevated_risk": "Elevated Risk",
+        "issue": "Issue"
+      },
+      "recommendation": "Decision recommendation",
+      "nextSteps": "Next steps",
+      "remove": "Remove {classification} action",
+      "configure": "Configure action"
+    },
+    "options": {
+      "empty": "No choices yet.",
+      "choice": "Choice {number}",
+      "id": "Choice ID",
+      "label": "User-facing label",
+      "factValue": "Stored fact value",
+      "remove": "Remove choice",
+      "add": "Add choice"
+    },
+    "branch": {
+      "empty": "No branch trigger configured.",
+      "add": "Add branch trigger",
+      "answer": "Trigger answer",
+      "questionKeys": "Follow-up question keys",
+      "help": "The follow-up questions are appended when the stored answer equals the trigger answer."
+    },
+    "factors": {
+      "totalWeight": "Total factor weight: {total}%",
+      "valid": "(valid)",
+      "invalidTotal": "(must equal 100%)",
+      "names": {
+        "impact": "Impact",
+        "likelihood": "Likelihood",
+        "severity": "Severity",
+        "controlEffectiveness": "Control effectiveness",
+        "regulatorySensitivity": "Regulatory sensitivity",
+        "duration": "Duration"
+      },
+      "weight": "Weight (%)",
+      "scaleMin": "Scale minimum",
+      "scaleMax": "Scale maximum",
+      "mappings": "Conditional mappings",
+      "emptyMappings": "No mappings; the scale minimum is used by default.",
+      "mapping": "Mapping {number}",
+      "factorValue": "Factor value",
+      "removeMapping": "Remove mapping",
+      "addMapping": "Add mapping"
+    },
+    "thresholds": {
+      "classification": {
+        "monitor_only": "Monitor Only",
+        "risk": "Risk",
+        "elevated_risk": "Elevated Risk",
+        "issue": "Issue"
+      },
+      "minimum": "Minimum",
+      "maximum": "Maximum"
+    },
+    "confidence": {
+      "consult": "Professional consultation below (%)",
+      "review": "Mandatory review below (%)"
+    },
+    "validation": {
+      "keyFormat": "{path} must start with a lowercase letter and contain only lowercase letters, numbers, and underscores.",
+      "scalar": "{path} must be text, a number, true/false, or null.",
+      "finite": "{path} must be a finite number.",
+      "condition": {
+        "invalid": "{path} must be a condition.",
+        "exclusive": "{path} must be either one condition group or one fact comparison.",
+        "groupEmpty": "{path} needs at least one child condition.",
+        "depth": "{path} is nested too deeply.",
+        "operator": "{path} has an invalid operator.",
+        "inValue": "{path} needs at least one accepted value.",
+        "comparison": "{path} needs one comparison value."
+      },
+      "paths": {
+        "condition": "{path}, condition {number}",
+        "factKey": "{path} fact key",
+        "acceptedValue": "{path}, accepted value {number}",
+        "comparisonValue": "{path} comparison value",
+        "question": "Question {number}",
+        "questionKey": "{question} key",
+        "visibilityFact": "{question} visibility fact key",
+        "visibilityValue": "{question} visibility value",
+        "choice": "Choice {number}",
+        "storedValue": "{choice} stored value",
+        "branchAnswer": "Branch trigger answer",
+        "followUp": "Follow-up question {number}",
+        "trigger": "Rule trigger",
+        "mapping": "{factor} mapping {number}"
+      },
+      "flow": {
+        "list": "Conversation flow must be a list.",
+        "questionInvalid": "{question} must be an object.",
+        "duplicate": "{question} repeats question key {key}.",
+        "visibilityInvalid": "{question} has an invalid visibility condition."
+      },
+      "actions": {
+        "object": "Recommended actions must be an object.",
+        "invalid": "{classification} action must be an object.",
+        "recommendation": "{classification} action needs a decision recommendation.",
+        "steps": "{classification} next steps must be a list of non-empty text entries."
+      },
+      "options": {
+        "list": "Question options must be a list.",
+        "mcqMinimum": "Multiple-choice questions need at least two choices.",
+        "mcqOnly": "Only multiple-choice questions may have choices.",
+        "invalid": "{choice} must be an object.",
+        "id": "{choice} needs a choice ID.",
+        "label": "{choice} needs a user-facing label."
+      },
+      "branch": {
+        "invalid": "Branch trigger must be an object.",
+        "minimum": "Branch trigger needs at least one follow-up question key."
+      },
+      "factors": {
+        "invalid": "Factors must be an object.",
+        "names": {
+          "impact": "Impact",
+          "likelihood": "Likelihood",
+          "severity": "Severity",
+          "controlEffectiveness": "Control effectiveness",
+          "regulatorySensitivity": "Regulatory sensitivity",
+          "duration": "Duration"
+        },
+        "missing": "{factor} is required.",
+        "weight": "{factor} weight must be from 0 to 100.",
+        "scale": "{factor} needs a scale.",
+        "scaleOrder": "{factor} scale maximum must be greater than its minimum.",
+        "mappings": "{factor} mappings must be a list.",
+        "mappingInvalid": "{mapping} must be an object.",
+        "mappingValue": "{mapping} value must be from {min} to {max}.",
+        "total": "Factor weights must total 100%; current total is {total}%."
+      },
+      "thresholds": {
+        "invalid": "Thresholds must be an object.",
+        "missing": "{classification} threshold is required.",
+        "range": "{classification} must use whole numbers from 0 to 100, with maximum not below minimum.",
+        "start": "{classification} must start at {minimum} so ranges stay contiguous.",
+        "end": "Issue threshold must end at 100."
+      },
+      "confidence": {
+        "invalid": "Confidence gates must be an object.",
+        "consult": "Professional-consult cutoff must be from 0 to 100.",
+        "review": "Mandatory-review cutoff must be from 0 to 100.",
+        "order": "Mandatory-review cutoff cannot be higher than professional-consult cutoff."
+      },
+      "classification": {
+        "monitor_only": "Monitor Only",
+        "risk": "Risk",
+        "elevated_risk": "Elevated Risk",
+        "issue": "Issue"
+      }
+    }
+  },
+  "newAssessment": {
+    "eyebrow": "Guided assessment",
+    "title": "New risk assessment",
+    "description": "Describe what happened in your own words. The assistant will pick the matching scenario and ask guided questions. Nothing is scored until you submit.",
+    "assistantTitle": "Tell us what happened",
+    "assistantDescription": "Start with the details you already know. You can confirm the suggested role before guided questions begin.",
+    "privateSession": "Protected intake",
+    "incidentLabel": "Incident or decision context",
+    "placeholder": "e.g. A vendor wire of $250,000 went out yesterday without the second approval…",
+    "characterHint": "{count} characters",
+    "privacyNote": "Use the facts needed for the assessment. Sensitive text is protected by role-aware access and retention controls.",
+    "rolePrompt": "Your role (optional — leave empty to let the assistant infer it)",
+    "roleHint": "Select one now, or let the assistant suggest the best match for you to confirm.",
+    "loadingRoles": "Loading available roles…",
+    "starting": "Starting…",
+    "start": "Start"
+  },
   "chatSession": {
-    "aiSuggestedRole": "AI-suggested role", "factsCaptured": "{count} facts captured", "factsFlagged": "some flagged for review", "messageKinds": { "info": "info", "clarification": "clarification" },
-    "persona": { "confirmTitle": "Confirm your role", "confirmDescription": "Choose the role that best matches your work. This sets the questions used for the assessment.", "current": "Role: {role}", "changeHint": "You can change it before the guided questions begin.", "loading": "Loading roles…", "change": "Change role", "locked": "The AI-suggested role can no longer be changed after guided questions begin.", "startNew": "Start a new assessment", "ifIncorrect": "if it is incorrect.", "empty": "No available roles could be loaded.", "suggestedSuffix": "(suggested)" },
-    "submission": { "ready": "All required information is captured.", "assessing": "Assessing…", "submit": "Submit for assessment" }, "closed": "This assessment is closed.", "answer": { "yes": "Yes", "no": "No", "explainPlaceholder": "or explain in words…", "numberPlaceholder": "Enter a number", "textPlaceholder": "Type your answer…", "send": "Send" }
+    "eyebrow": "Guided risk conversation",
+    "title": "Assessment conversation",
+    "assessmentId": "Assessment {id}",
+    "assistantName": "RiskSense assistant",
+    "assistantDescription": "Guided, evidence-aware intake",
+    "loadingConversation": "Loading your assessment…",
+    "processing": "Structuring your answer…",
+    "scrollLatest": "Scroll to latest message",
+    "progress": "Assessment progress",
+    "capturedFacts": "Captured facts",
+    "factConfidence": "confidence",
+    "noFacts": "Captured facts will appear here as you answer.",
+    "governanceNote": "The assistant structures and explains; deterministic rules calculate the result, and a human records the final decision.",
+    "stages": {
+      "loading": "Loading",
+      "persona": "Confirm role",
+      "describe": "Describe scenario",
+      "questions": "Guided questions",
+      "done": "Ready to submit",
+      "review": "Review & submit",
+      "decision": "Decision"
+    },
+    "aiSuggestedRole": "AI-suggested role",
+    "factsCaptured": "{count} facts captured",
+    "factsFlagged": "some flagged for review",
+    "messageKinds": { "info": "info", "clarification": "clarification" },
+    "persona": {
+      "confirmTitle": "Confirm your role",
+      "confirmDescription": "Choose the role that best matches your work. This sets the questions used for the assessment.",
+      "current": "Role: {role}",
+      "changeHint": "You can change it before the guided questions begin.",
+      "loading": "Loading roles…",
+      "change": "Change role",
+      "locked": "The AI-suggested role can no longer be changed after guided questions begin.",
+      "startNew": "Start a new assessment",
+      "ifIncorrect": "if it is incorrect.",
+      "empty": "No available roles could be loaded.",
+      "suggestedSuffix": "(suggested)"
+    },
+    "submission": {
+      "ready": "All required information is captured.",
+      "assessing": "Assessing…",
+      "submit": "Submit for assessment"
+    },
+    "closed": "This assessment is closed.",
+    "answer": {
+      "yes": "Yes",
+      "no": "No",
+      "explainPlaceholder": "or explain in words…",
+      "numberPlaceholder": "Enter a number",
+      "textPlaceholder": "Type your answer…",
+      "send": "Send"
+    }
   },
   "resultCard": {
-    "ruleDriven": "Rule-driven: {rule}", "errorReview": "Error review — score 0", "confidence": "Confidence {value}%", "professionalConsult": "Professional consult recommended", "recommendedAction": "Recommended action", "nextSteps": "Next steps", "computedWithoutRule": "Without the rule, the computed classification would have been {classification}.", "factors": { "title": "Factor breakdown", "value": "value {value}", "points": "{value} pts" },
-    "decision": { "label": "Decision", "types": { "accept": "accept", "override": "override", "escalate": "escalate" }, "status": "status {status}", "notice": "The AI does not decide. Record your decision to close this assessment (FR-22)." },
-    "escalated": { "label": "Escalated", "toReviewer": "Escalated to {name}", "stillOpen": "Still open until a reviewer accepts or overrides.", "reasonPlaceholder": "Why are you escalating? (optional)" }, "actions": { "accept": "Accept recommendation", "override": "Override…", "escalate": "Escalate…", "recordOverride": "Record override", "escalateSubmit": "Escalate" }, "override": { "classificationPlaceholder": "New classification", "reasonPlaceholder": "Reason (at least 25 characters, kept for reporting — FR-23)" }, "routing": { "noSpecificReviewer": "No specific reviewer", "crossDepartmentSuffix": "(cross-department)", "placeholder": "Route to a reviewer", "unavailable": "No reviewer routing on this plan — the escalation stays open for you or your department to decide." }
+    "ruleDriven": "Rule-driven: {rule}",
+    "errorReview": "Error review — score 0",
+    "confidence": "Confidence {value}%",
+    "professionalConsult": "Professional consult recommended",
+    "recommendedAction": "Recommended action",
+    "nextSteps": "Next steps",
+    "computedWithoutRule": "Without the rule, the computed classification would have been {classification}.",
+    "factors": {
+      "title": "Factor breakdown",
+      "value": "value {value}",
+      "points": "{value} pts"
+    },
+    "decision": {
+      "label": "Decision",
+      "types": {
+        "accept": "accept",
+        "override": "override",
+        "escalate": "escalate"
+      },
+      "status": "status {status}",
+      "notice": "The AI does not decide. Record your decision to close this assessment (FR-22)."
+    },
+    "escalated": {
+      "label": "Escalated",
+      "toReviewer": "Escalated to {name}",
+      "stillOpen": "Still open until a reviewer accepts or overrides.",
+      "reasonPlaceholder": "Why are you escalating? (optional)"
+    },
+    "actions": {
+      "accept": "Accept recommendation",
+      "override": "Override…",
+      "escalate": "Escalate…",
+      "recordOverride": "Record override",
+      "escalateSubmit": "Escalate"
+    },
+    "override": {
+      "classificationPlaceholder": "New classification",
+      "reasonPlaceholder": "Reason (at least 25 characters, kept for reporting — FR-23)"
+    },
+    "routing": {
+      "noSpecificReviewer": "No specific reviewer",
+      "crossDepartmentSuffix": "(cross-department)",
+      "placeholder": "Route to a reviewer",
+      "unavailable": "No reviewer routing on this plan — the escalation stays open for you or your department to decide."
+    }
   },
   "reviewDashboard": {
-    "title": "Assessments", "descriptionReviewer": "Your assessments and those of your department. Pending decisions come first — open one to review the recommendation and record your decision.", "descriptionRequestor": "Your assessments. Pending decisions come first — open one to review the recommendation and record your decision.", "newAssessment": "New assessment", "statusTabsLabel": "Status", "tabs": { "all": "All", "pending": "Pending", "awaiting_decision": "Awaiting decision", "escalated": "Escalated", "error_review": "Error review", "in_progress": "In progress", "closed": "Closed" },
-    "filters": { "persona": "Persona", "department": "Department", "classification": "Classification", "from": "From", "to": "To", "sort": "Sort", "any": "Any", "anyPersona": "Any persona", "anyDepartment": "Any department", "anyClassification": "Any classification", "clear": "Clear filters" }, "sort": { "pending_first": "Pending first", "newest": "Newest first", "oldest": "Oldest first" }, "columns": { "started": "Started", "requestor": "Requestor", "department": "Department", "personaScenario": "Persona / scenario", "status": "Status", "classification": "Classification", "confidence": "Confidence", "recommendedAction": "Recommended action", "decision": "Decision" }, "empty": { "filtered": "No assessments match these filters.", "default": "No assessments yet." }, "ruleDriven": "rule-driven", "ruleDrivenTitle": "A hard rule set this classification (FR-17)", "professionalConsultTitle": "Below 60 %: Professional Consult recommended (FR-20)", "routedTo": "to {name}", "actions": { "review": "Review", "open": "Open" }, "loading": "Loading…", "pagination": { "zero": "0 assessments", "range": "{first}–{last} of {total}", "perPage": "Per page", "previous": "Previous", "page": "Page {page} of {pages}", "next": "Next" }
+    "title": "Assessments",
+    "descriptionReviewer": "Your assessments and those of your department. Pending decisions come first — open one to review the recommendation and record your decision.",
+    "descriptionRequestor": "Your assessments. Pending decisions come first — open one to review the recommendation and record your decision.",
+    "newAssessment": "New assessment",
+    "statusTabsLabel": "Status",
+    "tabs": {
+      "all": "All",
+      "pending": "Pending",
+      "awaiting_decision": "Awaiting decision",
+      "escalated": "Escalated",
+      "error_review": "Error review",
+      "in_progress": "In progress",
+      "closed": "Closed"
+    },
+    "filters": {
+      "title": "Filter assessments",
+      "persona": "Persona",
+      "scenario": "Scenario",
+      "department": "Department",
+      "classification": "Classification",
+      "mandatoryReview": "Mandatory review",
+      "from": "From",
+      "to": "To",
+      "sort": "Sort",
+      "any": "Any",
+      "anyPersona": "Any persona",
+      "anyScenario": "Any scenario",
+      "anyDepartment": "Any department",
+      "anyClassification": "Any classification",
+      "anyReview": "Any review status",
+      "reviewRequired": "Review required",
+      "reviewNotRequired": "Review not required",
+      "clear": "Clear filters"
+    },
+    "sort": {
+      "pending_first": "Pending first",
+      "newest": "Newest first",
+      "oldest": "Oldest first"
+    },
+    "columns": {
+      "started": "Started",
+      "daysOpen": "Days open",
+      "requestor": "Requestor",
+      "department": "Department",
+      "personaScenario": "Persona / scenario",
+      "status": "Status",
+      "classification": "Classification",
+      "confidence": "Confidence",
+      "recommendedAction": "Recommended action",
+      "decision": "Decision"
+    },
+    "empty": {
+      "filtered": "No assessments match these filters.",
+      "default": "No assessments yet."
+    },
+    "ruleDriven": "rule-driven",
+    "ruleDrivenTitle": "A hard rule set this classification (FR-17)",
+    "professionalConsultTitle": "Below 60 %: Professional Consult recommended (FR-20)",
+    "routedTo": "to {name}",
+    "actions": { "review": "Review", "open": "Open" },
+    "loading": "Loading…",
+    "pagination": {
+      "zero": "0 assessments",
+      "range": "{first}–{last} of {total}",
+      "perPage": "Per page",
+      "previous": "Previous",
+      "page": "Page {page} of {pages}",
+      "next": "Next"
+    }
   },
   "audit": {
-    "assessments": { "title": "Assessments (audit view)", "description": "Every assessment in the tenant, newest first. “Stored” shows the record as saved; “Reconstruct” rebuilds it from the hash-chained audit log alone (FR-26) and flags any drift (FR-30).", "columns": { "started": "Started", "requestor": "Requestor", "department": "Department", "personaScenario": "Persona / scenario", "status": "Status", "classification": "Classification", "confidence": "Confidence", "decision": "Decision" }, "empty": "No assessments in this tenant.", "actions": { "stored": "Stored", "reconstruct": "Reconstruct" }, "count": "{count} assessments", "loading": "Loading…", "pagination": { "previous": "Previous", "page": "Page {page} of {pages}", "next": "Next" }, "decisionTypes": { "accept": "accept", "override": "override", "escalate": "escalate" }, "dialog": { "reconstructedTitle": "Reconstructed from the audit log", "storedTitle": "Stored record", "reconstructedDescription": "Nothing here is read from the assessment document; only the audit entries (FR-26).", "storedDescription": "The assessment as saved in the database." } },
-    "logs": { "title": "Audit log", "description": "Append-only and hash-chained (SEC-07). No role can edit or delete entries; “Verify chain” recomputes every hash.", "allCategories": "All categories", "verify": "Verify chain", "verification": { "intact": "Chain intact · {count} entries", "broken": "Broken at seq {sequence} ({count} ok before it)" }, "filters": { "category": "Category", "entity": "Entity id (assessment, user, dataset…)", "entityPlaceholder": "24-character id" }, "columns": { "sequence": "Seq", "when": "When", "category": "Category", "action": "Action", "actor": "Actor", "entity": "Entity", "hash": "Hash" }, "empty": "No entries.", "previousHash": "prev {hash}", "newest": "Newest", "older": "Older" }
+    "overview": {
+      "eyebrow": "Read-only assurance",
+      "title": "Audit evidence overview",
+      "description": "Monitor assessment lifecycle evidence and recent tenant activity without changing source records.",
+      "actions": {
+        "logs": "Open audit log",
+        "assessments": "Review assessments"
+      },
+      "metrics": {
+        "label": "Audit evidence summary",
+        "total": "Total assessments",
+        "open": "Open assessments",
+        "closed": "Closed assessments",
+        "attention": "Needs review"
+      },
+      "recentAssessments": {
+        "title": "Recent assessments",
+        "description": "Latest tenant records available for stored-record review and reconstruction.",
+        "empty": "No assessments are available.",
+        "viewAll": "View all assessments"
+      },
+      "unknownRequestor": "Unknown requestor",
+      "recentEvents": {
+        "title": "Recent audit events",
+        "description": "Newest append-only events across the tenant.",
+        "empty": "No audit events are available.",
+        "viewAll": "View full audit log"
+      },
+      "loading": "Loading audit evidence…"
+    },
+    "assessments": {
+      "eyebrow": "Assessment evidence",
+      "title": "Assessments (audit view)",
+      "description": "Every assessment in the tenant, newest first. “Stored” shows the record as saved; “Reconstruct” rebuilds it from the hash-chained audit log alone (FR-26) and flags any drift (FR-30).",
+      "summary": { "pending": "open or pending" },
+      "columns": {
+        "started": "Started",
+        "requestor": "Requestor",
+        "department": "Department",
+        "personaScenario": "Persona / scenario",
+        "status": "Status",
+        "classification": "Classification",
+        "confidence": "Confidence",
+        "decision": "Decision"
+      },
+      "empty": "No assessments in this tenant.",
+      "actions": { "stored": "Stored", "reconstruct": "Reconstruct" },
+      "count": "{count} assessments",
+      "loading": "Loading…",
+      "pagination": {
+        "previous": "Previous",
+        "page": "Page {page} of {pages}",
+        "next": "Next"
+      },
+      "decisionTypes": {
+        "accept": "accept",
+        "override": "override",
+        "escalate": "escalate"
+      },
+      "dialog": {
+        "reconstructedTitle": "Reconstructed from the audit log",
+        "storedTitle": "Stored record",
+        "reconstructedDescription": "Nothing here is read from the assessment document; only the audit entries (FR-26).",
+        "storedDescription": "The assessment as saved in the database."
+      }
+    },
+    "logs": {
+      "eyebrow": "Tamper-evident ledger",
+      "title": "Audit log",
+      "description": "Append-only and hash-chained (SEC-07). No role can edit or delete entries; “Verify chain” recomputes every hash.",
+      "loading": "Loading audit entries…",
+      "allCategories": "All categories",
+      "verify": "Verify chain",
+      "verification": {
+        "intact": "Chain intact · {count} entries",
+        "broken": "Broken at seq {sequence} ({count} ok before it)"
+      },
+      "filters": {
+        "category": "Category",
+        "entity": "Entity id (assessment, user, dataset…)",
+        "entityPlaceholder": "24-character id"
+      },
+      "columns": {
+        "sequence": "Seq",
+        "when": "When",
+        "category": "Category",
+        "action": "Action",
+        "actor": "Actor",
+        "entity": "Entity",
+        "size": "Event size",
+        "sizeHint": "Approximate UTF-8 JSON size of the visible audit entry",
+        "hash": "Hash"
+      },
+      "details": {
+        "show": "Show payload for {action}",
+        "hide": "Hide payload for {action}"
+      },
+      "visibleCount": "{count} entries on this page",
+      "empty": "No entries.",
+      "previousHash": "prev {hash}",
+      "newest": "Newest",
+      "older": "Older"
+    }
   },
-  "assessmentDetail": { "loading": "Loading…", "masked": "Free text is masked ({plan}, SEC-05). Unmasking is recorded in the audit log with your name.", "unmask": "Unmask (logged)", "started": "started {date}", "result": { "ruleDriven": "Rule-driven: {rule}", "confidence": "Confidence {value}%", "mandatoryReview": "Mandatory review", "professionalConsult": "Professional consult", "recommendedAction": "Recommended action", "keyDrivers": "Key drivers", "empty": "No result yet — intake in progress." }, "facts": { "title": "Facts ({count})", "lowConfidence": ", {count} low-confidence" }, "decision": { "label": "Decision", "types": { "accept": "accept", "override": "override", "escalate": "escalate" } }, "transcript": "Transcript ({count})" },
-  "reconstruction": { "loading": "Rebuilding from the audit log…", "integrity": { "verified": "Hash chain entries verified ({count})", "tampered": "Tampered entries: seq {sequences}" }, "completeness": { "full": "Fully reconstructible", "partial": "Partial ({plan} plan logs the skeleton only)", "none": "No audit entries" }, "conformance": { "matches": "Matches the stored record", "differences": "{count} difference(s) vs stored record" }, "missing": "Not logged on this plan: {fields}.", "masked": "User-entered text and payload details are masked ({plan}, SEC-05).", "unmask": "Unmask (logged)", "difference": { "title": "Differences (FR-30)", "field": "Field", "fromAudit": "From audit log", "stored": "Stored" }, "state": { "personaScenario": "Persona / scenario", "status": "Status from log", "scoreClass": "Score / class", "ruleDrivenSuffix": "(rule-driven)", "confidence": "Confidence", "pinnedVersions": "Pinned versions" }, "facts": "Facts from the log ({count})", "timeline": "Timeline ({count} entries)" },
+  "assessmentDetail": {
+    "loading": "Loading…",
+    "masked": "Free text is masked ({plan}, SEC-05). Unmasking is recorded in the audit log with your name.",
+    "unmask": "Unmask (logged)",
+    "started": "started {date}",
+    "result": {
+      "ruleDriven": "Rule-driven: {rule}",
+      "confidence": "Confidence {value}%",
+      "mandatoryReview": "Mandatory review",
+      "professionalConsult": "Professional consult",
+      "recommendedAction": "Recommended action",
+      "keyDrivers": "Key drivers",
+      "empty": "No result yet — intake in progress."
+    },
+    "facts": {
+      "title": "Facts ({count})",
+      "lowConfidence": ", {count} low-confidence"
+    },
+    "decision": {
+      "label": "Decision",
+      "types": {
+        "accept": "accept",
+        "override": "override",
+        "escalate": "escalate"
+      }
+    },
+    "transcript": "Transcript ({count})"
+  },
+  "reconstruction": {
+    "loading": "Rebuilding from the audit log…",
+    "integrity": {
+      "verified": "Hash chain entries verified ({count})",
+      "tampered": "Tampered entries: seq {sequences}"
+    },
+    "completeness": {
+      "full": "Fully reconstructible",
+      "partial": "Partial ({plan} plan logs the skeleton only)",
+      "none": "No audit entries"
+    },
+    "conformance": {
+      "matches": "Matches the stored record",
+      "differences": "{count} difference(s) vs stored record"
+    },
+    "missing": "Not logged on this plan: {fields}.",
+    "masked": "User-entered text and payload details are masked ({plan}, SEC-05).",
+    "unmask": "Unmask (logged)",
+    "difference": {
+      "title": "Differences (FR-30)",
+      "field": "Field",
+      "fromAudit": "From audit log",
+      "stored": "Stored"
+    },
+    "state": {
+      "personaScenario": "Persona / scenario",
+      "status": "Status from log",
+      "scoreClass": "Score / class",
+      "ruleDrivenSuffix": "(rule-driven)",
+      "confidence": "Confidence",
+      "pinnedVersions": "Pinned versions"
+    },
+    "facts": "Facts from the log ({count})",
+    "timeline": "Timeline ({count} entries)"
+  },
   "system": {
-    "overview": { "title": "System administration", "description": "Manage tenant access, operational policy, recovery evidence, and stored-record integrity.", "areas": { "users": { "title": "Users", "description": "Provision accounts, assign one role, and control department access." }, "departments": { "title": "Departments", "description": "Maintain departments and map the active personas available to each team." }, "tenant": { "title": "Tenant settings", "description": "Configure plan features, SSO, session limits, and retention windows." }, "retention": { "title": "Retention", "description": "Preview or enforce closed-record retention and review run history." }, "dr": { "title": "Disaster recovery", "description": "Record external backup and restore-drill evidence against recovery targets." }, "conformance": { "title": "Conformance", "description": "Scan stored assessments for schema drift and critical invariants." } } },
-    "users": { "title": "Users", "description": "Pre-provision tenant accounts, assign exactly one role, and control requestor department scope.", "provision": "Provision user", "retry": "Retry", "loading": "Loading users…", "empty": "No tenant users yet. Provision the first account.", "columns": { "user": "User", "role": "Role", "departments": "Departments", "mfa": "MFA", "status": "Status", "lastLogin": "Last login", "action": "Action" }, "scope": { "notApplicable": "Not applicable", "allDepartments": "All departments", "ownOnly": "Own assessments only" }, "mfa": { "enrolled": "Enrolled", "pending": "Pending" }, "never": "Never", "edit": "Edit", "dialog": { "editTitle": "Edit {name}", "createTitle": "Provision user", "editDescription": "Changes are audited. A role or status change terminates this user’s active sessions immediately.", "createDescription": "This creates a tenant record. The identity is linked only after the person completes a verified sign-in." }, "fields": { "name": "Name", "email": "Work email", "role": "Role", "status": "Account status" }, "departmentScope": { "title": "Department scope", "empty": "No departments are configured. The requestor will see only their own assessments.", "crossDepartment": "Allow review across every tenant department" }, "validation": { "name": "Name must contain at least 2 characters.", "email": "A valid work email is required.", "noChanges": "No changes to save." }, "confirmation": { "title": "Confirm access change", "description": "The new role or account status takes effect now and all active sessions for this user will be terminated.", "submit": "Confirm and save" }, "cancel": "Cancel", "saving": "Saving…", "saveChanges": "Save changes" },
-    "departments": { "title": "Departments", "description": "Map active personas to each team. These mappings constrain persona selection when the tenant feature is enabled.", "newDepartment": "New department", "retry": "Retry", "saved": "{name} mapping saved. New assessments use the updated active-persona scope.", "columns": { "name": "Name", "personas": "Mapped personas", "action": "Action" }, "loading": "Loading departments…", "empty": "No departments yet. Create one to define requestor scope.", "noRestriction": "No persona restriction", "unavailablePersona": "Unavailable persona · {id}", "editMapping": "Edit mapping", "dialog": { "editTitle": "Edit {name}", "createTitle": "New department", "description": "Only active personas from the tenant’s effective content catalog can be mapped. Changes affect new assessments, not pinned history." }, "fields": { "name": "Department name", "availablePersonas": "Available personas" }, "personasEmpty": "No active personas are available. The department can still be saved without a restriction.", "sourceContent": "{source} content", "allPersonasHint": "Leave every box clear to allow all active personas.", "validation": { "name": "Department name must contain at least 2 characters.", "noChanges": "No changes to save." }, "cancel": "Cancel", "saving": "Saving…", "saveMapping": "Save mapping", "createDepartment": "Create department" },
-    "tenant": { "title": "Tenant settings", "loading": "Loading…", "saved": "Saved {time} (audited as config/tenant.updated)", "plan": { "title": "Plan & features" }, "features": { "sso": { "label": "Single sign-on", "hint": "FR-03 — needs a provider id and an email domain below" }, "reviewDashboard": { "label": "Review dashboard", "hint": "FR-21 — department-scoped review and escalation routing" }, "reports": { "label": "Reports & analytics", "hint": "FR-26..28 — standard reports, trends, CSV/PDF export" }, "fullAudit": { "label": "Full audit payloads", "hint": "FR-26 — lifecycle fully reconstructible from the log" }, "departmentMapping": { "label": "Department ↔ persona mapping", "hint": "FR-10" }, "blockConcurrentLogin": { "label": "Block concurrent logins", "hint": "FR-04 — reject a second session instead of superseding" } }, "sso": { "title": "Single sign-on (FR-03)", "description": "OIDC/OAuth providers work on the Firebase free tier (microsoft.com, google.com, and oidc.ID configured in Firebase Authentication → Sign-in method). SAML (saml.ID) needs Identity Platform — see DeploymentGuide. Users on the domain are provisioned into this tenant on first login; SSO logins skip the email OTP for non-privileged roles.", "providerId": "Firebase provider id", "domain": "Email domain", "requireOtp": "Require the email OTP on every non-SSO login (FR-01). Administrators always get it (SEC-03)." }, "policy": { "title": "Sessions (SEC-02) & retention (SEC-06)", "idleTimeout": "Idle timeout (minutes, 5–30)", "maxSessions": "Max concurrent sessions (1–10)", "fields": { "assessmentDays": "Assessments (days)", "auditDays": "Audit log (days)", "evidenceDays": "Evidence (days)", "datasetHistoryDays": "Dataset history (days)" }, "description": "FREE: after the assessment window, records are reduced to login id, risk type, date/time and duration. PAID: archived. Enforcement runs nightly and is audited." }, "saving": "Saving…", "save": "Save changes", "discard": "Discard" },
-    "retention": { "title": "Retention", "description": "Records older than the tenant's assessment window are flagged, then after a 7-day grace period FREE records are reduced to login id, risk type, date/time and duration, and PAID records are archived to cold storage before reduction. The audit log is never deleted (SEC-07). Every action is audited as retention.*. The nightly job runs at 02:00 UTC when JOBS_ENABLED=true.", "running": "Running…", "dryRun": "Dry run (report only)", "runNow": "Run now", "confirmation": "This reduces / archives eligible records. Continue?", "confirmRun": "Yes, run retention", "cancel": "Cancel", "result": { "dryRun": "Dry run", "run": "Run", "policy": "window {window} days · grace {grace} days", "flagged": "flagged {count}", "reduced": "reduced {count}", "archived": "archived {count}", "messagesRemoved": "messages removed {count}", "auditPastWindow": "audit entries past window {count}", "duration": "{value} ms" }, "columns": { "when": "When", "trigger": "Trigger", "mode": "Mode", "flagged": "Flagged", "reduced": "Reduced", "archived": "Archived", "auditPastWindow": "Audit past window", "error": "Error" }, "empty": "No runs yet.", "modes": { "dry": "dry run", "enforced": "enforced" } },
-    "dr": { "title": "Disaster recovery", "description": "Track evidence against the 24-hour backup, 1-hour RPO, 4-hour RTO, and annual restore-drill targets.", "loading": "Loading recovery evidence…", "loadFailed": "Recovery evidence could not be loaded.", "retry": "Retry", "saved": "Recovery evidence saved and recorded in the audit log.", "notRecorded": "Not recorded", "readiness": { "ready": "Evidence ready", "attention": "Attention required" }, "operatorNotice": { "title": "Operator-recorded evidence", "description": "this screen does not query or verify the backup provider. Confirm timestamps and the evidence link against the external system before saving." }, "checks": { "backup": "Backup within {hours} hours", "drill": "Passed drill within {days} days", "evidence": "External evidence reference recorded", "pass": "Pass", "needsEvidence": "Needs evidence" }, "current": { "title": "Current evidence", "backup": "Last backup: {date}", "drill": "last restore drill: {date}", "updated": "register updated {date}", "openEvidence": "Open external evidence", "unsafeLink": "The recorded evidence reference is not a safe HTTP(S) link.", "noLink": "No external evidence link recorded." }, "form": { "title": "Record verified evidence", "description": "Every save is attributed to the current system administrator and audited.", "provider": "Backup provider", "evidenceUrl": "Evidence URL", "latestBackup": "Latest successful backup", "latestDrill": "Latest restore drill", "outcome": "Restore-drill outcome", "backupsEnabled": "Backups are enabled at the external provider", "attestation": "I checked the external provider and confirm that these timestamps, outcome, and evidence link are accurate." }, "outcomes": { "passed": "Passed", "failed": "Failed" }, "validation": { "provider": "Provider must contain at least 2 characters and cannot be cleared after it is recorded.", "backupTimestamp": "A recorded backup timestamp cannot be cleared; replace it with the latest verified timestamp.", "drillTimestamp": "A recorded drill timestamp cannot be cleared; replace it with corrected evidence.", "outcome": "Choose a passed or failed outcome for the recorded restore drill.", "evidenceUrl": "Evidence URL must use http or https.", "attestation": "Confirm the external evidence attestation before saving." }, "saving": "Saving…", "save": "Save attested evidence", "discard": "Discard" },
-    "conformance": { "title": "Stored-record conformance", "description": "Detect assessment schema drift, closed records without a human decision, and in-progress records with an invalid computed result.", "runScan": "Run scan", "confirmation": "Scan every assessment in this tenant and persist flags?", "scanning": "Scanning…", "confirmScan": "Confirm scan", "cancel": "Cancel", "retry": "Retry", "summary": { "scanned": "Records scanned", "valid": "Valid", "flagged": "Flagged this run", "resolved": "Resolved this run", "empty": "No conformance scan has been recorded yet." }, "flags": { "title": "Assessment flags", "description": "Flags remain as evidence after repair; the default view shows unresolved records only.", "includeResolved": "Include resolved flags", "loading": "Loading conformance evidence…", "emptyAll": "No conformance flags have been recorded.", "emptyOpen": "No unresolved conformance flags.", "resolved": "resolved", "open": "open", "columns": { "assessment": "Assessment", "issues": "Issues", "firstDetected": "First detected", "lastDetected": "Last detected", "status": "Status" } }, "runs": { "title": "Recent scans", "description": "Manual, scheduler, and command-line scans share the same persistent history.", "empty": "No runs yet.", "duration": "{value} ms", "columns": { "when": "When", "trigger": "Trigger", "scanned": "Scanned", "valid": "Valid", "flagged": "Flagged", "resolved": "Resolved", "duration": "Duration" } } }
+    "overview": {
+      "eyebrow": "Operational control plane",
+      "title": "System administration",
+      "description": "Manage tenant access, operational policy, recovery evidence, and stored-record integrity.",
+      "areas": {
+        "users": {
+          "title": "Users",
+          "description": "Provision accounts, assign one role, and control department access."
+        },
+        "departments": {
+          "title": "Departments",
+          "description": "Maintain departments and map the active personas available to each team."
+        },
+        "tenant": {
+          "title": "Tenant settings",
+          "description": "Configure plan features, SSO, session limits, and retention windows."
+        },
+        "retention": {
+          "title": "Retention",
+          "description": "Preview or enforce closed-record retention and review run history."
+        },
+        "dr": {
+          "title": "Disaster recovery",
+          "description": "Record external backup and restore-drill evidence against recovery targets."
+        },
+        "conformance": {
+          "title": "Conformance",
+          "description": "Scan stored assessments for schema drift and critical invariants."
+        },
+        "audit": {
+          "title": "Audit archive",
+          "description": "Create bounded immutable exports and review cold-storage manifests."
+        }
+      }
+    },
+    "auditArchive": {
+      "eyebrow": "Cold-storage handoff",
+      "title": "Audit archive",
+      "description": "Create a bounded JSON export and keep an immutable SHA-256 manifest. Exporting never updates or deletes source audit entries.",
+      "enabled": "Full audit enabled",
+      "featureRequired": "Full audit required",
+      "invalidResponse": "The export was created, but its manifest response was not valid.",
+      "metrics": {
+        "exports": "Immutable manifests",
+        "latestRecords": "Records in latest export",
+        "integrity": "Integrity control",
+        "immutable": "Append-only evidence"
+      },
+      "disabled": {
+        "title": "Enable full audit to create archives",
+        "description": "Audit archive exports and manifests are available only when the tenant's Full audit feature is enabled."
+      },
+      "form": {
+        "title": "Create bounded export",
+        "description": "Choose a UTC-backed date range containing 1–10,000 events. The downloaded file contains clear-text records for authorized cold storage.",
+        "from": "From",
+        "to": "To",
+        "maxRecords": "Maximum records",
+        "noticeTitle": "External storage required.",
+        "notice": "Transfer the downloaded JSON to the tenant's approved cold storage. RiskSense AI records the manifest but does not store the export externally.",
+        "created": "Export created and downloaded · {count} records",
+        "exporting": "Creating export…",
+        "confirm": "Confirm and download",
+        "export": "Create export",
+        "cancel": "Cancel"
+      },
+      "history": {
+        "title": "Immutable manifest history",
+        "description": "Each row proves which sequence range was exported and the SHA-256 hash of its exact record set.",
+        "columns": {
+          "created": "Created",
+          "range": "Date range",
+          "records": "Records",
+          "sequence": "Sequence",
+          "hash": "Export hash"
+        },
+        "empty": "No archive manifests yet."
+      }
+    },
+    "users": {
+      "eyebrow": "Identity & access",
+      "title": "Users",
+      "description": "Pre-provision tenant accounts, assign exactly one role, and control requestor department scope.",
+      "summary": {
+        "total": "Tenant accounts",
+        "active": "Active accounts",
+        "mfaPending": "MFA pending"
+      },
+      "accessPolicy": {
+        "title": "Account, role & MFA policy",
+        "free": "FREE public access is requestor-only. Each person uses one account with exactly one role.",
+        "paid": "PAID workspaces support managed requestor, administrator, system administrator, and audit roles. Each account has exactly one role.",
+        "default": "Each person uses one account with exactly one role.",
+        "paidMfa": "Administrators and system administrators always complete the RiskSense email OTP. PAID requestors sign in through tenant SSO and may satisfy MFA at the identity provider; audit users follow tenant OTP policy.",
+        "freeMfa": "FREE requestor OTP follows tenant policy. Administrator and system-administrator accounts always complete the backend email OTP."
+      },
+      "provision": "Provision user",
+      "retry": "Retry",
+      "loading": "Loading users…",
+      "empty": "No tenant users yet. Provision the first account.",
+      "columns": {
+        "user": "User",
+        "role": "Role",
+        "departments": "Departments",
+        "mfa": "MFA",
+        "status": "Status",
+        "lastLogin": "Last login",
+        "action": "Action"
+      },
+      "scope": {
+        "notApplicable": "Not applicable",
+        "allDepartments": "All departments",
+        "ownOnly": "Own assessments only"
+      },
+      "mfa": { "enrolled": "Enrolled", "pending": "Pending", "notRequired": "Not required" },
+      "never": "Never",
+      "edit": "Edit",
+      "dialog": {
+        "editTitle": "Edit {name}",
+        "createTitle": "Provision user",
+        "editDescription": "Changes are audited. A role or status change terminates this user’s active sessions immediately.",
+        "createDescription": "This creates a tenant record. The identity is linked only after the person completes a verified sign-in."
+      },
+      "fields": {
+        "name": "Name",
+        "email": "Work email",
+        "role": "Role",
+        "status": "Account status"
+      },
+      "departmentScope": {
+        "title": "Department scope",
+        "empty": "No departments are configured. The requestor will see only their own assessments.",
+        "crossDepartment": "Allow review across every tenant department"
+      },
+      "validation": {
+        "name": "Name must contain at least 2 characters.",
+        "email": "A valid work email is required.",
+        "noChanges": "No changes to save."
+      },
+      "confirmation": {
+        "title": "Confirm access change",
+        "description": "The new role or account status takes effect now and all active sessions for this user will be terminated.",
+        "submit": "Confirm and save"
+      },
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "saveChanges": "Save changes"
+    },
+    "departments": {
+      "eyebrow": "Access mapping",
+      "title": "Departments",
+      "description": "Map active personas to each team. These mappings constrain persona selection when the tenant feature is enabled.",
+      "summary": {
+        "departments": "Departments",
+        "restricted": "Mapped departments",
+        "personas": "Active personas"
+      },
+      "newDepartment": "New department",
+      "retry": "Retry",
+      "saved": "{name} mapping saved. New assessments use the updated active-persona scope.",
+      "columns": {
+        "name": "Name",
+        "personas": "Mapped personas",
+        "action": "Action"
+      },
+      "loading": "Loading departments…",
+      "empty": "No departments yet. Create one to define requestor scope.",
+      "noRestriction": "No persona restriction",
+      "unavailablePersona": "Unavailable persona · {id}",
+      "editMapping": "Edit mapping",
+      "dialog": {
+        "editTitle": "Edit {name}",
+        "createTitle": "New department",
+        "description": "Only active personas from the tenant’s effective content catalog can be mapped. Changes affect new assessments, not pinned history."
+      },
+      "fields": {
+        "name": "Department name",
+        "availablePersonas": "Available personas"
+      },
+      "personasEmpty": "No active personas are available. The department can still be saved without a restriction.",
+      "sourceContent": "{source} content",
+      "allPersonasHint": "Leave every box clear to allow all active personas.",
+      "validation": {
+        "name": "Department name must contain at least 2 characters.",
+        "noChanges": "No changes to save."
+      },
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "saveMapping": "Save mapping",
+      "createDepartment": "Create department"
+    },
+    "tenant": {
+      "eyebrow": "Tenant configuration",
+      "title": "Tenant settings",
+      "loading": "Loading…",
+      "saved": "Saved {time} (audited as config/tenant.updated)",
+      "plan": {
+        "title": "Plan & features",
+        "freeDescription": "FREE uses the public requestor experience; advanced managed roles and tenant features are available on PAID.",
+        "paidDescription": "PAID enables managed roles and tenant features; individual capabilities remain controlled below."
+      },
+      "mfaPolicy": {
+        "paidTitle": "Role-aware MFA policy",
+        "paidDescription": "PAID requestors and administrators use the configured SSO provider. Administrators and system administrators always complete the RiskSense email OTP; other roles follow tenant OTP policy.",
+        "freeTitle": "FREE authentication policy",
+        "freeDescription": "FREE public users are requestors. Their email OTP follows tenant policy; any privileged operator account always completes the backend email OTP."
+      },
+      "features": {
+        "sso": {
+          "label": "Single sign-on",
+          "hint": "FR-03 — needs a provider id and an email domain below"
+        },
+        "reviewDashboard": {
+          "label": "Review dashboard",
+          "hint": "FR-21 — department-scoped review and escalation routing"
+        },
+        "reports": {
+          "label": "Reports & analytics",
+          "hint": "FR-26..28 — standard reports, trends, CSV/PDF export"
+        },
+        "fullAudit": {
+          "label": "Full audit payloads",
+          "hint": "FR-26 — lifecycle fully reconstructible from the log"
+        },
+        "departmentMapping": {
+          "label": "Department ↔ persona mapping",
+          "hint": "FR-10"
+        },
+        "blockConcurrentLogin": {
+          "label": "Block concurrent logins",
+          "hint": "FR-04 — reject a second session instead of superseding"
+        }
+      },
+      "sso": {
+        "title": "Single sign-on (FR-03)",
+        "description": "OIDC/OAuth providers work on the Firebase free tier (microsoft.com, google.com, and oidc.ID configured in Firebase Authentication → Sign-in method). SAML (saml.ID) needs Identity Platform — see DeploymentGuide. Users on the domain are provisioned into this tenant on first login; SSO logins skip the email OTP for non-privileged roles.",
+        "providerId": "Firebase provider id",
+        "domain": "Email domain",
+        "requireOtp": "Require the email OTP on every non-SSO login (FR-01). Administrators always get it (SEC-03)."
+      },
+      "policy": {
+        "title": "Sessions (SEC-02) & retention (SEC-06)",
+        "accountSemantics": "One person uses one account with exactly one role. Session settings control access to that account, not extra roles.",
+        "sessionSemantics": "This limits simultaneous devices or browser sessions for one account; it does not create another account or role.",
+        "retentionTitle": "Retention windows",
+        "retentionFixed": "FREE uses the fixed public retention windows shown below. Switch to PAID before configuring customer-specific windows.",
+        "retentionConfigurable": "PAID retention windows are tenant-configurable. Enforcement remains staged, audited, and non-destructive to audit logs.",
+        "datasetHistorySemantics": "Dataset history starts when a version is retired. The value is the number of days retained after retirement—an explicit replacement for ‘life + 3 years.’",
+        "idleTimeout": "Idle timeout (minutes, 5–30)",
+        "maxSessions": "Max concurrent sessions (1–10)",
+        "fields": {
+          "assessmentDays": "Assessments (days)",
+          "auditDays": "Audit log (days)",
+          "evidenceDays": "Evidence (days)",
+          "datasetHistoryDays": "Dataset history (days)"
+        },
+        "description": "FREE: after the assessment window, records are reduced to login id, risk type, date/time and duration. PAID: archived. Enforcement runs nightly and is audited."
+      },
+      "saving": "Saving…",
+      "save": "Save changes",
+      "discard": "Discard"
+    },
+    "retention": {
+      "eyebrow": "Lifecycle controls",
+      "title": "Retention",
+      "description": "Records older than the tenant's assessment window are flagged, then after a 7-day grace period FREE records are reduced to login id, risk type, date/time and duration, and PAID records are archived to cold storage before reduction. The audit log is never deleted (SEC-07). Every action is audited as retention.*. The nightly job runs at 02:00 UTC when JOBS_ENABLED=true.",
+      "policy": {
+        "freeTitle": "Fixed FREE retention",
+        "freeDescription": "FREE uses the public retention windows shown in Tenant settings. Expired records are reduced after the seven-day grace period.",
+        "paidTitle": "Configurable PAID retention",
+        "paidDescription": "PAID windows can be configured per tenant. Full records are archived before the live copy is reduced."
+      },
+      "history": {
+        "title": "Run history",
+        "description": "Dry runs and enforced runs use the same auditable history."
+      },
+      "running": "Running…",
+      "dryRun": "Dry run (report only)",
+      "runNow": "Run now",
+      "confirmation": "This reduces / archives eligible records. Continue?",
+      "confirmRun": "Yes, run retention",
+      "cancel": "Cancel",
+      "result": {
+        "dryRun": "Dry run",
+        "run": "Run",
+        "policy": "window {window} days · grace {grace} days",
+        "flagged": "flagged {count}",
+        "reduced": "reduced {count}",
+        "archived": "archived {count}",
+        "messagesRemoved": "messages removed {count}",
+        "auditPastWindow": "audit entries past window {count}",
+        "duration": "{value} ms"
+      },
+      "columns": {
+        "when": "When",
+        "trigger": "Trigger",
+        "mode": "Mode",
+        "flagged": "Flagged",
+        "reduced": "Reduced",
+        "archived": "Archived",
+        "auditPastWindow": "Audit past window",
+        "error": "Error"
+      },
+      "empty": "No runs yet.",
+      "modes": { "dry": "dry run", "enforced": "enforced" }
+    },
+    "dr": {
+      "eyebrow": "Resilience evidence",
+      "title": "Disaster recovery",
+      "description": "Track evidence against the 24-hour backup, 1-hour RPO, 4-hour RTO, and annual restore-drill targets.",
+      "targets": {
+        "rto": "Recovery time objective",
+        "rpo": "Recovery point objective",
+        "backup": "Backup frequency",
+        "drill": "Restore drill",
+        "hours": "{value} h",
+        "days": "{value} days"
+      },
+      "loading": "Loading recovery evidence…",
+      "loadFailed": "Recovery evidence could not be loaded.",
+      "retry": "Retry",
+      "saved": "Recovery evidence saved and recorded in the audit log.",
+      "notRecorded": "Not recorded",
+      "readiness": {
+        "ready": "Evidence ready",
+        "attention": "Attention required"
+      },
+      "operatorNotice": {
+        "title": "Operator-recorded evidence",
+        "description": "this screen does not query or verify the backup provider. Confirm timestamps and the evidence link against the external system before saving."
+      },
+      "checks": {
+        "backup": "Backup within {hours} hours",
+        "drill": "Passed drill within {days} days",
+        "evidence": "External evidence reference recorded",
+        "pass": "Pass",
+        "needsEvidence": "Needs evidence"
+      },
+      "current": {
+        "title": "Current evidence",
+        "backup": "Last backup: {date}",
+        "drill": "last restore drill: {date}",
+        "updated": "register updated {date}",
+        "openEvidence": "Open external evidence",
+        "unsafeLink": "The recorded evidence reference is not a safe HTTP(S) link.",
+        "noLink": "No external evidence link recorded."
+      },
+      "form": {
+        "title": "Record verified evidence",
+        "description": "Every save is attributed to the current system administrator and audited.",
+        "provider": "Backup provider",
+        "evidenceUrl": "Evidence URL",
+        "latestBackup": "Latest successful backup",
+        "latestDrill": "Latest restore drill",
+        "outcome": "Restore-drill outcome",
+        "backupsEnabled": "Backups are enabled at the external provider",
+        "attestation": "I checked the external provider and confirm that these timestamps, outcome, and evidence link are accurate."
+      },
+      "outcomes": { "passed": "Passed", "failed": "Failed" },
+      "validation": {
+        "provider": "Provider must contain at least 2 characters and cannot be cleared after it is recorded.",
+        "backupTimestamp": "A recorded backup timestamp cannot be cleared; replace it with the latest verified timestamp.",
+        "drillTimestamp": "A recorded drill timestamp cannot be cleared; replace it with corrected evidence.",
+        "outcome": "Choose a passed or failed outcome for the recorded restore drill.",
+        "evidenceUrl": "Evidence URL must use http or https.",
+        "attestation": "Confirm the external evidence attestation before saving."
+      },
+      "saving": "Saving…",
+      "save": "Save attested evidence",
+      "discard": "Discard"
+    },
+    "conformance": {
+      "eyebrow": "Data assurance",
+      "title": "Stored-record conformance",
+      "description": "Detect assessment schema drift, closed records without a human decision, and in-progress records with an invalid computed result.",
+      "runScan": "Run scan",
+      "confirmation": "Scan every assessment in this tenant and persist flags?",
+      "scanning": "Scanning…",
+      "confirmScan": "Confirm scan",
+      "cancel": "Cancel",
+      "retry": "Retry",
+      "summary": {
+        "scanned": "Records scanned",
+        "valid": "Valid",
+        "flagged": "Flagged this run",
+        "resolved": "Resolved this run",
+        "empty": "No conformance scan has been recorded yet."
+      },
+      "flags": {
+        "title": "Assessment flags",
+        "description": "Flags remain as evidence after repair; the default view shows unresolved records only.",
+        "includeResolved": "Include resolved flags",
+        "loading": "Loading conformance evidence…",
+        "emptyAll": "No conformance flags have been recorded.",
+        "emptyOpen": "No unresolved conformance flags.",
+        "resolved": "resolved",
+        "open": "open",
+        "columns": {
+          "assessment": "Assessment",
+          "issues": "Issues",
+          "firstDetected": "First detected",
+          "lastDetected": "Last detected",
+          "status": "Status"
+        }
+      },
+      "runs": {
+        "title": "Recent scans",
+        "description": "Manual, scheduler, and command-line scans share the same persistent history.",
+        "empty": "No runs yet.",
+        "duration": "{value} ms",
+        "columns": {
+          "when": "When",
+          "trigger": "Trigger",
+          "scanned": "Scanned",
+          "valid": "Valid",
+          "flagged": "Flagged",
+          "resolved": "Resolved",
+          "duration": "Duration"
+        }
+      }
+    }
   },
-  "placeholder": { "notBuilt": "Not built yet — see", "description": "This screen is a placeholder created in Sprint 0." }
+  "placeholder": {
+    "notBuilt": "Not built yet — see",
+    "description": "This screen is a placeholder created in Sprint 0."
+  }
 }

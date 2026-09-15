@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { Archive, DatabaseZap, PlayCircle, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { api, toApiError } from '@/lib/api/client';
 import type { components } from '@/lib/api/types';
@@ -19,11 +21,17 @@ export default function RetentionPage() {
   const [busy, setBusy] = useState<'dry' | 'real' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState(false);
+  const [settings, setSettings] = useState<components['schemas']['TenantSettings'] | null>(null);
 
   const load = useCallback(() => {
     api.GET('/system/retention/runs').then((r) => (r.data ? setRuns(r.data.data as Run[]) : setError(toApiError((r as { error?: unknown }).error).message)));
   }, []);
   useEffect(load, [load]);
+  useEffect(() => {
+    api.GET('/system/tenant').then((result) => {
+      if (result.data) setSettings(result.data.data);
+    });
+  }, []);
 
   async function run(dryRun: boolean) {
     setBusy(dryRun ? 'dry' : 'real');
@@ -37,14 +45,31 @@ export default function RetentionPage() {
   }
 
   return (
-    <div className="max-w-4xl space-y-4">
-      <div>
-        <h1 className="text-xl font-semibold">{t('title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('description')}</p>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="mx-auto max-w-7xl space-y-5">
+      <header className="relative overflow-hidden rounded-2xl border bg-card px-5 py-6 shadow-sm sm:px-7">
+        <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-primary/10 to-transparent" />
+        <div className="relative flex flex-wrap items-end justify-between gap-4">
+          <div className="max-w-3xl">
+            <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary"><DatabaseZap className="size-4" aria-hidden="true" />{t('eyebrow')}</div>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('description')}</p>
+          </div>
+          {settings && <Badge variant={settings.plan === 'paid' ? 'default' : 'secondary'}>{settings.plan.toUpperCase()}</Badge>}
+        </div>
+      </header>
+
+      {settings && (
+        <Card size="sm">
+          <CardContent className="flex items-start gap-3">
+            <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${settings.plan === 'paid' ? 'bg-violet-500/10 text-violet-700' : 'bg-blue-500/10 text-blue-700'}`}>{settings.plan === 'paid' ? <Archive className="size-4" aria-hidden="true" /> : <ShieldCheck className="size-4" aria-hidden="true" />}</span>
+            <div><p className="font-medium">{settings.plan === 'paid' ? t('policy.paidTitle') : t('policy.freeTitle')}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{settings.plan === 'paid' ? t('policy.paidDescription') : t('policy.freeDescription')}</p></div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border bg-card p-4 shadow-sm">
         <Button variant="outline" disabled={busy !== null} onClick={() => void run(true)}>
-          {busy === 'dry' ? t('running') : t('dryRun')}
+          <PlayCircle aria-hidden="true" />{busy === 'dry' ? t('running') : t('dryRun')}
         </Button>
         {!confirm ? (
           <Button variant="destructive" disabled={busy !== null} onClick={() => setConfirm(true)}>
@@ -62,12 +87,15 @@ export default function RetentionPage() {
           </>
         )}
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</div>}
       {last && (
-        <div className="rounded-md border p-3 text-sm">
+        <Card size="sm">
+          <CardHeader>
           <div className="mb-1 font-medium">
             {last.dryRun ? t('result.dryRun') : t('result.run')} · {last.plan.toUpperCase()} · {t('result.policy', { window: last.policy.assessmentDays, grace: last.policy.graceDays })}
           </div>
+          </CardHeader>
+          <CardContent>
           <div className="flex flex-wrap gap-3">
             <Badge variant="outline">{t('result.flagged', { count: last.flagged })}</Badge>
             <Badge variant="outline">{t('result.reduced', { count: last.reduced })}</Badge>
@@ -76,9 +104,13 @@ export default function RetentionPage() {
             <Badge variant="outline">{t('result.auditPastWindow', { count: last.auditPastRetention })}</Badge>
             <Badge variant="outline">{t('result.duration', { value: last.durationMs })}</Badge>
           </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
-      <div className="overflow-x-auto rounded-md border">
+      <Card>
+        <CardHeader className="border-b"><CardTitle>{t('history.title')}</CardTitle><CardDescription>{t('history.description')}</CardDescription></CardHeader>
+        <CardContent className="px-0">
+      <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -115,6 +147,8 @@ export default function RetentionPage() {
           </TableBody>
         </Table>
       </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

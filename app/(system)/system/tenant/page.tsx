@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { BadgeCheck, Building2, Database, KeyRound, LockKeyhole, Settings2, UsersRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { api, toApiError } from '@/lib/api/client';
@@ -46,26 +48,35 @@ export default function TenantSettingsPage() {
   if (!merged) return <p className="text-sm text-muted-foreground">{error ?? t('loading')}</p>;
   const dirty = Object.keys(draft).length > 0;
   return (
-    <div className="max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold">{t('title')}</h1>
-        <p className="text-sm text-muted-foreground">
-          {merged.name} · <code>{merged.slug}</code> · <Badge variant={merged.plan === 'paid' ? 'default' : 'secondary'}>{merged.plan.toUpperCase()}</Badge>
-        </p>
-      </div>
+    <div className="mx-auto max-w-6xl space-y-6">
+      <header className="relative overflow-hidden rounded-2xl border bg-card px-5 py-6 shadow-sm sm:px-7">
+        <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-primary/10 to-transparent" />
+        <div className="relative flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary"><Settings2 className="size-4" aria-hidden="true" />{t('eyebrow')}</div>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">{merged.name} · <code>{merged.slug}</code></p>
+          </div>
+          <Badge variant={merged.plan === 'paid' ? 'default' : 'secondary'} className="px-3 py-1">{merged.plan.toUpperCase()}</Badge>
+        </div>
+      </header>
 
-      <section className="space-y-3 rounded-md border p-4">
-        <h2 className="font-medium">{t('plan.title')}</h2>
-        <div className="flex gap-2">
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle className="flex items-center gap-2"><Building2 className="size-4 text-primary" aria-hidden="true" />{t('plan.title')}</CardTitle>
+          <CardDescription>{merged.plan === 'paid' ? t('plan.paidDescription') : t('plan.freeDescription')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 pt-1">
+        <div className="inline-flex rounded-xl border bg-muted/30 p-1">
           {(['free', 'paid'] as const).map((p) => (
-            <Button key={p} size="sm" variant={merged.plan === p ? 'default' : 'outline'} onClick={() => setDraft((d) => ({ ...d, plan: p }))}>
+            <Button key={p} size="sm" variant={merged.plan === p ? 'default' : 'ghost'} onClick={() => setDraft((d) => ({ ...d, plan: p, ...(p === 'free' ? { retentionPolicy: undefined } : {}) }))}>
               {p.toUpperCase()}
             </Button>
           ))}
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
           {FEATURES.map((feature) => (
-            <label key={feature} className="flex cursor-pointer items-start gap-2 rounded-md border p-2 text-sm">
+            <label key={feature} className="flex cursor-pointer items-start gap-3 rounded-xl border bg-background p-3 text-sm transition-colors hover:bg-muted/40">
               <input type="checkbox" className="mt-1" checked={Boolean(merged.features[feature])} onChange={(e) => setDraft((d) => ({ ...d, features: { ...(d.features ?? {}), [feature]: e.target.checked } }))} />
               <span>
                 <span className="font-medium">{t(`features.${feature}.label`)}</span>
@@ -74,11 +85,15 @@ export default function TenantSettingsPage() {
             </label>
           ))}
         </div>
-      </section>
+        </CardContent>
+      </Card>
 
-      <section className="space-y-3 rounded-md border p-4">
-        <h2 className="font-medium">{t('sso.title')}</h2>
-        <p className="text-xs text-muted-foreground">{t('sso.description')}</p>
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle className="flex items-center gap-2"><KeyRound className="size-4 text-primary" aria-hidden="true" />{t('sso.title')}</CardTitle>
+          <CardDescription>{t('sso.description')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 pt-1">
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
             <Label htmlFor="providerId">{t('sso.providerId')}</Label>
@@ -93,10 +108,21 @@ export default function TenantSettingsPage() {
           <input type="checkbox" checked={merged.authPolicy.otpRequired} onChange={(e) => setDraft((d) => ({ ...d, authPolicy: { otpRequired: e.target.checked } }))} />
           {t('sso.requireOtp')}
         </label>
-      </section>
+        <div className={`rounded-xl border p-3 text-sm ${merged.plan === 'paid' ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-blue-500/30 bg-blue-500/5'}`}>
+          <div className="flex items-start gap-2">
+            <BadgeCheck className={`mt-0.5 size-4 shrink-0 ${merged.plan === 'paid' ? 'text-emerald-700' : 'text-blue-700'}`} aria-hidden="true" />
+            <div><p className="font-medium">{merged.plan === 'paid' ? t('mfaPolicy.paidTitle') : t('mfaPolicy.freeTitle')}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{merged.plan === 'paid' ? t('mfaPolicy.paidDescription') : t('mfaPolicy.freeDescription')}</p></div>
+          </div>
+        </div>
+        </CardContent>
+      </Card>
 
-      <section className="space-y-3 rounded-md border p-4">
-        <h2 className="font-medium">{t('policy.title')}</h2>
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle className="flex items-center gap-2"><LockKeyhole className="size-4 text-primary" aria-hidden="true" />{t('policy.title')}</CardTitle>
+          <CardDescription>{t('policy.accountSemantics')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5 pt-1">
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
             <Label htmlFor="idle">{t('policy.idleTimeout')}</Label>
@@ -105,20 +131,31 @@ export default function TenantSettingsPage() {
           <div className="space-y-1">
             <Label htmlFor="max">{t('policy.maxSessions')}</Label>
             <Input id="max" type="number" min={1} max={10} value={merged.sessionPolicy.maxConcurrentSessions} onChange={(e) => setDraft((d) => ({ ...d, sessionPolicy: { ...(d.sessionPolicy ?? {}), maxConcurrentSessions: Number(e.target.value) } }))} />
+            <p className="text-xs leading-5 text-muted-foreground"><UsersRound className="mr-1 inline size-3.5" aria-hidden="true" />{t('policy.sessionSemantics')}</p>
           </div>
+        </div>
+        <div className="rounded-xl border bg-muted/20 p-4">
+          <div className="mb-4 flex items-start gap-3">
+            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><Database className="size-4" aria-hidden="true" /></span>
+            <div><h2 className="font-medium">{t('policy.retentionTitle')}</h2><p id="retention-mode-hint" className="mt-1 text-xs leading-5 text-muted-foreground">{merged.plan === 'free' ? t('policy.retentionFixed') : t('policy.retentionConfigurable')}</p></div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
           {RETENTION_FIELDS.map((k) => (
             <div key={k} className="space-y-1">
               <Label htmlFor={k}>{t(`policy.fields.${k}`)}</Label>
-              <Input id={k} type="number" min={1} value={merged.retentionPolicy[k]} onChange={(e) => setDraft((d) => ({ ...d, retentionPolicy: { ...(d.retentionPolicy ?? {}), [k]: Number(e.target.value) } }))} />
+              <Input id={k} type="number" min={1} aria-describedby={k === 'datasetHistoryDays' ? 'dataset-history-semantics retention-mode-hint' : 'retention-mode-hint'} disabled={merged.plan === 'free'} value={merged.retentionPolicy[k]} onChange={(e) => setDraft((d) => ({ ...d, retentionPolicy: { ...(d.retentionPolicy ?? {}), [k]: Number(e.target.value) } }))} />
+              {k === 'datasetHistoryDays' && <p id="dataset-history-semantics" className="text-xs leading-5 text-muted-foreground">{t('policy.datasetHistorySemantics')}</p>}
             </div>
           ))}
+          </div>
         </div>
         <p className="text-xs text-muted-foreground">{t('policy.description')}</p>
-      </section>
+        </CardContent>
+      </Card>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
       {saved && <p className="text-sm text-muted-foreground">{saved}</p>}
-      <div className="flex gap-2">
+      <div className="sticky bottom-4 z-10 flex w-fit gap-2 rounded-xl border bg-background/95 p-2 shadow-lg backdrop-blur">
         <Button disabled={!dirty || busy} onClick={() => void save()}>
           {busy ? t('saving') : t('save')}
         </Button>

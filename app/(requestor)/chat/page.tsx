@@ -3,6 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { AlertCircle, ArrowRight, Check, LoaderCircle, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -36,28 +38,101 @@ export default function NewAssessmentPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('title')}</CardTitle>
-          <CardDescription>{t('description')}</CardDescription>
+    <div className="page-shell max-w-5xl">
+      <div className="space-y-2">
+        <div className="eyebrow flex items-center gap-2">
+          <Sparkles className="size-3.5" />
+          {t('eyebrow')}
+        </div>
+        <h1 className="page-heading">{t('title')}</h1>
+        <p className="page-description">{t('description')}</p>
+      </div>
+
+      <Card className="overflow-visible">
+        <CardHeader className="border-b border-border/70 pb-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="space-y-1">
+              <CardTitle className="flex items-center gap-2">
+                <span className="flex size-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Sparkles className="size-4" />
+                </span>
+                {t('assistantTitle')}
+              </CardTitle>
+              <CardDescription>{t('assistantDescription')}</CardDescription>
+            </div>
+            <Badge variant="outline" className="bg-primary/5 text-primary">
+              <ShieldCheck className="size-3" />
+              {t('privateSession')}
+            </Badge>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Textarea rows={4} value={text} onChange={(e) => setText(e.target.value)} placeholder={t('placeholder')} />
-          <div>
-            <div className="mb-2 text-sm font-medium">{t('rolePrompt')}</div>
-            <div className="flex flex-wrap gap-2">
-              {personas.map((p) => (
-                <Button key={p.key} type="button" size="sm" variant={personaKey === p.key ? 'default' : 'outline'} onClick={() => setPersonaKey(personaKey === p.key ? null : p.key)}>
-                  {p.name}
-                </Button>
-              ))}
+        <CardContent className="grid gap-7 pt-1 lg:grid-cols-[minmax(0,1.14fr)_minmax(18rem,0.86fr)]">
+          <div className="space-y-3">
+            <label htmlFor="incident-description" className="text-sm font-semibold">{t('incidentLabel')}</label>
+            <div className="relative">
+              <Textarea
+                id="incident-description"
+                rows={8}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder={t('placeholder')}
+                className="min-h-52 resize-none bg-background/55 pr-4 text-[0.94rem] leading-7"
+              />
+              <div className="pointer-events-none absolute right-3 bottom-3 rounded-md bg-muted/80 px-2 py-1 text-[0.65rem] text-muted-foreground">
+                {t('characterHint', { count: text.trim().length })}
+              </div>
+            </div>
+            <div className="flex items-start gap-2 rounded-xl bg-info-soft p-3 text-xs leading-5 text-muted-foreground">
+              <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-primary" />
+              {t('privacyNote')}
             </div>
           </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button disabled={busy || (!personaKey && text.trim().length < 10)} onClick={() => void start()}>
-            {busy ? t('starting') : t('start')}
-          </Button>
+
+          <div className="space-y-3">
+            <div>
+              <div className="text-sm font-semibold">{t('rolePrompt')}</div>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('roleHint')}</p>
+            </div>
+            <div className="scrollbar-subtle grid max-h-64 gap-2 overflow-y-auto pr-1">
+              {personas.map((p) => (
+                <button
+                  key={p.key}
+                  type="button"
+                  aria-pressed={personaKey === p.key}
+                  className={`group flex w-full items-start gap-3 rounded-xl border p-3 text-left transition ${
+                    personaKey === p.key
+                      ? 'border-primary/50 bg-primary/6 shadow-[0_0_0_3px_rgba(41,105,210,0.08)]'
+                      : 'bg-card hover:border-primary/25 hover:bg-accent/45'
+                  }`}
+                  onClick={() => setPersonaKey(personaKey === p.key ? null : p.key)}
+                >
+                  <span className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg ${personaKey === p.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground group-hover:text-primary'}`}>
+                    {personaKey === p.key ? <Check className="size-4" /> : <UserRound className="size-4" />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold">{p.name}</span>
+                    {p.description && <span className="mt-0.5 line-clamp-2 block text-xs leading-5 text-muted-foreground">{p.description}</span>}
+                  </span>
+                </button>
+              ))}
+              {!error && personas.length === 0 && (
+                <div className="flex items-center gap-2 rounded-xl border border-dashed p-3 text-xs text-muted-foreground" role="status">
+                  <LoaderCircle className="size-4 animate-spin" />
+                  {t('loadingRoles')}
+                </div>
+              )}
+            </div>
+            <Button size="lg" className="mt-2 w-full" disabled={busy || (!personaKey && text.trim().length < 10)} onClick={() => void start()}>
+              {busy ? t('starting') : t('start')}
+              {!busy && <ArrowRight data-icon="inline-end" className="size-4" />}
+            </Button>
+          </div>
+          {error && (
+            <p className="flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive lg:col-span-2" role="alert">
+              <AlertCircle className="mt-0.5 size-4 shrink-0" />
+              {error}
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { Building2, Layers3, Network, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -62,6 +64,7 @@ export default function DepartmentsPage() {
   }, [load]);
 
   const personasById = useMemo(() => new Map(personas.map((persona) => [persona._id, persona])), [personas]);
+  const restrictedDepartments = departments.filter((department) => department.personaIds.length > 0).length;
 
   function openCreate() {
     setEditor({ mode: 'create', department: null });
@@ -126,13 +129,23 @@ export default function DepartmentsPage() {
   }
 
   return (
-    <div className="max-w-5xl space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">{t('title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('description')}</p>
+    <div className="mx-auto max-w-7xl space-y-5">
+      <header className="relative overflow-hidden rounded-2xl border bg-card px-5 py-6 shadow-sm sm:px-7">
+        <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-primary/10 to-transparent" />
+        <div className="relative flex flex-wrap items-start justify-between gap-4">
+          <div className="max-w-3xl">
+            <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary"><Building2 className="size-4" aria-hidden="true" />{t('eyebrow')}</div>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('description')}</p>
+          </div>
+          <Button onClick={openCreate}><Plus aria-hidden="true" />{t('newDepartment')}</Button>
         </div>
-        <Button onClick={openCreate}>{t('newDepartment')}</Button>
+      </header>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Card size="sm"><CardHeader><div className="flex items-center justify-between"><CardDescription>{t('summary.departments')}</CardDescription><Building2 className="size-4 text-blue-700" aria-hidden="true" /></div><CardTitle className="mt-1 text-2xl tabular-nums">{departments.length}</CardTitle></CardHeader></Card>
+        <Card size="sm"><CardHeader><div className="flex items-center justify-between"><CardDescription>{t('summary.restricted')}</CardDescription><Network className="size-4 text-violet-700" aria-hidden="true" /></div><CardTitle className="mt-1 text-2xl tabular-nums">{restrictedDepartments}</CardTitle></CardHeader></Card>
+        <Card size="sm"><CardHeader><div className="flex items-center justify-between"><CardDescription>{t('summary.personas')}</CardDescription><Layers3 className="size-4 text-emerald-700" aria-hidden="true" /></div><CardTitle className="mt-1 text-2xl tabular-nums">{personas.length}</CardTitle></CardHeader></Card>
       </div>
 
       {pageError && (
@@ -143,7 +156,7 @@ export default function DepartmentsPage() {
       )}
       {saved && <p className="rounded-md border bg-muted/20 p-3 text-sm" role="status">{saved}</p>}
 
-      <div className="rounded-md border">
+      <div className="overflow-x-auto rounded-2xl border bg-card shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
@@ -196,14 +209,14 @@ export default function DepartmentsPage() {
               <Label htmlFor="department-name">{t('fields.name')}</Label>
               <Input id="department-name" value={draft.name} minLength={2} required onChange={(event) => { setDraft((current) => ({ ...current, name: event.target.value })); setFormError(null); }} />
             </div>
-            <fieldset className="space-y-2 rounded-md border p-3">
+            <fieldset className="space-y-2 rounded-xl border bg-muted/20 p-3">
               <legend className="px-1 text-sm font-medium">{t('fields.availablePersonas')}</legend>
               {personas.length === 0 ? (
                 <p className="text-xs text-muted-foreground">{t('personasEmpty')}</p>
               ) : (
                 <div className="grid gap-2 sm:grid-cols-2">
                   {personas.map((persona) => (
-                    <label key={persona._id} className="flex items-start gap-2 rounded-md border p-2 text-sm">
+                    <label key={persona._id} className="flex items-start gap-2 rounded-xl border bg-background p-3 text-sm transition-colors hover:bg-muted/40">
                       <input className="mt-0.5" type="checkbox" checked={(draft.personaIds ?? []).includes(persona._id)} onChange={(event) => togglePersona(persona._id, event.target.checked)} />
                       <span>
                         <span className="font-medium">{persona.name}</span>
