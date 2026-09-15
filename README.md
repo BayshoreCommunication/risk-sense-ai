@@ -4,9 +4,10 @@ Next.js 16.3.5 App Router and React 19.3 frontend for RiskSense AI (Node.js 20.9
 content administrators, system administrators, and auditors. Request and response types are generated
 from the backend OpenAPI document.
 
-The TAC requirements source is Draft v1 and is not signed acceptance. Figma implementation is
-intentionally deferred until the owner supplies the forthcoming design prompt; this repository does
-not claim visual-design sign-off.
+The TAC requirements source is Draft v1 and is not signed acceptance. The owner authorized the linked
+Figma as a content/layout reference on 2026-09-15, without requiring a pixel-identical copy, and
+authorized requirement-led extensions where the file is incomplete. The repository implements that
+direction but does not claim owner visual-design sign-off or final Figma comment resolution.
 
 ## Local setup
 
@@ -39,13 +40,18 @@ UI, auth-restoration, structured-editor, system-administration, error, and confi
 `npm run e2e` is the separate full-stack Playwright suite and requires a running backend and
 frontend.
 
+The 2026-09-15 redesign validation passes 31/31 mocked browser cases, exact 1,114/1,114 EN/BN key
+and ICU-variable parity, lint, typecheck, a 27/27-route production build, and a zero-vulnerability
+production dependency audit. Human language, accessibility, usability and owner visual acceptance
+remain external gates.
+
 ## Implemented workspaces
 
 - Requestor: guided intake, persona confirmation, typed answers, resume, result, decision, and review.
 - Administrator: review queue, copy-on-write personas/scenarios/rules/matrices, audited questions,
   structured editors, reviewed dataset bundles, simulation, reports, and analytics.
 - System administrator: tenant/session/retention settings, users, department-persona mapping, disaster
-  recovery evidence, and stored-record conformance.
+  recovery evidence, stored-record conformance, and bounded immutable audit export/manifests.
 - Audit: assessment reconstruction, masked/unmasked access, and audit-chain verification.
 
 English and Bangla message catalogs cover the current application UI. NFR-08 remains partially open
