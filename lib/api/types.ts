@@ -4178,7 +4178,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Review dashboard (DASH-01): scoped, filtered, paginated; counts per status within the non-status filters */
+                /** @description Review dashboard (DASH-01): scoped, filtered, paginated; counts and average confidence within the non-status filters */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -4192,6 +4192,7 @@ export interface paths {
                                 limit: number;
                                 pages: number;
                                 counts: components["schemas"]["AssessmentCounts"];
+                                summary: components["schemas"]["AssessmentSummary"];
                             };
                             meta: {
                                 requestId: string;
@@ -5652,6 +5653,9 @@ export interface components {
             error_review: number;
             pending: number;
             all: number;
+        };
+        AssessmentSummary: {
+            averageConfidence: number | null;
         };
         Department: {
             _id: string;

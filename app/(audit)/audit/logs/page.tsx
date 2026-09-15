@@ -73,6 +73,9 @@ export default function AuditLogsPage() {
             <p className="page-description mt-2">{t('description')}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="secondary">{t('scopeBadge')}</Badge>
+            <Badge variant="outline">FR-24–26</Badge>
+            <Badge variant="outline">SEC-07</Badge>
             {verify && (
               <Badge variant={verify.ok ? 'outline' : 'destructive'} className="h-8 gap-1.5 px-3">
                 {verify.ok ? <CheckCircle2 className="size-3.5" aria-hidden="true" /> : <ShieldAlert className="size-3.5" aria-hidden="true" />}
@@ -136,8 +139,8 @@ export default function AuditLogsPage() {
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
               <div><dt className="text-muted-foreground">{t('columns.sequence')}</dt><dd className="mt-0.5 font-mono">{entry.seq}</dd></div>
               <div><dt className="text-muted-foreground">{t('columns.size')}</dt><dd className="mt-0.5 font-mono">{formatBytes(eventSize(entry), locale)}</dd></div>
-              <div><dt className="text-muted-foreground">{t('columns.actor')}</dt><dd className="mt-0.5">{entry.actorRole ?? 'system'}</dd></div>
-              <div><dt className="text-muted-foreground">{t('columns.entity')}</dt><dd className="mt-0.5 font-mono">{entry.entity.type} {entry.entity.id.slice(-6)}</dd></div>
+              <div><dt className="text-muted-foreground">{t('columns.user')}</dt><dd className="mt-0.5">{entry.actorRole ?? t('systemActor')}</dd></div>
+              <div><dt className="text-muted-foreground">{t('columns.record')}</dt><dd className="mt-0.5 font-mono">{entry.entity.type} {entry.entity.id.slice(-6)}</dd></div>
               <div className="col-span-2 min-w-0"><dt className="text-muted-foreground">{t('columns.hash')}</dt><dd className="mt-0.5 truncate font-mono" title={entry.hash}>{entry.hash}</dd></div>
             </dl>
             <Button size="sm" variant="outline" className="w-full" aria-expanded={expanded === entry._id} onClick={() => setExpanded(expanded === entry._id ? null : entry._id)}>
@@ -152,39 +155,42 @@ export default function AuditLogsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('columns.sequence')}</TableHead>
-              <TableHead>{t('columns.when')}</TableHead>
-              <TableHead>{t('columns.category')}</TableHead>
+              <TableHead>{t('columns.timestamp')}</TableHead>
+              <TableHead>{t('columns.user')}</TableHead>
               <TableHead>{t('columns.action')}</TableHead>
-              <TableHead>{t('columns.actor')}</TableHead>
-              <TableHead>{t('columns.entity')}</TableHead>
+              <TableHead>{t('columns.record')}</TableHead>
               <TableHead className="text-right" title={t('columns.sizeHint')}>{t('columns.size')}</TableHead>
-              <TableHead>{t('columns.hash')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading && (
               <TableRow>
-                <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
                   {t('loading')}
                 </TableCell>
               </TableRow>
             )}
             {!loading && items.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">{t('empty')}</TableCell>
+                <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">{t('empty')}</TableCell>
               </TableRow>
             )}
             {!loading && items.map((e) => (
               <TableRow key={e._id}>
-                <TableCell className="font-mono">{e.seq}</TableCell>
-                <TableCell className="whitespace-nowrap">{new Date(e.createdAt).toLocaleString(locale)}</TableCell>
-                <TableCell>
-                  <Badge variant="secondary">{e.category}</Badge>
+                <TableCell className="whitespace-nowrap align-top">{new Date(e.createdAt).toLocaleString(locale)}</TableCell>
+                <TableCell className="align-top">
+                  <p className="whitespace-nowrap text-sm font-medium">{e.actorRole ?? t('systemActor')}</p>
+                  {e.actorUserId && <p className="mt-0.5 font-mono text-[0.68rem] text-muted-foreground" title={e.actorUserId}>…{e.actorUserId.slice(-8)}</p>}
                 </TableCell>
                 <TableCell>
-                  <div className="flex min-w-48 items-center justify-between gap-2">
-                    <span>{e.action}</span>
+                  <div className="flex min-w-64 items-start justify-between gap-2">
+                    <div>
+                      <span className="font-medium">{e.action}</span>
+                      <div className="mt-1 flex items-center gap-2">
+                        <Badge variant="secondary">{e.category}</Badge>
+                        <span className="font-mono text-[0.68rem] text-muted-foreground">{t('sequenceValue', { value: e.seq })}</span>
+                      </div>
+                    </div>
                     <Button
                       size="icon-xs"
                       variant="ghost"
@@ -195,16 +201,21 @@ export default function AuditLogsPage() {
                       {expanded === e._id ? <ChevronUp aria-hidden="true" /> : <ChevronDown aria-hidden="true" />}
                     </Button>
                   </div>
-                  {expanded === e._id && <pre className="mt-1 max-w-xl overflow-x-auto rounded bg-muted p-2 text-xs">{JSON.stringify(e.payload, null, 2)}</pre>}
+                  {expanded === e._id && (
+                    <div className="mt-3 max-w-2xl space-y-2 rounded-lg border bg-muted/35 p-3 text-xs">
+                      <dl className="grid gap-2 sm:grid-cols-2">
+                        <div className="min-w-0"><dt className="text-muted-foreground">{t('columns.hash')}</dt><dd className="truncate font-mono" title={e.hash}>{e.hash}</dd></div>
+                        <div className="min-w-0"><dt className="text-muted-foreground">{t('previousHashLabel')}</dt><dd className="truncate font-mono" title={e.prevHash}>{e.prevHash}</dd></div>
+                      </dl>
+                      <pre className="max-h-72 overflow-auto rounded-md bg-background p-3">{JSON.stringify(e.payload, null, 2)}</pre>
+                    </div>
+                  )}
                 </TableCell>
-                <TableCell className="whitespace-nowrap text-xs">{e.actorRole ?? 'system'}</TableCell>
-                <TableCell className="whitespace-nowrap font-mono text-xs">
-                  {e.entity.type} {e.entity.id.slice(-6)}
+                <TableCell className="whitespace-nowrap align-top text-xs">
+                  <p className="font-medium capitalize">{e.entity.type.replace(/_/g, ' ')}</p>
+                  <p className="mt-0.5 font-mono text-muted-foreground" title={e.entity.id}>…{e.entity.id.slice(-8)}</p>
                 </TableCell>
-                <TableCell className="whitespace-nowrap text-right font-mono text-xs tabular-nums" title={t('columns.sizeHint')}>{formatBytes(eventSize(e), locale)}</TableCell>
-                <TableCell className="font-mono text-xs" title={t('previousHash', { hash: e.prevHash })}>
-                  {e.hash.slice(0, 10)}…
-                </TableCell>
+                <TableCell className="whitespace-nowrap text-right align-top font-mono text-xs tabular-nums" title={t('columns.sizeHint')}>{formatBytes(eventSize(e), locale)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

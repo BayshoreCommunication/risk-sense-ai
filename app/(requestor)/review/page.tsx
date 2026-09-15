@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { AlertCircle, CalendarClock, CheckCircle2, ChevronRight, CircleDot, ClipboardCheck, Filter, Plus, RefreshCw, Search } from 'lucide-react';
+import { AlertCircle, CalendarClock, CheckCircle2, ChevronRight, Gauge, ClipboardCheck, Filter, Plus, RefreshCw, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -121,6 +121,7 @@ function ReviewDashboard() {
 
   const [items, setItems] = useState<AssessmentListItem[]>([]);
   const [counts, setCounts] = useState<AssessmentCounts | null>(null);
+  const [averageConfidence, setAverageConfidence] = useState<number | null>(null);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -151,6 +152,7 @@ function ReviewDashboard() {
         if (cancelled) return;
         setItems(r.items);
         setCounts(r.counts);
+        setAverageConfidence(r.summary?.averageConfidence ?? null);
         setTotal(r.total);
         setPages(r.pages);
         setError(null);
@@ -201,7 +203,7 @@ function ReviewDashboard() {
   const personaName = (key?: string) => personas.find((p) => p.key === key)?.name ?? key?.replace(/_/g, ' ') ?? '—';
   const first = total === 0 ? 0 : (filters.page - 1) * filters.limit + 1;
   const last = Math.min(total, filters.page * filters.limit);
-  const columnCount = reviewer ? 11 : 9;
+  const columnCount = reviewer ? 9 : 7;
 
   const commitScenario = () => {
     const scenarioKey = normalizeScenarioKey(scenarioDraft);
@@ -228,12 +230,24 @@ function ReviewDashboard() {
         </div>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-3" aria-label={t('statusTabsLabel')}>
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label={t('summaryLabel')}>
+        <button
+          type="button"
+          aria-pressed={filters.tab === 'all'}
+          onClick={() => update({ tab: 'all' })}
+          className={`rounded-xl border bg-card p-4 text-left shadow-[0_10px_28px_rgba(15,35,65,0.04)] transition-colors hover:border-primary/30 hover:bg-primary/[0.025] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${filters.tab === 'all' ? 'border-primary/35 bg-primary/[0.04] ring-1 ring-primary/10' : ''}`}
+        >
+          <span className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+            {t('tabs.all')}
+            <ClipboardCheck aria-hidden="true" className="size-4 text-primary" />
+          </span>
+          <span className="mt-3 block text-2xl font-semibold tabular-nums">{counts?.all ?? '—'}</span>
+        </button>
         <button
           type="button"
           aria-pressed={filters.tab === 'pending'}
           onClick={() => update({ tab: 'pending' })}
-          className={`rounded-lg border bg-card p-4 text-left transition-colors hover:border-amber-300 hover:bg-amber-50/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${filters.tab === 'pending' ? 'border-amber-300 bg-amber-50/50 ring-1 ring-amber-200' : ''}`}
+          className={`rounded-xl border bg-card p-4 text-left shadow-[0_10px_28px_rgba(15,35,65,0.04)] transition-colors hover:border-amber-300 hover:bg-amber-50/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${filters.tab === 'pending' ? 'border-amber-300 bg-amber-50/50 ring-1 ring-amber-200' : ''}`}
         >
           <span className="flex items-center justify-between text-xs font-medium text-muted-foreground">
             {t('tabs.pending')}
@@ -241,23 +255,18 @@ function ReviewDashboard() {
           </span>
           <span className="mt-3 block text-2xl font-semibold tabular-nums">{counts?.pending ?? '—'}</span>
         </button>
-        <button
-          type="button"
-          aria-pressed={filters.tab === 'in_progress'}
-          onClick={() => update({ tab: 'in_progress' })}
-          className={`rounded-lg border bg-card p-4 text-left transition-colors hover:border-sky-300 hover:bg-sky-50/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${filters.tab === 'in_progress' ? 'border-sky-300 bg-sky-50/50 ring-1 ring-sky-200' : ''}`}
-        >
+        <div className="rounded-xl border bg-card p-4 text-left shadow-[0_10px_28px_rgba(15,35,65,0.04)]">
           <span className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-            {t('tabs.in_progress')}
-            <CircleDot aria-hidden="true" className="size-4 text-sky-600" />
+            {t('averageConfidence')}
+            <Gauge aria-hidden="true" className="size-4 text-sky-600" />
           </span>
-          <span className="mt-3 block text-2xl font-semibold tabular-nums">{counts?.in_progress ?? '—'}</span>
-        </button>
+          <span className="mt-3 block text-2xl font-semibold tabular-nums">{averageConfidence === null ? '—' : `${averageConfidence.toLocaleString(locale, { maximumFractionDigits: 1 })}%`}</span>
+        </div>
         <button
           type="button"
           aria-pressed={filters.tab === 'closed'}
           onClick={() => update({ tab: 'closed' })}
-          className={`rounded-lg border bg-card p-4 text-left transition-colors hover:border-emerald-300 hover:bg-emerald-50/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${filters.tab === 'closed' ? 'border-emerald-300 bg-emerald-50/50 ring-1 ring-emerald-200' : ''}`}
+          className={`rounded-xl border bg-card p-4 text-left shadow-[0_10px_28px_rgba(15,35,65,0.04)] transition-colors hover:border-emerald-300 hover:bg-emerald-50/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${filters.tab === 'closed' ? 'border-emerald-300 bg-emerald-50/50 ring-1 ring-emerald-200' : ''}`}
         >
           <span className="flex items-center justify-between text-xs font-medium text-muted-foreground">
             {t('tabs.closed')}
@@ -269,14 +278,13 @@ function ReviewDashboard() {
 
       <Card className="gap-0 py-0 shadow-none">
         <CardContent className="px-3 py-3 sm:px-4">
-          <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label={t('statusTabsLabel')}>
+          <div className="flex gap-1 overflow-x-auto" aria-label={t('statusTabsLabel')}>
             {tabs.map((tab) => {
               const n = counts ? counts[tab.key] : undefined;
               return (
                 <Button
                   key={tab.key}
-                  role="tab"
-                  aria-selected={filters.tab === tab.key}
+                  aria-pressed={filters.tab === tab.key}
                   size="sm"
                   className="shrink-0"
                   variant={filters.tab === tab.key ? 'default' : 'ghost'}
@@ -448,19 +456,17 @@ function ReviewDashboard() {
       )}
 
       <Card className="gap-0 py-0 shadow-sm">
-        <Table aria-busy={loading} className="min-w-[1060px]">
+        <Table aria-busy={loading} className={reviewer ? 'min-w-[1120px]' : 'min-w-[940px]'}>
           <TableHeader className="bg-muted/35">
             <TableRow className="hover:bg-transparent">
-              <TableHead>{t('columns.started')}</TableHead>
-              <TableHead className="text-center">{t('columns.daysOpen')}</TableHead>
               {reviewer && <TableHead>{t('columns.requestor')}</TableHead>}
               {reviewer && <TableHead>{t('columns.department')}</TableHead>}
               <TableHead>{t('columns.personaScenario')}</TableHead>
-              <TableHead>{t('columns.status')}</TableHead>
               <TableHead>{t('columns.classification')}</TableHead>
               <TableHead>{t('columns.confidence')}</TableHead>
-              <TableHead>{t('columns.recommendedAction')}</TableHead>
-              <TableHead>{t('columns.decision')}</TableHead>
+              <TableHead className="text-center">{t('columns.daysOpen')}</TableHead>
+              <TableHead>{t('columns.status')}</TableHead>
+              <TableHead>{t('columns.recommendationDecision')}</TableHead>
               <TableHead />
             </TableRow>
           </TableHeader>
@@ -495,11 +501,6 @@ function ReviewDashboard() {
             )}
             {items.map((a) => (
               <TableRow key={a._id} className={PENDING.has(a.status) ? 'border-l-2 border-l-primary bg-primary/[0.035]' : undefined}>
-                <TableCell className="whitespace-nowrap">
-                  <div className="font-medium">{new Date(a.createdAt).toLocaleDateString(locale)}</div>
-                  <div className="mt-0.5 text-xs text-muted-foreground">{new Date(a.createdAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}</div>
-                </TableCell>
-                <TableCell className="text-center text-base font-semibold tabular-nums">{daysOpen(a, dashboardOpenedAt)}</TableCell>
                 {reviewer && (
                   <TableCell>
                     <div className="font-medium">{a.requestor?.name ?? '—'}</div>
@@ -508,11 +509,10 @@ function ReviewDashboard() {
                 )}
                 {reviewer && <TableCell className="whitespace-nowrap">{a.department?.name ?? '—'}</TableCell>}
                 <TableCell className="whitespace-normal">
-                  <div className="font-medium capitalize">{personaName(a.personaKey)}</div>
-                  <div className="mt-0.5 max-w-44 truncate text-xs capitalize text-muted-foreground">{a.scenarioKey?.replace(/_/g, ' ') ?? '—'}</div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={PENDING.has(a.status) ? 'default' : 'secondary'}>{status.has(a.status) ? status(a.status) : a.status}</Badge>
+                  <div className="font-medium capitalize">{a.scenarioKey?.replace(/_/g, ' ') ?? '—'}</div>
+                  <div className="mt-0.5 max-w-52 truncate text-xs text-muted-foreground">
+                    {personaName(a.personaKey)} · {new Date(a.createdAt).toLocaleDateString(locale)} · {a._id.slice(-6).toUpperCase()}
+                  </div>
                 </TableCell>
                 <TableCell className="whitespace-normal">
                   {a.result ? (
@@ -551,26 +551,28 @@ function ReviewDashboard() {
                     '—'
                   )}
                 </TableCell>
+                <TableCell className="text-center text-base font-semibold tabular-nums">{daysOpen(a, dashboardOpenedAt)}</TableCell>
+                <TableCell>
+                  <Badge variant={PENDING.has(a.status) ? 'default' : 'secondary'}>{status.has(a.status) ? status(a.status) : a.status}</Badge>
+                  {a.status === 'escalated' && a.escalatedTo && <div className="mt-1 text-xs text-muted-foreground">{t('routedTo', { name: a.escalatedTo.name })}</div>}
+                </TableCell>
                 <TableCell className="max-w-[18rem] whitespace-normal">
                   {a.result ? (
-                    <div title={a.result.explanation}>
-                      <p className="line-clamp-2 text-sm leading-5">{a.result.recommendedAction}</p>
-                      <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{a.result.explanation}</p>
+                    <div>
+                      <p className="line-clamp-2 text-sm font-medium leading-5">{a.result.recommendedAction}</p>
+                      <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground" title={a.result.explanation}>{a.result.explanation}</p>
                     </div>
                   ) : (
                     '—'
                   )}
-                </TableCell>
-                <TableCell className="whitespace-normal">
-                  {a.decision ? (
-                    <Badge variant="outline">
-                      {detail.has(`decision.types.${a.decision.type}`) ? detail(`decision.types.${a.decision.type}`) : a.decision.type}
-                      {a.decision.overriddenTo ? ` → ${classification.has(a.decision.overriddenTo) ? classification(a.decision.overriddenTo) : a.decision.overriddenTo}` : ''}
+                  {a.decision && (
+                    <Badge variant="outline" className="mt-2 max-w-full">
+                      <span className="truncate">
+                        {detail.has(`decision.types.${a.decision.type}`) ? detail(`decision.types.${a.decision.type}`) : a.decision.type}
+                        {a.decision.overriddenTo ? ` → ${classification.has(a.decision.overriddenTo) ? classification(a.decision.overriddenTo) : a.decision.overriddenTo}` : ''}
+                      </span>
                     </Badge>
-                  ) : (
-                    '—'
                   )}
-                  {a.status === 'escalated' && a.escalatedTo && <div className="mt-1 text-xs text-muted-foreground">{t('routedTo', { name: a.escalatedTo.name })}</div>}
                 </TableCell>
                 <TableCell className="text-right">
                   <Button size="sm" variant={PENDING.has(a.status) ? 'default' : 'outline'} onClick={() => router.push(`/chat/${a._id}`)}>

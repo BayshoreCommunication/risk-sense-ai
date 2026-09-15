@@ -120,8 +120,8 @@ test.describe('audit', () => {
   test('language switcher changes the shell labels [NFR-08]', async ({ page }) => {
     await devLogin(page, ACCOUNTS.audit);
     await page.getByRole('button', { name: 'বাংলা' }).click();
-    await expect(page.getByRole('link', { name: 'অডিট লগ' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'অডিট লগ ভিউয়ার' })).toBeVisible();
     await page.getByRole('button', { name: 'English' }).click();
-    await expect(page.getByRole('link', { name: 'Audit logs' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Audit log viewer' })).toBeVisible();
   });
 });

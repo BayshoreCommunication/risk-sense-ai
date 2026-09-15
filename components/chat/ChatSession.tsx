@@ -161,9 +161,15 @@ export function ChatSession({ id }: { id: string }) {
             </div>
           </div>
           {a?.scenarioKey && (
-            <div className="text-right">
-              <span className="block text-[0.65rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">{t('scenario')}</span>
-              <span className="text-sm font-medium">{humanizeKey(a.scenarioKey)}</span>
+            <div className="min-w-52 rounded-xl border border-primary/15 bg-primary/[0.04] px-3 py-2">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[0.65rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">{t('selectedScenario')}</span>
+                <Badge variant="outline" className="h-5 px-1.5 text-[0.62rem]">
+                  {a.scenarioSource === 'ai' ? t('scenarioSources.ai') : t('scenarioSources.default')}
+                </Badge>
+              </div>
+              <span className="mt-1 block text-sm font-semibold">{humanizeKey(a.scenarioKey)}</span>
+              <span className="block font-mono text-[0.64rem] text-muted-foreground">{a.scenarioKey}</span>
             </div>
           )}
         </header>
@@ -457,7 +463,7 @@ function AnswerBox({
   if (q.type === 'mcq' && q.options?.length) {
     return (
       <fieldset>
-        <legend className="sr-only">{q.text ?? t('optionsLabel')}</legend>
+        <legend className="mb-3 text-sm font-semibold leading-6 text-foreground">{q.text ?? t('optionsLabel')}</legend>
         <Suggestions className="grid grid-cols-1 sm:grid-cols-2">
           {q.options.map((option) => (
             <Suggestion
@@ -480,7 +486,7 @@ function AnswerBox({
   if (q.type === 'yes_no') {
     return (
       <fieldset className="grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-end">
-        <legend className="sr-only">{q.text ?? t('yesNoLabel')}</legend>
+        <legend className="mb-1 text-sm font-semibold leading-6 text-foreground sm:col-span-3">{q.text ?? t('yesNoLabel')}</legend>
         <div className="grid grid-cols-2 gap-2">
           <Button disabled={busy} onClick={() => void onAnswer({ value: true })}>
             <Check className="size-4" aria-hidden="true" />
@@ -521,6 +527,7 @@ function AnswerBox({
     };
     return (
       <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+        <p className="text-sm font-semibold leading-6 text-foreground sm:col-span-2">{q.text ?? t('numberLabel')}</p>
         <div>
           <label className="sr-only" htmlFor={inputId}>{q.text ?? t('numberLabel')}</label>
           <Input
@@ -548,6 +555,7 @@ function AnswerBox({
 
   return (
     <div>
+      <p className="mb-3 text-sm font-semibold leading-6 text-foreground">{q.text ?? t('textLabel')}</p>
       <label className="sr-only" htmlFor={inputId}>{q.text ?? t('textLabel')}</label>
       <div className="relative">
         <Textarea

@@ -76,7 +76,15 @@ export type AssessmentListItem = {
 };
 
 export type AssessmentCounts = Record<Assessment['status'] | 'pending' | 'all', number>;
-export type AssessmentListResult = { items: AssessmentListItem[]; total: number; page: number; limit: number; pages: number; counts: AssessmentCounts };
+export type AssessmentListResult = {
+  items: AssessmentListItem[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+  counts: AssessmentCounts;
+  summary: { averageConfidence: number | null };
+};
 export type AssessmentListQuery = NonNullable<paths['/assessments']['get']['parameters']['query']>;
 export type Department = { _id: string; name: string; personaIds: string[] };
 

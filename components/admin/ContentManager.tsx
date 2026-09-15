@@ -40,6 +40,8 @@ export interface ContentManagerProps {
   approval?: boolean;
   /** Optional client-side facets for dense catalog screens. Values are derived from loaded records. */
   facets?: { key: string; label: string }[];
+  /** Optional requirement or authoring guidance shown between the page header and data controls. */
+  callout?: React.ReactNode;
 }
 
 const ALL_FACET_VALUES = '__all';
@@ -148,7 +150,7 @@ export function ContentManager(props: ContentManagerProps) {
   const t = useTranslations('contentManager');
   const statusT = useTranslations('status');
   const structuredValidation = useTranslations('structured.validation');
-  const { title, description, apiClient, fields, columns, versioned, defaultQuery, approval, facets = [] } = props;
+  const { title, description, apiClient, fields, columns, versioned, defaultQuery, approval, facets = [], callout } = props;
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -298,6 +300,8 @@ export function ContentManager(props: ContentManagerProps) {
           </Button>
         </div>
       </header>
+
+      {callout}
 
       {facets.length > 0 && (
         <section className="control-strip grid gap-3 sm:grid-cols-3" aria-label={t('facets')}>

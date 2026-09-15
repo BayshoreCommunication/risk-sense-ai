@@ -44,6 +44,48 @@ export default function RetentionPage() {
     load();
   }
 
+  const formatWindow = (days: number) =>
+    days % 365 === 0
+      ? t('policyTable.years', { years: days / 365, days: days.toLocaleString(locale) })
+      : t('policyTable.days', { days: days.toLocaleString(locale) });
+
+  const policyRows = settings
+    ? [
+        {
+          key: 'assessments',
+          record: t('policyTable.records.assessments'),
+          window: formatWindow(settings.retentionPolicy.assessmentDays),
+          expiry: settings.plan === 'paid' ? t('policyTable.actions.archiveReduce') : t('policyTable.actions.reduce'),
+          coverage: t('policyTable.coverage.enforced'),
+          enforced: true,
+        },
+        {
+          key: 'evidence',
+          record: t('policyTable.records.evidence'),
+          window: formatWindow(settings.retentionPolicy.evidenceDays),
+          expiry: t('policyTable.actions.followAssessment'),
+          coverage: t('policyTable.coverage.recorded'),
+          enforced: false,
+        },
+        {
+          key: 'audit',
+          record: t('policyTable.records.audit'),
+          window: formatWindow(settings.retentionPolicy.auditDays),
+          expiry: t('policyTable.actions.preserve'),
+          coverage: t('policyTable.coverage.reported'),
+          enforced: false,
+        },
+        {
+          key: 'datasets',
+          record: t('policyTable.records.datasets'),
+          window: t('policyTable.afterRetirement', { duration: formatWindow(settings.retentionPolicy.datasetHistoryDays) }),
+          expiry: t('policyTable.actions.retainHistory'),
+          coverage: t('policyTable.coverage.recorded'),
+          enforced: false,
+        },
+      ]
+    : [];
+
   return (
     <div className="page-shell">
       <header className="workspace-header">
@@ -58,12 +100,64 @@ export default function RetentionPage() {
       </header>
 
       {settings && (
-        <Card size="sm" className="shadow-none">
-          <CardContent className="flex items-start gap-3">
-            <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${settings.plan === 'paid' ? 'bg-violet-500/10 text-violet-700' : 'bg-blue-500/10 text-blue-700'}`}>{settings.plan === 'paid' ? <Archive className="size-4" aria-hidden="true" /> : <ShieldCheck className="size-4" aria-hidden="true" />}</span>
-            <div><p className="font-medium">{settings.plan === 'paid' ? t('policy.paidTitle') : t('policy.freeTitle')}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{settings.plan === 'paid' ? t('policy.paidDescription') : t('policy.freeDescription')}</p></div>
-          </CardContent>
-        </Card>
+        <>
+          <Card className="overflow-hidden shadow-none">
+            <CardHeader className="border-b bg-muted/20">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <CardTitle>{t('policyTable.title')}</CardTitle>
+                  <CardDescription className="mt-1">{t('policyTable.description')}</CardDescription>
+                </div>
+                <Badge variant="outline">SEC-06</Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="px-0">
+              <div className="divide-y md:hidden">
+                {policyRows.map((row) => (
+                  <article key={row.key} className="space-y-3 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <h2 className="text-sm font-semibold">{row.record}</h2>
+                      <Badge variant={row.enforced ? 'default' : 'outline'} className={row.enforced ? 'bg-emerald-600 text-white hover:bg-emerald-600' : undefined}>{row.coverage}</Badge>
+                    </div>
+                    <dl className="grid gap-3 text-xs">
+                      <div><dt className="font-medium uppercase tracking-wide text-muted-foreground">{t('policyTable.columns.window')}</dt><dd className="mt-1 font-semibold tabular-nums">{row.window}</dd></div>
+                      <div><dt className="font-medium uppercase tracking-wide text-muted-foreground">{t('policyTable.columns.expiry')}</dt><dd className="mt-1 leading-5 text-foreground/80">{row.expiry}</dd></div>
+                    </dl>
+                  </article>
+                ))}
+              </div>
+              <div className="hidden overflow-x-auto md:block">
+                <Table className="min-w-[760px] table-fixed">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[21%]">{t('policyTable.columns.record')}</TableHead>
+                      <TableHead className="w-[25%]">{t('policyTable.columns.window')}</TableHead>
+                      <TableHead className="w-[38%]">{t('policyTable.columns.expiry')}</TableHead>
+                      <TableHead className="w-[16%] text-right">{t('policyTable.columns.coverage')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {policyRows.map((row) => (
+                      <TableRow key={row.key}>
+                        <TableCell className="font-medium">{row.record}</TableCell>
+                        <TableCell className="whitespace-normal tabular-nums">{row.window}</TableCell>
+                        <TableCell className="whitespace-normal">{row.expiry}</TableCell>
+                        <TableCell className="text-right"><Badge variant={row.enforced ? 'default' : 'outline'} className={row.enforced ? 'bg-emerald-600 text-white hover:bg-emerald-600' : undefined}>{row.coverage}</Badge></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card size="sm" className="shadow-none">
+            <CardContent className="flex items-start gap-3">
+              <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${settings.plan === 'paid' ? 'bg-violet-500/10 text-violet-700' : 'bg-blue-500/10 text-blue-700'}`}>{settings.plan === 'paid' ? <Archive className="size-4" aria-hidden="true" /> : <ShieldCheck className="size-4" aria-hidden="true" />}</span>
+              <div><p className="font-medium">{settings.plan === 'paid' ? t('policy.paidTitle') : t('policy.freeTitle')}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{settings.plan === 'paid' ? t('policy.paidDescription') : t('policy.freeDescription')}</p></div>
+            </CardContent>
+          </Card>
+        </>
       )}
 
       <div className="control-strip flex flex-wrap items-center gap-2">

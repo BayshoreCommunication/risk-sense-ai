@@ -103,10 +103,6 @@ export default function TenantSettingsPage() {
             <Input id="domain" placeholder="acme.com" value={merged.sso.domain ?? ''} onChange={(e) => setDraft((d) => ({ ...d, sso: { providerId: (d.sso?.providerId ?? merged.sso.providerId) || null, domain: e.target.value || null } }))} />
           </div>
         </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={merged.authPolicy.otpRequired} onChange={(e) => setDraft((d) => ({ ...d, authPolicy: { otpRequired: e.target.checked } }))} />
-          {t('sso.requireOtp')}
-        </label>
         <div className={`rounded-xl border p-3 text-sm ${merged.plan === 'paid' ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-blue-500/30 bg-blue-500/5'}`}>
           <div className="flex items-start gap-2">
             <BadgeCheck className={`mt-0.5 size-4 shrink-0 ${merged.plan === 'paid' ? 'text-emerald-700' : 'text-blue-700'}`} aria-hidden="true" />

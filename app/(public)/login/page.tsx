@@ -91,9 +91,19 @@ function LoginForm() {
     setStep('otp');
   }
 
+  /** FREE requestors exchange directly; only an OTP_REQUIRED response opens the PAID/managed-role factor. */
+  async function exchangeOrRequestOtp() {
+    try {
+      await exchangeForSession();
+    } catch (nextError) {
+      if (toApiError(nextError).code === 'OTP_REQUIRED') await startSecondFactor();
+      else throw nextError;
+    }
+  }
+
   const firstFactor = (fn: () => Promise<unknown>) => run(async () => {
     await fn();
-    await startSecondFactor();
+    await exchangeOrRequestOtp();
   }, { signOutOnError: true });
 
   /**
@@ -114,12 +124,7 @@ function LoginForm() {
         }
         setNotice(t('ssoRedirect', { tenant: tenant ?? '' }));
         await signInWithSso(providerId, email.trim());
-        try {
-          await exchangeForSession();
-        } catch (e) {
-          if (toApiError(e).code === 'OTP_REQUIRED') await startSecondFactor();
-          else throw e;
-        }
+        await exchangeOrRequestOtp();
       },
       { signOutOnError: true },
     );
@@ -353,9 +358,21 @@ function LoginForm() {
           </p>
         )}
         {error && <p role="alert" className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">{error}</p>}
-        <div className="flex items-start gap-2 border-t pt-4 text-xs leading-5 text-muted-foreground">
-          <LockKeyhole className="mt-0.5 size-3.5 shrink-0 text-primary" />
-          <span>{t('planNote')}</span>
+        <div className="space-y-3 border-t pt-4">
+          <div className="grid gap-2 sm:grid-cols-2" aria-label={t('planPolicyLabel')}>
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3">
+              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800"><Badge variant="outline" className="border-emerald-300 bg-white/70 text-[0.6rem] text-emerald-800">FREE</Badge>{t('plans.freeTitle')}</div>
+              <p className="mt-1.5 text-xs leading-5 text-emerald-900/72">{t('plans.freeDescription')}</p>
+            </div>
+            <div className="rounded-lg border border-blue-200 bg-blue-50/65 p-3">
+              <div className="flex items-center gap-2 text-xs font-semibold text-blue-900"><Badge variant="outline" className="border-blue-300 bg-white/70 text-[0.6rem] text-blue-900">PAID</Badge>{t('plans.paidTitle')}</div>
+              <p className="mt-1.5 text-xs leading-5 text-blue-950/72">{t('plans.paidDescription')}</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2 text-xs leading-5 text-muted-foreground">
+            <LockKeyhole className="mt-0.5 size-3.5 shrink-0 text-primary" />
+            <span>{t('recoveryNote')}</span>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -366,44 +383,45 @@ export default function LoginPage() {
   const t = useTranslations('login');
   return (
     <main className="min-h-screen bg-background">
-      <div className="mx-auto grid min-h-screen max-w-[1540px] lg:grid-cols-[minmax(22rem,0.78fr)_minmax(32rem,1.22fr)]">
-        <section className="relative hidden overflow-hidden border-r border-sidebar-border bg-sidebar px-10 py-12 text-sidebar-foreground lg:flex lg:flex-col lg:justify-between xl:px-14 xl:py-14">
-          <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sidebar-primary to-transparent" />
+      <div className="mx-auto grid min-h-screen max-w-[1540px] lg:grid-cols-[minmax(32rem,1.03fr)_minmax(30rem,0.97fr)]">
+        <section className="relative flex min-h-screen items-center justify-center px-4 py-8 sm:px-8 lg:px-12 xl:px-16">
+          <div aria-hidden="true" className="subtle-grid absolute inset-0 opacity-30" />
+          <div className="relative w-full">
+            <Suspense>
+              <LoginForm />
+            </Suspense>
+          </div>
+        </section>
+
+        <section className="relative hidden overflow-hidden border-l border-white/10 bg-[#061a33] px-10 py-12 text-white lg:flex lg:flex-col lg:justify-between xl:px-14 xl:py-14">
+          <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#38a0ff] to-transparent" />
+          <div aria-hidden="true" className="absolute -right-28 top-24 size-80 rounded-full bg-blue-500/12 blur-3xl" />
           <div className="relative flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-lg bg-sidebar-primary text-xs font-bold">R</div>
+            <div className="flex size-9 items-center justify-center rounded-lg bg-[#1674df] text-xs font-bold text-white">R</div>
             <div>
               <div className="font-semibold">{t('title')}</div>
-              <div className="text-[0.66rem] font-semibold tracking-[0.14em] text-sidebar-foreground/60 uppercase">{t('eyebrow')}</div>
+              <div className="text-[0.66rem] font-semibold tracking-[0.14em] text-white/55 uppercase">{t('eyebrow')}</div>
             </div>
           </div>
 
           <div className="relative max-w-xl space-y-8 py-12">
             <div className="space-y-4">
-              <div className="text-[0.68rem] font-semibold tracking-[0.17em] text-sidebar-primary uppercase">{t('eyebrow')}</div>
+              <div className="text-[0.68rem] font-semibold tracking-[0.17em] text-[#55adff] uppercase">{t('eyebrow')}</div>
               <h1 className="max-w-lg text-4xl leading-[1.08] font-semibold tracking-[-0.045em] xl:text-[2.9rem]">{t('heroTitle')}</h1>
-              <p className="max-w-lg text-sm leading-6 text-sidebar-foreground/62 xl:text-base xl:leading-7">{t('heroDescription')}</p>
+              <p className="max-w-lg text-sm leading-6 text-white/62 xl:text-base xl:leading-7">{t('heroDescription')}</p>
             </div>
-            <div className="divide-y divide-sidebar-border border-y border-sidebar-border">
+            <div className="divide-y divide-white/10 border-y border-white/10">
               {(['guided', 'deterministic', 'auditable'] as const).map((key, index) => (
-                <div key={key} className="flex items-center gap-4 py-3.5 text-sm text-sidebar-foreground/80">
-                  <span className="font-mono text-[0.65rem] text-sidebar-primary">0{index + 1}</span>
+                <div key={key} className="flex items-center gap-4 py-3.5 text-sm text-white/80">
+                  <span className="font-mono text-[0.65rem] text-[#55adff]">0{index + 1}</span>
                   <span className="flex-1">{t(`assurance.${key}`)}</span>
-                  <CheckCircle2 className="size-4 text-sidebar-primary" aria-hidden="true" />
+                  <CheckCircle2 className="size-4 text-[#55adff]" aria-hidden="true" />
                 </div>
               ))}
             </div>
           </div>
 
-          <p className="relative max-w-lg text-xs leading-5 text-sidebar-foreground/65">{t('governanceNote')}</p>
-        </section>
-
-        <section className="relative flex min-h-screen items-center justify-center px-4 py-8 sm:px-8 lg:px-12">
-          <div aria-hidden="true" className="subtle-grid absolute inset-0 opacity-30" />
-          <div className="relative w-full">
-          <Suspense>
-            <LoginForm />
-          </Suspense>
-          </div>
+          <p className="relative max-w-lg text-xs leading-5 text-white/62">{t('governanceNote')}</p>
         </section>
       </div>
     </main>

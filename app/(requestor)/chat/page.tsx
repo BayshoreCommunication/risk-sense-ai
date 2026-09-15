@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { assessments } from '@/lib/assessments';
 import { toApiError } from '@/lib/api/client';
 
-/** Start screen: describe the incident (persona inferred, FR-04) and/or pick the role explicitly. */
+/** Start screen: describe the incident (persona inferred, FR-04) and/or pick the assessment persona explicitly. */
 export default function NewAssessmentPage() {
   const t = useTranslations('newAssessment');
   const router = useRouter();
@@ -68,7 +68,10 @@ export default function NewAssessmentPage() {
         </CardHeader>
         <CardContent className="grid gap-7 pt-1 lg:grid-cols-[minmax(0,1.14fr)_minmax(18rem,0.86fr)]">
           <div className="space-y-3">
-            <label htmlFor="incident-description" className="text-sm font-semibold">{t('incidentLabel')}</label>
+            <label htmlFor="incident-description" className="flex items-center gap-2 text-sm font-semibold">
+              <span className="grid size-6 place-items-center rounded-md bg-primary text-xs text-primary-foreground">1</span>
+              {t('incidentLabel')}
+            </label>
             <div className="relative">
               <Textarea
                 id="incident-description"
@@ -90,10 +93,13 @@ export default function NewAssessmentPage() {
 
           <div className="space-y-3">
             <div>
-              <div className="text-sm font-semibold">{t('rolePrompt')}</div>
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <span className="grid size-6 place-items-center rounded-md bg-primary text-xs text-primary-foreground">2</span>
+                {t('rolePrompt')}
+              </div>
               <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('roleHint')}</p>
             </div>
-            <div className="scrollbar-subtle grid max-h-64 gap-2 overflow-y-auto pr-1">
+            <div className="scrollbar-subtle grid max-h-64 gap-2 overflow-y-auto pr-1" role="group" aria-label={t('personaGroupLabel')}>
               {personas.map((p) => (
                 <button
                   key={p.key}
@@ -118,7 +124,7 @@ export default function NewAssessmentPage() {
               {!error && personas.length === 0 && (
                 <div className="flex items-center gap-2 rounded-xl border border-dashed p-3 text-xs text-muted-foreground" role="status">
                   <LoaderCircle className="size-4 animate-spin" />
-                  {t('loadingRoles')}
+                  {t('loadingPersonas')}
                 </div>
               )}
             </div>

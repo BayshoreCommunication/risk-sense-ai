@@ -49,7 +49,7 @@
 }
 
 :root {
-  --background: oklch(0.974 0.006 250);
+  --background: oklch(0.978 0.006 250);
   --foreground: oklch(0.205 0.038 258);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.23 0.045 255);
@@ -64,7 +64,7 @@
   --accent: oklch(0.937 0.027 252);
   --accent-foreground: oklch(0.36 0.12 255);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.875 0.014 252);
+  --border: oklch(0.89 0.014 252);
   --input: oklch(0.845 0.019 252);
   --ring: oklch(0.62 0.17 255);
   --chart-1: oklch(0.56 0.2 255);
@@ -72,14 +72,14 @@
   --chart-3: oklch(0.77 0.16 78);
   --chart-4: oklch(0.61 0.2 305);
   --chart-5: oklch(0.62 0.22 28);
-  --radius: 0.55rem;
-  --sidebar: oklch(0.174 0.047 258);
-  --sidebar-foreground: oklch(0.94 0.015 250);
-  --sidebar-primary: oklch(0.67 0.16 251);
+  --radius: 0.62rem;
+  --sidebar: oklch(0.995 0.002 250);
+  --sidebar-foreground: oklch(0.255 0.04 258);
+  --sidebar-primary: oklch(0.515 0.178 257);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.255 0.067 257);
-  --sidebar-accent-foreground: oklch(0.99 0.004 250);
-  --sidebar-border: oklch(1 0 0 / 11%);
+  --sidebar-accent: oklch(0.955 0.025 252);
+  --sidebar-accent-foreground: oklch(0.31 0.105 257);
+  --sidebar-border: oklch(0.9 0.014 252);
   --sidebar-ring: oklch(0.7 0.13 251);
   --success: oklch(0.63 0.17 158);
   --success-soft: oklch(0.96 0.04 158);
@@ -130,8 +130,8 @@
   body {
     @apply min-h-screen bg-background text-foreground;
     background-image:
-      linear-gradient(to bottom, color-mix(in oklch, var(--background), white 34%), var(--background) 15rem),
-      linear-gradient(90deg, transparent, var(--workspace-glow), transparent);
+      radial-gradient(circle at 72% -10%, color-mix(in oklch, var(--primary), transparent 94%), transparent 34rem),
+      linear-gradient(to bottom, color-mix(in oklch, var(--background), white 42%), var(--background) 17rem);
   }
   html {
     @apply font-sans;
@@ -180,17 +180,17 @@
 
 @layer utilities {
   .workspace-header {
-    @apply relative overflow-hidden rounded-xl border bg-card px-5 py-5 shadow-[0_1px_2px_rgba(15,35,65,0.035)] sm:px-6;
+    @apply relative overflow-hidden rounded-xl border bg-card px-5 py-5 shadow-[0_10px_30px_rgba(15,35,65,0.035)] sm:px-6;
   }
   .workspace-header::before {
     content: "";
-    @apply absolute inset-y-0 left-0 w-1 bg-primary;
+    @apply absolute inset-x-0 top-0 h-px bg-gradient-to-r from-primary/0 via-primary/65 to-primary/0;
   }
   .data-panel {
-    @apply overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgba(15,35,65,0.035)];
+    @apply overflow-hidden rounded-xl border bg-card shadow-[0_8px_26px_rgba(15,35,65,0.032)];
   }
   .control-strip {
-    @apply rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(15,35,65,0.035)];
+    @apply rounded-xl border bg-card p-4 shadow-[0_8px_26px_rgba(15,35,65,0.032)];
   }
   .metric-value {
     @apply font-heading text-2xl font-semibold tracking-[-0.035em] tabular-nums;

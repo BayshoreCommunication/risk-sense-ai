@@ -15,6 +15,7 @@ import {
   Database,
   FileClock,
   FileSearch,
+  FileText,
   Fingerprint,
   History,
   Languages,
@@ -46,39 +47,40 @@ type AuthUser = components['schemas']['AuthUser'];
 type AuthTenant = components['schemas']['AuthTenant'];
 type Me = { user: AuthUser; tenant: AuthTenant; sessionId: string };
 type Feature = keyof AuthTenant['features'];
-type NavItem = { href: string; key: string; icon: LucideIcon; feature?: Feature };
+type NavItem = { href: string; key: string; icon: LucideIcon; feature?: Feature; section?: 'advanced' };
 
 /** Nav entries per role; labels are message keys under `nav.<role>` (messages/*.json). */
 const NAV: Record<Role, NavItem[]> = {
   requestor: [
-    { href: '/chat', key: 'chat', icon: MessageSquareText },
     { href: '/review', key: 'review', icon: ClipboardCheck },
+    { href: '/chat', key: 'chat', icon: MessageSquareText },
   ],
   administrator: [
     { href: '/admin', key: 'overview', icon: LayoutDashboard },
-    { href: '/admin/review', key: 'review', icon: ClipboardCheck },
     { href: '/admin/personas', key: 'personas', icon: UsersRound },
     { href: '/admin/scenarios', key: 'scenarios', icon: Library },
     { href: '/admin/questions', key: 'questions', icon: BookOpenCheck },
-    { href: '/admin/datasets', key: 'datasets', icon: Database },
     { href: '/admin/rules', key: 'rules', icon: Network },
     { href: '/admin/scoring', key: 'scoring', icon: SlidersHorizontal },
+    { href: '/admin/datasets', key: 'datasets', icon: Database },
     { href: '/admin/analytics', key: 'analytics', icon: BarChart3, feature: 'reports' },
+    { href: '/admin/reports', key: 'reports', icon: FileText, feature: 'reports' },
+    { href: '/admin/review', key: 'review', icon: ClipboardCheck },
   ],
   system_administrator: [
     { href: '/system', key: 'overview', icon: CircleGauge },
     { href: '/system/users', key: 'users', icon: UserRoundCog },
-    { href: '/system/departments', key: 'departments', icon: Building2 },
     { href: '/system/tenant', key: 'tenant', icon: Settings2 },
     { href: '/system/retention', key: 'retention', icon: History },
     { href: '/system/dr', key: 'dr', icon: RefreshCw },
-    { href: '/system/conformance', key: 'conformance', icon: ShieldCheck },
-    { href: '/system/audit', key: 'audit', icon: Archive },
+    { href: '/system/departments', key: 'departments', icon: Building2, section: 'advanced' },
+    { href: '/system/conformance', key: 'conformance', icon: ShieldCheck, section: 'advanced' },
+    { href: '/system/audit', key: 'audit', icon: Archive, section: 'advanced' },
   ],
   audit: [
-    { href: '/audit', key: 'overview', icon: Activity },
-    { href: '/audit/assessments', key: 'assessments', icon: FileSearch },
     { href: '/audit/logs', key: 'logs', icon: FileClock },
+    { href: '/audit/assessments', key: 'assessments', icon: FileSearch, section: 'advanced' },
+    { href: '/audit', key: 'overview', icon: Activity, section: 'advanced' },
   ],
 };
 
@@ -239,15 +241,13 @@ export function AppShell({ role, children }: { role: Role; children: React.React
 
   const renderNavigation = (mobile = false) => (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex h-16 shrink-0 items-center gap-3 border-b border-sidebar-border px-5">
-        <div className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-xs font-bold text-sidebar-primary-foreground">
-          R
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold tracking-[-0.01em] text-sidebar-foreground">{t('app.name')}</div>
-          <div className="truncate text-[0.66rem] font-medium tracking-[0.12em] text-sidebar-foreground/50 uppercase">{t('app.secureWorkspace')}</div>
-        </div>
-        {mobile && (
+      {mobile ? (
+        <div className="flex h-14 shrink-0 items-center gap-3 border-b border-sidebar-border px-4">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-xs font-bold text-sidebar-primary-foreground">R</div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-semibold tracking-[-0.01em] text-sidebar-foreground">{t('app.name')}</div>
+            <div className="truncate text-[0.62rem] font-medium tracking-[0.12em] text-sidebar-foreground/50 uppercase">{t('app.secureWorkspace')}</div>
+          </div>
           <button
             type="button"
             aria-label={t('app.closeNavigation')}
@@ -256,34 +256,40 @@ export function AppShell({ role, children }: { role: Role; children: React.React
           >
             <X className="size-4" />
           </button>
-        )}
-      </div>
+        </div>
+      ) : null}
 
       <div className="scrollbar-subtle min-h-0 flex-1 overflow-y-auto px-3 py-5">
-        <div className="mb-3 px-3 text-[0.62rem] font-semibold tracking-[0.16em] text-sidebar-foreground/48 uppercase">
+        <div className="mb-3 px-3 text-[0.62rem] font-semibold tracking-[0.16em] text-sidebar-foreground/45 uppercase">
           {t('app.roleNavigation', { role: t(`roles.${trustedRole}`) })}
         </div>
         <nav className="space-y-0.5" aria-label={t('app.navigation')}>
-          {navigation.map((item) => {
+          {navigation.map((item, index) => {
             const active = isNavActive(pathname, item, home);
             const Icon = item.icon;
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={active ? 'page' : undefined}
-                className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[0.84rem] transition ${
-                  active
-                    ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground'
-                    : 'text-sidebar-foreground/64 hover:bg-sidebar-accent/55 hover:text-sidebar-foreground'
-                }`}
-              >
-                {active && <span aria-hidden="true" className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-sidebar-primary" />}
-                <span className={`flex size-7 items-center justify-center transition ${active ? 'text-sidebar-primary' : 'text-sidebar-foreground/42 group-hover:text-sidebar-foreground/80'}`}>
-                  <Icon className="size-[1.05rem]" />
-                </span>
-                <span className="min-w-0 flex-1 truncate">{t(`nav.${trustedRole}.${item.key}`)}</span>
-              </Link>
+              <div key={item.href}>
+                {item.section === 'advanced' && navigation[index - 1]?.section !== 'advanced' ? (
+                  <div className="mb-2 mt-5 border-t border-sidebar-border px-3 pt-4 text-[0.59rem] font-semibold tracking-[0.14em] text-sidebar-foreground/40 uppercase">
+                    {t('app.advancedOperations')}
+                  </div>
+                ) : null}
+                <Link
+                  href={item.href}
+                  aria-current={active ? 'page' : undefined}
+                  className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[0.84rem] transition ${
+                    active
+                      ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground'
+                      : 'text-sidebar-foreground/62 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
+                  }`}
+                >
+                  {active && <span aria-hidden="true" className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-sidebar-primary" />}
+                  <span className={`flex size-7 items-center justify-center transition ${active ? 'text-sidebar-primary' : 'text-sidebar-foreground/38 group-hover:text-sidebar-foreground/80'}`}>
+                    <Icon className="size-[1.05rem]" />
+                  </span>
+                  <span className="min-w-0 flex-1 truncate">{t(`nav.${trustedRole}.${item.key}`)}</span>
+                </Link>
+              </div>
             );
           })}
         </nav>
@@ -337,9 +343,43 @@ export function AppShell({ role, children }: { role: Role; children: React.React
 
   return (
     <div className="min-h-screen bg-transparent">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 border-r border-sidebar-border bg-sidebar lg:block">
-        {renderNavigation()}
-      </aside>
+      <div inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
+        <header className="fixed inset-x-0 top-0 z-50 flex h-14 items-center bg-[#06224b] text-white shadow-[0_1px_0_rgba(255,255,255,0.08)]">
+        <div className="flex h-full w-full items-center gap-3 px-4 sm:px-5 lg:w-60 lg:border-r lg:border-white/10">
+          <button
+            ref={mobileNavigationTriggerRef}
+            type="button"
+            aria-label={t('app.openNavigation')}
+            aria-expanded={mobileNavigationOpen}
+            aria-controls="app-mobile-navigation"
+            className="rounded-lg p-2 text-white/75 transition hover:bg-white/10 hover:text-white lg:hidden"
+            onClick={() => setMobileNavigationOpen(true)}
+          >
+            <Menu className="size-5" />
+          </button>
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-[#1674df] text-[0.66rem] font-bold text-white shadow-sm">R</div>
+          <div className="min-w-0">
+            <div className="truncate text-sm font-semibold tracking-[-0.01em]">{t('app.name')}</div>
+            <div className="hidden truncate text-[0.58rem] font-medium tracking-[0.13em] text-white/52 uppercase sm:block">{t('app.secureWorkspace')}</div>
+          </div>
+        </div>
+        <div className="hidden min-w-0 flex-1 items-center gap-2 px-5 lg:flex">
+          <PanelLeftClose className="size-4 text-white/36" aria-hidden="true" />
+          <span className="truncate text-xs font-medium text-white/72">{activeItem ? t(`nav.${trustedRole}.${activeItem.key}`) : t(`roles.${trustedRole}`)}</span>
+        </div>
+        <div className="ml-auto flex shrink-0 items-center gap-2 px-4 sm:px-5">
+          <Badge className="hidden border-white/15 bg-white/8 text-[0.62rem] text-white sm:inline-flex" variant="outline">{t(`roles.${trustedRole}`)}</Badge>
+          <Badge className="border-white/15 bg-white/8 text-[0.62rem] text-white" variant="outline">{me.tenant.plan.toUpperCase()}</Badge>
+          <div className="flex size-8 items-center justify-center rounded-lg border border-white/15 bg-white/8 text-[0.68rem] font-bold text-white" title={`${me.user.name} · ${me.user.email}`}>
+            {initials(me.user.name) || 'RS'}
+          </div>
+        </div>
+        </header>
+
+        <aside className="fixed bottom-0 left-0 top-14 z-40 hidden w-60 border-r border-sidebar-border bg-sidebar lg:block">
+          {renderNavigation()}
+        </aside>
+      </div>
 
       {mobileNavigationOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
@@ -364,28 +404,8 @@ export function AppShell({ role, children }: { role: Role; children: React.React
         </div>
       )}
 
-      <div className="min-w-0 lg:pl-60" inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/80 bg-background/94 px-4 backdrop-blur-xl sm:px-6 lg:px-7">
-          <button
-            ref={mobileNavigationTriggerRef}
-            type="button"
-            aria-label={t('app.openNavigation')}
-            aria-expanded={mobileNavigationOpen}
-            aria-controls="app-mobile-navigation"
-            className="rounded-lg border bg-card p-2 text-muted-foreground transition hover:bg-accent hover:text-foreground lg:hidden"
-            onClick={() => setMobileNavigationOpen(true)}
-          >
-            <Menu className="size-5" />
-          </button>
-          <div className="flex min-w-0 flex-1 items-center gap-2.5">
-            <PanelLeftClose className="hidden size-4 text-muted-foreground/40 lg:block" aria-hidden="true" />
-            <span className="truncate text-sm font-semibold text-foreground">{activeItem ? t(`nav.${trustedRole}.${activeItem.key}`) : t(`roles.${trustedRole}`)}</span>
-          </div>
-          <div className="flex size-8 items-center justify-center rounded-lg border bg-card text-[0.68rem] font-bold text-primary" title={`${me.user.name} · ${me.user.email}`}>
-            {initials(me.user.name) || 'RS'}
-          </div>
-        </header>
-        <main className="min-h-[calc(100dvh-3.5rem)] px-4 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-7">{children}</main>
+      <div className="min-w-0 pt-14 lg:pl-60" inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
+        <main className="min-h-[calc(100dvh-3.5rem)] px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">{children}</main>
       </div>
     </div>
   );

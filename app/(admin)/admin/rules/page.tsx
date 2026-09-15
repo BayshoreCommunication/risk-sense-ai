@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { ContentManager, type FieldSpec } from '@/components/admin/ContentManager';
+import { Badge } from '@/components/ui/badge';
 import { rulesApi } from '@/lib/admin/content';
 
 function ruleFields(t: ReturnType<typeof useTranslations>): FieldSpec[] {
@@ -53,6 +54,22 @@ export default function RulesPage() {
           return classification.has(value) ? classification(value) : value;
         } },
       ]}
+      callout={(
+        <aside className="flex flex-col gap-3 rounded-xl border border-blue-200 bg-blue-50/55 p-4 sm:flex-row sm:items-center sm:justify-between" aria-label={t('lockoutExample.title')}>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-semibold text-blue-950">{t('lockoutExample.title')}</span>
+              <Badge variant="outline" className="border-blue-300 bg-white/70 text-[0.62rem] text-blue-900">{t('lockoutExample.notActive')}</Badge>
+            </div>
+            <p className="mt-1 text-xs leading-5 text-blue-950/70">{t('lockoutExample.description')}</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2 rounded-lg border border-blue-200 bg-white/75 px-3 py-2 text-xs">
+            <code>{t('lockoutExample.condition')}</code>
+            <span aria-hidden="true">→</span>
+            <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800" variant="outline">{classification('monitor_only')}</Badge>
+          </div>
+        </aside>
+      )}
       versioned
       approval
     />

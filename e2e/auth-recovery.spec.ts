@@ -1,8 +1,67 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { applyAuthHeaders, AuthBridgeState } from '../lib/api/auth-state';
 import { runVerificationRecovery } from '../lib/firebase/verification-recovery';
 
 const nextTurn = () => new Promise<void>((resolve) => setTimeout(resolve, 10));
+
+async function mockVerifiedPasswordSignIn(page: Page, email: string, uid: string) {
+  const now = Math.floor(Date.now() / 1_000);
+  const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url');
+  const idToken = `${encode({ alg: 'none', typ: 'JWT' })}.${encode({
+    aud: 'frontend-test',
+    auth_time: now,
+    email,
+    email_verified: true,
+    exp: now + 3_600,
+    firebase: { identities: { email: [email] }, sign_in_provider: 'password' },
+    iat: now,
+    iss: 'https://securetoken.google.com/frontend-test',
+    sub: uid,
+    user_id: uid,
+  })}.test-signature`;
+
+  await page.route('https://identitytoolkit.googleapis.com/**', async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path.endsWith('/accounts:signInWithPassword')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          displayName: '',
+          email,
+          emailVerified: true,
+          expiresIn: '3600',
+          idToken,
+          kind: 'identitytoolkit#VerifyPasswordResponse',
+          localId: uid,
+          refreshToken: `refresh-${uid}`,
+          registered: true,
+        }),
+      });
+      return;
+    }
+    if (path.endsWith('/accounts:lookup')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          kind: 'identitytoolkit#GetAccountInfoResponse',
+          users: [{
+            createdAt: String(now * 1_000),
+            email,
+            emailVerified: true,
+            lastLoginAt: String(now * 1_000),
+            localId: uid,
+            providerUserInfo: [{ email, federatedId: email, providerId: 'password' }],
+            validSince: '0',
+          }],
+        }),
+      });
+      return;
+    }
+    await route.abort('failed');
+  });
+}
 
 test('persisted Firebase restoration gates the first protected request until its bearer exists [SEC-02]', async () => {
   for (const devAuthEnabled of [false, true]) {
@@ -121,6 +180,113 @@ test('already-verified recovery skips delivery but still signs out [FR-01, SEC-0
     }),
   ).resolves.toBe('already-verified');
   expect(events).toEqual(['sign-in', 'reload', 'sign-out', 'clear-token']);
+});
+
+test('a verified FREE requestor receives a session without entering the PAID MFA flow [FR-01, FR-02]', async ({ page }, testInfo) => {
+  test.skip(testInfo.config.metadata.frontendMocks !== true, 'requires the isolated mocked-Firebase frontend build');
+  const email = 'free.requestor@example.test';
+  const session = {
+    user: {
+      id: 'free-user-1',
+      firebaseUid: 'firebase-free-user-1',
+      email,
+      name: 'Free Requestor',
+      role: 'requestor',
+      tenantId: 'public-tenant',
+      departmentIds: [],
+      crossDepartmentAccess: false,
+      mfaEnrolled: false,
+    },
+    tenant: {
+      id: 'public-tenant',
+      slug: 'public',
+      plan: 'free',
+      features: { sso: false, reviewDashboard: false, reports: false, fullAudit: false, departmentMapping: false, blockConcurrentLogin: false },
+      sessionPolicy: { idleTimeoutMin: 15, maxConcurrentSessions: 1 },
+    },
+    sessionId: 'free-session-1',
+    expiresAt: '2026-09-15T10:00:00.000Z',
+  };
+  let sessionCalls = 0;
+  let otpRequests = 0;
+  await mockVerifiedPasswordSignIn(page, email, 'firebase-free-user-1');
+  await page.route('**/test-api/**', async (route) => {
+    const path = new URL(route.request().url()).pathname.replace(/^\/test-api/, '');
+    if (path === '/auth/session') {
+      sessionCalls += 1;
+      await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ data: session, meta: { requestId: 'free-login' } }) });
+      return;
+    }
+    if (path === '/auth/otp/request') {
+      otpRequests += 1;
+      await route.fulfill({ status: 500, contentType: 'application/json', body: '{}' });
+      return;
+    }
+    if (path === '/me') {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: session, meta: { requestId: 'free-me' } }) });
+      return;
+    }
+    if (path === '/personas') {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [], meta: { requestId: 'free-personas' } }) });
+      return;
+    }
+    await route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
+  });
+
+  await page.goto('/login');
+  await page.getByLabel('Work email').fill(email);
+  await page.getByLabel('Password').fill('correct-horse-battery-staple');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+
+  await expect(page).toHaveURL(/\/chat$/);
+  await expect(page.getByRole('heading', { name: 'New risk assessment' })).toBeVisible();
+  expect(sessionCalls).toBe(1);
+  expect(otpRequests).toBe(0);
+});
+
+test('a verified PAID account enters the current-login MFA flow when session exchange requires it [FR-01, SEC-03]', async ({ page }, testInfo) => {
+  test.skip(testInfo.config.metadata.frontendMocks !== true, 'requires the isolated mocked-Firebase frontend build');
+  const email = 'paid.requestor@example.test';
+  let sessionCalls = 0;
+  let otpRequests = 0;
+  await mockVerifiedPasswordSignIn(page, email, 'firebase-paid-user-1');
+  await page.route('**/test-api/**', async (route) => {
+    const path = new URL(route.request().url()).pathname.replace(/^\/test-api/, '');
+    if (path === '/auth/session') {
+      sessionCalls += 1;
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: { code: 'OTP_REQUIRED', message: 'A verification code is required to sign in' }, meta: { requestId: 'paid-login' } }),
+      });
+      return;
+    }
+    if (path === '/auth/otp/request') {
+      otpRequests += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ data: { sentTo: 'pa***@example.test', expiresAt: '2026-09-15T10:00:00.000Z', devCode: '123456' }, meta: { requestId: 'paid-otp' } }),
+      });
+      return;
+    }
+    await route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
+  });
+
+  await page.goto('/login');
+  await page.getByLabel('Work email').fill(email);
+  await page.getByLabel('Password').fill('correct-horse-battery-staple');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+
+  await expect(page.getByLabel('Verification code')).toBeVisible();
+  // The masked destination proves the OTP was requested for this identity…
+  await expect(page.getByText('pa***@example.test')).toBeVisible();
+  // …and the code itself never reaches a non-development build: DEV_AUTH_ENABLED needs NODE_ENV and
+  // NEXT_PUBLIC_ENV to both be "development", and this suite builds with NEXT_PUBLIC_ENV=ci (SEC-03).
+  await expect(page.getByText('Dev mail provider')).toHaveCount(0);
+  await expect(page.getByText('123456')).toHaveCount(0);
+  expect(sessionCalls).toBe(1);
+  expect(otpRequests).toBe(1);
 });
 
 test('unverified password account sees a retryable resend flow without an application-session call [FR-01, SEC-02, NFR-08]', async ({ page }, testInfo) => {
