@@ -26,7 +26,16 @@ function ruleFields(t: ReturnType<typeof useTranslations>): FieldSpec[] {
 
 export default function RulesPage() {
   const t = useTranslations('admin.rules');
+  const classification = useTranslations('classification');
   const fields = ruleFields(t);
+  const formatCondition = (value: unknown): string => {
+    if (!value || typeof value !== 'object') return '—';
+    const condition = value as { all?: unknown[]; any?: unknown[]; factKey?: string; op?: string; value?: unknown };
+    if (condition.all) return `(${condition.all.map(formatCondition).join(` ${t('display.and')} `)})`;
+    if (condition.any) return `(${condition.any.map(formatCondition).join(` ${t('display.or')} `)})`;
+    const operator: Record<string, string> = { eq: '=', ne: '≠', gt: '>', gte: '≥', lt: '<', lte: '≤', in: t('display.in'), exists: t('display.exists') };
+    return `${condition.factKey ?? 'fact'} ${operator[condition.op ?? ''] ?? condition.op ?? ''}${condition.op === 'exists' ? '' : ` ${Array.isArray(condition.value) ? condition.value.join(', ') : String(condition.value ?? '')}`}`;
+  };
   return (
     <ContentManager
       title={t('title')}
@@ -38,7 +47,11 @@ export default function RulesPage() {
         { key: 'priority', label: t('fields.priority') },
         { key: 'key', label: t('fields.key') },
         { key: 'name', label: t('fields.name') },
-        { key: 'forcedClassification', label: t('columns.forces') },
+        { key: 'trigger', label: t('fields.trigger'), render: (item) => <code className="text-xs">{formatCondition(item.trigger)}</code> },
+        { key: 'forcedClassification', label: t('columns.forces'), render: (item) => {
+          const value = String(item.forcedClassification ?? '');
+          return classification.has(value) ? classification(value) : value;
+        } },
       ]}
       versioned
       approval

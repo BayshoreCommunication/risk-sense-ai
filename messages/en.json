@@ -74,7 +74,7 @@
     "resendVerificationHint": "Already created an account but did not receive the verification link?",
     "resendVerification": "Resend verification email",
     "resendVerificationNeedsCredentials": "Enter your email and password first",
-    "noFirebase": "Firebase is not configured — development sign-in only.",
+    "noFirebase": "Sign-in is unavailable in this environment. Contact your administrator.",
     "authNotConfigured": "Authentication is not configured. Contact your administrator.",
     "sessionExpired": "Your session expired. Sign in again to continue.",
     "sessionInvalid": "Your session is no longer active. Sign in again to continue.",
@@ -246,7 +246,7 @@
         "branchTrigger": "When this answer matches, append the specified follow-up question keys.",
         "scoringHint": "Optional authoring hint for scoring reviewers."
       },
-      "columns": { "text": "Question", "personas": "Personas" }
+      "columns": { "text": "Question", "personas": "Personas", "updated": "Updated" }
     },
     "rules": {
       "title": "Rules",
@@ -269,6 +269,7 @@
         "priority": "Lower numbers are evaluated first.",
         "sectors": "Optional semicolon-separated sector restrictions."
       },
+      "display": { "and": "AND", "or": "OR", "in": "in", "exists": "exists" },
       "columns": { "forces": "Forces" }
     },
     "scoring": {
@@ -319,7 +320,7 @@
     },
     "datasets": {
       "title": "Datasets",
-      "description": "Upload the content workbook (personas, scenarios, questions, scoring). Rows are validated first; a second administrator approves; activation versions the content (FR-13, AI-06).",
+      "description": "Upload the content workbook for validation. A different administrator must approve it before activation versions the content.",
       "downloadTemplate": "Download template",
       "upload": {
         "title": "Upload workbook",
@@ -335,6 +336,9 @@
         "questions": "Questions",
         "rows": "Content rows",
         "errors": "Errors",
+        "author": "Uploaded by",
+        "reviewer": "Reviewed by",
+        "uploaded": "Uploaded",
         "status": "Status",
         "actions": "Actions"
       },
@@ -353,7 +357,7 @@
     },
     "reviewQueue": {
       "title": "Mandatory review queue",
-      "description": "Assessments flagged because their confidence fell below the matrix threshold (AI-03). Oldest first. Open one to check the extracted facts and the explanation; the requestor or their reviewer records the decision.",
+      "description": "Assessments flagged because their confidence fell below the configured threshold. Oldest first. Open one to check the extracted facts and explanation; the requestor or assigned reviewer records the decision.",
       "tabs": { "pending": "Awaiting decision", "all": "All flagged" },
       "columns": {
         "started": "Started",
@@ -380,11 +384,12 @@
     },
     "analytics": {
       "title": "Analytics",
-      "description": "Standard reports (volume, classification, override rate, assessment time) and trends. Cached for an hour; exports match the table view exactly.",
+      "description": "Explore assessment volume, classification, overrides and completion time. Every export matches the selected filters.",
       "refresh": "Refresh",
       "loading": "Loading…",
       "milliseconds": "ms",
       "minutesShort": "{value} min",
+      "total": "Total",
       "ranges": {
         "days30": "Last 30 days",
         "days90": "Last 90 days",
@@ -405,10 +410,10 @@
       },
       "views": {
         "chart": "Chart",
+        "pie": "Pie",
         "table": "Table",
         "tableView": "Table view"
       },
-      "cache": { "cached": "Cached", "computed": "Computed" },
       "stats": {
         "started": "Started",
         "startedHint": "{closed} closed · {escalated} escalated",
@@ -416,8 +421,6 @@
         "scoredHint": "{ruleDriven} rule-driven · {professionalConsult} professional consult",
         "overrideRate": "Override rate",
         "overrideHint": "{overridden} of {decided} decided",
-        "acceptRate": "Accept rate",
-        "acceptHint": "Accuracy proxy (BRD §12, target 75%)",
         "medianTime": "Median time",
         "timeHint": "p95 {p95} · intake {intake}"
       },
@@ -430,11 +433,12 @@
         "classification": {
           "title": "Classification distribution",
           "description": "Final class (a human override wins over the AI recommendation).",
+          "pieTitle": "Classification distribution as a pie chart",
           "ordered": "ordered by severity."
         },
         "override": {
           "title": "Override rate",
-          "description": "Share of decided assessments where the human changed the classification. Override reasons (FR-23) are in the table export.",
+          "description": "Share of decided assessments where the human changed the classification. Reasons are included in the table export.",
           "chartTitle": "Override rate per period",
           "series": "Override rate"
         },
@@ -453,7 +457,7 @@
       },
       "trends": {
         "title": "Trends by {group}",
-        "description": "Assessments per period for each {group} (top 8; the rest folded into “other”). Cached for an hour (FR-27).",
+        "description": "Assessments per period for each {group}; the eight largest groups are shown and the rest are combined as “other”.",
         "chartTitle": "Assessments per period by {group}",
         "empty": "No assessments in this range."
       }
@@ -462,6 +466,8 @@
   "contentManager": {
     "filter": "Filter content",
     "filterPlaceholder": "Filter…",
+    "facets": "Catalog filters",
+    "allValues": "All",
     "version": "Version",
     "current": "current",
     "status": "Status",
@@ -545,6 +551,7 @@
       "factKey": "Fact key",
       "operator": "Operator",
       "operatorLabel": "Condition operator",
+      "operators": { "eq": "Equals", "ne": "Does not equal", "gt": "Greater than", "gte": "At least", "lt": "Less than", "lte": "At most", "in": "Matches one of", "exists": "Exists" },
       "existsHelp": "This operator checks whether the fact exists; no comparison value is needed.",
       "acceptedValues": "Accepted values",
       "comparisonValue": "Comparison value",
@@ -754,6 +761,13 @@
     "loadingConversation": "Loading your assessment…",
     "processing": "Structuring your answer…",
     "scrollLatest": "Scroll to latest message",
+    "workspaceLabel": "Assessment conversation workspace",
+    "contextPanel": "Assessment context",
+    "currentStage": "Current stage",
+    "workflow": "Assessment workflow",
+    "assessmentContext": "Assessment context",
+    "role": "Role",
+    "scenario": "Scenario",
     "progress": "Assessment progress",
     "capturedFacts": "Captured facts",
     "factConfidence": "confidence",
@@ -794,6 +808,11 @@
     "answer": {
       "yes": "Yes",
       "no": "No",
+      "optionsLabel": "Answer options",
+      "yesNoLabel": "Yes or no answer",
+      "explainLabel": "Explain your answer",
+      "numberLabel": "Numeric answer",
+      "textLabel": "Your answer",
       "explainPlaceholder": "or explain in words…",
       "numberPlaceholder": "Enter a number",
       "textPlaceholder": "Type your answer…",
@@ -801,6 +820,8 @@
     }
   },
   "resultCard": {
+    "title": "Assessment result",
+    "scoreOutOf": "/ 100 risk score",
     "ruleDriven": "Rule-driven: {rule}",
     "errorReview": "Error review — score 0",
     "confidence": "Confidence {value}%",
@@ -815,18 +836,21 @@
     },
     "decision": {
       "label": "Decision",
+      "title": "Record the human decision",
+      "recorded": "Decision recorded",
       "types": {
         "accept": "accept",
         "override": "override",
         "escalate": "escalate"
       },
       "status": "status {status}",
-      "notice": "The AI does not decide. Record your decision to close this assessment (FR-22)."
+      "notice": "The assistant provides a recommendation; a human decision is required before this assessment can close."
     },
     "escalated": {
       "label": "Escalated",
       "toReviewer": "Escalated to {name}",
       "stillOpen": "Still open until a reviewer accepts or overrides.",
+      "reasonLabel": "Escalation note",
       "reasonPlaceholder": "Why are you escalating? (optional)"
     },
     "actions": {
@@ -837,17 +861,23 @@
       "escalateSubmit": "Escalate"
     },
     "override": {
+      "classificationLabel": "Override classification",
       "classificationPlaceholder": "New classification",
-      "reasonPlaceholder": "Reason (at least 25 characters, kept for reporting — FR-23)"
+      "reasonLabel": "Override rationale",
+      "reasonPlaceholder": "Explain why the recommendation should change",
+      "reasonHint": "Enter at least 25 characters. The rationale is retained with the decision."
     },
     "routing": {
       "noSpecificReviewer": "No specific reviewer",
       "crossDepartmentSuffix": "(cross-department)",
+      "loading": "Loading available reviewers…",
+      "reviewerLabel": "Reviewer",
       "placeholder": "Route to a reviewer",
       "unavailable": "No reviewer routing on this plan — the escalation stays open for you or your department to decide."
     }
   },
   "reviewDashboard": {
+    "eyebrow": "Decision workspace",
     "title": "Assessments",
     "descriptionReviewer": "Your assessments and those of your department. Pending decisions come first — open one to review the recommendation and record your decision.",
     "descriptionRequestor": "Your assessments. Pending decisions come first — open one to review the recommendation and record your decision.",
@@ -904,8 +934,8 @@
       "default": "No assessments yet."
     },
     "ruleDriven": "rule-driven",
-    "ruleDrivenTitle": "A hard rule set this classification (FR-17)",
-    "professionalConsultTitle": "Below 60 %: Professional Consult recommended (FR-20)",
+    "ruleDrivenTitle": "A hard rule set this classification",
+    "professionalConsultTitle": "Below 60% confidence: professional consultation recommended",
     "routedTo": "to {name}",
     "actions": { "review": "Review", "open": "Open" },
     "loading": "Loading…",
@@ -952,7 +982,7 @@
     "assessments": {
       "eyebrow": "Assessment evidence",
       "title": "Assessments (audit view)",
-      "description": "Every assessment in the tenant, newest first. “Stored” shows the record as saved; “Reconstruct” rebuilds it from the hash-chained audit log alone (FR-26) and flags any drift (FR-30).",
+      "description": "Every assessment in the tenant, newest first. “Stored” shows the saved record; “Reconstruct” rebuilds it from the tamper-evident audit history and flags any drift.",
       "summary": { "pending": "open or pending" },
       "columns": {
         "started": "Started",
@@ -981,14 +1011,14 @@
       "dialog": {
         "reconstructedTitle": "Reconstructed from the audit log",
         "storedTitle": "Stored record",
-        "reconstructedDescription": "Nothing here is read from the assessment document; only the audit entries (FR-26).",
-        "storedDescription": "The assessment as saved in the database."
+        "reconstructedDescription": "This view is rebuilt only from audit entries, independently of the saved assessment.",
+        "storedDescription": "The assessment as it is currently stored."
       }
     },
     "logs": {
       "eyebrow": "Tamper-evident ledger",
       "title": "Audit log",
-      "description": "Append-only and hash-chained (SEC-07). No role can edit or delete entries; “Verify chain” recomputes every hash.",
+      "description": "This ledger is append-only and tamper-evident. No role can edit or delete entries; “Verify chain” checks every recorded link.",
       "loading": "Loading audit entries…",
       "allCategories": "All categories",
       "verify": "Verify chain",
@@ -1025,7 +1055,7 @@
   },
   "assessmentDetail": {
     "loading": "Loading…",
-    "masked": "Free text is masked ({plan}, SEC-05). Unmasking is recorded in the audit log with your name.",
+    "masked": "Free text is masked on the {plan} plan. Unmasking is recorded in the audit log with your identity.",
     "unmask": "Unmask (logged)",
     "started": "started {date}",
     "result": {
@@ -1067,10 +1097,10 @@
       "differences": "{count} difference(s) vs stored record"
     },
     "missing": "Not logged on this plan: {fields}.",
-    "masked": "User-entered text and payload details are masked ({plan}, SEC-05).",
+    "masked": "User-entered text and payload details are masked on the {plan} plan.",
     "unmask": "Unmask (logged)",
     "difference": {
-      "title": "Differences (FR-30)",
+      "title": "Differences",
       "field": "Field",
       "fromAudit": "From audit log",
       "stored": "Stored"
@@ -1173,15 +1203,15 @@
       "summary": {
         "total": "Tenant accounts",
         "active": "Active accounts",
-        "mfaPending": "MFA pending"
+        "mfaPending": "Managed MFA pending"
       },
       "accessPolicy": {
         "title": "Account, role & MFA policy",
         "free": "FREE public access is requestor-only. Each person uses one account with exactly one role.",
         "paid": "PAID workspaces support managed requestor, administrator, system administrator, and audit roles. Each account has exactly one role.",
         "default": "Each person uses one account with exactly one role.",
-        "paidMfa": "Administrators and system administrators always complete the RiskSense email OTP. PAID requestors sign in through tenant SSO and may satisfy MFA at the identity provider; audit users follow tenant OTP policy.",
-        "freeMfa": "FREE requestor OTP follows tenant policy. Administrator and system-administrator accounts always complete the backend email OTP."
+        "paidMfa": "Every PAID account completes MFA. Requestors use the tenant identity provider; administrators, system administrators and audit users also complete the RiskSense verification step required for their role.",
+        "freeMfa": "FREE requestor verification follows tenant policy. Managed operator roles are available only in PAID workspaces."
       },
       "provision": "Provision user",
       "retry": "Retry",
@@ -1201,7 +1231,7 @@
         "allDepartments": "All departments",
         "ownOnly": "Own assessments only"
       },
-      "mfa": { "enrolled": "Enrolled", "pending": "Pending", "notRequired": "Not required" },
+      "mfa": { "enrolled": "Enrolled", "pending": "Pending", "signIn": "Enforced at sign-in", "notRequired": "Not required" },
       "never": "Never",
       "edit": "Edit",
       "dialog": {
@@ -1282,7 +1312,7 @@
       "eyebrow": "Tenant configuration",
       "title": "Tenant settings",
       "loading": "Loading…",
-      "saved": "Saved {time} (audited as config/tenant.updated)",
+      "saved": "Changes saved at {time} and recorded in the audit log.",
       "plan": {
         "title": "Plan & features",
         "freeDescription": "FREE uses the public requestor experience; advanced managed roles and tenant features are available on PAID.",
@@ -1290,45 +1320,45 @@
       },
       "mfaPolicy": {
         "paidTitle": "Role-aware MFA policy",
-        "paidDescription": "PAID requestors and administrators use the configured SSO provider. Administrators and system administrators always complete the RiskSense email OTP; other roles follow tenant OTP policy.",
+        "paidDescription": "Every PAID account completes MFA. Requestors use the configured identity provider, but RiskSense accepts its second factor only when the Firebase session explicitly proves it; otherwise an email code is required. Managed operators always complete the RiskSense verification step required for their role.",
         "freeTitle": "FREE authentication policy",
-        "freeDescription": "FREE public users are requestors. Their email OTP follows tenant policy; any privileged operator account always completes the backend email OTP."
+        "freeDescription": "FREE public users are requestors. Their email code follows tenant policy; any privileged operator account always completes the RiskSense verification step."
       },
       "features": {
         "sso": {
           "label": "Single sign-on",
-          "hint": "FR-03 — needs a provider id and an email domain below"
+          "hint": "Requires a provider ID and an approved email domain."
         },
         "reviewDashboard": {
           "label": "Review dashboard",
-          "hint": "FR-21 — department-scoped review and escalation routing"
+          "hint": "Department-scoped review and escalation routing."
         },
         "reports": {
           "label": "Reports & analytics",
-          "hint": "FR-26..28 — standard reports, trends, CSV/PDF export"
+          "hint": "Standard reports, trends, and CSV/PDF export."
         },
         "fullAudit": {
           "label": "Full audit payloads",
-          "hint": "FR-26 — lifecycle fully reconstructible from the log"
+          "hint": "Reconstruct the assessment lifecycle from its audit history."
         },
         "departmentMapping": {
           "label": "Department ↔ persona mapping",
-          "hint": "FR-10"
+          "hint": "Limit departments to approved personas."
         },
         "blockConcurrentLogin": {
           "label": "Block concurrent logins",
-          "hint": "FR-04 — reject a second session instead of superseding"
+          "hint": "Reject a second session instead of replacing the active one."
         }
       },
       "sso": {
-        "title": "Single sign-on (FR-03)",
-        "description": "OIDC/OAuth providers work on the Firebase free tier (microsoft.com, google.com, and oidc.ID configured in Firebase Authentication → Sign-in method). SAML (saml.ID) needs Identity Platform — see DeploymentGuide. Users on the domain are provisioned into this tenant on first login; SSO logins skip the email OTP for non-privileged roles.",
-        "providerId": "Firebase provider id",
+        "title": "Single sign-on",
+        "description": "Connect an OIDC, OAuth, or supported SAML identity provider. People on the approved domain are provisioned into this tenant on first sign-in. Provider match alone does not prove MFA: a requestor's Firebase session must explicitly prove a second factor, otherwise RiskSense sends an email code.",
+        "providerId": "Identity provider ID",
         "domain": "Email domain",
-        "requireOtp": "Require the email OTP on every non-SSO login (FR-01). Administrators always get it (SEC-03)."
+        "requireOtp": "Require an email verification code on every non-SSO sign-in. Privileged operators always complete this step."
       },
       "policy": {
-        "title": "Sessions (SEC-02) & retention (SEC-06)",
+        "title": "Sessions & retention",
         "accountSemantics": "One person uses one account with exactly one role. Session settings control access to that account, not extra roles.",
         "sessionSemantics": "This limits simultaneous devices or browser sessions for one account; it does not create another account or role.",
         "retentionTitle": "Retention windows",
@@ -1352,7 +1382,7 @@
     "retention": {
       "eyebrow": "Lifecycle controls",
       "title": "Retention",
-      "description": "Records older than the tenant's assessment window are flagged, then after a 7-day grace period FREE records are reduced to login id, risk type, date/time and duration, and PAID records are archived to cold storage before reduction. The audit log is never deleted (SEC-07). Every action is audited as retention.*. The nightly job runs at 02:00 UTC when JOBS_ENABLED=true.",
+      "description": "Records older than the tenant's assessment window are flagged. After a seven-day grace period, FREE records are reduced to essential metadata; PAID records are archived before reduction. The audit ledger is preserved, and every lifecycle action is recorded.",
       "policy": {
         "freeTitle": "Fixed FREE retention",
         "freeDescription": "FREE uses the public retention windows shown in Tenant settings. Expired records are reduced after the seven-day grace period.",
@@ -1396,14 +1426,23 @@
     "dr": {
       "eyebrow": "Resilience evidence",
       "title": "Disaster recovery",
-      "description": "Track evidence against the 24-hour backup, 1-hour RPO, 4-hour RTO, and annual restore-drill targets.",
+      "description": "Track operator evidence against the tenant's recovery targets, daily backup control, and annual restore-drill control.",
       "targets": {
         "rto": "Recovery time objective",
         "rpo": "Recovery point objective",
         "backup": "Backup frequency",
         "drill": "Restore drill",
         "hours": "{value} h",
-        "days": "{value} days"
+        "days": "{value} days",
+        "hourUnit": "hours",
+        "policyTitle": "Recovery target policy",
+        "paidDescription": "PAID tenants may set stricter RPO and RTO targets within the approved 1-hour and 4-hour limits.",
+        "freeDescription": "FREE tenants use the fixed 1-hour RPO and 4-hour RTO targets.",
+        "paidBadge": "PAID · configurable",
+        "fixedBadge": "FREE · fixed",
+        "evidenceBoundary": "Changing a target does not verify backup or recovery capability. Readiness still requires current external evidence.",
+        "saved": "Recovery targets saved and recorded in the audit log.",
+        "save": "Save target policy"
       },
       "loading": "Loading recovery evidence…",
       "loadFailed": "Recovery evidence could not be loaded.",
@@ -1452,6 +1491,7 @@
         "drillTimestamp": "A recorded drill timestamp cannot be cleared; replace it with corrected evidence.",
         "outcome": "Choose a passed or failed outcome for the recorded restore drill.",
         "evidenceUrl": "Evidence URL must use http or https.",
+        "targetRange": "{target} must be greater than 0 and no more than {max} hours.",
         "attestation": "Confirm the external evidence attestation before saving."
       },
       "saving": "Saving…",

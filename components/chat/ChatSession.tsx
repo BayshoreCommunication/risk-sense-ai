@@ -1,15 +1,27 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { AlertCircle, Bot, Check, ChevronRight, CircleDot, FileCheck2, Flag, LoaderCircle, LockKeyhole, Send, Sparkles, UserRound } from 'lucide-react';
+import {
+  AlertCircle,
+  Bot,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  CircleDot,
+  FileCheck2,
+  Flag,
+  LoaderCircle,
+  LockKeyhole,
+  Send,
+  Sparkles,
+} from 'lucide-react';
 import { Conversation, ConversationContent, ConversationScrollButton } from '@/components/ai-elements/conversation';
 import { Message as AIMessage, MessageContent, MessageResponse } from '@/components/ai-elements/message';
 import { Suggestion, Suggestions } from '@/components/ai-elements/suggestion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { assessments, pendingQuestion, type Assessment, type Message, type QuestionSnapshot, type Turn } from '@/lib/assessments';
@@ -17,18 +29,33 @@ import { toApiError } from '@/lib/api/client';
 import { ResultCard } from './ResultCard';
 
 type PersonaOption = { key: string; name: string; description?: string };
+type StageKey = 'persona' | 'describe' | 'questions' | 'review' | 'decision';
 
-function formatPersonaKey(key: string) {
+const WORKFLOW_STAGES: StageKey[] = ['persona', 'describe', 'questions', 'review', 'decision'];
+
+function humanizeKey(key: string) {
   return key
     .split('_')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
 }
 
+function activeStage(a: Assessment | null) {
+  if (!a) return -1;
+  if (a.status === 'in_progress') return { persona: 0, describe: 1, questions: 2, done: 3 }[a.phase];
+  if (a.status === 'intake_complete') return 3;
+  return 4;
+}
+
+function factValue(value: unknown) {
+  if (value === null || value === undefined || value === '') return '—';
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+}
+
 /**
- * One intake conversation (FR-03..FR-08). MCQ / yes-no / number answers are structured and never
- * touch the model; free text goes through fact extraction. Submission and the decision live here too
- * so the requestor sees the whole loop on one screen.
+ * One intake conversation (FR-03..FR-08). Structured answers never touch the model; free text is
+ * sent only for fact extraction. Submission and the required human decision remain explicit.
  */
 export function ChatSession({ id }: { id: string }) {
   const t = useTranslations('chatSession');
@@ -44,13 +71,13 @@ export function ChatSession({ id }: { id: string }) {
   const busyRef = useRef(false);
 
   const reload = useCallback(async () => {
-    const [aa, mm] = await Promise.all([assessments.get(id), assessments.messages(id)]);
-    setA(aa);
-    setMessages(mm);
+    const [assessment, transcript] = await Promise.all([assessments.get(id), assessments.messages(id)]);
+    setA(assessment);
+    setMessages(transcript);
   }, [id]);
 
   useEffect(() => {
-    reload().catch((e) => setError(toApiError(e).message));
+    reload().catch((nextError) => setError(toApiError(nextError).message));
   }, [reload]);
 
   async function run(fn: () => Promise<Turn | Assessment>) {
@@ -61,15 +88,15 @@ export function ChatSession({ id }: { id: string }) {
     try {
       await fn();
       await reload();
-    } catch (e) {
-      setError(toApiError(e).message);
+    } catch (nextError) {
+      setError(toApiError(nextError).message);
     } finally {
       busyRef.current = false;
       setBusy(false);
     }
   }
 
-  const q = pendingQuestion(messages, a);
+  const question = pendingQuestion(messages, a);
   const answer = (body: { value?: string | number | boolean; text?: string }) => run(() => assessments.answer(id, body));
 
   async function openPersonaPicker() {
@@ -93,215 +120,298 @@ export function ChatSession({ id }: { id: string }) {
   }
 
   const candidateOptions: PersonaOption[] =
-    q?.key === '__persona' && q.options?.length
-      ? q.options.map((option) => ({ key: option.id, name: option.label }))
-      : (a?.personaCandidates ?? []).map((key) => ({ key, name: formatPersonaKey(key) }));
-
-  const phaseIndex = !a ? 0 : a.status === 'in_progress' ? Math.max(0, ['persona', 'describe', 'questions', 'done'].indexOf(a.phase)) : a.status === 'intake_complete' ? 3 : 4;
-  const progress = [12, 30, 58, 82, 100][phaseIndex] ?? 12;
-  const stageKey = !a ? 'loading' : a.status === 'in_progress' ? a.phase : a.status === 'intake_complete' ? 'review' : 'decision';
+    question?.key === '__persona' && question.options?.length
+      ? question.options.map((option) => ({ key: option.id, name: option.label }))
+      : (a?.personaCandidates ?? []).map((key) => ({ key, name: humanizeKey(key) }));
+  const currentStageIndex = activeStage(a);
+  const currentStageKey = currentStageIndex >= 0 ? WORKFLOW_STAGES[currentStageIndex] : undefined;
 
   return (
-    <div className="page-shell max-w-[1420px]">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="page-shell max-w-[1480px] space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-2">
-          <div className="eyebrow flex items-center gap-2"><Sparkles className="size-3.5" />{t('eyebrow')}</div>
+          <div className="eyebrow flex items-center gap-2">
+            <Sparkles className="size-3.5" />
+            {t('eyebrow')}
+          </div>
           <div>
             <h1 className="page-heading">{t('title')}</h1>
             <p className="mt-1 text-sm text-muted-foreground">{t('assessmentId', { id: id.slice(-8).toUpperCase() })}</p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {a?.personaKey && <Badge variant="outline"><UserRound className="size-3" />{a.personaKey.replace(/_/g, ' ')}</Badge>}
-          {a?.personaSource === 'ai' && <Badge variant="secondary"><Sparkles className="size-3" />{t('aiSuggestedRole')}</Badge>}
+        <div className="flex items-center gap-2">
+          {currentStageKey && (
+            <span className="text-xs font-medium text-muted-foreground">
+              {t('currentStage')}: <span className="text-foreground">{t(`stages.${currentStageKey}`)}</span>
+            </span>
+          )}
           {a && <Badge variant={a.status === 'closed' ? 'default' : 'secondary'}>{status.has(a.status) ? status(a.status) : a.status}</Badge>}
         </div>
       </div>
 
-      <div className="grid min-h-0 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_18.5rem]">
-        <Card className="h-[calc(100dvh-13rem)] min-h-[34rem] max-h-[52rem] gap-0 py-0">
-          <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b bg-card/95 px-4 py-3.5 sm:px-5">
-            <div className="flex items-center gap-3">
-              <span className="relative flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/18">
-                <Bot className="size-4.5" />
-                <span className="absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 border-card bg-emerald-500" />
-              </span>
-              <div>
-                <div className="text-sm font-semibold">{t('assistantName')}</div>
-                <div className="text-xs text-muted-foreground">{t('assistantDescription')}</div>
-              </div>
+      <section aria-label={t('workspaceLabel')} className="overflow-hidden rounded-[1.25rem] border border-border/90 bg-card shadow-[0_18px_50px_rgba(15,35,65,0.07)]">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b bg-card px-4 py-3.5 sm:px-5">
+          <div className="flex items-center gap-3">
+            <span className="flex size-9 items-center justify-center rounded-lg bg-slate-950 text-white">
+              <Bot className="size-4.5" aria-hidden="true" />
+            </span>
+            <div>
+              <h2 className="text-sm font-semibold tracking-tight">{t('assistantName')}</h2>
+              <p className="text-xs text-muted-foreground">{t('assistantDescription')}</p>
             </div>
-            {a?.scenarioKey && <Badge variant="outline" className="bg-background/80">{a.scenarioKey.replace(/_/g, ' ')}</Badge>}
           </div>
+          {a?.scenarioKey && (
+            <div className="text-right">
+              <span className="block text-[0.65rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">{t('scenario')}</span>
+              <span className="text-sm font-medium">{humanizeKey(a.scenarioKey)}</span>
+            </div>
+          )}
+        </header>
 
-          <Conversation className="min-h-0 bg-[linear-gradient(to_bottom,rgba(246,249,253,0.72),rgba(255,255,255,0.2))]">
-            <ConversationContent className="mx-auto w-full max-w-4xl gap-5 px-4 py-6 sm:px-6">
-              {!a && messages.length === 0 && (
-                <div className="flex min-h-80 flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground" role="status">
-                  <LoaderCircle className="size-6 animate-spin text-primary" />
-                  {t('loadingConversation')}
-                </div>
-              )}
-              {messages.map((m) => {
-                if (m.role === 'system') {
-                  return (
-                    <div key={m._id} className="flex justify-center">
-                      <div className="flex max-w-[92%] items-center gap-2 rounded-full border bg-card/80 px-3 py-1.5 text-xs text-muted-foreground shadow-sm">
-                        <CircleDot className="size-3 text-primary" />
-                        {m.content}
+        <div className="grid min-h-0 xl:grid-cols-[minmax(0,1fr)_19rem]">
+          <div className="min-w-0">
+            <Conversation className="h-[min(58dvh,38rem)] min-h-[25rem] bg-background sm:min-h-[30rem] xl:h-[calc(100dvh-20rem)] xl:max-h-[49rem]">
+              <ConversationContent className="mx-auto w-full max-w-4xl gap-6 px-4 py-6 sm:px-7 sm:py-8">
+                {!a && messages.length === 0 && (
+                  <div className="flex min-h-72 flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground" role="status">
+                    <LoaderCircle className="size-5 animate-spin text-primary" aria-hidden="true" />
+                    {t('loadingConversation')}
+                  </div>
+                )}
+
+                {messages.map((message) => {
+                  if (message.role === 'system') {
+                    return (
+                      <div key={message._id} className="flex items-center gap-3 text-xs text-muted-foreground" role="note">
+                        <span className="h-px flex-1 bg-border" aria-hidden="true" />
+                        <span>{message.content}</span>
+                        <span className="h-px flex-1 bg-border" aria-hidden="true" />
                       </div>
-                    </div>
-                  );
-                }
-                const assistant = m.role === 'assistant';
-                const clarification = m.kind === 'clarification';
-                return (
-                  <AIMessage key={m._id} from={m.role} className={assistant ? 'max-w-[92%]' : 'max-w-[88%]'}>
-                    <div className={`flex gap-2.5 ${assistant ? 'items-start' : 'justify-end'}`}>
-                      {assistant && (
-                        <span className={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg ${clarification ? 'bg-amber-100 text-amber-700' : 'bg-primary/10 text-primary'}`}>
-                          {clarification ? <Flag className="size-3.5" /> : <Bot className="size-3.5" />}
-                        </span>
-                      )}
-                      <MessageContent
-                        className={
-                          assistant
-                            ? `rounded-2xl rounded-tl-md border px-4 py-3 shadow-[0_3px_14px_rgba(20,55,100,0.05)] ${clarification ? 'border-amber-200 bg-amber-50/85' : m.kind === 'result' ? 'border-violet-200 bg-violet-50/75' : 'bg-card'}`
-                            : 'rounded-2xl rounded-tr-md bg-primary px-4 py-3 text-primary-foreground shadow-md shadow-primary/10'
-                        }
-                      >
-                        {assistant && (m.kind === 'info' || clarification) && (
-                          <span className={`mb-1 block text-[0.64rem] font-semibold tracking-[0.12em] uppercase ${clarification ? 'text-amber-700' : 'text-primary'}`}>
-                            {t(`messageKinds.${m.kind}`)}
+                    );
+                  }
+
+                  const assistant = message.role === 'assistant';
+                  const clarification = message.kind === 'clarification';
+                  return (
+                    <AIMessage key={message._id} from={message.role} className={assistant ? undefined : 'max-w-[88%] sm:max-w-[78%]'}>
+                      {assistant ? (
+                        <div className="grid grid-cols-[2rem_minmax(0,1fr)] items-start gap-3">
+                          <span
+                            className={`flex size-8 items-center justify-center rounded-lg border ${
+                              clarification ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-primary/15 bg-primary/[0.06] text-primary'
+                            }`}
+                          >
+                            {clarification ? <Flag className="size-3.5" aria-hidden="true" /> : <Bot className="size-3.5" aria-hidden="true" />}
                           </span>
-                        )}
-                        {assistant ? <MessageResponse className="leading-6">{m.content}</MessageResponse> : <p className="whitespace-pre-wrap leading-6">{m.content}</p>}
+                          <div className="min-w-0">
+                            <span className={`mb-1.5 block text-[0.66rem] font-semibold tracking-[0.12em] uppercase ${clarification ? 'text-amber-700' : 'text-muted-foreground'}`}>
+                              {clarification ? t('messageKinds.clarification') : t('assistantName')}
+                            </span>
+                            <MessageContent className={`w-full border-l-2 py-0 pl-4 ${clarification ? 'border-amber-300' : 'border-primary/20'}`}>
+                              <MessageResponse className="leading-6">{message.content}</MessageResponse>
+                            </MessageContent>
+                          </div>
+                        </div>
+                      ) : (
+                        <MessageContent className="rounded-xl rounded-br-sm bg-slate-950 px-4 py-3 text-white shadow-none">
+                          <p className="whitespace-pre-wrap leading-6">{message.content}</p>
+                        </MessageContent>
+                      )}
+                    </AIMessage>
+                  );
+                })}
+
+                {busy && (
+                  <AIMessage from="assistant" role="status">
+                    <div className="grid grid-cols-[2rem_minmax(0,1fr)] items-start gap-3">
+                      <span className="flex size-8 items-center justify-center rounded-lg border border-primary/15 bg-primary/[0.06] text-primary">
+                        <LoaderCircle className="size-3.5 animate-spin" aria-hidden="true" />
+                      </span>
+                      <MessageContent className="w-full border-l-2 border-primary/20 py-1 pl-4 text-muted-foreground">
+                        {a?.status === 'intake_complete' ? t('submission.assessing') : t('processing')}
                       </MessageContent>
                     </div>
                   </AIMessage>
-                );
-              })}
-              {busy && (
-                <AIMessage from="assistant" className="max-w-[92%]" role="status">
-                  <div className="flex items-start gap-2.5">
-                    <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><Bot className="size-3.5" /></span>
-                    <MessageContent className="rounded-2xl rounded-tl-md border bg-card px-4 py-3 shadow-sm">
-                      <div className="flex items-center gap-3">
-                        <span className="flex gap-1" aria-hidden="true"><i className="size-1.5 animate-bounce rounded-full bg-primary [animation-delay:-0.2s]" /><i className="size-1.5 animate-bounce rounded-full bg-primary [animation-delay:-0.1s]" /><i className="size-1.5 animate-bounce rounded-full bg-primary" /></span>
-                        <span className="text-sm text-muted-foreground">{a?.status === 'intake_complete' ? t('submission.assessing') : t('processing')}</span>
-                      </div>
-                    </MessageContent>
-                  </div>
-                </AIMessage>
-              )}
-              {a?.result && <ResultCard a={a} busy={busy} onDecide={(d) => void run(() => assessments.decide(id, d))} />}
-            </ConversationContent>
-            <ConversationScrollButton aria-label={t('scrollLatest')} className="bottom-4" />
-          </Conversation>
+                )}
 
-          <div
-            className="max-h-[45dvh] shrink-0 overflow-y-auto border-t bg-card/96 p-3.5 sm:p-4"
-            data-testid="composer"
-            data-busy={busy ? 'true' : 'false'}
-            data-messages={messages.length}
-            data-status={a?.status ?? ''}
-          >
-            {error && (
-              <p className="mb-3 flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive" role="alert">
-                <AlertCircle className="mt-0.5 size-4 shrink-0" />{error}
-              </p>
-            )}
-            {a?.status === 'in_progress' && a.phase === 'persona' && (
-              <div className="space-y-3 rounded-xl border bg-muted/25 p-3.5">
-                <div>
-                  <p className="text-sm font-semibold">{t('persona.confirmTitle')}</p>
-                  <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{t('persona.confirmDescription')}</p>
-                </div>
-                <PersonaChooser options={candidateOptions} busy={busy} suggestedKey={a.personaSource === 'ai' ? a.personaKey : undefined} onChoose={choosePersona} />
-              </div>
-            )}
-            {a?.status === 'in_progress' && a.phase === 'describe' && a.personaKey && (
-              <div className="mb-3 rounded-xl border bg-muted/25 p-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
+                {a?.result && <ResultCard a={a} busy={busy} onDecide={(decision) => void run(() => assessments.decide(id, decision))} />}
+              </ConversationContent>
+              <ConversationScrollButton aria-label={t('scrollLatest')} />
+            </Conversation>
+
+            <div
+              className="max-h-[48dvh] overflow-y-auto border-t bg-card p-4 sm:p-5"
+              data-testid="composer"
+              data-busy={busy ? 'true' : 'false'}
+              data-messages={messages.length}
+              data-status={a?.status ?? ''}
+            >
+              {error && (
+                <p className="mb-4 flex items-start gap-2 border-l-2 border-destructive bg-destructive/5 px-3 py-2.5 text-sm text-destructive" role="alert">
+                  <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                  {error}
+                </p>
+              )}
+
+              {a?.status === 'in_progress' && a.phase === 'persona' && (
+                <fieldset className="space-y-3">
+                  <legend className="text-sm font-semibold">{t('persona.confirmTitle')}</legend>
+                  <p className="text-xs leading-5 text-muted-foreground">{t('persona.confirmDescription')}</p>
+                  <PersonaChooser options={candidateOptions} busy={busy} suggestedKey={a.personaSource === 'ai' ? a.personaKey : undefined} onChoose={choosePersona} />
+                </fieldset>
+              )}
+
+              {a?.status === 'in_progress' && a.phase === 'describe' && a.personaKey && (
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b pb-4">
                   <div>
-                    <p className="text-sm font-semibold">{t('persona.current', { role: a.personaKey.replace(/_/g, ' ') })}</p>
+                    <p className="text-sm font-semibold">{t('persona.current', { role: humanizeKey(a.personaKey) })}</p>
                     <p className="text-xs text-muted-foreground">{t('persona.changeHint')}</p>
                   </div>
                   <Button type="button" size="sm" variant="outline" disabled={busy || personasLoading} onClick={() => void openPersonaPicker()}>
                     {personasLoading ? t('persona.loading') : t('persona.change')}
                   </Button>
+                  {personaPickerOpen && !personasLoading && <PersonaChooser options={personaOptions} busy={busy} onChoose={choosePersona} />}
                 </div>
-                {personaPickerOpen && !personasLoading && <PersonaChooser options={personaOptions} busy={busy} onChoose={choosePersona} />}
-              </div>
-            )}
-            {a?.status === 'in_progress' && a.phase === 'questions' && a.personaSource === 'ai' && (
-              <p className="mb-3 flex items-start gap-2 text-xs leading-5 text-muted-foreground">
-                <LockKeyhole className="mt-0.5 size-3.5 shrink-0" />
-                <span>{t('persona.locked')}{' '}<Link className="font-medium text-primary underline underline-offset-2" href="/chat">{t('persona.startNew')}</Link>{' '}{t('persona.ifIncorrect')}</span>
-              </p>
-            )}
-            {a?.status === 'in_progress' && a.phase !== 'persona' && q && <AnswerBox key={q.key + messages.length} q={q} busy={busy} text={text} setText={setText} onAnswer={answer} />}
-            {a?.status === 'intake_complete' && (
-              <div className="flex flex-col gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 sm:flex-row sm:items-center sm:justify-between">
-                <span className="flex items-center gap-2 text-sm font-medium"><FileCheck2 className="size-4 text-emerald-600" />{t('submission.ready')}</span>
-                <Button disabled={busy} onClick={() => void run(() => assessments.submit(id))}>
-                  {busy ? t('submission.assessing') : t('submission.submit')} {!busy && <ChevronRight data-icon="inline-end" className="size-4" />}
-                </Button>
-              </div>
-            )}
-            {a?.status === 'closed' && <p className="rounded-xl bg-muted/50 p-3 text-center text-sm text-muted-foreground">{t('closed')}</p>}
+              )}
+
+              {a?.status === 'in_progress' && a.phase === 'questions' && a.personaSource === 'ai' && (
+                <p className="mb-4 flex items-start gap-2 text-xs leading-5 text-muted-foreground">
+                  <LockKeyhole className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+                  <span>
+                    {t('persona.locked')}{' '}
+                    <Link className="font-medium text-primary underline underline-offset-2" href="/chat">{t('persona.startNew')}</Link>{' '}
+                    {t('persona.ifIncorrect')}
+                  </span>
+                </p>
+              )}
+
+              {a?.status === 'in_progress' && a.phase !== 'persona' && question && (
+                <AnswerBox key={question.key + messages.length} q={question} busy={busy} text={text} setText={setText} onAnswer={answer} />
+              )}
+
+              {a?.status === 'intake_complete' && (
+                <div className="flex flex-col gap-3 border-l-2 border-emerald-500 bg-emerald-50/60 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    <FileCheck2 className="size-4 text-emerald-700" aria-hidden="true" />
+                    {t('submission.ready')}
+                  </span>
+                  <Button disabled={busy} onClick={() => void run(() => assessments.submit(id))}>
+                    {busy ? t('submission.assessing') : t('submission.submit')}
+                    {!busy && <ChevronRight data-icon="inline-end" className="size-4" aria-hidden="true" />}
+                  </Button>
+                </div>
+              )}
+
+              {a?.status === 'closed' && (
+                <p className="flex items-center justify-center gap-2 py-1 text-center text-sm text-muted-foreground">
+                  <CheckCircle2 className="size-4 text-emerald-600" aria-hidden="true" />
+                  {t('closed')}
+                </p>
+              )}
+            </div>
           </div>
-        </Card>
 
-        <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
-          <Card size="sm">
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">{t('progress')}</span>
-                <span className="text-xs font-semibold text-primary">{progress}%</span>
-              </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${progress}%` }} /></div>
-              <div className="flex items-center gap-2 text-sm font-semibold"><CircleDot className="size-4 text-primary" />{t(`stages.${stageKey}`)}</div>
-            </CardContent>
-          </Card>
+          <aside className="border-t bg-slate-50/65 xl:border-t-0 xl:border-l" aria-label={t('contextPanel')}>
+            <section className="p-5">
+              <h3 className="text-[0.68rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('workflow')}</h3>
+              <ol className="mt-4 space-y-1" aria-label={t('workflow')}>
+                {WORKFLOW_STAGES.map((stage, index) => {
+                  const complete = index < currentStageIndex || (a?.status === 'closed' && index === currentStageIndex);
+                  const current = index === currentStageIndex && !complete;
+                  return (
+                    <li key={stage} className="relative flex gap-3 pb-4 last:pb-0" aria-current={current ? 'step' : undefined}>
+                      {index < WORKFLOW_STAGES.length - 1 && <span className="absolute top-6 bottom-0 left-3 w-px bg-border" aria-hidden="true" />}
+                      <span
+                        className={`relative z-[1] flex size-6 shrink-0 items-center justify-center rounded-md border text-[0.65rem] font-semibold ${
+                          complete
+                            ? 'border-emerald-600 bg-emerald-600 text-white'
+                            : current
+                              ? 'border-primary bg-primary text-primary-foreground'
+                              : 'border-border bg-card text-muted-foreground'
+                        }`}
+                      >
+                        {complete ? <Check className="size-3" aria-hidden="true" /> : current ? <CircleDot className="size-3" aria-hidden="true" /> : index + 1}
+                      </span>
+                      <span className={`pt-0.5 text-sm ${current ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>{t(`stages.${stage}`)}</span>
+                    </li>
+                  );
+                })}
+              </ol>
+            </section>
 
-          <Card size="sm">
-            <CardContent className="space-y-3">
+            {(a?.personaKey || a?.scenarioKey) && (
+              <section className="border-t px-5 py-4">
+                <h3 className="text-[0.68rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('assessmentContext')}</h3>
+                <dl className="mt-3 space-y-3 text-sm">
+                  {a.personaKey && (
+                    <div>
+                      <dt className="text-xs text-muted-foreground">{t('role')}</dt>
+                      <dd className="mt-0.5 font-medium">{humanizeKey(a.personaKey)}</dd>
+                      {a.personaSource === 'ai' && <dd className="mt-1 text-xs text-primary">{t('aiSuggestedRole')}</dd>}
+                    </div>
+                  )}
+                  {a.scenarioKey && (
+                    <div>
+                      <dt className="text-xs text-muted-foreground">{t('scenario')}</dt>
+                      <dd className="mt-0.5 font-medium">{humanizeKey(a.scenarioKey)}</dd>
+                    </div>
+                  )}
+                </dl>
+              </section>
+            )}
+
+            <section className="border-t px-5 py-4">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-semibold">{t('capturedFacts')}</span>
-                <Badge variant="secondary">{a?.facts?.length ?? 0}</Badge>
+                <h3 className="text-[0.68rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('capturedFacts')}</h3>
+                <span className="text-xs font-semibold tabular-nums text-foreground">{a?.facts?.length ?? 0}</span>
               </div>
               {a?.facts?.length ? (
-                <div className="space-y-2">
+                <div className="mt-3 divide-y">
                   {a.facts.slice(-6).map((fact) => (
-                    <div key={fact.key} className="flex items-start gap-2 rounded-lg bg-muted/45 p-2.5">
-                      <span className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full ${fact.flagged ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                        {fact.flagged ? <Flag className="size-2.5" /> : <Check className="size-2.5" />}
+                    <div key={fact.key} className="grid grid-cols-[1rem_minmax(0,1fr)] gap-2 py-3 first:pt-0 last:pb-0">
+                      <span className={`mt-0.5 ${fact.flagged ? 'text-amber-700' : 'text-emerald-700'}`}>
+                        {fact.flagged ? <Flag className="size-3.5" aria-hidden="true" /> : <Check className="size-3.5" aria-hidden="true" />}
                       </span>
-                      <div className="min-w-0"><div className="truncate text-xs font-medium">{fact.key.replace(/_/g, ' ')}</div><div className="text-[0.65rem] text-muted-foreground">{Math.round(fact.confidence * 100)}% {t('factConfidence')}</div></div>
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-medium">{humanizeKey(fact.key)}</p>
+                        <p className="mt-0.5 line-clamp-2 break-words text-xs leading-4 text-muted-foreground">{factValue(fact.value)}</p>
+                        <p className="mt-1 text-[0.65rem] tabular-nums text-muted-foreground">{Math.round(fact.confidence * 100)}% {t('factConfidence')}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
-              ) : <p className="text-xs leading-5 text-muted-foreground">{t('noFacts')}</p>}
-            </CardContent>
-          </Card>
+              ) : (
+                <p className="mt-3 text-xs leading-5 text-muted-foreground">{t('noFacts')}</p>
+              )}
+            </section>
 
-          <div className="flex items-start gap-2 rounded-xl border border-primary/15 bg-primary/5 p-3 text-xs leading-5 text-muted-foreground">
-            <LockKeyhole className="mt-0.5 size-3.5 shrink-0 text-primary" />
-            {t('governanceNote')}
-          </div>
-        </aside>
-      </div>
+            <p className="border-t px-5 py-4 text-xs leading-5 text-muted-foreground">
+              <LockKeyhole className="mr-1.5 inline size-3.5 text-primary" aria-hidden="true" />
+              {t('governanceNote')}
+            </p>
+          </aside>
+        </div>
+      </section>
     </div>
   );
 }
 
-function PersonaChooser({ options, busy, suggestedKey, onChoose }: { options: PersonaOption[]; busy: boolean; suggestedKey?: string; onChoose: (personaKey: string) => void }) {
+function PersonaChooser({
+  options,
+  busy,
+  suggestedKey,
+  onChoose,
+}: {
+  options: PersonaOption[];
+  busy: boolean;
+  suggestedKey?: string;
+  onChoose: (personaKey: string) => void;
+}) {
   const t = useTranslations('chatSession.persona');
   if (options.length === 0) return <p className="text-sm text-muted-foreground">{t('empty')}</p>;
 
   return (
-    <Suggestions className="pb-1">
+    <Suggestions className="grid grid-cols-1 sm:grid-cols-2" role="group" aria-label={t('confirmTitle')}>
       {options.map((option) => (
         <Suggestion
           key={option.key}
@@ -310,54 +420,98 @@ function PersonaChooser({ options, busy, suggestedKey, onChoose }: { options: Pe
           variant={option.key === suggestedKey ? 'default' : 'outline'}
           disabled={busy}
           title={option.description}
+          className="min-h-12 w-full items-center justify-between"
           onClick={onChoose}
         >
-          {option.name}
-          {option.key === suggestedKey ? ` ${t('suggestedSuffix')}` : ''}
+          <span>
+            <span className="block font-medium">{option.name}</span>
+            {option.description && <span className="mt-0.5 block text-xs font-normal opacity-75">{option.description}</span>}
+          </span>
+          {option.key === suggestedKey && <span className="ml-2 text-xs font-medium">{t('suggestedSuffix')}</span>}
         </Suggestion>
       ))}
     </Suggestions>
   );
 }
 
-function AnswerBox({ q, busy, text, setText, onAnswer }: { q: QuestionSnapshot; busy: boolean; text: string; setText: (s: string) => void; onAnswer: (b: { value?: string | number | boolean; text?: string }) => Promise<void> }) {
+function AnswerBox({
+  q,
+  busy,
+  text,
+  setText,
+  onAnswer,
+}: {
+  q: QuestionSnapshot;
+  busy: boolean;
+  text: string;
+  setText: (value: string) => void;
+  onAnswer: (body: { value?: string | number | boolean; text?: string }) => Promise<void>;
+}) {
   const t = useTranslations('chatSession.answer');
+  const inputId = useId();
   const submitText = () => {
     if (busy || !text.trim()) return;
     void onAnswer({ text: text.trim() }).then(() => setText(''));
   };
+
   if (q.type === 'mcq' && q.options?.length) {
     return (
-      <Suggestions className="pb-1">
-        {q.options.map((o) => (
-          <Suggestion key={o.id} data-testid="answer-option" suggestion={o.id} variant="outline" disabled={busy} onClick={() => void onAnswer({ value: o.id })}>
-            {o.label}
-          </Suggestion>
-        ))}
-      </Suggestions>
+      <fieldset>
+        <legend className="sr-only">{q.text ?? t('optionsLabel')}</legend>
+        <Suggestions className="grid grid-cols-1 sm:grid-cols-2">
+          {q.options.map((option) => (
+            <Suggestion
+              key={option.id}
+              data-testid="answer-option"
+              suggestion={option.id}
+              variant="outline"
+              disabled={busy}
+              className="w-full border-border/90 bg-background hover:border-primary/35 hover:bg-primary/[0.04]"
+              onClick={() => void onAnswer({ value: option.id })}
+            >
+              {option.label}
+            </Suggestion>
+          ))}
+        </Suggestions>
+      </fieldset>
     );
   }
+
   if (q.type === 'yes_no') {
     return (
-      <div className="grid gap-2 sm:grid-cols-[auto_auto_minmax(0,1fr)_auto]">
-        <Button disabled={busy} onClick={() => void onAnswer({ value: true })}><Check className="size-4" />{t('yes')}</Button>
-        <Button variant="outline" disabled={busy} onClick={() => void onAnswer({ value: false })}>{t('no')}</Button>
-        <Input
-          disabled={busy}
-          placeholder={t('explainPlaceholder')}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
-              e.preventDefault();
-              submitText();
-            }
-          }}
-        />
-        <Button variant="outline" disabled={busy || !text.trim()} onClick={submitText} aria-label={t('send')}><Send className="size-4" /><span className="sm:sr-only">{t('send')}</span></Button>
-      </div>
+      <fieldset className="grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-end">
+        <legend className="sr-only">{q.text ?? t('yesNoLabel')}</legend>
+        <div className="grid grid-cols-2 gap-2">
+          <Button disabled={busy} onClick={() => void onAnswer({ value: true })}>
+            <Check className="size-4" aria-hidden="true" />
+            {t('yes')}
+          </Button>
+          <Button variant="outline" disabled={busy} onClick={() => void onAnswer({ value: false })}>{t('no')}</Button>
+        </div>
+        <div>
+          <label className="sr-only" htmlFor={inputId}>{t('explainLabel')}</label>
+          <Input
+            id={inputId}
+            disabled={busy}
+            placeholder={t('explainPlaceholder')}
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+                event.preventDefault();
+                submitText();
+              }
+            }}
+          />
+        </div>
+        <Button variant="outline" disabled={busy || !text.trim()} onClick={submitText} aria-label={t('send')}>
+          <Send className="size-4" aria-hidden="true" />
+          <span className="sm:sr-only">{t('send')}</span>
+        </Button>
+      </fieldset>
     );
   }
+
   if (q.type === 'number') {
     const submitNumber = () => {
       if (!text.trim()) return;
@@ -366,45 +520,56 @@ function AnswerBox({ q, busy, text, setText, onAnswer }: { q: QuestionSnapshot; 
       void onAnswer({ value }).then(() => setText(''));
     };
     return (
-      <div className="flex gap-2">
-        <Input
-          type="number"
-          disabled={busy}
-          placeholder={t('numberPlaceholder')}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !busy && !e.nativeEvent.isComposing) {
-              e.preventDefault();
-              submitNumber();
-            }
-          }}
-        />
+      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+        <div>
+          <label className="sr-only" htmlFor={inputId}>{q.text ?? t('numberLabel')}</label>
+          <Input
+            id={inputId}
+            type="number"
+            disabled={busy}
+            placeholder={t('numberPlaceholder')}
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !busy && !event.nativeEvent.isComposing) {
+                event.preventDefault();
+                submitNumber();
+              }
+            }}
+          />
+        </div>
         <Button disabled={busy || text.trim() === '' || !Number.isFinite(Number(text))} onClick={submitNumber}>
-          <Send className="size-4" />{t('send')}
+          <Send className="size-4" aria-hidden="true" />
+          {t('send')}
         </Button>
       </div>
     );
   }
+
   return (
-    <div className="relative">
-      <Textarea
-        rows={2}
-        disabled={busy}
-        placeholder={t('textPlaceholder')}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        className="min-h-24 resize-none pr-24"
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' && !e.shiftKey && !busy && !e.nativeEvent.isComposing) {
-            e.preventDefault();
-            submitText();
-          }
-        }}
-      />
-      <Button className="absolute right-2 bottom-2" disabled={busy || !text.trim()} onClick={submitText}>
-        <Send className="size-4" />{t('send')}
-      </Button>
+    <div>
+      <label className="sr-only" htmlFor={inputId}>{q.text ?? t('textLabel')}</label>
+      <div className="relative">
+        <Textarea
+          id={inputId}
+          rows={2}
+          disabled={busy}
+          placeholder={t('textPlaceholder')}
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          className="min-h-24 resize-none pr-24"
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' && !event.shiftKey && !busy && !event.nativeEvent.isComposing) {
+              event.preventDefault();
+              submitText();
+            }
+          }}
+        />
+        <Button className="absolute right-2 bottom-2" disabled={busy || !text.trim()} onClick={submitText}>
+          <Send className="size-4" aria-hidden="true" />
+          {t('send')}
+        </Button>
+      </div>
     </div>
   );
 }

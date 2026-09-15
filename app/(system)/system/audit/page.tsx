@@ -157,37 +157,36 @@ export default function SystemAuditArchivePage() {
   const latest = manifests[0] ?? null;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <header className="relative overflow-hidden rounded-2xl border bg-card px-5 py-6 shadow-sm sm:px-7">
-        <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-primary/10 to-transparent" />
-        <div className="relative flex flex-wrap items-start justify-between gap-4">
+    <div className="page-shell">
+      <header className="workspace-header">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">
             <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
               <Archive className="size-4" aria-hidden="true" />
               {t('eyebrow')}
             </div>
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('description')}</p>
+            <h1 className="page-heading">{t('title')}</h1>
+            <p className="page-description mt-2">{t('description')}</p>
           </div>
           <Badge variant={enabled ? 'outline' : 'secondary'}>{enabled ? t('enabled') : t('featureRequired')}</Badge>
         </div>
       </header>
 
       {enabled && (
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Card>
+        <div className="data-panel grid divide-y sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+          <Card className="rounded-none border-0 shadow-none">
             <CardHeader>
               <CardDescription>{t('metrics.exports')}</CardDescription>
               <CardTitle className="text-2xl tabular-nums">{manifests.length}</CardTitle>
             </CardHeader>
           </Card>
-          <Card>
+          <Card className="rounded-none border-0 shadow-none">
             <CardHeader>
               <CardDescription>{t('metrics.latestRecords')}</CardDescription>
               <CardTitle className="text-2xl tabular-nums">{latest?.recordCount ?? 0}</CardTitle>
             </CardHeader>
           </Card>
-          <Card>
+          <Card className="rounded-none border-0 shadow-none">
             <CardHeader>
               <CardDescription>{t('metrics.integrity')}</CardDescription>
               <CardTitle className="flex items-center gap-2 text-base"><ShieldCheck className="size-5 text-emerald-600" aria-hidden="true" />{t('metrics.immutable')}</CardTitle>
@@ -199,7 +198,7 @@ export default function SystemAuditArchivePage() {
       {error && <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive" role="alert">{error}</div>}
 
       {!loading && enabled === false && (
-        <Card>
+        <Card className="overflow-hidden shadow-none">
           <CardHeader>
             <CardTitle>{t('disabled.title')}</CardTitle>
             <CardDescription>{t('disabled.description')}</CardDescription>
@@ -208,7 +207,7 @@ export default function SystemAuditArchivePage() {
       )}
 
       {enabled && (
-        <Card>
+        <Card className="overflow-hidden shadow-none">
           <CardHeader className="border-b">
             <CardTitle className="flex items-center gap-2"><Download className="size-4 text-primary" aria-hidden="true" />{t('form.title')}</CardTitle>
             <CardDescription>{t('form.description')}</CardDescription>
@@ -254,7 +253,16 @@ export default function SystemAuditArchivePage() {
             <CardDescription>{t('history.description')}</CardDescription>
           </CardHeader>
           <CardContent className="px-0">
-            <div className="overflow-x-auto">
+            <div className="divide-y md:hidden">
+              {!loading && manifests.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('history.empty')}</p>}
+              {manifests.map((manifest) => (
+                <article key={manifest._id} className="space-y-3 p-4">
+                  <div className="flex items-start justify-between gap-3"><div><p className="text-sm font-semibold">{new Date(manifest.createdAt).toLocaleString(locale)}</p><p className="mt-1 text-xs text-muted-foreground">{new Date(manifest.from).toLocaleDateString(locale)} – {new Date(manifest.to).toLocaleDateString(locale)}</p></div><Badge variant="outline">{manifest.recordCount}</Badge></div>
+                  <dl className="grid grid-cols-2 gap-3 text-xs"><div><dt className="text-muted-foreground">{t('history.columns.sequence')}</dt><dd className="mt-1 font-mono">{manifest.firstSeq}–{manifest.lastSeq}</dd></div><div><dt className="text-muted-foreground">{t('history.columns.hash')}</dt><dd className="mt-1 truncate font-mono" title={manifest.exportHash}>{manifest.exportHash.slice(0, 14)}…</dd></div></dl>
+                </article>
+              ))}
+            </div>
+            <div className="hidden overflow-x-auto md:block">
               <Table>
                 <TableHeader>
                   <TableRow>

@@ -48,13 +48,12 @@ export default function TenantSettingsPage() {
   if (!merged) return <p className="text-sm text-muted-foreground">{error ?? t('loading')}</p>;
   const dirty = Object.keys(draft).length > 0;
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <header className="relative overflow-hidden rounded-2xl border bg-card px-5 py-6 shadow-sm sm:px-7">
-        <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-primary/10 to-transparent" />
-        <div className="relative flex flex-wrap items-start justify-between gap-4">
+    <div className="page-shell max-w-6xl">
+      <header className="workspace-header">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary"><Settings2 className="size-4" aria-hidden="true" />{t('eyebrow')}</div>
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
+            <h1 className="page-heading">{t('title')}</h1>
             <p className="mt-2 text-sm text-muted-foreground">{merged.name} · <code>{merged.slug}</code></p>
           </div>
           <Badge variant={merged.plan === 'paid' ? 'default' : 'secondary'} className="px-3 py-1">{merged.plan.toUpperCase()}</Badge>

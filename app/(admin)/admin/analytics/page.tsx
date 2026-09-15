@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
-import { BarChart3, ChartNoAxesColumn, FileDown, RefreshCw, SlidersHorizontal, Table2 } from 'lucide-react';
-import { BarChart, ChartStyles, LineChart, STATUS, StatTile, StatusBars } from '@/components/analytics/Charts';
+import { useTranslations } from 'next-intl';
+import { BarChart3, ChartNoAxesColumn, ChartPie, FileDown, RefreshCw, SlidersHorizontal, Table2 } from 'lucide-react';
+import { BarChart, ChartStyles, LineChart, PieChart, STATUS, StatTile, StatusBars } from '@/components/analytics/Charts';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -26,10 +26,9 @@ const BY = [
 const TYPES: ReportType[] = ['volume', 'classification', 'override-rate', 'assessment-time'];
 
 /** One report block: chart / table toggle + CSV / PDF export (FR-28: the export is the table view). */
-function ReportPanel({ type, title, description, result, query, children }: { type: ReportType; title: string; description: string; result: ReportResult | null; query: ReportQuery; children: React.ReactNode }) {
-  const locale = useLocale();
+function ReportPanel({ type, title, description, result, query, children, pie }: { type: ReportType; title: string; description: string; result: ReportResult | null; query: ReportQuery; children: React.ReactNode; pie?: React.ReactNode }) {
   const t = useTranslations('admin.analytics');
-  const [view, setView] = useState<'chart' | 'table'>('chart');
+  const [view, setView] = useState<'chart' | 'pie' | 'table'>('chart');
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   async function download(format: 'csv' | 'pdf') {
@@ -45,7 +44,7 @@ function ReportPanel({ type, title, description, result, query, children }: { ty
     }
   }
   return (
-    <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
+    <section className="data-panel">
       <div className="flex flex-col gap-3 border-b border-border/60 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="max-w-xl">
           <h2 className="font-heading font-semibold">{title}</h2>
@@ -57,6 +56,12 @@ function ReportPanel({ type, title, description, result, query, children }: { ty
               <ChartNoAxesColumn data-icon="inline-start" aria-hidden="true" />
               {t('views.chart')}
             </Button>
+            {pie && (
+              <Button size="sm" variant={view === 'pie' ? 'default' : 'ghost'} aria-pressed={view === 'pie'} onClick={() => setView('pie')}>
+                <ChartPie data-icon="inline-start" aria-hidden="true" />
+                {t('views.pie')}
+              </Button>
+            )}
             <Button size="sm" variant={view === 'table' ? 'default' : 'ghost'} aria-pressed={view === 'table'} onClick={() => setView('table')}>
               <Table2 data-icon="inline-start" aria-hidden="true" />
               {t('views.table')}
@@ -83,6 +88,8 @@ function ReportPanel({ type, title, description, result, query, children }: { ty
           </div>
         ) : view === 'chart' ? (
           children
+        ) : view === 'pie' && pie ? (
+          pie
         ) : (
           <div className="overflow-hidden rounded-xl border border-border/70">
           <Table>
@@ -108,11 +115,6 @@ function ReportPanel({ type, title, description, result, query, children }: { ty
             </TableBody>
           </Table>
           </div>
-        )}
-        {result && (
-          <p className="mt-3 text-[11px] text-muted-foreground">
-            {result.cached ? t('cache.cached') : t('cache.computed')} {new Date(result.generatedAt).toLocaleTimeString(locale)} · {result.computeMs} {t('milliseconds')}
-          </p>
         )}
       </div>
     </section>
@@ -183,10 +185,10 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <ChartStyles />
-      <header className="relative overflow-hidden rounded-2xl border border-indigo-200/60 bg-[linear-gradient(125deg,rgba(99,102,241,0.11),var(--card)_62%)] px-5 py-6 shadow-sm sm:px-6">
+      <header className="workspace-header">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex max-w-3xl items-start gap-3">
-            <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-500/12 text-indigo-700">
+            <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg bg-indigo-500/10 text-indigo-700">
               <BarChart3 className="size-5" aria-hidden="true" />
             </span>
             <div>
@@ -201,7 +203,7 @@ export default function AnalyticsPage() {
         </div>
       </header>
 
-      <section className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
+      <section className="control-strip">
         <div className="mb-3 flex items-center gap-2 text-sm font-medium">
           <SlidersHorizontal className="size-4 text-primary" aria-hidden="true" />
           <span>{t('filters.period')}</span>
@@ -271,11 +273,10 @@ export default function AnalyticsPage() {
       </section>
       {error && <p className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</p>}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid overflow-hidden rounded-xl sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label={t('stats.started')} value={vol ? Number(vol.summary.started).toLocaleString() : '—'} hint={vol ? t('stats.startedHint', { closed: Number(vol.summary.closed), escalated: Number(vol.summary.escalated) }) : undefined} />
         <StatTile label={t('stats.scored')} value={cls ? Number(cls.summary.scored).toLocaleString() : '—'} hint={cls ? t('stats.scoredHint', { ruleDriven: Number(cls.summary.ruleDriven), professionalConsult: Number(cls.summary.professionalConsult) }) : undefined} />
         <StatTile label={t('stats.overrideRate')} value={ovr && ovr.summary.overrideRate !== null ? `${ovr.summary.overrideRate}%` : '—'} hint={ovr ? t('stats.overrideHint', { overridden: Number(ovr.summary.overridden), decided: Number(ovr.summary.accepted) + Number(ovr.summary.overridden) }) : undefined} />
-        <StatTile label={t('stats.acceptRate')} value={ovr && ovr.summary.acceptRate !== null ? `${ovr.summary.acceptRate}%` : '—'} hint={t('stats.acceptHint')} />
         <StatTile label={t('stats.medianTime')} value={tim ? fmtSeconds(tim.summary.medianTotalSec as number | null) : '—'} hint={tim ? t('stats.timeHint', { p95: fmtSeconds(tim.summary.p95TotalSec as number | null), intake: fmtSeconds(tim.summary.avgIntakeSec as number | null) }) : undefined} />
       </div>
 
@@ -283,12 +284,19 @@ export default function AnalyticsPage() {
         <ReportPanel type="volume" title={t('reports.volume.title')} description={t('reports.volume.description')} result={vol ?? null} query={query}>
           {vol && <BarChart title={t('reports.volume.chartTitle')} data={vol.rows.map((r) => ({ label: String(r.period), value: Number(r.started) }))} />}
         </ReportPanel>
-        <ReportPanel type="classification" title={t('reports.classification.title')} description={t('reports.classification.description')} result={cls ?? null} query={query}>
+        <ReportPanel
+          type="classification"
+          title={t('reports.classification.title')}
+          description={t('reports.classification.description')}
+          result={cls ?? null}
+          query={query}
+          pie={cls ? <PieChart title={t('reports.classification.pieTitle')} totalLabel={t('total')} rows={cls.rows.map((r) => ({ key: String(r.classification), label: t(`classifications.${String(r.classification)}`), value: Number(r.count) }))} /> : null}
+        >
           {cls && <StatusBars rows={cls.rows.map((r) => ({ key: String(r.classification), count: Number(r.count), share: r.share === null ? null : Number(r.share) }))} />}
           {cls && <p className="mt-2 text-xs text-muted-foreground">{Object.entries(STATUS).map(([key, value]) => `${value.icon} ${t(`classifications.${key}`)}`).join(' · ')} — {t('reports.classification.ordered')}</p>}
         </ReportPanel>
         <ReportPanel type="override-rate" title={t('reports.override.title')} description={t('reports.override.description')} result={ovr ?? null} query={query}>
-          {ovr && <LineChart title={t('reports.override.chartTitle')} unit="%" periods={ovr.rows.map((r) => String(r.period))} series={[{ name: t('reports.override.series'), values: ovr.rows.map((r) => (r.overrideRate === null ? null : Number(r.overrideRate))) }]} format={(v) => `${v}%`} />}
+          {ovr && <LineChart title={t('reports.override.chartTitle')} periods={ovr.rows.map((r) => String(r.period))} series={[{ name: t('reports.override.series'), values: ovr.rows.map((r) => (r.overrideRate === null ? null : Number(r.overrideRate))) }]} format={(v) => `${v}%`} />}
         </ReportPanel>
         <ReportPanel type="assessment-time" title={t('reports.time.title')} description={t('reports.time.description')} result={tim ?? null} query={query}>
           {tim && (

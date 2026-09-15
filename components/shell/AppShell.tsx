@@ -10,7 +10,6 @@ import {
   BarChart3,
   BookOpenCheck,
   Building2,
-  ChevronRight,
   CircleGauge,
   ClipboardCheck,
   Database,
@@ -21,6 +20,7 @@ import {
   Languages,
   LayoutDashboard,
   Library,
+  LoaderCircle,
   LogOut,
   Menu,
   MessageSquareText,
@@ -30,7 +30,6 @@ import {
   Settings2,
   ShieldCheck,
   SlidersHorizontal,
-  Sparkles,
   UserRoundCog,
   UsersRound,
   X,
@@ -215,7 +214,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
         <div aria-hidden="true" className="subtle-grid absolute inset-0 opacity-60" />
         {state === 'error' ? (
           <div className="surface relative max-w-md space-y-4 p-7 text-center" role="alert">
-            <div className="mx-auto flex size-11 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+            <div className="mx-auto flex size-11 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
               <Fingerprint className="size-5" />
             </div>
             <p className="text-sm text-destructive">{loadError ?? t('app.sessionVerifyFailed')}</p>
@@ -224,11 +223,8 @@ export function AppShell({ role, children }: { role: Role; children: React.React
             </Button>
           </div>
         ) : (
-          <div className="relative flex flex-col items-center gap-4 text-sm text-muted-foreground" role="status">
-            <div className="relative flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-xl shadow-primary/20">
-              <Sparkles className="size-6 animate-pulse" />
-              <span className="absolute -inset-2 -z-10 animate-ping rounded-3xl bg-primary/10" />
-            </div>
+          <div className="relative flex flex-col items-center gap-3 text-sm text-muted-foreground" role="status">
+            <LoaderCircle className="size-6 animate-spin text-primary" aria-hidden="true" />
             <p>{state === 'redirecting' ? t('app.openingWorkspace') : t('app.loading')}</p>
           </div>
         )}
@@ -243,8 +239,8 @@ export function AppShell({ role, children }: { role: Role; children: React.React
 
   const renderNavigation = (mobile = false) => (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex h-17 shrink-0 items-center gap-3 border-b border-sidebar-border px-5">
-        <div className="flex size-9 items-center justify-center rounded-xl bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground shadow-lg shadow-blue-950/25">
+      <div className="flex h-16 shrink-0 items-center gap-3 border-b border-sidebar-border px-5">
+        <div className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-xs font-bold text-sidebar-primary-foreground">
           R
         </div>
         <div className="min-w-0 flex-1">
@@ -264,10 +260,10 @@ export function AppShell({ role, children }: { role: Role; children: React.React
       </div>
 
       <div className="scrollbar-subtle min-h-0 flex-1 overflow-y-auto px-3 py-5">
-        <div className="mb-3 px-3 text-[0.65rem] font-semibold tracking-[0.15em] text-sidebar-foreground/55 uppercase">
+        <div className="mb-3 px-3 text-[0.62rem] font-semibold tracking-[0.16em] text-sidebar-foreground/48 uppercase">
           {t('app.roleNavigation', { role: t(`roles.${trustedRole}`) })}
         </div>
-        <nav className="space-y-1" aria-label={t('app.navigation')}>
+        <nav className="space-y-0.5" aria-label={t('app.navigation')}>
           {navigation.map((item) => {
             const active = isNavActive(pathname, item, home);
             const Icon = item.icon;
@@ -276,17 +272,17 @@ export function AppShell({ role, children }: { role: Role; children: React.React
                 key={item.href}
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
-                className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
+                className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[0.84rem] transition ${
                   active
-                    ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground shadow-[inset_0_0_0_1px_rgba(255,255,255,0.055)]'
-                    : 'text-sidebar-foreground/67 hover:bg-sidebar-accent/65 hover:text-sidebar-foreground'
+                    ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground'
+                    : 'text-sidebar-foreground/64 hover:bg-sidebar-accent/55 hover:text-sidebar-foreground'
                 }`}
               >
-                <span className={`flex size-8 items-center justify-center rounded-lg transition ${active ? 'bg-sidebar-primary/18 text-sidebar-primary' : 'text-sidebar-foreground/45 group-hover:text-sidebar-foreground/80'}`}>
+                {active && <span aria-hidden="true" className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-sidebar-primary" />}
+                <span className={`flex size-7 items-center justify-center transition ${active ? 'text-sidebar-primary' : 'text-sidebar-foreground/42 group-hover:text-sidebar-foreground/80'}`}>
                   <Icon className="size-[1.05rem]" />
                 </span>
                 <span className="min-w-0 flex-1 truncate">{t(`nav.${trustedRole}.${item.key}`)}</span>
-                {active && <ChevronRight className="size-3.5 text-sidebar-primary/80" />}
               </Link>
             );
           })}
@@ -294,16 +290,16 @@ export function AppShell({ role, children }: { role: Role; children: React.React
       </div>
 
       <div className="shrink-0 space-y-3 border-t border-sidebar-border p-4">
-        <div className="rounded-xl border border-sidebar-border bg-sidebar-accent/45 p-3">
+        <div className="px-1 py-1">
           <div className="flex items-center gap-2">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary/18 text-xs font-bold text-sidebar-primary">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-sidebar-accent text-xs font-bold text-sidebar-primary">
               {initials(me.user.name) || 'RS'}
             </div>
             <div className="min-w-0 flex-1">
               <div className="truncate text-xs font-semibold text-sidebar-foreground">{me.user.name}</div>
               <div className="truncate text-[0.65rem] text-sidebar-foreground/60">{me.user.email}</div>
             </div>
-            <Badge className="border-sidebar-border bg-sidebar/40 text-[0.58rem] text-sidebar-foreground" variant="outline">
+            <Badge className="border-sidebar-border bg-sidebar-accent/70 text-[0.58rem] text-sidebar-foreground" variant="outline">
               {me.tenant.plan.toUpperCase()}
             </Badge>
           </div>
@@ -341,7 +337,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
 
   return (
     <div className="min-h-screen bg-transparent">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-65 border-r border-sidebar-border bg-sidebar lg:block">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 border-r border-sidebar-border bg-sidebar lg:block">
         {renderNavigation()}
       </aside>
 
@@ -368,33 +364,28 @@ export function AppShell({ role, children }: { role: Role; children: React.React
         </div>
       )}
 
-      <div className="min-w-0 lg:pl-65" inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/75 bg-background/85 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
+      <div className="min-w-0 lg:pl-60" inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/80 bg-background/94 px-4 backdrop-blur-xl sm:px-6 lg:px-7">
           <button
             ref={mobileNavigationTriggerRef}
             type="button"
             aria-label={t('app.openNavigation')}
             aria-expanded={mobileNavigationOpen}
             aria-controls="app-mobile-navigation"
-            className="rounded-xl border bg-card p-2 text-muted-foreground shadow-sm transition hover:bg-accent hover:text-foreground lg:hidden"
+            className="rounded-lg border bg-card p-2 text-muted-foreground transition hover:bg-accent hover:text-foreground lg:hidden"
             onClick={() => setMobileNavigationOpen(true)}
           >
             <Menu className="size-5" />
           </button>
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <PanelLeftClose className="hidden size-4 text-muted-foreground/45 lg:block" aria-hidden="true" />
+          <div className="flex min-w-0 flex-1 items-center gap-2.5">
+            <PanelLeftClose className="hidden size-4 text-muted-foreground/40 lg:block" aria-hidden="true" />
             <span className="truncate text-sm font-semibold text-foreground">{activeItem ? t(`nav.${trustedRole}.${activeItem.key}`) : t(`roles.${trustedRole}`)}</span>
-            <span className="hidden text-muted-foreground/35 sm:inline">/</span>
-            <span className="hidden truncate text-xs text-muted-foreground sm:inline">{t(`roles.${trustedRole}`)}</span>
           </div>
-          <Badge variant={me.tenant.plan === 'paid' ? 'default' : 'secondary'} className="hidden sm:inline-flex">
-            {me.tenant.plan.toUpperCase()}
-          </Badge>
-          <div className="flex size-9 items-center justify-center rounded-xl border bg-card text-xs font-bold text-primary shadow-sm" title={`${me.user.name} · ${me.user.email}`}>
+          <div className="flex size-8 items-center justify-center rounded-lg border bg-card text-[0.68rem] font-bold text-primary" title={`${me.user.name} · ${me.user.email}`}>
             {initials(me.user.name) || 'RS'}
           </div>
         </header>
-        <main className="min-h-[calc(100dvh-4rem)] px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8">{children}</main>
+        <main className="min-h-[calc(100dvh-3.5rem)] px-4 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-7">{children}</main>
       </div>
     </div>
   );

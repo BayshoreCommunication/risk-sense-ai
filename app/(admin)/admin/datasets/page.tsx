@@ -9,24 +9,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { api, handleSessionResponse, toApiError } from '@/lib/api/client';
+import type { components } from '@/lib/api/types';
 import { DEV_AUTH_ENABLED } from '@/lib/environment';
 import { COOKIE_DEV_USER, COOKIE_SESSION, readCookie } from '@/lib/session';
 
-type RowError = { sheet: string; row: number; column?: string; message: string };
-type Dataset = {
-  _id: string;
-  seq: number;
-  fileName: string;
-  format: 'xlsx' | 'json';
-  status: 'rejected' | 'validated' | 'approved' | 'active' | 'failed';
-  counts: { personas: number; scenarios: number; questions: number; scoring: number; skippedRows: number };
-  validationErrors: RowError[];
-  authorId: string;
-  reviewerId?: string;
-  failure?: string;
-  createdAt: string;
-  applied?: { personas: string[]; scenarios: string[]; questions: string[] };
-};
+type Dataset = components['schemas']['Dataset'];
+
+function contentRows(dataset: Dataset) {
+  return dataset.counts.personas + dataset.counts.scenarios + dataset.counts.questions + dataset.counts.scoring;
+}
 
 const STATUS_VARIANT: Record<Dataset['status'], 'default' | 'secondary' | 'outline' | 'destructive'> = {
   active: 'default',
@@ -72,12 +63,12 @@ export default function DatasetsPage() {
   const reload = useCallback(async () => {
     setLoading(true);
     try {
-      const res = (await api.GET('/datasets')) as { data?: { data: unknown }; error?: unknown };
+      const res = await api.GET('/datasets');
       if (!res.data) {
         setError(toApiError(res.error).message);
         return;
       }
-      setItems(res.data.data as Dataset[]);
+      setItems(res.data.data);
     } finally {
       setLoading(false);
     }
@@ -123,23 +114,69 @@ export default function DatasetsPage() {
     URL.revokeObjectURL(url);
   }
 
+  function actionsFor(dataset: Dataset) {
+    if (dataset.status !== 'validated' && dataset.status !== 'approved') return null;
+    return (
+      <div className="flex flex-wrap justify-end gap-2">
+        {dataset.status === 'validated' && (
+          <Button size="sm" variant="outline" disabled={busy} onClick={() => void run(async () => {
+            const res = await api.POST('/datasets/{id}/approve', { params: { path: { id: dataset._id } } });
+            if (res.error) throw res.error;
+          })}>
+            <CheckCircle2 data-icon="inline-start" aria-hidden="true" />
+            {t('actions.approve')}
+          </Button>
+        )}
+        {dataset.status === 'approved' && (
+          <Button size="sm" disabled={busy} onClick={() => void run(async () => {
+            const res = await api.POST('/datasets/{id}/activate', { params: { path: { id: dataset._id } } });
+            if (res.error) throw res.error;
+          })}>
+            <Power data-icon="inline-start" aria-hidden="true" />
+            {t('actions.activate')}
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  function errorCountFor(dataset: Dataset) {
+    if (dataset.validationErrors.length === 0) return <span className="tabular-nums">0</span>;
+    return (
+      <button
+        className="inline-flex min-h-9 items-center gap-1 rounded-md px-2 font-medium text-destructive underline-offset-4 hover:bg-destructive/10 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        onClick={() => setExpanded(expanded === dataset._id ? null : dataset._id)}
+        aria-expanded={expanded === dataset._id}
+        aria-controls={`dataset-errors-${dataset._id}`}
+      >
+        {dataset.validationErrors.length}
+        {expanded === dataset._id ? <ChevronUp className="size-3.5" aria-hidden="true" /> : <ChevronDown className="size-3.5" aria-hidden="true" />}
+      </button>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      <header className="flex flex-col gap-4 rounded-2xl border border-border/70 bg-card/80 px-5 py-5 shadow-sm sm:flex-row sm:items-start sm:justify-between sm:px-6">
-        <div className="max-w-3xl">
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{t('description')}</p>
+    <div className="mx-auto max-w-7xl space-y-5">
+      <header className="workspace-header">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="max-w-3xl">
+            <h1 className="flex items-center gap-3 text-2xl font-semibold tracking-tight sm:text-3xl">
+              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><FileSpreadsheet className="size-5" aria-hidden="true" /></span>
+              {t('title')}
+            </h1>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('description')}</p>
+          </div>
+          <Button variant="outline" onClick={() => void run(downloadTemplate)} disabled={busy} className="shrink-0 bg-background">
+            <Download data-icon="inline-start" aria-hidden="true" />
+            {t('downloadTemplate')}
+          </Button>
         </div>
-        <Button variant="outline" onClick={() => void run(downloadTemplate)} disabled={busy} className="shrink-0 bg-background shadow-sm">
-          <Download data-icon="inline-start" aria-hidden="true" />
-          {t('downloadTemplate')}
-        </Button>
       </header>
 
-      <Card className="border-0 bg-card shadow-sm ring-1 ring-foreground/8">
-        <CardHeader className="border-b border-border/60 pb-4">
+      <Card className="shadow-none">
+        <CardHeader className="border-b pb-4">
           <div className="flex items-start gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
               <UploadCloud className="size-5" aria-hidden="true" />
             </span>
             <div>
@@ -149,10 +186,10 @@ export default function DatasetsPage() {
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative w-full max-w-xl rounded-xl border border-dashed border-primary/25 bg-primary/[0.025] p-2">
+          <div className="relative w-full max-w-xl rounded-lg border border-dashed border-primary/30 bg-primary/[0.025] p-2">
             <Input aria-label={t('upload.fileLabel')} type="file" accept=".xlsx" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="w-full border-0 bg-transparent shadow-none" />
           </div>
-          <Button onClick={() => void run(upload)} disabled={!file || busy} className="shrink-0 shadow-sm">
+          <Button onClick={() => void run(upload)} disabled={!file || busy} className="shrink-0">
             <FileSpreadsheet data-icon="inline-start" aria-hidden="true" />
             {busy ? t('upload.working') : t('upload.submit')}
           </Button>
@@ -161,17 +198,17 @@ export default function DatasetsPage() {
 
       {error && <p className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</p>}
 
-      <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm" aria-busy={loading}>
-        <Table className="min-w-[860px]">
-          <TableHeader className="bg-muted/45">
+      <section className="data-panel hidden overflow-x-auto lg:block" aria-busy={loading}>
+        <Table className="min-w-[980px]">
+          <TableHeader>
             <TableRow>
               <TableHead>#</TableHead>
               <TableHead>{t('columns.file')}</TableHead>
-              <TableHead className="text-right">{t('columns.personas')}</TableHead>
-              <TableHead className="text-right">{t('columns.scenarios')}</TableHead>
-              <TableHead className="text-right">{t('columns.questions')}</TableHead>
               <TableHead className="text-right">{t('columns.rows')}</TableHead>
               <TableHead className="text-right">{t('columns.errors')}</TableHead>
+              <TableHead>{t('columns.author')}</TableHead>
+              <TableHead>{t('columns.reviewer')}</TableHead>
+              <TableHead>{t('columns.uploaded')}</TableHead>
               <TableHead>{t('columns.status')}</TableHead>
               <TableHead className="text-right">{t('columns.actions')}</TableHead>
             </TableRow>
@@ -201,69 +238,85 @@ export default function DatasetsPage() {
                   </div>
                   <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                     <Badge variant="outline" className="h-5 rounded-md px-1.5 uppercase">{d.format}</Badge>
-                    <span>{new Date(d.createdAt).toLocaleString(locale)}</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-right tabular-nums">{d.counts.personas}</TableCell>
-                <TableCell className="text-right tabular-nums">{d.counts.scenarios}</TableCell>
-                <TableCell className="text-right tabular-nums">{d.counts.questions}</TableCell>
-                <TableCell className="text-right font-medium tabular-nums">{d.counts.personas + d.counts.scenarios + d.counts.questions + d.counts.scoring}</TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {d.validationErrors.length > 0 ? (
-                    <button
-                      className="inline-flex items-center gap-1 rounded-lg px-2 py-1 font-medium text-destructive underline-offset-4 hover:bg-destructive/10 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      onClick={() => setExpanded(expanded === d._id ? null : d._id)}
-                      aria-expanded={expanded === d._id}
-                      aria-controls={`dataset-errors-${d._id}`}
-                    >
-                      {d.validationErrors.length}
-                      {expanded === d._id ? <ChevronUp className="size-3.5" aria-hidden="true" /> : <ChevronDown className="size-3.5" aria-hidden="true" />}
-                    </button>
-                  ) : (
-                    '0'
-                  )}
+                <TableCell className="text-right">
+                  <div className="font-semibold tabular-nums">{contentRows(d)}</div>
+                  <div className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                    {t('columns.personas')} {d.counts.personas} · {t('columns.scenarios')} {d.counts.scenarios} · {t('columns.questions')} {d.counts.questions}
+                  </div>
                 </TableCell>
+                <TableCell className="text-right tabular-nums">{errorCountFor(d)}</TableCell>
+                <TableCell className="max-w-44 truncate font-medium" title={d.author?.name}>{d.author?.name ?? '—'}</TableCell>
+                <TableCell className="max-w-44 truncate" title={d.reviewer?.name}>{d.reviewer?.name ?? '—'}</TableCell>
+                <TableCell className="text-muted-foreground"><time dateTime={d.createdAt}>{new Date(d.createdAt).toLocaleString(locale)}</time></TableCell>
                 <TableCell>
                   <Badge variant={STATUS_VARIANT[d.status]}>{statusT.has(d.status) ? statusT(d.status) : d.status}</Badge>
                   {d.failure && <div className="mt-1 text-xs text-destructive">{d.failure}</div>}
                 </TableCell>
-                <TableCell>
-                  <div className="flex min-w-max justify-end gap-1.5">
-                  {d.status === 'validated' && (
-                    <Button size="sm" variant="outline" disabled={busy} onClick={() => void run(async () => {
-                      const res = await api.POST('/datasets/{id}/approve', { params: { path: { id: d._id } } });
-                      if (res.error) throw res.error;
-                    })}>
-                      <CheckCircle2 data-icon="inline-start" aria-hidden="true" />
-                      {t('actions.approve')}
-                    </Button>
-                  )}
-                  {d.status === 'approved' && (
-                    <Button size="sm" disabled={busy} onClick={() => void run(async () => {
-                      const res = await api.POST('/datasets/{id}/activate', { params: { path: { id: d._id } } });
-                      if (res.error) throw res.error;
-                    })}>
-                      <Power data-icon="inline-start" aria-hidden="true" />
-                      {t('actions.activate')}
-                    </Button>
-                  )}
-                  </div>
-                </TableCell>
+                <TableCell>{actionsFor(d)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </section>
 
+      <section className="data-panel divide-y lg:hidden" aria-busy={loading}>
+        {loading && <p className="px-4 py-12 text-center text-sm text-muted-foreground">{commonT('loading')}</p>}
+        {!loading && items.length === 0 && <p className="px-4 py-12 text-center text-sm text-muted-foreground">{t('empty')}</p>}
+        {items.map((d) => (
+          <article key={d._id} className="space-y-4 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <FileSpreadsheet className="size-4 shrink-0 text-emerald-600" aria-hidden="true" />
+                  <h2 className="truncate font-semibold" title={d.fileName}>{d.fileName}</h2>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  #{d.seq} · <span className="uppercase">{d.format}</span> · {t('columns.uploaded')} <time dateTime={d.createdAt}>{new Date(d.createdAt).toLocaleString(locale)}</time>
+                </p>
+              </div>
+              <Badge variant={STATUS_VARIANT[d.status]}>{statusT.has(d.status) ? statusT(d.status) : d.status}</Badge>
+            </div>
+
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+              <div>
+                <dt className="text-xs text-muted-foreground">{t('columns.author')}</dt>
+                <dd className="mt-0.5 truncate font-medium" title={d.author?.name}>{d.author?.name ?? '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">{t('columns.reviewer')}</dt>
+                <dd className="mt-0.5 truncate font-medium" title={d.reviewer?.name}>{d.reviewer?.name ?? '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">{t('columns.rows')}</dt>
+                <dd className="mt-0.5 font-semibold tabular-nums">{contentRows(d)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">{t('columns.errors')}</dt>
+                <dd className="mt-0.5">{errorCountFor(d)}</dd>
+              </div>
+            </dl>
+
+            <p className="text-xs leading-5 text-muted-foreground">
+              {t('columns.personas')} {d.counts.personas} · {t('columns.scenarios')} {d.counts.scenarios} · {t('columns.questions')} {d.counts.questions}
+            </p>
+            {d.failure && <p className="text-xs text-destructive">{d.failure}</p>}
+            {actionsFor(d)}
+          </article>
+        ))}
+      </section>
+
       {expanded && items.find((d) => d._id === expanded)?.validationErrors.length ? (
-        <Card id={`dataset-errors-${expanded}`} className="border-0 bg-card shadow-sm ring-1 ring-destructive/15">
-          <CardHeader className="border-b border-border/60 pb-4">
+        <Card id={`dataset-errors-${expanded}`} className="border-destructive/20 shadow-none">
+          <CardHeader className="border-b pb-4">
             <CardTitle className="text-base">{t('validation.title', { sequence: items.find((d) => d._id === expanded)?.seq ?? '' })}</CardTitle>
             <CardDescription className="leading-5">{t('validation.description')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table className="min-w-[620px]">
-              <TableHeader className="bg-muted/45">
+            <div className="hidden md:block">
+              <Table className="min-w-[620px]">
+              <TableHeader>
                 <TableRow>
                   <TableHead>{t('validation.columns.sheet')}</TableHead>
                   <TableHead>{t('validation.columns.row')}</TableHead>
@@ -284,6 +337,19 @@ export default function DatasetsPage() {
                   ))}
               </TableBody>
             </Table>
+            </div>
+            <div className="divide-y md:hidden">
+              {items
+                .find((d) => d._id === expanded)!
+                .validationErrors.map((e, i) => (
+                  <article key={i} className="grid grid-cols-2 gap-3 py-4 text-sm first:pt-0 last:pb-0">
+                    <div><p className="text-xs text-muted-foreground">{t('validation.columns.sheet')}</p><p className="mt-0.5 font-medium">{e.sheet}</p></div>
+                    <div><p className="text-xs text-muted-foreground">{t('validation.columns.row')}</p><p className="mt-0.5 font-medium tabular-nums">{e.row || '—'}</p></div>
+                    <div><p className="text-xs text-muted-foreground">{t('validation.columns.column')}</p><p className="mt-0.5">{e.column ?? '—'}</p></div>
+                    <div><p className="text-xs text-muted-foreground">{t('validation.columns.message')}</p><p className="mt-0.5 break-words">{e.message}</p></div>
+                  </article>
+                ))}
+            </div>
           </CardContent>
         </Card>
       ) : null}

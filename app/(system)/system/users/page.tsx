@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { api, toApiError } from '@/lib/api/client';
 import type { components, paths } from '@/lib/api/types';
@@ -39,9 +40,6 @@ const EMPTY_USER: UserDraft = {
   crossDepartmentAccess: false,
   status: 'active',
 };
-
-const selectClassName =
-  'h-8 w-full rounded-lg border border-input bg-background px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50';
 
 function errorMessage(result: { error?: unknown }) {
   return toApiError(result.error).message;
@@ -99,6 +97,7 @@ export default function UsersPage() {
   const requiresRecordedMfa = (user: SystemUser) =>
     user.role === 'administrator' ||
     user.role === 'system_administrator' ||
+    (plan === 'paid' && user.role === 'audit') ||
     (otpRequired === true && !(plan === 'paid' && user.role === 'requestor'));
   const pendingMfa = users.filter((user) => !user.mfaEnrolled && requiresRecordedMfa(user)).length;
 
@@ -203,9 +202,8 @@ export default function UsersPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">
-      <header className="relative overflow-hidden rounded-2xl border bg-card px-5 py-6 shadow-sm sm:px-7">
-        <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-primary/10 to-transparent" />
-        <div className="relative flex flex-wrap items-start justify-between gap-4">
+      <header className="workspace-header">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">
             <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary"><UsersRound className="size-4" aria-hidden="true" />{t('eyebrow')}</div>
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
@@ -215,10 +213,10 @@ export default function UsersPage() {
         </div>
       </header>
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Card size="sm"><CardHeader><CardDescription>{t('summary.total')}</CardDescription><CardTitle className="text-2xl tabular-nums">{users.length}</CardTitle></CardHeader></Card>
-        <Card size="sm"><CardHeader><CardDescription>{t('summary.active')}</CardDescription><CardTitle className="text-2xl tabular-nums">{activeUsers}</CardTitle></CardHeader></Card>
-        <Card size="sm"><CardHeader><CardDescription>{t('summary.mfaPending')}</CardDescription><CardTitle className={pendingMfa > 0 && plan === 'paid' ? 'text-destructive text-2xl tabular-nums' : 'text-2xl tabular-nums'}>{pendingMfa}</CardTitle></CardHeader></Card>
+      <div className="grid overflow-hidden rounded-xl sm:grid-cols-3">
+        <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.total')}</CardDescription><CardTitle className="metric-value">{users.length}</CardTitle></CardHeader></Card>
+        <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.active')}</CardDescription><CardTitle className="metric-value">{activeUsers}</CardTitle></CardHeader></Card>
+        <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.mfaPending')}</CardDescription><CardTitle className={pendingMfa > 0 && plan === 'paid' ? 'metric-value text-destructive' : 'metric-value'}>{pendingMfa}</CardTitle></CardHeader></Card>
       </div>
 
       <Card>
@@ -238,7 +236,7 @@ export default function UsersPage() {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-2xl border bg-card shadow-sm">
+      <div className="data-panel hidden overflow-x-auto lg:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -276,7 +274,7 @@ export default function UsersPage() {
                       ? t('scope.allDepartments')
                       : user.departmentIds.map((id) => departmentNames.get(id) ?? id).join(', ') || t('scope.ownOnly')}
                 </TableCell>
-                <TableCell><Badge variant={user.mfaEnrolled ? 'outline' : requiresRecordedMfa(user) ? 'destructive' : 'secondary'}>{user.mfaEnrolled ? t('mfa.enrolled') : requiresRecordedMfa(user) ? t('mfa.pending') : t('mfa.notRequired')}</Badge></TableCell>
+                <TableCell><Badge variant={user.mfaEnrolled ? 'outline' : plan === 'paid' && user.role === 'requestor' ? 'secondary' : requiresRecordedMfa(user) ? 'destructive' : 'secondary'}>{user.mfaEnrolled ? t('mfa.enrolled') : plan === 'paid' && user.role === 'requestor' ? t('mfa.signIn') : requiresRecordedMfa(user) ? t('mfa.pending') : t('mfa.notRequired')}</Badge></TableCell>
                 <TableCell><Badge variant={user.status === 'active' ? 'outline' : 'destructive'}>{status.has(user.status) ? status(user.status) : user.status}</Badge></TableCell>
                 <TableCell>{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString(locale) : t('never')}</TableCell>
                 <TableCell className="text-right"><Button size="sm" variant="outline" onClick={() => openEdit(user)}>{t('edit')}</Button></TableCell>
@@ -284,6 +282,26 @@ export default function UsersPage() {
             ))}
           </TableBody>
         </Table>
+      </div>
+
+      <div className="data-panel divide-y lg:hidden" aria-busy={loading}>
+        {loading && <p className="p-8 text-center text-sm text-muted-foreground">{t('loading')}</p>}
+        {!loading && !pageError && users.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('empty')}</p>}
+        {users.map((user) => (
+          <article key={user._id} className="space-y-3 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0"><h2 className="truncate font-semibold">{user.name}</h2><p className="truncate text-xs text-muted-foreground">{user.email}</p></div>
+              <Badge variant={user.status === 'active' ? 'outline' : 'destructive'}>{status.has(user.status) ? status(user.status) : user.status}</Badge>
+            </div>
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+              <div><dt className="text-muted-foreground">{t('columns.role')}</dt><dd className="mt-0.5 font-medium">{roles.has(user.role) ? roles(user.role) : user.role}</dd></div>
+              <div><dt className="text-muted-foreground">{t('columns.mfa')}</dt><dd className="mt-0.5 font-medium">{user.mfaEnrolled ? t('mfa.enrolled') : plan === 'paid' && user.role === 'requestor' ? t('mfa.signIn') : requiresRecordedMfa(user) ? t('mfa.pending') : t('mfa.notRequired')}</dd></div>
+              <div className="col-span-2"><dt className="text-muted-foreground">{t('columns.departments')}</dt><dd className="mt-0.5 font-medium">{user.role !== 'requestor' ? t('scope.notApplicable') : user.crossDepartmentAccess ? t('scope.allDepartments') : user.departmentIds.map((id) => departmentNames.get(id) ?? id).join(', ') || t('scope.ownOnly')}</dd></div>
+              <div className="col-span-2"><dt className="text-muted-foreground">{t('columns.lastLogin')}</dt><dd className="mt-0.5 font-medium">{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString(locale) : t('never')}</dd></div>
+            </dl>
+            <Button className="w-full" size="sm" variant="outline" onClick={() => openEdit(user)}>{t('edit')}</Button>
+          </article>
+        ))}
       </div>
 
       <Dialog open={editor !== null} onOpenChange={(open) => !open && closeEditor()}>
@@ -314,26 +332,21 @@ export default function UsersPage() {
               </div>
               <div className="space-y-1">
                 <Label htmlFor="user-role">{t('fields.role')}</Label>
-                <select
-                  id="user-role"
-                  className={selectClassName}
-                  aria-describedby="user-role-policy"
-                  value={draft.role}
-                  onChange={(event) => {
-                    const role = event.target.value as Role;
+                <Select value={draft.role} onValueChange={(value) => {
+                    const role = (value ?? 'requestor') as Role;
                     updateDraft({ role, ...(role === 'requestor' ? {} : { departmentIds: [], crossDepartmentAccess: false }) });
-                  }}
-                >
-                  {ROLES.map((role) => <option key={role} value={role}>{roles(role)}</option>)}
-                </select>
+                  }}>
+                  <SelectTrigger id="user-role" className="w-full" aria-describedby="user-role-policy"><SelectValue /></SelectTrigger>
+                  <SelectContent>{ROLES.map((role) => <SelectItem key={role} value={role}>{roles(role)}</SelectItem>)}</SelectContent>
+                </Select>
               </div>
               {editor?.mode === 'edit' && (
                 <div className="space-y-1">
                   <Label htmlFor="user-status">{t('fields.status')}</Label>
-                  <select id="user-status" className={selectClassName} value={draft.status} onChange={(event) => updateDraft({ status: event.target.value as SystemUser['status'] })}>
-                    <option value="active">{status('active')}</option>
-                    <option value="disabled">{status('disabled')}</option>
-                  </select>
+                  <Select value={draft.status} onValueChange={(value) => updateDraft({ status: (value ?? 'active') as SystemUser['status'] })}>
+                    <SelectTrigger id="user-status" className="w-full"><SelectValue /></SelectTrigger>
+                    <SelectContent><SelectItem value="active">{status('active')}</SelectItem><SelectItem value="disabled">{status('disabled')}</SelectItem></SelectContent>
+                  </Select>
                 </div>
               )}
             </div>

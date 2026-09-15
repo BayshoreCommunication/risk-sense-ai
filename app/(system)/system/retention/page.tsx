@@ -45,21 +45,20 @@ export default function RetentionPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
-      <header className="relative overflow-hidden rounded-2xl border bg-card px-5 py-6 shadow-sm sm:px-7">
-        <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-primary/10 to-transparent" />
-        <div className="relative flex flex-wrap items-end justify-between gap-4">
+    <div className="page-shell">
+      <header className="workspace-header">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="max-w-3xl">
             <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary"><DatabaseZap className="size-4" aria-hidden="true" />{t('eyebrow')}</div>
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('description')}</p>
+            <h1 className="page-heading">{t('title')}</h1>
+            <p className="page-description mt-2">{t('description')}</p>
           </div>
           {settings && <Badge variant={settings.plan === 'paid' ? 'default' : 'secondary'}>{settings.plan.toUpperCase()}</Badge>}
         </div>
       </header>
 
       {settings && (
-        <Card size="sm">
+        <Card size="sm" className="shadow-none">
           <CardContent className="flex items-start gap-3">
             <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${settings.plan === 'paid' ? 'bg-violet-500/10 text-violet-700' : 'bg-blue-500/10 text-blue-700'}`}>{settings.plan === 'paid' ? <Archive className="size-4" aria-hidden="true" /> : <ShieldCheck className="size-4" aria-hidden="true" />}</span>
             <div><p className="font-medium">{settings.plan === 'paid' ? t('policy.paidTitle') : t('policy.freeTitle')}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{settings.plan === 'paid' ? t('policy.paidDescription') : t('policy.freeDescription')}</p></div>
@@ -67,7 +66,7 @@ export default function RetentionPage() {
         </Card>
       )}
 
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border bg-card p-4 shadow-sm">
+      <div className="control-strip flex flex-wrap items-center gap-2">
         <Button variant="outline" disabled={busy !== null} onClick={() => void run(true)}>
           <PlayCircle aria-hidden="true" />{busy === 'dry' ? t('running') : t('dryRun')}
         </Button>
@@ -89,7 +88,7 @@ export default function RetentionPage() {
       </div>
       {error && <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</div>}
       {last && (
-        <Card size="sm">
+        <Card size="sm" className="shadow-none">
           <CardHeader>
           <div className="mb-1 font-medium">
             {last.dryRun ? t('result.dryRun') : t('result.run')} · {last.plan.toUpperCase()} · {t('result.policy', { window: last.policy.assessmentDays, grace: last.policy.graceDays })}
@@ -107,10 +106,25 @@ export default function RetentionPage() {
           </CardContent>
         </Card>
       )}
-      <Card>
+      <Card className="overflow-hidden shadow-none">
         <CardHeader className="border-b"><CardTitle>{t('history.title')}</CardTitle><CardDescription>{t('history.description')}</CardDescription></CardHeader>
         <CardContent className="px-0">
-      <div className="overflow-x-auto">
+      <div className="divide-y md:hidden">
+        {runs.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('empty')}</p>}
+        {runs.map((r) => (
+          <article key={r._id} className="space-y-3 p-4">
+            <div className="flex items-start justify-between gap-3"><div><p className="text-sm font-semibold">{r.dryRun ? t('modes.dry') : t('modes.enforced')}</p><p className="mt-1 text-xs text-muted-foreground">{new Date(r.ranAt).toLocaleString(locale)}</p></div><Badge variant="outline">{r.trigger}</Badge></div>
+            <dl className="grid grid-cols-2 gap-3 text-xs">
+              <div><dt className="text-muted-foreground">{t('columns.flagged')}</dt><dd className="mt-1 font-semibold tabular-nums">{r.flagged}</dd></div>
+              <div><dt className="text-muted-foreground">{t('columns.reduced')}</dt><dd className="mt-1 font-semibold tabular-nums">{r.reduced}</dd></div>
+              <div><dt className="text-muted-foreground">{t('columns.archived')}</dt><dd className="mt-1 font-semibold tabular-nums">{r.archived}</dd></div>
+              <div><dt className="text-muted-foreground">{t('columns.auditPastWindow')}</dt><dd className="mt-1 font-semibold tabular-nums">{r.auditPastRetention}</dd></div>
+            </dl>
+            {r.error && <p className="text-xs text-destructive">{r.error}</p>}
+          </article>
+        ))}
+      </div>
+      <div className="hidden overflow-x-auto md:block">
         <Table>
           <TableHeader>
             <TableRow>

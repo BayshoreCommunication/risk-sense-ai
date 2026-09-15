@@ -48,17 +48,16 @@ export default function AuditOverviewPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <header className="relative overflow-hidden rounded-2xl border bg-card px-5 py-7 shadow-sm sm:px-8 sm:py-9">
-        <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-primary/10 to-transparent" />
-        <div className="relative flex flex-wrap items-end justify-between gap-5">
+    <div className="page-shell">
+      <header className="workspace-header">
+        <div className="flex flex-wrap items-end justify-between gap-5">
           <div className="max-w-3xl">
             <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
               <Fingerprint className="size-4" aria-hidden="true" />
               {t('eyebrow')}
             </div>
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground sm:text-base">{t('description')}</p>
+            <h1 className="page-heading">{t('title')}</h1>
+            <p className="page-description mt-2">{t('description')}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button nativeButton={false} variant="outline" render={<Link href="/audit/logs" />}><Fingerprint aria-hidden="true" />{t('actions.logs')}</Button>
@@ -69,17 +68,15 @@ export default function AuditOverviewPage() {
 
       {error && <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive" role="alert">{error}</div>}
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label={t('metrics.label')}>
+      <section className="data-panel grid divide-y sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-4" aria-label={t('metrics.label')}>
         {metrics.map((metric) => (
-          <Card key={metric.label}>
-            <CardHeader className="grid grid-cols-[1fr_auto] items-start">
+          <div key={metric.label} className="grid min-h-28 grid-cols-[1fr_auto] items-start gap-4 p-5">
               <div>
-                <CardDescription>{metric.label}</CardDescription>
-                <CardTitle className="mt-2 text-3xl tabular-nums">{loading ? '—' : metric.value}</CardTitle>
+                <p className="text-xs font-medium text-muted-foreground">{metric.label}</p>
+                <p className="metric-value mt-3">{loading ? '—' : metric.value}</p>
               </div>
-              <span className={`grid size-10 place-items-center rounded-xl ${metric.tone}`}><metric.icon className="size-5" aria-hidden="true" /></span>
-            </CardHeader>
-          </Card>
+              <span className={`grid size-9 place-items-center rounded-lg ${metric.tone}`}><metric.icon className="size-4" aria-hidden="true" /></span>
+          </div>
         ))}
       </section>
 

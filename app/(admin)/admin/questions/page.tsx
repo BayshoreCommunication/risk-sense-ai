@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { ContentManager, type FieldSpec } from '@/components/admin/ContentManager';
 import { questionsApi } from '@/lib/admin/content';
 
@@ -34,6 +34,7 @@ function questionFields(t: ReturnType<typeof useTranslations>): FieldSpec[] {
 
 export default function QuestionsPage() {
   const t = useTranslations('admin.questions');
+  const locale = useLocale();
   const fields = questionFields(t);
   return (
     <ContentManager
@@ -48,6 +49,12 @@ export default function QuestionsPage() {
         { key: 'type', label: t('fields.type') },
         { key: 'factKey', label: t('fields.factKey') },
         { key: 'tags.personaKeys', label: t('columns.personas'), render: (it) => ((it.tags as { personaKeys?: string[] })?.personaKeys ?? []).join(', ') },
+        { key: 'updatedAt', label: t('columns.updated'), render: (it) => it.updatedAt ? new Date(String(it.updatedAt)).toLocaleDateString(locale) : '—' },
+      ]}
+      facets={[
+        { key: 'tags.personaKeys', label: t('fields.personaKeys') },
+        { key: 'tags.scenarioKeys', label: t('fields.scenarioKeys') },
+        { key: 'tags.sectors', label: t('fields.sectors') },
       ]}
       versioned={false}
     />

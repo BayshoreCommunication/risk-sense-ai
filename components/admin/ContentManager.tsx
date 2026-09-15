@@ -38,7 +38,11 @@ export interface ContentManagerProps {
   defaultQuery?: Record<string, string>;
   /** Change-controlled entities (rules, matrices): show Approve on drafts and Activate only once approved. */
   approval?: boolean;
+  /** Optional client-side facets for dense catalog screens. Values are derived from loaded records. */
+  facets?: { key: string; label: string }[];
 }
+
+const ALL_FACET_VALUES = '__all';
 
 function getPath(obj: unknown, path: string): unknown {
   return path.split('.').reduce<unknown>((acc, k) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[k] : undefined), obj);
@@ -131,6 +135,12 @@ const STATUS_CLASS: Record<string, string> = {
   retired: 'border-slate-200 bg-slate-50 text-slate-600',
 };
 
+function optionLabel(value: string) {
+  return value
+    .replaceAll('_', ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 type LifecycleAction = 'approve' | 'activate' | 'deactivate' | 'retire';
 type PendingAction = { action: LifecycleAction; item: Item; run: (changeRef?: string) => Promise<unknown> };
 
@@ -138,7 +148,7 @@ export function ContentManager(props: ContentManagerProps) {
   const t = useTranslations('contentManager');
   const statusT = useTranslations('status');
   const structuredValidation = useTranslations('structured.validation');
-  const { title, description, apiClient, fields, columns, versioned, defaultQuery, approval } = props;
+  const { title, description, apiClient, fields, columns, versioned, defaultQuery, approval, facets = [] } = props;
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -149,6 +159,7 @@ export function ContentManager(props: ContentManagerProps) {
   const [formError, setFormError] = useState<string | null>(null);
   const [history, setHistory] = useState<Item[] | null>(null);
   const [filter, setFilter] = useState('');
+  const [facetValues, setFacetValues] = useState<Record<string, string>>({});
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
   const [changeRef, setChangeRef] = useState('');
@@ -170,11 +181,28 @@ export function ContentManager(props: ContentManagerProps) {
     void reload();
   }, [reload]);
 
+  const facetOptions = useMemo(() => Object.fromEntries(facets.map((facet) => {
+    const values = new Set<string>();
+    items.forEach((item) => {
+      const raw = getPath(item, facet.key);
+      if (Array.isArray(raw)) raw.forEach((value) => typeof value === 'string' && values.add(value));
+      else if (typeof raw === 'string') values.add(raw);
+    });
+    return [facet.key, [...values].sort((a, b) => a.localeCompare(b))];
+  })), [facets, items]);
+
   const visible = useMemo(() => {
     const q = filter.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter((it) => JSON.stringify(it).toLowerCase().includes(q));
-  }, [items, filter]);
+    return items.filter((item) => {
+      if (q && !JSON.stringify(item).toLowerCase().includes(q)) return false;
+      return facets.every((facet) => {
+        const selected = facetValues[facet.key] ?? ALL_FACET_VALUES;
+        if (selected === ALL_FACET_VALUES) return true;
+        const raw = getPath(item, facet.key);
+        return Array.isArray(raw) ? raw.includes(selected) : raw === selected;
+      });
+    });
+  }, [items, filter, facets, facetValues]);
 
   function openCreate() {
     setEditing(null);
@@ -250,10 +278,13 @@ export function ContentManager(props: ContentManagerProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-col gap-4 rounded-2xl border border-border/70 bg-card/80 px-5 py-5 shadow-sm sm:flex-row sm:items-start sm:justify-between sm:px-6">
+    <div className="space-y-5">
+      <header className="workspace-header flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="max-w-3xl">
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">{title}</h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="font-heading text-2xl font-semibold tracking-tight">{title}</h1>
+            {!loading && <Badge variant="secondary" aria-label={`${visible.length} ${title}`}>{visible.length}</Badge>}
+          </div>
           <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{description}</p>
         </div>
         <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
@@ -261,16 +292,37 @@ export function ContentManager(props: ContentManagerProps) {
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input aria-label={t('filter')} placeholder={t('filterPlaceholder')} value={filter} onChange={(e) => setFilter(e.target.value)} className="w-full pl-8" />
           </div>
-          <Button onClick={openCreate} className="shadow-sm">
+          <Button onClick={openCreate}>
             <Plus data-icon="inline-start" aria-hidden="true" />
             {t('actions.new')}
           </Button>
         </div>
       </header>
 
+      {facets.length > 0 && (
+        <section className="control-strip grid gap-3 sm:grid-cols-3" aria-label={t('facets')}>
+          {facets.map((facet, index) => {
+            const options = facetOptions[facet.key] ?? [];
+            const selected = facetValues[facet.key] ?? ALL_FACET_VALUES;
+            return (
+              <div key={facet.key} className="space-y-1.5">
+                <Label htmlFor={`content-facet-${index}`}>{facet.label}</Label>
+                <Select value={selected} onValueChange={(value) => setFacetValues((current) => ({ ...current, [facet.key]: value ?? ALL_FACET_VALUES }))}>
+                  <SelectTrigger id={`content-facet-${index}`} className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL_FACET_VALUES}>{t('allValues')}</SelectItem>
+                    {options.map((option) => <SelectItem key={option} value={option}>{optionLabel(option)}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            );
+          })}
+        </section>
+      )}
+
       {error ? <p className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm text-destructive" role="alert">{error}</p> : null}
 
-      <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm" aria-busy={loading}>
+      <section className="data-panel" aria-busy={loading}>
         <Table className="min-w-[760px]">
           <TableHeader className="bg-muted/45">
             <TableRow>
@@ -411,7 +463,7 @@ export function ContentManager(props: ContentManagerProps) {
                       <SelectContent>
                         {f.options.map((o) => (
                           <SelectItem key={o} value={o}>
-                            {o}
+                            {optionLabel(o)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -491,7 +543,7 @@ export function ContentManager(props: ContentManagerProps) {
           </DialogHeader>
           <ul className="space-y-2 text-sm">
             {(history ?? []).map((h) => (
-              <li key={h._id} className="flex items-center justify-between rounded-xl border border-border/70 bg-muted/20 px-3 py-2.5">
+              <li key={h._id} className="flex items-center justify-between rounded-lg border border-border/70 bg-muted/20 px-3 py-2.5">
                 <span>
                   v{String(h.version)} · {String(h.name ?? h.key)}
                 </span>

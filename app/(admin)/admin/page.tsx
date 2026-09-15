@@ -14,7 +14,6 @@ import {
   ListChecks,
   SlidersHorizontal,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { api } from '@/lib/api/client';
 
@@ -49,32 +48,24 @@ export default function Page() {
   }, []);
 
   return (
-    <div className="space-y-7">
-      <header className="relative overflow-hidden rounded-2xl border border-primary/10 bg-[linear-gradient(125deg,color-mix(in_oklch,var(--primary)_10%,var(--background)),var(--background)_58%)] px-5 py-6 shadow-sm sm:px-7 sm:py-8">
-        <div className="absolute -right-16 -top-20 size-56 rounded-full bg-primary/10 blur-3xl" aria-hidden="true" />
-        <div className="relative max-w-3xl space-y-3">
-          <Badge variant="outline" className="border-primary/20 bg-background/80 text-primary">
-            DASH-02
-          </Badge>
-          <div>
-            <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">{t('description')}</p>
-          </div>
-        </div>
+    <div className="space-y-5">
+      <header className="workspace-header">
+        <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{t('description')}</p>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <section className="data-panel grid sm:grid-cols-2 xl:grid-cols-3">
         {ADMIN_AREAS.map((area) => {
           const Icon = area.icon;
           return (
-            <Link key={area.href} href={area.href} className="group rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <Card className="h-full min-h-44 border-0 bg-card/90 shadow-[0_12px_36px_-28px_rgba(15,23,42,0.65)] ring-1 ring-foreground/8 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-[0_18px_42px_-24px_rgba(15,23,42,0.45)] group-hover:ring-primary/20">
-                <CardHeader className="h-full gap-4">
+            <Link key={area.href} href={area.href} className="group border-b border-r border-border/70 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
+              <Card className="h-full min-h-40 rounded-none border-0 bg-transparent shadow-none transition-colors group-hover:bg-accent/30">
+                <CardHeader className="h-full gap-5">
                   <div className="flex items-start justify-between gap-4">
-                    <span className={`grid size-10 place-items-center rounded-xl ${area.iconClass}`}>
+                    <span className={`grid size-9 place-items-center rounded-lg ${area.iconClass}`}>
                       <Icon className="size-5" aria-hidden="true" />
                     </span>
-                    <ArrowUpRight className="size-4 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden="true" />
+                    <ArrowUpRight className="size-4 text-muted-foreground transition-colors group-hover:text-primary" aria-hidden="true" />
                   </div>
                   <div>
                     <CardTitle className="text-base">{t(`areas.${area.key}.title`)}</CardTitle>
@@ -87,11 +78,11 @@ export default function Page() {
         })}
 
         {reportsEnabled ? (
-          <Link href="/admin/analytics" className="group rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <Card className="h-full min-h-44 border-0 bg-card/90 shadow-[0_12px_36px_-28px_rgba(15,23,42,0.65)] ring-1 ring-foreground/8 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-[0_18px_42px_-24px_rgba(15,23,42,0.45)] group-hover:ring-primary/20">
-              <CardHeader className="h-full gap-4">
+          <Link href="/admin/analytics" className="group border-b border-r border-border/70 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
+            <Card className="h-full min-h-40 rounded-none border-0 bg-transparent shadow-none transition-colors group-hover:bg-accent/30">
+              <CardHeader className="h-full gap-5">
                 <div className="flex items-start justify-between gap-4">
-                  <span className="grid size-10 place-items-center rounded-xl bg-indigo-500/10 text-indigo-700">
+                  <span className="grid size-9 place-items-center rounded-lg bg-indigo-500/10 text-indigo-700">
                     <BarChart3 className="size-5" aria-hidden="true" />
                   </span>
                   <ArrowUpRight className="size-4 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden="true" />
@@ -104,7 +95,7 @@ export default function Page() {
             </Card>
           </Link>
         ) : null}
-      </div>
+      </section>
     </div>
   );
 }

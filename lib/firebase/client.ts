@@ -86,8 +86,9 @@ export async function signInWithGoogle(): Promise<User> {
 
 /**
  * PAID SSO (FR-03): any Firebase OAuth/OIDC/SAML provider by id — `microsoft.com`, `oidc.<id>`, `saml.<id>`.
- * The provider id comes from `GET /auth/sso/lookup` for the user's email domain; the IdP's own MFA replaces
- * our email OTP for non-privileged roles (backend decides).
+ * The provider id comes from `GET /auth/sso/lookup` for the user's email domain. Provider match alone does
+ * not prove MFA; the backend accepts a second factor only when Firebase signs that claim, otherwise it asks
+ * for the RiskSense email OTP.
  */
 export async function signInWithSso(providerId: string, loginHint?: string): Promise<User> {
   const provider = providerId.startsWith('saml.') ? new SAMLAuthProvider(providerId) : new OAuthProvider(providerId);

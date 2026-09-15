@@ -30,6 +30,7 @@ export default function PersonasPage() {
         { key: 'key', label: t('fields.key') },
         { key: 'name', label: t('fields.name') },
         { key: 'sector', label: t('fields.sector') },
+        { key: 'defaultScenarioKey', label: t('fields.defaultScenarioKey'), render: (item) => String(item.defaultScenarioKey ?? '—') },
       ]}
       versioned
     />

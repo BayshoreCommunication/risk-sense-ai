@@ -21,9 +21,11 @@ type DrForm = {
   lastRestoreDrillAt: string;
   lastRestoreDrillOutcome: '' | 'passed' | 'failed';
   evidenceRef: string;
+  rpoHours: string;
+  rtoHours: string;
 };
 
-const EMPTY_FORM: DrForm = { provider: '', backupsEnabled: false, lastBackupAt: '', lastRestoreDrillAt: '', lastRestoreDrillOutcome: '', evidenceRef: '' };
+const EMPTY_FORM: DrForm = { provider: '', backupsEnabled: false, lastBackupAt: '', lastRestoreDrillAt: '', lastRestoreDrillOutcome: '', evidenceRef: '', rpoHours: '1', rtoHours: '4' };
 const selectClassName =
   'h-8 w-full rounded-lg border border-input bg-background px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50';
 
@@ -43,6 +45,8 @@ function toForm(status: DrStatus): DrForm {
     lastRestoreDrillAt: toLocalDateTime(status.lastRestoreDrillAt),
     lastRestoreDrillOutcome: status.lastRestoreDrillOutcome ?? '',
     evidenceRef: status.evidenceRef ?? '',
+    rpoHours: String(status.targets.rpoHours),
+    rtoHours: String(status.targets.rtoHours),
   };
 }
 
@@ -94,7 +98,18 @@ export default function DisasterRecoveryPage() {
     void load();
   }, [load]);
 
-  const dirty = Boolean(status && JSON.stringify(form) !== JSON.stringify(toForm(status)));
+  const original = status ? toForm(status) : null;
+  const targetsDirty = Boolean(status?.targetsConfigurable && original && (form.rpoHours !== original.rpoHours || form.rtoHours !== original.rtoHours));
+  const evidenceDirty = Boolean(
+    original &&
+      (form.provider !== original.provider ||
+        form.backupsEnabled !== original.backupsEnabled ||
+        form.lastBackupAt !== original.lastBackupAt ||
+        form.lastRestoreDrillAt !== original.lastRestoreDrillAt ||
+        form.lastRestoreDrillOutcome !== original.lastRestoreDrillOutcome ||
+        form.evidenceRef !== original.evidenceRef),
+  );
+  const dirty = evidenceDirty || targetsDirty;
 
   function updateForm(next: Partial<DrForm>) {
     setForm((current) => ({ ...current, ...next }));
@@ -145,11 +160,31 @@ export default function DisasterRecoveryPage() {
       }
       patch.evidenceRef = evidenceRef || null;
     }
+    if (status.targetsConfigurable) {
+      const targets: NonNullable<DrPatch['targets']> = {};
+      if (form.rpoHours !== original.rpoHours) {
+        const rpoHours = Number(form.rpoHours);
+        if (!Number.isFinite(rpoHours) || rpoHours <= 0 || rpoHours > 1) {
+          setError(t('validation.targetRange', { target: t('targets.rpo'), max: 1 }));
+          return null;
+        }
+        targets.rpoHours = rpoHours;
+      }
+      if (form.rtoHours !== original.rtoHours) {
+        const rtoHours = Number(form.rtoHours);
+        if (!Number.isFinite(rtoHours) || rtoHours <= 0 || rtoHours > 4) {
+          setError(t('validation.targetRange', { target: t('targets.rto'), max: 4 }));
+          return null;
+        }
+        targets.rtoHours = rtoHours;
+      }
+      if (Object.keys(targets).length > 0) patch.targets = targets;
+    }
     return patch;
   }
 
   async function save() {
-    if (!attested) {
+    if (evidenceDirty && !attested) {
       setError(t('validation.attestation'));
       return;
     }
@@ -166,7 +201,7 @@ export default function DisasterRecoveryPage() {
     setStatus(result.data.data);
     setForm(toForm(result.data.data));
     setAttested(false);
-    setSaved(t('saved'));
+    setSaved(evidenceDirty ? t('saved') : t('targets.saved'));
   }
 
   if (loading && !status) return <p className="text-sm text-muted-foreground">{t('loading')}</p>;
@@ -187,14 +222,13 @@ export default function DisasterRecoveryPage() {
   const evidenceHref = safeEvidenceHref(status.evidenceRef);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
-      <header className="relative overflow-hidden rounded-2xl border bg-card px-5 py-6 shadow-sm sm:px-7">
-        <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-primary/10 to-transparent" />
-        <div className="relative flex flex-wrap items-start justify-between gap-4">
+    <div className="page-shell">
+      <header className="workspace-header">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">
             <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary"><CloudCog className="size-4" aria-hidden="true" />{t('eyebrow')}</div>
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('description')}</p>
+            <h1 className="page-heading">{t('title')}</h1>
+            <p className="page-description mt-2">{t('description')}</p>
           </div>
           <Badge className="px-3 py-1" variant={status.readiness === 'ready' ? 'outline' : 'destructive'}>{status.readiness === 'ready' ? t('readiness.ready') : t('readiness.attention')}</Badge>
         </div>
@@ -249,6 +283,55 @@ export default function DisasterRecoveryPage() {
       >
         <CardHeader className="border-b"><CardTitle>{t('form.title')}</CardTitle><CardDescription>{t('form.description')}</CardDescription></CardHeader>
         <CardContent className="space-y-4">
+        <section className="rounded-xl border border-border/70 bg-muted/25 p-4" aria-labelledby="dr-target-policy-title">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 id="dr-target-policy-title" className="text-sm font-semibold">{t('targets.policyTitle')}</h2>
+              <p className="mt-1 max-w-3xl text-xs leading-5 text-muted-foreground">
+                {status.targetsConfigurable ? t('targets.paidDescription') : t('targets.freeDescription')}
+              </p>
+            </div>
+            <Badge variant="outline">{status.targetsConfigurable ? t('targets.paidBadge') : t('targets.fixedBadge')}</Badge>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label htmlFor="dr-rpo-hours">{t('targets.rpo')}</Label>
+              <div className="relative">
+                <Input
+                  id="dr-rpo-hours"
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="any"
+                  disabled={!status.targetsConfigurable}
+                  value={form.rpoHours}
+                  onChange={(event) => updateForm({ rpoHours: event.target.value })}
+                  className="pr-14"
+                />
+                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">{t('targets.hourUnit')}</span>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="dr-rto-hours">{t('targets.rto')}</Label>
+              <div className="relative">
+                <Input
+                  id="dr-rto-hours"
+                  type="number"
+                  min="0"
+                  max="4"
+                  step="any"
+                  disabled={!status.targetsConfigurable}
+                  value={form.rtoHours}
+                  onChange={(event) => updateForm({ rtoHours: event.target.value })}
+                  className="pr-14"
+                />
+                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">{t('targets.hourUnit')}</span>
+              </div>
+            </div>
+          </div>
+          <p className="mt-3 text-xs leading-5 text-muted-foreground">{t('targets.evidenceBoundary')}</p>
+        </section>
+
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
             <Label htmlFor="dr-provider">{t('form.provider')}</Label>
@@ -280,7 +363,7 @@ export default function DisasterRecoveryPage() {
           </label>
         </div>
 
-        {dirty && (
+        {evidenceDirty && (
           <label className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
             <input className="mt-0.5" type="checkbox" checked={attested} onChange={(event) => setAttested(event.target.checked)} />
             {t('form.attestation')}
@@ -289,7 +372,7 @@ export default function DisasterRecoveryPage() {
         {error && <p className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm text-destructive" role="alert">{error}</p>}
         {saved && <p className="text-sm text-muted-foreground" role="status">{saved}</p>}
         <div className="flex gap-2">
-          <Button type="submit" disabled={!dirty || !attested || saving}>{saving ? t('saving') : t('save')}</Button>
+          <Button type="submit" disabled={!dirty || (evidenceDirty && !attested) || saving}>{saving ? t('saving') : evidenceDirty ? t('save') : t('targets.save')}</Button>
           <Button type="button" variant="outline" disabled={!dirty || saving} onClick={() => { setForm(toForm(status)); setAttested(false); setError(null); }}>{t('discard')}</Button>
         </div>
         </CardContent>

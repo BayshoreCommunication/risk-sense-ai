@@ -74,7 +74,8 @@ export function BarChart({ data, format = (v) => String(v), title }: { data: { l
   const every = Math.ceil(data.length / 12);
   const active = hover ?? selected;
   return (
-    <svg className="viz" viewBox={`0 0 ${W} ${H}`} width="100%" role="group" aria-roledescription="interactive chart" aria-labelledby={id} onMouseLeave={() => setHover(null)}>
+    <div className="viz">
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="group" aria-roledescription="interactive chart" aria-labelledby={id} onMouseLeave={() => setHover(null)}>
       <title id={id}>{title}</title>
       <rect x={0} y={0} width={W} height={H} fill="var(--viz-surface)" rx={6} />
       {ticks.map((t) => {
@@ -132,6 +133,13 @@ export function BarChart({ data, format = (v) => String(v), title }: { data: { l
       })}
       {active !== null && data[active] && <Tooltip x={PAD.left + active * slot + slot / 2} y={PAD.top + innerH - (data[active].value / max) * innerH} lines={[data[active].label, format(data[active].value)]} />}
     </svg>
+    {selected !== null && data[selected] && (
+      <div className="mt-2 flex items-center justify-between gap-3 border-t border-border/70 pt-3 text-sm" role="status">
+        <span className="font-medium">{data[selected].label}</span>
+        <span className="rounded-md bg-blue-50 px-2 py-1 font-semibold tabular-nums text-blue-700">{format(data[selected].value)}</span>
+      </div>
+    )}
+    </div>
   );
 }
 
@@ -149,7 +157,8 @@ export function LineChart({ periods, series, format = (v) => String(v), title, u
   const every = Math.ceil(periods.length / 8);
   const active = hover ?? selected;
   return (
-    <svg className="viz" viewBox={`0 0 ${W} ${H}`} width="100%" role="group" aria-roledescription="interactive chart" aria-labelledby={id} onMouseLeave={() => setHover(null)}>
+    <div className="viz">
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="group" aria-roledescription="interactive chart" aria-labelledby={id} onMouseLeave={() => setHover(null)}>
       <title id={id}>{title}</title>
       <rect x={0} y={0} width={W} height={H} fill="var(--viz-surface)" rx={6} />
       {ticks.map((t) => (
@@ -229,6 +238,83 @@ export function LineChart({ periods, series, format = (v) => String(v), title, u
         </g>
       )}
     </svg>
+    {selected !== null && periods[selected] && (
+      <div className="mt-2 border-t border-border/70 pt-3" role="status">
+        <div className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">{periods[selected]}</div>
+        <div className="flex flex-wrap gap-2">
+          {series.map((item, index) => (
+            <span key={item.name} className="inline-flex items-center gap-2 rounded-md border bg-card px-2.5 py-1.5 text-xs">
+              <span className="size-2 rounded-sm" style={{ background: `var(--s${index + 1})` }} aria-hidden="true" />
+              <span>{item.name}</span>
+              <strong className="tabular-nums">{item.values[selected] === null || item.values[selected] === undefined ? '—' : `${format(item.values[selected] as number)}${unit}`}</strong>
+            </span>
+          ))}
+        </div>
+      </div>
+    )}
+    </div>
+  );
+}
+
+function polarPoint(cx: number, cy: number, radius: number, angle: number) {
+  const radians = ((angle - 90) * Math.PI) / 180;
+  return { x: cx + radius * Math.cos(radians), y: cy + radius * Math.sin(radians) };
+}
+
+function piePath(cx: number, cy: number, radius: number, startAngle: number, endAngle: number) {
+  const start = polarPoint(cx, cy, radius, endAngle);
+  const end = polarPoint(cx, cy, radius, startAngle);
+  const largeArc = endAngle - startAngle <= 180 ? 0 : 1;
+  return `M ${cx} ${cy} L ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArc} 0 ${end.x} ${end.y} Z`;
+}
+
+/** Categorical pie view for distributions. Each slice is also identified by its legend label and value. */
+export function PieChart({ rows, title, totalLabel }: { rows: { key: string; label: string; value: number }[]; title: string; totalLabel: string }) {
+  const locale = useLocale();
+  const id = useId();
+  const [selected, setSelected] = useState<string | null>(null);
+  const total = rows.reduce((sum, row) => sum + Math.max(0, row.value), 0);
+  let cursor = 0;
+  return (
+    <div className="viz grid items-center gap-5 sm:grid-cols-[minmax(13rem,0.8fr)_minmax(13rem,1.2fr)]">
+      <svg viewBox="0 0 240 240" className="mx-auto w-full max-w-64" role="group" aria-roledescription="interactive chart" aria-labelledby={id}>
+        <title id={id}>{title}</title>
+        {total === 0 ? <circle cx="120" cy="120" r="84" fill="var(--viz-grid)" /> : rows.map((row, index) => {
+          if (row.value <= 0) return null;
+          const start = cursor;
+          const sweep = (Math.max(0, row.value) / total) * 360;
+          const end = start + sweep;
+          cursor = end;
+          const statusColor = STATUS[row.key]?.color;
+          return (
+            <path
+              key={row.key}
+              d={piePath(120, 120, selected === row.key ? 92 : 86, start, Math.max(start + 0.01, end - 0.8))}
+              fill={statusColor ?? `var(--s${index + 1})`}
+              opacity={selected === null || selected === row.key ? 1 : 0.35}
+              className="pointer-events-none transition-opacity"
+              aria-hidden="true"
+            />
+          );
+        })}
+        <circle cx="120" cy="120" r="48" fill="var(--card)" />
+        <text x="120" y="116" textAnchor="middle" fontSize="11" fill="var(--viz-muted)">{totalLabel}</text>
+        <text x="120" y="139" textAnchor="middle" fontSize="22" fontWeight="700" fill="var(--viz-ink)">{total.toLocaleString(locale)}</text>
+      </svg>
+      <div className="divide-y divide-border/70 border-y border-border/70">
+        {rows.map((row, index) => {
+          const statusColor = STATUS[row.key]?.color;
+          return (
+            <button key={row.key} type="button" className="flex w-full items-center gap-3 py-2.5 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring" aria-pressed={selected === row.key} onClick={() => setSelected((current) => current === row.key ? null : row.key)}>
+              <span className="size-2.5 rounded-sm" style={{ background: statusColor ?? `var(--s${index + 1})` }} aria-hidden="true" />
+              <span className="min-w-0 flex-1 truncate">{row.label}</span>
+              <strong className="tabular-nums">{row.value.toLocaleString(locale)}</strong>
+              <span className="w-12 text-right text-xs tabular-nums text-muted-foreground">{total ? `${Math.round((row.value / total) * 100)}%` : '0%'}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -274,8 +360,8 @@ export function StatusBars({ rows }: { rows: { key: string; count: number; share
 
 export function StatTile({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="relative min-h-28 overflow-hidden rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
-      <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary/80 via-primary/25 to-transparent" aria-hidden="true" />
+    <div className="relative min-h-24 overflow-hidden border-y border-r border-border/70 bg-card p-4 first:border-l">
+      <div className="absolute inset-x-0 top-0 h-px bg-primary/45" aria-hidden="true" />
       <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className="mt-2 font-heading text-2xl font-semibold tracking-tight tabular-nums">{value}</div>
       {hint && <div className="mt-1 text-xs leading-5 text-muted-foreground">{hint}</div>}

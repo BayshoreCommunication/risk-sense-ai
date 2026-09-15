@@ -39,29 +39,54 @@ export default function AuditAssessmentsPage() {
 
   const items = data?.items ?? [];
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
-      <header className="relative overflow-hidden rounded-2xl border bg-card px-5 py-6 shadow-sm sm:px-7">
-        <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-primary/10 to-transparent" />
-        <div className="relative max-w-3xl">
+    <div className="page-shell">
+      <header className="workspace-header">
+        <div className="max-w-3xl">
           <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
             <FileSearch className="size-4" aria-hidden="true" />
             {t('eyebrow')}
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('description')}</p>
+          <h1 className="page-heading">{t('title')}</h1>
+          <p className="page-description mt-2">{t('description')}</p>
         </div>
       </header>
 
       {data && (
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div className="flex items-center gap-3 rounded-2xl border bg-card p-4 shadow-sm"><span className="grid size-10 place-items-center rounded-xl bg-blue-500/10 text-blue-700"><Database className="size-5" aria-hidden="true" /></span><p className="text-sm font-medium">{t('count', { count: data.total })}</p></div>
-          <div className="flex items-center gap-3 rounded-2xl border bg-card p-4 shadow-sm"><span className="grid size-10 place-items-center rounded-xl bg-amber-500/10 text-amber-700"><History className="size-5" aria-hidden="true" /></span><p className="text-sm font-medium"><span className="mr-1 text-xl tabular-nums">{data.counts.pending}</span>{t('summary.pending')}</p></div>
-          <div className="flex items-center gap-3 rounded-2xl border bg-card p-4 shadow-sm"><span className="grid size-10 place-items-center rounded-xl bg-emerald-500/10 text-emerald-700"><ShieldCheck className="size-5" aria-hidden="true" /></span><p className="text-sm font-medium"><span className="mr-1 text-xl tabular-nums">{data.counts.closed}</span>{status('closed')}</p></div>
+        <div className="data-panel grid divide-y sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+          <div className="flex items-center gap-3 p-4"><span className="grid size-9 place-items-center rounded-lg bg-blue-500/10 text-blue-700"><Database className="size-4" aria-hidden="true" /></span><p className="text-sm font-medium">{t('count', { count: data.total })}</p></div>
+          <div className="flex items-center gap-3 p-4"><span className="grid size-9 place-items-center rounded-lg bg-amber-500/10 text-amber-700"><History className="size-4" aria-hidden="true" /></span><p className="text-sm font-medium"><span className="mr-1 text-xl tabular-nums">{data.counts.pending}</span>{t('summary.pending')}</p></div>
+          <div className="flex items-center gap-3 p-4"><span className="grid size-9 place-items-center rounded-lg bg-emerald-500/10 text-emerald-700"><ShieldCheck className="size-4" aria-hidden="true" /></span><p className="text-sm font-medium"><span className="mr-1 text-xl tabular-nums">{data.counts.closed}</span>{status('closed')}</p></div>
         </div>
       )}
 
       {error && <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</div>}
-      <div className="overflow-x-auto rounded-2xl border bg-card shadow-sm">
+      <div className="data-panel divide-y lg:hidden">
+        {loading && <p className="p-8 text-center text-sm text-muted-foreground">{t('loading')}</p>}
+        {!loading && data && items.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('empty')}</p>}
+        {!loading && items.map((a) => (
+          <article key={a._id} className="space-y-3 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">{a.requestor?.name ?? '—'}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{new Date(a.createdAt).toLocaleString(locale)}</p>
+              </div>
+              <Badge variant="secondary">{status.has(a.status) ? status(a.status) : a.status}</Badge>
+            </div>
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+              <div><dt className="text-muted-foreground">{t('columns.department')}</dt><dd className="mt-0.5 font-medium">{a.department?.name ?? '—'}</dd></div>
+              <div><dt className="text-muted-foreground">{t('columns.personaScenario')}</dt><dd className="mt-0.5 font-medium">{a.personaKey?.replace(/_/g, ' ') ?? '—'} · {a.scenarioKey?.replace(/_/g, ' ') ?? '—'}</dd></div>
+              <div><dt className="text-muted-foreground">{t('columns.classification')}</dt><dd className="mt-0.5 font-medium">{a.result ? classification.has(a.result.classification) ? classification(a.result.classification) : a.result.classification : '—'}</dd></div>
+              <div><dt className="text-muted-foreground">{t('columns.confidence')}</dt><dd className="mt-0.5 font-medium tabular-nums">{a.result ? `${a.result.confidence}%` : '—'}</dd></div>
+              <div className="col-span-2"><dt className="text-muted-foreground">{t('columns.decision')}</dt><dd className="mt-0.5 font-medium">{a.decision ? `${t.has(`decisionTypes.${a.decision.type}`) ? t(`decisionTypes.${a.decision.type}`) : a.decision.type}${a.decision.overriddenTo ? ` → ${classification.has(a.decision.overriddenTo) ? classification(a.decision.overriddenTo) : a.decision.overriddenTo}` : ''}` : '—'}</dd></div>
+            </dl>
+            <div className="grid grid-cols-2 gap-2">
+              <Button size="sm" variant="outline" onClick={() => setOpen({ item: a, mode: 'stored' })}><Database aria-hidden="true" />{t('actions.stored')}</Button>
+              <Button size="sm" variant="outline" onClick={() => setOpen({ item: a, mode: 'reconstruct' })}><History aria-hidden="true" />{t('actions.reconstruct')}</Button>
+            </div>
+          </article>
+        ))}
+      </div>
+      <div className="data-panel hidden overflow-x-auto lg:block">
         <Table>
           <TableHeader>
             <TableRow>

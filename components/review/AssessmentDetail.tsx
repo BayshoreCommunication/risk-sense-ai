@@ -89,7 +89,7 @@ export function AssessmentDetail({ id }: { id: string }) {
       </section>
       {r ? (
         <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
-          <div className="grid gap-4 border-b bg-gradient-to-br from-primary/[0.08] via-background to-background p-4 sm:grid-cols-[auto_1fr] sm:items-center">
+          <div className="grid gap-4 border-b bg-muted/25 p-4 sm:grid-cols-[auto_1fr] sm:items-center">
             <div className="flex size-24 flex-col items-center justify-center rounded-2xl border bg-background shadow-sm">
               <span className="text-3xl font-semibold tracking-tight tabular-nums">{r.score}</span>
               <span className="text-xs text-muted-foreground">/ 100</span>

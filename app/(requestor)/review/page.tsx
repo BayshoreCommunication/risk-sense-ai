@@ -210,19 +210,18 @@ function ReviewDashboard() {
   };
 
   return (
-    <div className="space-y-5">
-      <section className="relative overflow-hidden rounded-2xl border bg-card px-5 py-5 shadow-sm sm:px-6">
-        <div aria-hidden="true" className="absolute -right-12 -top-16 size-44 rounded-full bg-primary/10 blur-3xl" />
-        <div className="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+    <div className="page-shell">
+      <section className="workspace-header">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div className="max-w-3xl">
             <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
               <ClipboardCheck aria-hidden="true" className="size-4" />
-              DASH-01
+              {t('eyebrow')}
             </div>
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
-            <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{reviewer ? t('descriptionReviewer') : t('descriptionRequestor')}</p>
+            <h1 className="page-heading">{t('title')}</h1>
+            <p className="page-description mt-1.5">{reviewer ? t('descriptionReviewer') : t('descriptionRequestor')}</p>
           </div>
-          <Button className="self-start shadow-sm sm:self-center" onClick={() => router.push('/chat')}>
+          <Button className="self-start sm:self-center" onClick={() => router.push('/chat')}>
             <Plus aria-hidden="true" data-icon="inline-start" />
             {t('newAssessment')}
           </Button>
@@ -234,7 +233,7 @@ function ReviewDashboard() {
           type="button"
           aria-pressed={filters.tab === 'pending'}
           onClick={() => update({ tab: 'pending' })}
-          className={`group rounded-xl border bg-card p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${filters.tab === 'pending' ? 'border-amber-300 bg-amber-50/50 ring-1 ring-amber-200' : ''}`}
+          className={`rounded-lg border bg-card p-4 text-left transition-colors hover:border-amber-300 hover:bg-amber-50/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${filters.tab === 'pending' ? 'border-amber-300 bg-amber-50/50 ring-1 ring-amber-200' : ''}`}
         >
           <span className="flex items-center justify-between text-xs font-medium text-muted-foreground">
             {t('tabs.pending')}
@@ -246,7 +245,7 @@ function ReviewDashboard() {
           type="button"
           aria-pressed={filters.tab === 'in_progress'}
           onClick={() => update({ tab: 'in_progress' })}
-          className={`group rounded-xl border bg-card p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${filters.tab === 'in_progress' ? 'border-sky-300 bg-sky-50/50 ring-1 ring-sky-200' : ''}`}
+          className={`rounded-lg border bg-card p-4 text-left transition-colors hover:border-sky-300 hover:bg-sky-50/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${filters.tab === 'in_progress' ? 'border-sky-300 bg-sky-50/50 ring-1 ring-sky-200' : ''}`}
         >
           <span className="flex items-center justify-between text-xs font-medium text-muted-foreground">
             {t('tabs.in_progress')}
@@ -258,7 +257,7 @@ function ReviewDashboard() {
           type="button"
           aria-pressed={filters.tab === 'closed'}
           onClick={() => update({ tab: 'closed' })}
-          className={`group rounded-xl border bg-card p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${filters.tab === 'closed' ? 'border-emerald-300 bg-emerald-50/50 ring-1 ring-emerald-200' : ''}`}
+          className={`rounded-lg border bg-card p-4 text-left transition-colors hover:border-emerald-300 hover:bg-emerald-50/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${filters.tab === 'closed' ? 'border-emerald-300 bg-emerald-50/50 ring-1 ring-emerald-200' : ''}`}
         >
           <span className="flex items-center justify-between text-xs font-medium text-muted-foreground">
             {t('tabs.closed')}
@@ -268,7 +267,7 @@ function ReviewDashboard() {
         </button>
       </section>
 
-      <Card className="gap-0 py-0 shadow-sm">
+      <Card className="gap-0 py-0 shadow-none">
         <CardContent className="px-3 py-3 sm:px-4">
           <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label={t('statusTabsLabel')}>
             {tabs.map((tab) => {
@@ -292,7 +291,7 @@ function ReviewDashboard() {
         </CardContent>
       </Card>
 
-      <Card className="shadow-sm">
+      <Card className="shadow-none">
         <CardContent className="space-y-4">
           <h2 className="flex items-center gap-2 text-sm font-medium">
             <Filter aria-hidden="true" className="size-4 text-primary" />

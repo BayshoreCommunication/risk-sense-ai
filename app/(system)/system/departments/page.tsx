@@ -129,14 +129,13 @@ export default function DepartmentsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
-      <header className="relative overflow-hidden rounded-2xl border bg-card px-5 py-6 shadow-sm sm:px-7">
-        <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-primary/10 to-transparent" />
-        <div className="relative flex flex-wrap items-start justify-between gap-4">
+    <div className="page-shell">
+      <header className="workspace-header">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">
             <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary"><Building2 className="size-4" aria-hidden="true" />{t('eyebrow')}</div>
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('description')}</p>
+            <h1 className="page-heading">{t('title')}</h1>
+            <p className="page-description mt-2">{t('description')}</p>
           </div>
           <Button onClick={openCreate}><Plus aria-hidden="true" />{t('newDepartment')}</Button>
         </div>
@@ -156,7 +155,26 @@ export default function DepartmentsPage() {
       )}
       {saved && <p className="rounded-md border bg-muted/20 p-3 text-sm" role="status">{saved}</p>}
 
-      <div className="overflow-x-auto rounded-2xl border bg-card shadow-sm">
+      <div className="data-panel divide-y md:hidden">
+        {loading && <p className="p-8 text-center text-sm text-muted-foreground">{t('loading')}</p>}
+        {!loading && !pageError && departments.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('empty')}</p>}
+        {departments.map((department) => (
+          <article key={department._id} className="space-y-3 p-4">
+            <div className="flex items-start justify-between gap-3"><h2 className="text-sm font-semibold">{department.name}</h2><Button size="sm" variant="outline" onClick={() => openEdit(department)}>{t('editMapping')}</Button></div>
+            {department.personaIds.length === 0 ? (
+              <p className="text-xs text-muted-foreground">{t('noRestriction')}</p>
+            ) : (
+              <div className="flex flex-wrap gap-1">
+                {department.personaIds.map((personaId) => {
+                  const persona = personasById.get(personaId);
+                  return <Badge key={personaId} variant="outline">{persona?.name ?? t('unavailablePersona', { id: personaId.slice(-6) })}</Badge>;
+                })}
+              </div>
+            )}
+          </article>
+        ))}
+      </div>
+      <div className="data-panel hidden overflow-x-auto md:block">
         <Table>
           <TableHeader>
             <TableRow>

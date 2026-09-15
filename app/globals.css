@@ -49,35 +49,35 @@
 }
 
 :root {
-  --background: oklch(0.982 0.008 247);
-  --foreground: oklch(0.23 0.045 255);
+  --background: oklch(0.974 0.006 250);
+  --foreground: oklch(0.205 0.038 258);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.23 0.045 255);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.23 0.045 255);
-  --primary: oklch(0.55 0.19 255);
+  --primary: oklch(0.515 0.178 257);
   --primary-foreground: oklch(0.99 0.004 250);
-  --secondary: oklch(0.95 0.024 250);
+  --secondary: oklch(0.944 0.018 252);
   --secondary-foreground: oklch(0.29 0.072 255);
-  --muted: oklch(0.955 0.012 248);
-  --muted-foreground: oklch(0.5 0.035 255);
-  --accent: oklch(0.94 0.035 250);
+  --muted: oklch(0.95 0.009 250);
+  --muted-foreground: oklch(0.47 0.032 257);
+  --accent: oklch(0.937 0.027 252);
   --accent-foreground: oklch(0.36 0.12 255);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.89 0.018 250);
-  --input: oklch(0.88 0.022 250);
+  --border: oklch(0.875 0.014 252);
+  --input: oklch(0.845 0.019 252);
   --ring: oklch(0.62 0.17 255);
   --chart-1: oklch(0.56 0.2 255);
   --chart-2: oklch(0.67 0.16 164);
   --chart-3: oklch(0.77 0.16 78);
   --chart-4: oklch(0.61 0.2 305);
   --chart-5: oklch(0.62 0.22 28);
-  --radius: 0.75rem;
-  --sidebar: oklch(0.19 0.055 255);
+  --radius: 0.55rem;
+  --sidebar: oklch(0.174 0.047 258);
   --sidebar-foreground: oklch(0.94 0.015 250);
   --sidebar-primary: oklch(0.67 0.16 251);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.28 0.072 255);
+  --sidebar-accent: oklch(0.255 0.067 257);
   --sidebar-accent-foreground: oklch(0.99 0.004 250);
   --sidebar-border: oklch(1 0 0 / 11%);
   --sidebar-ring: oklch(0.7 0.13 251);
@@ -86,7 +86,7 @@
   --warning: oklch(0.7 0.16 72);
   --warning-soft: oklch(0.97 0.045 78);
   --info-soft: oklch(0.955 0.035 250);
-  --workspace-glow: oklch(0.8 0.095 247 / 25%);
+  --workspace-glow: oklch(0.79 0.07 247 / 11%);
 }
 
 .dark {
@@ -130,8 +130,8 @@
   body {
     @apply min-h-screen bg-background text-foreground;
     background-image:
-      radial-gradient(circle at 82% -10%, var(--workspace-glow), transparent 34rem),
-      linear-gradient(to bottom, color-mix(in oklch, var(--background), white 28%), var(--background) 19rem);
+      linear-gradient(to bottom, color-mix(in oklch, var(--background), white 34%), var(--background) 15rem),
+      linear-gradient(90deg, transparent, var(--workspace-glow), transparent);
   }
   html {
     @apply font-sans;
@@ -151,7 +151,7 @@
 
 @layer components {
   .page-shell {
-    @apply mx-auto w-full max-w-[1560px] space-y-6;
+    @apply mx-auto w-full max-w-[1480px] space-y-5;
   }
   .page-heading {
     @apply text-2xl font-semibold tracking-[-0.025em] text-foreground sm:text-3xl;
@@ -163,7 +163,7 @@
     @apply text-[0.68rem] font-semibold tracking-[0.15em] text-primary uppercase;
   }
   .surface {
-    @apply rounded-2xl border bg-card shadow-[0_1px_2px_rgba(15,35,65,0.04),0_12px_32px_rgba(24,65,120,0.055)];
+    @apply rounded-xl border bg-card shadow-[0_1px_2px_rgba(15,35,65,0.035)];
   }
   .subtle-grid {
     background-image:
@@ -175,6 +175,25 @@
   .scrollbar-subtle {
     scrollbar-color: color-mix(in oklch, var(--muted-foreground), transparent 60%) transparent;
     scrollbar-width: thin;
+  }
+}
+
+@layer utilities {
+  .workspace-header {
+    @apply relative overflow-hidden rounded-xl border bg-card px-5 py-5 shadow-[0_1px_2px_rgba(15,35,65,0.035)] sm:px-6;
+  }
+  .workspace-header::before {
+    content: "";
+    @apply absolute inset-y-0 left-0 w-1 bg-primary;
+  }
+  .data-panel {
+    @apply overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgba(15,35,65,0.035)];
+  }
+  .control-strip {
+    @apply rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(15,35,65,0.035)];
+  }
+  .metric-value {
+    @apply font-heading text-2xl font-semibold tracking-[-0.035em] tabular-nums;
   }
 }
 

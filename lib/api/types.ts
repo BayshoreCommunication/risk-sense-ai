@@ -5243,7 +5243,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description External backup/PITR evidence and readiness against NFR-06 targets */
+                /** @description External backup/PITR evidence and effective NFR-06 targets; PAID tenants may configure stricter RPO/RTO targets */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -5282,11 +5282,15 @@ export interface paths {
                         lastRestoreDrillOutcome?: "passed" | "failed";
                         /** Format: uri */
                         evidenceRef?: string | null;
+                        targets?: {
+                            rpoHours?: number;
+                            rtoHours?: number;
+                        };
                     };
                 };
             };
             responses: {
-                /** @description Operator-recorded external DR evidence; audited */
+                /** @description Audited operator evidence or PAID recovery-target configuration; target settings do not assert provider state */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -5574,8 +5578,58 @@ export interface components {
         Question: {
             [key: string]: unknown;
         };
+        DatasetPerson: {
+            id: string;
+            name: string;
+        };
         Dataset: {
-            [key: string]: unknown;
+            _id: string;
+            tenantId: string;
+            seq: number;
+            fileName: string;
+            /** @enum {string} */
+            format: "xlsx" | "json";
+            templateVersion: number;
+            /** @enum {string} */
+            status: "rejected" | "validated" | "approved" | "active" | "failed";
+            counts: {
+                personas: number;
+                scenarios: number;
+                questions: number;
+                scoring: number;
+                skippedRows: number;
+            };
+            validationErrors: {
+                sheet: string;
+                row: number;
+                column?: string;
+                message: string;
+            }[];
+            content?: {
+                [key: string]: unknown;
+            };
+            authorId: string;
+            reviewerId?: string;
+            /** Format: date-time */
+            approvedAt?: string;
+            activatedBy?: string;
+            /** Format: date-time */
+            activatedAt?: string;
+            applied: {
+                personas: string[];
+                scenarios: string[];
+                questions: string[];
+                rules: string[];
+                matrix?: string;
+            };
+            failure?: string;
+            author?: components["schemas"]["DatasetPerson"];
+            reviewer?: components["schemas"]["DatasetPerson"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            __v?: number;
         };
         Rule: {
             [key: string]: unknown;
@@ -5717,6 +5771,7 @@ export interface components {
                 rtoHours: number;
                 drillFrequencyDays: number;
             };
+            targetsConfigurable: boolean;
             checks: {
                 backupFresh: boolean;
                 drillCurrent: boolean;
