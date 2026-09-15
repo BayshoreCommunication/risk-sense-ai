@@ -174,6 +174,42 @@ test('raw dataset downloads share the global invalid-session gate [SEC-02, FR-13
   await expect(page).toHaveURL((url) => url.pathname === '/login' && url.searchParams.get('reason') === 'session_invalid' && url.searchParams.get('next') === '/admin/datasets');
 });
 
+test('dataset history shows named provenance in a responsive evidence row [FR-14, NFR-07]', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await authenticate(page, 'administrator');
+  await mockApi(page, () => currentUser('administrator'), async ({ route, path, method }) => {
+    if (path === '/datasets' && method === 'GET') {
+      await ok(route, [
+        {
+          _id: 'dataset-1',
+          seq: 7,
+          fileName: 'quarterly-risk-content.xlsx',
+          format: 'xlsx',
+          status: 'active',
+          counts: { personas: 2, scenarios: 4, questions: 12, scoring: 6, skippedRows: 0 },
+          validationErrors: [],
+          authorId: 'author-id',
+          reviewerId: 'reviewer-id',
+          author: { id: 'author-id', name: 'Amina Uploader' },
+          reviewer: { id: 'reviewer-id', name: 'Rafi Reviewer' },
+          createdAt: '2026-09-14T08:30:00.000Z',
+        },
+      ]);
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/admin/datasets');
+  const record = page.locator('main article').filter({ hasText: 'quarterly-risk-content.xlsx' });
+  await expect(record.getByText('Amina Uploader')).toBeVisible();
+  await expect(record.getByText('Rafi Reviewer')).toBeVisible();
+  await expect(record.getByText(/^#7 · xlsx · Uploaded/)).toBeVisible();
+  await expect(page.getByText('author-id')).toHaveCount(0);
+  await expect(page.getByText('reviewer-id')).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
 test('administrator landing is useful and reports navigation follows /me features [DASH-02, DASH-03]', async ({ page }) => {
   let reports = false;
   await authenticate(page, 'administrator');
@@ -187,6 +223,83 @@ test('administrator landing is useful and reports navigation follows /me feature
   reports = true;
   await page.reload();
   await expect(page.getByRole('link', { name: 'Analytics', exact: true })).toBeVisible();
+});
+
+test('analytics supports pie, table and persistent period drill-down views [DASH-03, FR-27, FR-28]', async ({ page }) => {
+  await authenticate(page, 'administrator');
+  await mockApi(page, () => currentUser('administrator', { reports: true }), async ({ route, path, method }) => {
+    if (method !== 'GET') return false;
+    if (path === '/departments' || path === '/personas') {
+      await ok(route, []);
+      return true;
+    }
+    if (path === '/reports/volume') {
+      await ok(route, {
+        columns: [{ key: 'period', label: 'Period', kind: 'text' }, { key: 'started', label: 'Started', kind: 'number' }],
+        rows: [{ period: '2026-08', started: 12 }],
+        summary: { started: 12, closed: 8, escalated: 1 },
+      });
+      return true;
+    }
+    if (path === '/reports/classification') {
+      await ok(route, {
+        columns: [{ key: 'classification', label: 'Classification', kind: 'text' }, { key: 'count', label: 'Count', kind: 'number' }],
+        rows: [
+          { classification: 'monitor_only', count: 8, share: 67 },
+          { classification: 'risk', count: 4, share: 33 },
+          { classification: 'issue', count: 0, share: 0 },
+        ],
+        summary: { scored: 12, ruleDriven: 2, professionalConsult: 1 },
+      });
+      return true;
+    }
+    if (path === '/reports/override-rate') {
+      await ok(route, {
+        columns: [{ key: 'period', label: 'Period', kind: 'text' }, { key: 'overrideRate', label: 'Override rate', kind: 'percent' }],
+        rows: [{ period: '2026-08', overrideRate: 25 }],
+        summary: { overrideRate: 25, overridden: 2, accepted: 6 },
+      });
+      return true;
+    }
+    if (path === '/reports/assessment-time') {
+      await ok(route, {
+        columns: [{ key: 'period', label: 'Period', kind: 'text' }, { key: 'medianTotalSec', label: 'Median', kind: 'seconds' }],
+        rows: [{ period: '2026-08', medianTotalSec: 180, p95TotalSec: 420 }],
+        summary: { medianTotalSec: 180, p95TotalSec: 420, avgIntakeSec: 120 },
+      });
+      return true;
+    }
+    if (path === '/analytics/trends') {
+      await ok(route, {
+        columns: [{ key: 'period', label: 'Period', kind: 'text' }, { key: 'group', label: 'Group', kind: 'text' }, { key: 'count', label: 'Count', kind: 'number' }],
+        rows: [{ period: '2026-08', group: 'Finance', count: 12 }],
+        summary: { series: 'Finance' },
+      });
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/admin/analytics');
+  await expect(page.getByRole('heading', { name: 'Analytics' })).toBeVisible();
+
+  await page.getByRole('button', { name: '2026-08: 12' }).click();
+  await expect(page.getByRole('status').filter({ hasText: '2026-08' })).toContainText('12');
+
+  const classificationPanel = page.locator('section.data-panel').filter({ has: page.getByRole('heading', { name: 'Classification distribution' }) });
+  await classificationPanel.getByRole('button', { name: 'Pie' }).click();
+  const pie = classificationPanel.getByRole('group', { name: 'Classification distribution as a pie chart' });
+  await expect(pie).toBeVisible();
+  await expect(pie.locator('path')).toHaveCount(2);
+  const pieOption = classificationPanel.getByRole('button', { name: /Monitor Only 8/ });
+  await expect(pieOption).toHaveCount(1);
+  await pieOption.focus();
+  await expect(pieOption).toBeFocused();
+  await pieOption.press('Space');
+  await expect(pieOption).toHaveAttribute('aria-pressed', 'true');
+
+  await classificationPanel.getByRole('button', { name: 'Table' }).click();
+  await expect(classificationPanel.getByRole('columnheader', { name: 'Classification' })).toBeVisible();
 });
 
 test('system navigation exposes every implemented operational workspace [DASH-04, FR-02, FR-10, NFR-06, FR-30]', async ({ page }) => {
@@ -205,6 +318,64 @@ test('system navigation exposes every implemented operational workspace [DASH-04
   await expect(page.getByRole('link', { name: 'Departments', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Disaster recovery', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Conformance', exact: true })).toBeVisible();
+});
+
+test('mobile audit cards retain hash and human-decision evidence [FR-22, FR-26, SEC-07, NFR-08]', async ({ page }) => {
+  const fullHash = 'ab'.repeat(32);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await authenticate(page, 'audit');
+  await mockApi(page, () => currentUser('audit', { reports: true, fullAudit: true }), async ({ route, path }) => {
+    if (path === '/audit-logs') {
+      await ok(route, {
+        items: [{
+          _id: 'event-1',
+          seq: 42,
+          category: 'decision',
+          action: 'decision.recorded',
+          actorRole: 'requestor',
+          entity: { type: 'assessment', id: 'assessment-1' },
+          payload: {},
+          prevHash: '00'.repeat(32),
+          hash: fullHash,
+          createdAt: '2026-09-15T08:00:00.000Z',
+        }],
+        nextCursorSeq: null,
+      });
+      return true;
+    }
+    if (path === '/assessments') {
+      await ok(route, {
+        items: [{
+          _id: 'assessment-1',
+          status: 'closed',
+          phase: 'done',
+          personaKey: 'finance_officer',
+          scenarioKey: 'fin_suspected_fraud',
+          requestorId: 'requestor-1',
+          requestor: { name: 'Finance reviewer', email: 'reviewer@example.test' },
+          result: { classification: 'risk', confidence: 92 },
+          decision: { type: 'accept', decidedAt: '2026-09-15T08:05:00.000Z' },
+          timing: { startedAt: '2026-09-15T08:00:00.000Z' },
+          createdAt: '2026-09-15T08:00:00.000Z',
+        }],
+        total: 1,
+        page: 1,
+        limit: 25,
+        pages: 1,
+        counts: { in_progress: 0, intake_complete: 0, awaiting_decision: 0, escalated: 0, closed: 1, error_review: 0, pending: 0, all: 1 },
+      });
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/audit/logs');
+  await expect(page.getByText(fullHash, { exact: true })).toBeVisible();
+  await expect(page.getByText('Event size', { exact: true }).first()).toBeVisible();
+
+  await page.goto('/audit/assessments');
+  await expect(page.getByText('Decision', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('accept', { exact: true }).first()).toBeVisible();
 });
 
 test('mobile workspace navigation traps focus and returns it to the trigger [NFR-07, NFR-08]', async ({ page }) => {

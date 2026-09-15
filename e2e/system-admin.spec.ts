@@ -105,7 +105,7 @@ test('a system administrator provisions a requestor with department scope [FR-02
   });
 
   await page.goto('/system/users');
-  await expect(page.getByText('No tenant users yet. Provision the first account.')).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'No tenant users yet. Provision the first account.' })).toBeVisible();
   await page.getByRole('button', { name: 'Provision user' }).first().click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Name').fill('Finance Reviewer');
@@ -121,8 +121,43 @@ test('a system administrator provisions a requestor with department scope [FR-02
     departmentIds: [financeId],
     crossDepartmentAccess: true,
   });
-  await expect(page.getByText('Finance Reviewer')).toBeVisible();
-  await expect(page.getByText('All departments')).toBeVisible();
+  await expect(page.getByText('Finance Reviewer').first()).toBeVisible();
+  await expect(page.getByText('All departments').first()).toBeVisible();
+});
+
+test('mobile user cards preserve access and last-login evidence without inferring an SSO factor [FR-02, SEC-03, NFR-08]', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await mockApi(page, async ({ route, path, method }) => {
+    if (path === '/system/users' && method === 'GET') {
+      await ok(route, [{
+        _id: '64b000000000000000000031',
+        email: 'requestor@example.test',
+        name: 'Paid Requestor',
+        role: 'requestor',
+        departmentIds: [],
+        crossDepartmentAccess: false,
+        mfaEnrolled: false,
+        status: 'active',
+        lastLoginAt: '2026-09-14T08:00:00.000Z',
+      }]);
+      return true;
+    }
+    if (path === '/system/departments' && method === 'GET') {
+      await ok(route, []);
+      return true;
+    }
+    if (path === '/system/tenant' && method === 'GET') {
+      await ok(route, { ...me.tenant, name: 'Test tenant', retentionPolicy: {}, authPolicy: { otpRequired: true }, sso: { providerId: 'oidc.test', domain: 'example.test' } });
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/system/users');
+  const card = page.locator('article').filter({ hasText: 'Paid Requestor' });
+  await expect(card).toContainText('Enforced at sign-in');
+  await expect(card).toContainText('Last login');
+  await expect(card).not.toContainText('Via SSO');
 });
 
 test('role changes require confirmation and surface backend self-lockout protection [FR-02, SEC-02]', async ({ page }) => {
@@ -160,7 +195,8 @@ test('role changes require confirmation and surface backend self-lockout protect
   await page.goto('/system/users');
   await page.getByRole('button', { name: 'Edit' }).click();
   const dialog = page.getByRole('dialog');
-  await dialog.getByLabel('Role').selectOption('audit');
+  await dialog.getByLabel('Role').click();
+  await page.getByRole('option', { name: 'Audit' }).click();
   await dialog.getByRole('button', { name: 'Save changes' }).click();
 
   expect(patchCount).toBe(0);
@@ -221,6 +257,7 @@ test('DR changes require an explicit external-evidence attestation [NFR-06, FR-2
     lastRestoreDrillOutcome: null,
     evidenceRef: null,
     targets: { backupFrequencyHours: 24, rpoHours: 1, rtoHours: 4, drillFrequencyDays: 365 },
+    targetsConfigurable: false,
     checks: { backupFresh: false, drillCurrent: false, externalEvidenceRecorded: false },
     readiness: 'attention_required',
     updatedAt: null,
@@ -271,6 +308,97 @@ test('DR changes require an explicit external-evidence attestation [NFR-06, FR-2
   await expect(page.getByRole('status')).toContainText('Recovery evidence saved');
 });
 
+test('audit archive exposes immutable manifests and requires explicit export confirmation [FR-26, SEC-07]', async ({ page }) => {
+  const manifest = {
+    _id: 'manifest-1',
+    from: '2026-08-01T00:00:00.000Z',
+    to: '2026-09-01T00:00:00.000Z',
+    firstSeq: 101,
+    lastSeq: 150,
+    recordCount: 50,
+    exportHash: 'a'.repeat(64),
+    actorUserId: me.user.id,
+    createdAt: '2026-09-01T00:05:00.000Z',
+  };
+  let posts = 0;
+  await mockApi(page, async ({ route, path, method }) => {
+    if (path === '/system/tenant' && method === 'GET') {
+      await ok(route, { ...me.tenant, name: 'Test tenant', retentionPolicy: {}, authPolicy: { otpRequired: true }, sso: { providerId: null, domain: null } });
+      return true;
+    }
+    if (path === '/audit-logs/archive-manifests' && method === 'GET') {
+      await ok(route, [manifest]);
+      return true;
+    }
+    if (path === '/audit-logs/archive' && method === 'POST') {
+      posts += 1;
+      await ok(route, { manifest, records: [] }, 201);
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/system/audit');
+  await expect(page.getByRole('heading', { name: 'Audit archive' })).toBeVisible();
+  await expect(page.getByText('50', { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole('cell', { name: '101–150' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Create export' }).click();
+  expect(posts).toBe(0);
+  const confirm = page.getByRole('button', { name: 'Confirm and download' });
+  await expect(confirm).toBeVisible();
+  const downloadPromise = page.waitForEvent('download');
+  await confirm.click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe('audit-export-101-150.json');
+  await expect.poll(() => posts).toBe(1);
+  await expect(page.getByRole('status')).toContainText('Export created and downloaded · 50 records');
+});
+
+test('PAID recovery targets can be tightened without claiming new provider evidence [NFR-06, FR-25]', async ({ page }) => {
+  const status = {
+    provider: null,
+    backupsEnabled: false,
+    lastBackupAt: null,
+    lastRestoreDrillAt: null,
+    lastRestoreDrillOutcome: null,
+    evidenceRef: null,
+    targets: { backupFrequencyHours: 24, rpoHours: 1, rtoHours: 4, drillFrequencyDays: 365 },
+    targetsConfigurable: true,
+    checks: { backupFresh: false, drillCurrent: false, externalEvidenceRecorded: false },
+    readiness: 'attention_required',
+    updatedAt: null,
+  };
+  let patchBody: { targets?: { rpoHours?: number; rtoHours?: number } } | null = null;
+  await mockApi(page, async ({ route, path, method }) => {
+    if (path === '/system/dr/status' && method === 'GET') {
+      await ok(route, status);
+      return true;
+    }
+    if (path === '/system/dr/status' && method === 'PATCH') {
+      patchBody = route.request().postDataJSON();
+      await ok(route, { ...status, targets: { ...status.targets, ...patchBody?.targets }, updatedAt: '2026-09-15T12:00:00.000Z' });
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/system/dr');
+  await page.getByLabel('Recovery point objective').fill('0.5');
+  await page.getByLabel('Recovery time objective').fill('2');
+  await expect(page.getByLabel(/I checked the external provider/)).toHaveCount(0);
+
+  const save = page.getByRole('button', { name: 'Save target policy' });
+  await expect(save).toBeEnabled();
+  await save.click();
+
+  await expect.poll(() => patchBody).toEqual({ targets: { rpoHours: 0.5, rtoHours: 2 } });
+  await expect(page.getByRole('status')).toContainText('Recovery targets saved');
+  await expect(page.getByText('2 h')).toBeVisible();
+  await expect(page.getByText('0.5 h')).toBeVisible();
+  await expect(page.getByText('Attention required')).toBeVisible();
+});
+
 test('a tenant-wide conformance scan is confirmed and resolved history is opt-in [FR-30, AI-01, FR-08]', async ({ page }) => {
   const run = { tenantId: me.user.tenantId, slug: 'test', ranAt: '2026-09-14T10:00:00.000Z', trigger: 'manual', scanned: 4, valid: 3, flagged: 1, resolved: 0, durationMs: 18 };
   const openFlag = {
@@ -301,7 +429,7 @@ test('a tenant-wide conformance scan is confirmed and resolved history is opt-in
   });
 
   await page.goto('/system/conformance');
-  await expect(page.getByText('AI-01: closed assessments require a human decision and deciding user')).toBeVisible();
+  await expect(page.getByRole('row').filter({ hasText: 'AI-01: closed assessments require a human decision and deciding user' })).toBeVisible();
   await page.getByRole('button', { name: 'Run scan' }).click();
   expect(posts).toBe(0);
   await expect(page.getByText(/Scan every assessment/)).toBeVisible();
@@ -311,5 +439,5 @@ test('a tenant-wide conformance scan is confirmed and resolved history is opt-in
 
   await page.getByLabel('Include resolved flags').check();
   await expect.poll(() => includedResolved).toBe(true);
-  await expect(page.getByText('resolved', { exact: true })).toBeVisible();
+  await expect(page.getByRole('row').filter({ hasText: 'AI-01: closed assessments require a human decision and deciding user' }).getByText('resolved', { exact: true })).toBeVisible();
 });

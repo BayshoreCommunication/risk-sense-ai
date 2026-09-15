@@ -38,10 +38,10 @@ test.describe('requestor', () => {
       else await page.waitForTimeout(500);
     }
     await page.getByRole('button', { name: /^Submit/ }).click();
-    await expect(page.getByText(/\/100/)).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText('Recommended action:')).toBeVisible();
+    await expect(page.getByText(/\/ 100 risk score/)).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('Recommended action', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Accept recommendation' }).click();
-    await expect(page.getByText(/Decision: accept/)).toBeVisible();
+    await expect(page.getByText(/Decision recorded: accept/)).toBeVisible();
     await page.goto('/review');
     await expect(page.getByRole('heading', { name: 'Assessments' })).toBeVisible();
     await expect(page.getByText('Closed').first()).toBeVisible();
@@ -82,17 +82,18 @@ test.describe('administrator', () => {
 test.describe('system administrator', () => {
   test('edits tenant settings and runs a retention dry run [FR-03, SEC-02, SEC-06]', async ({ page }) => {
     await devLogin(page, ACCOUNTS.sysadmin);
-    await expect(page).toHaveURL(/\/system\/tenant/);
+    await expect(page).toHaveURL(/\/system$/);
+    await page.goto('/system/tenant');
     await expect(page.getByRole('heading', { name: 'Tenant settings' })).toBeVisible();
     const idle = page.getByLabel('Idle timeout (minutes, 5–30)');
     const current = await idle.inputValue();
     const next = current === '15' ? '20' : '15';
     await idle.fill(next);
     await page.getByRole('button', { name: 'Save changes' }).click();
-    await expect(page.getByText(/Saved .*audited/)).toBeVisible();
+    await expect(page.getByText(/Changes saved at .*audit log/)).toBeVisible();
     await idle.fill(current);
     await page.getByRole('button', { name: 'Save changes' }).click();
-    await expect(page.getByText(/Saved .*audited/)).toBeVisible();
+    await expect(page.getByText(/Changes saved at .*audit log/)).toBeVisible();
     await page.goto('/system/retention');
     await page.getByRole('button', { name: 'Dry run (report only)' }).click();
     await expect(page.getByText(/Dry run · /)).toBeVisible();

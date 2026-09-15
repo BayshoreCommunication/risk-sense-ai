@@ -204,12 +204,12 @@ test('rule condition builder emits the deterministic condition language [FR-16, 
   await nodes.nth(0).getByRole('button', { name: 'Add condition' }).click();
   await nodes.nth(2).getByLabel('Fact key').fill('amount_usd');
   await nodes.nth(2).getByLabel('Condition operator').click();
-  await page.getByRole('option', { name: 'gt', exact: true }).click();
+  await page.getByRole('option', { name: 'Greater than', exact: true }).click();
   await nodes.nth(2).getByLabel('Comparison value value type').click();
   await page.getByRole('option', { name: 'Number' }).click();
   await nodes.nth(2).getByLabel('Comparison value', { exact: true }).fill('100000');
   await page.getByLabel('Forced classification *', { exact: true }).click();
-  await page.getByRole('option', { name: 'issue', exact: true }).click();
+  await page.getByRole('option', { name: 'Issue', exact: true }).click();
 
   await page.getByRole('button', { name: 'Create draft' }).click();
   await expect.poll(() => submitted).toMatchObject({
@@ -277,7 +277,22 @@ test('every lifecycle transition waits for an explicit confirmation [AI-05, AI-0
   let approvalBody: unknown;
   const rules = [
     { _id: 'rule-draft', key: 'draft_rule', name: 'Draft rule', priority: 10, forcedClassification: 'risk', status: 'draft', version: 2, isCurrent: false },
-    { _id: 'rule-active', key: 'active_rule', name: 'Active rule', priority: 20, forcedClassification: 'issue', status: 'active', version: 1, isCurrent: true },
+    {
+      _id: 'rule-active',
+      key: 'active_rule',
+      name: 'Active rule',
+      priority: 20,
+      trigger: {
+        all: [
+          { factKey: 'authorized', op: 'eq', value: false },
+          { any: [{ factKey: 'amount_usd', op: 'gt', value: 100000 }, { factKey: 'regulator_notified', op: 'exists' }] },
+        ],
+      },
+      forcedClassification: 'issue',
+      status: 'active',
+      version: 1,
+      isCurrent: true,
+    },
   ];
   const scenarios = [
     { _id: 'scenario-draft', key: 'draft_scenario', personaKey: 'finance_officer', name: 'Draft scenario', conversationFlow: [], status: 'draft', version: 2, isCurrent: false },
@@ -320,6 +335,7 @@ test('every lifecycle transition waits for an explicit confirmation [AI-05, AI-0
   expect(approvalBody).toEqual({ changeRef: 'CHG-2026-1042' });
 
   const activeRule = page.getByRole('row').filter({ hasText: 'active_rule' });
+  await expect(activeRule).toContainText('(authorized = false AND (amount_usd > 100000 OR regulator_notified exists))');
   await activeRule.getByRole('button', { name: 'Retire' }).click();
   expect(calls).not.toContain('/rules/rule-active/retire');
   await page.getByRole('button', { name: 'Confirm Retire' }).click();
