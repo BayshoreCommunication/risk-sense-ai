@@ -4,6 +4,11 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 const nextConfig: NextConfig = {
+  // This repository is nested below an unrelated home-directory lockfile. Pin the
+  // application root so Turbopack resolves and watches only this frontend.
+  turbopack: {
+    root: process.cwd(),
+  },
   // Security headers for the frontend host (SEC-04 / T-091). The API sets its own via helmet.
   async headers() {
     return [

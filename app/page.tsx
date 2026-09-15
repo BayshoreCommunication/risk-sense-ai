@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-// middleware.ts redirects "/" to the role home or /login; this is the fallback.
+// proxy.ts redirects "/" to the role home or /login; this is the fallback.
 export default function Home() {
   redirect('/login');
 }

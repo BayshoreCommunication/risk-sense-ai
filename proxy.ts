@@ -7,7 +7,7 @@ const PUBLIC_PATHS = ['/login', '/mfa'];
  * Role-based route guard (DecisionLog 2026-09-13-04): one app, route groups per role.
  * This is a UX guard only; the backend enforces RBAC on every request (SEC-01).
  */
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const role = req.cookies.get(COOKIE_ROLE)?.value;
   const hasSession = Boolean(req.cookies.get(COOKIE_SESSION)?.value);
