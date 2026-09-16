@@ -87,7 +87,11 @@ function LoginForm() {
     const res = await api.POST('/auth/otp/request');
     if (res.error || !res.data) throw res.error;
     setOtpInfo(res.data.data);
-    setOtp('');
+    if (res.data.data.devCode) {
+      setOtp(res.data.data.devCode);
+    } else {
+      setOtp('');
+    }
     setStep('otp');
   }
 
@@ -247,6 +251,49 @@ function LoginForm() {
                 </p>
               )}
             </form>
+            {mode === 'signin' && (
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-primary">Live Demo Accounts</span>
+                  <span className="text-[0.68rem] text-muted-foreground">Click to fill</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    className="flex flex-col items-center justify-center rounded-md border border-border bg-background p-2 text-center text-xs transition hover:border-primary hover:bg-muted/50 cursor-pointer"
+                    onClick={() => {
+                      setEmail('admin@dev.local');
+                      setPassword('RiskSense2026!');
+                    }}
+                  >
+                    <span className="font-semibold text-foreground">Administrator</span>
+                    <span className="text-[0.65rem] text-muted-foreground">TAC (/admin)</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="flex flex-col items-center justify-center rounded-md border border-border bg-background p-2 text-center text-xs transition hover:border-primary hover:bg-muted/50 cursor-pointer"
+                    onClick={() => {
+                      setEmail('sysadmin@dev.local');
+                      setPassword('RiskSense2026!');
+                    }}
+                  >
+                    <span className="font-semibold text-foreground">System Admin</span>
+                    <span className="text-[0.65rem] text-muted-foreground">Bayshore (/system)</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="flex flex-col items-center justify-center rounded-md border border-border bg-background p-2 text-center text-xs transition hover:border-primary hover:bg-muted/50 cursor-pointer"
+                    onClick={() => {
+                      setEmail('audit@dev.local');
+                      setPassword('RiskSense2026!');
+                    }}
+                  >
+                    <span className="font-semibold text-foreground">Auditor</span>
+                    <span className="text-[0.65rem] text-muted-foreground">TAC (/audit)</span>
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="flex items-center gap-3 text-center text-[0.68rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
               <span className="h-px flex-1 bg-border" />
               {t('or')}
@@ -284,10 +331,18 @@ function LoginForm() {
                 autoComplete="one-time-code"
                 autoFocus
               />
-              {otpInfo?.devCode && DEV_AUTH_ENABLED && (
-                <p className="text-xs text-muted-foreground">
-                  {t('devCode')} <code className="font-mono">{otpInfo.devCode}</code>
-                </p>
+              {otpInfo?.devCode && (
+                <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5 text-xs">
+                  <span className="font-medium text-foreground">{t('devCode')}</span>
+                  <button
+                    type="button"
+                    className="rounded bg-background px-2 py-0.5 font-mono text-sm font-bold tracking-widest text-primary border border-border hover:bg-muted cursor-pointer"
+                    onClick={() => setOtp(otpInfo.devCode!)}
+                    title="Click to insert code"
+                  >
+                    {otpInfo.devCode}
+                  </button>
+                </div>
               )}
             </div>
             <Button type="submit" size="lg" className="w-full" disabled={busy || otp.length !== 6}>
