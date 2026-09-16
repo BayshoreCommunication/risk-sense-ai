@@ -257,7 +257,7 @@ function LoginForm() {
                   <span className="font-semibold text-primary">Live Demo Accounts</span>
                   <span className="text-[0.68rem] text-muted-foreground">Click to fill</span>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <button
                     type="button"
                     className="flex flex-col items-center justify-center rounded-md border border-border bg-background p-2 text-center text-xs transition hover:border-primary hover:bg-muted/50 cursor-pointer"
@@ -290,6 +290,17 @@ function LoginForm() {
                   >
                     <span className="font-semibold text-foreground">Auditor</span>
                     <span className="text-[0.65rem] text-muted-foreground">TAC (/audit)</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="flex flex-col items-center justify-center rounded-md border border-border bg-background p-2 text-center text-xs transition hover:border-primary hover:bg-muted/50 cursor-pointer"
+                    onClick={() => {
+                      setEmail('requestor@tac.local');
+                      setPassword('RiskSense2026!');
+                    }}
+                  >
+                    <span className="font-semibold text-foreground">Requestor</span>
+                    <span className="text-[0.65rem] text-muted-foreground">TAC (/chat)</span>
                   </button>
                 </div>
               </div>
