@@ -377,7 +377,7 @@ test('unverified password account sees a retryable resend flow without an applic
   await expect(page.getByLabel('Password')).toHaveValue('correct-horse-battery-staple');
 
   await page.getByRole('button', { name: 'Resend verification email' }).click();
-  await expect(page.getByRole('status')).toContainText(`New verification link sent to ${email}`);
+  await expect(page.getByRole('status')).toContainText(`We sent a new verification link to ${email}`);
   expect(deliveryAttempts).toBe(2);
   expect(backendCalls).toEqual([]);
 

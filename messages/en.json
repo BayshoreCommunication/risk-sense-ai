@@ -69,23 +69,36 @@
     "title": "RiskSense AI",
     "eyebrow": "Secure decision intelligence",
     "heroTitle": "Turn uncertain incidents into auditable decisions.",
-    "heroDescription": "Capture the facts, apply deterministic policy, record the human decision.",
-    "planNote": "Free accounts sign in as requestors. Paid workspaces add managed roles, SSO and email MFA.",
-    "recoveryNote": "MFA or SSO did not complete? Try again, or contact your administrator.",
+    "heroDescription": "A guided workspace for capturing facts, applying deterministic policy, and recording accountable human decisions.",
+    "governanceNote": "The assistant structures and explains. Rules and scoring stay deterministic, and only an authorized person records the final decision.",
+    "planNote": "Free accounts are requestors. Paid workspaces add managed roles and tenant SSO; RiskSense email OTP follows role and tenant policy.",
+    "planPolicyLabel": "Plan-aware sign-in policy",
+    "plans": {
+      "freeTitle": "Requestor access",
+      "freeDescription": "Every user is a requestor. Managed-role MFA is not required in the free web version.",
+      "paidTitle": "Managed workspace",
+      "paidDescription": "Managed roles and organization SSO are available, and every paid account must satisfy current-login MFA."
+    },
+    "recoveryNote": "MFA or SSO did not complete? Refresh your identity-provider access and try again, or contact your administrator.",
+    "steps": {
+      "identity": "Identity",
+      "verify": "Verification"
+    },
     "assurance": {
-      "guided": "Guided, scenario-aware intake",
+      "guided": "Guided, scenario-aware risk intake",
       "deterministic": "Deterministic rules and scoring",
       "auditable": "Tamper-evident decision history"
     },
     "otpPrompt": "Enter the 6-digit code we emailed to {email}.",
     "signInPrompt": "Sign in to start or review a risk assessment.",
-    "signUpPrompt": "Create your account. Verify your email, then sign in.",
-    "verificationEmailSent": "Verification link sent to {email}. Open it, then sign in.",
-    "verificationResent": "New verification link sent to {email}. Open it, then sign in.",
+    "signUpPrompt": "Create your account. You must verify your email before signing in.",
+    "verificationEmailSent": "We sent a verification link to {email}. Open it, verify your email, then sign in. The app may ask for an email code next.",
+    "verificationResent": "We sent a new verification link to {email}. Open it, verify your email, then sign in.",
     "verificationAlreadyComplete": "{email} is already verified. Sign in to continue.",
+    "resendVerificationHint": "Already created an account but did not receive the verification link?",
     "resendVerification": "Resend verification email",
     "resendVerificationNeedsCredentials": "Enter your email and password first",
-    "noFirebase": "Sign-in is unavailable here. Contact your administrator.",
+    "noFirebase": "Sign-in is unavailable in this environment. Contact your administrator.",
     "authNotConfigured": "Authentication is not configured. Contact your administrator.",
     "sessionExpired": "Your session expired. Sign in again to continue.",
     "sessionInvalid": "Your session is no longer active. Sign in again to continue.",
@@ -97,8 +110,8 @@
     "continue": "Continue",
     "createAccount": "Create account",
     "pleaseWait": "Please wait…",
-    "switchToSignUp": "Create an account",
-    "switchToSignIn": "Sign in instead",
+    "switchToSignUp": "New here? Create an account",
+    "switchToSignIn": "Already have an account? Sign in",
     "forgotPassword": "Forgot password?",
     "resetSent": "Password reset email sent to {email}.",
     "or": "or",
@@ -122,10 +135,6 @@
       "systemAdministrator": "System administrator",
       "audit": "Audit",
       "requestorPaid": "Requestor · PAID"
-    },
-    "demo": {
-      "title": "Demo accounts",
-      "hint": "Click to fill"
     }
   },
   "classification": {
