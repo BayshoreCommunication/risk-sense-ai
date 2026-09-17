@@ -173,7 +173,7 @@ export default function DepartmentsPage() {
           </article>
         ))}
       </div>
-      <div className="data-panel fills hidden md:block">
+      <div className="data-panel fills hidden md:flex">
         <Table>
           <TableHeader>
             <TableRow>

@@ -163,9 +163,10 @@
     @apply shrink-0;
   }
   /* The region that should absorb whatever height is left, so its own scroller is exact.
-     Declared after `.page-shell > *` so its `flex-1` wins over the shrink-0 above. */
+     Declared after `.page-shell > *` so its `flex-1` wins over the shrink-0 above. Pair it with
+     `lg:flex`, never `lg:block`: a responsive display utility outranks this layer. */
   .fills {
-    @apply flex min-h-0 flex-1 flex-col [&_[data-slot=table-container]]:max-h-full;
+    @apply flex min-h-0 flex-1 flex-col;
   }
   .page-heading {
     @apply font-heading text-[1.75rem] font-bold tracking-[-0.02em] text-foreground sm:text-[2.125rem];
@@ -218,6 +219,11 @@
   }
   .data-panel {
     @apply overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgba(15,35,65,0.05)];
+  }
+  /* A filled panel already owns its height, so the scroller inside it stops guessing from the
+     viewport. Declared here, in the utilities layer, to outrank the table's own `max-h-*`. */
+  .fills [data-slot='table-container'] {
+    max-height: 100%;
   }
   .control-strip {
     @apply rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(15,35,65,0.05)];

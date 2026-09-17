@@ -78,7 +78,7 @@ export default function AuditAssessmentsPage() {
           </article>
         ))}
       </div>
-      <div className="data-panel fills hidden lg:block">
+      <div className="data-panel fills hidden lg:flex">
         <Table>
           <TableHeader>
             <TableRow>

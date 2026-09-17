@@ -114,7 +114,7 @@ export function ChatSession({ id }: { id: string }) {
   const currentStageKey = currentStageIndex >= 0 ? WORKFLOW_STAGES[currentStageIndex] : undefined;
 
   return (
-    <div className="page-shell max-w-[1480px] space-y-5">
+    <div className="page-shell max-w-[1480px]">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-2">
           <div>

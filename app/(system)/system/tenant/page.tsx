@@ -150,7 +150,7 @@ export default function TenantSettingsPage() {
 
       {error && <p className="text-sm text-destructive">{error}</p>}
       {saved && <p className="text-sm text-muted-foreground">{saved}</p>}
-      <div className="sticky bottom-4 z-10 flex w-fit gap-2 rounded-xl border bg-background/95 p-2 shadow-lg backdrop-blur">
+      <div className="sticky bottom-0 z-10 flex justify-end gap-2 rounded-xl border bg-card p-2 shadow-[0_-6px_20px_rgba(15,35,65,0.08)]">
         <Button disabled={!dirty || busy} onClick={() => void save()}>
           {busy ? t('saving') : t('save')}
         </Button>

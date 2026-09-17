@@ -220,7 +220,7 @@ export default function UsersPage() {
         requirements={['FR-02', 'FR-10']}
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-t-xl border border-b-0 bg-card px-4 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card px-4 py-4 shadow-[0_1px_2px_rgba(15,35,65,0.05)]">
         <div className="flex items-center gap-3">
           <span className="card-icon"><UsersRound className="size-5" aria-hidden="true" /></span>
           <div>
@@ -240,7 +240,7 @@ export default function UsersPage() {
         </div>
       )}
 
-      <div className="data-panel fills hidden rounded-t-none lg:block">
+      <div className="data-panel fills hidden lg:flex">
         <Table>
           <TableHeader>
             <TableRow>
