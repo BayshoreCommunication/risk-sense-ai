@@ -256,53 +256,23 @@ function LoginForm() {
               <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-primary">Live Demo Accounts</span>
-                  <span className="text-[0.68rem] text-muted-foreground">Click to fill</span>
+                  <span className="text-[0.68rem] text-muted-foreground">{DEMO_PASSWORD ? 'Click to fill' : 'Click to fill the address'}</span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <button
-                    type="button"
-                    className="flex flex-col items-center justify-center rounded-md border border-border bg-background p-2 text-center text-xs transition hover:border-primary hover:bg-muted/50 cursor-pointer"
-                    onClick={() => {
-                      setEmail('admin@dev.local');
-                      setPassword('RiskSense2026!');
-                    }}
-                  >
-                    <span className="font-semibold text-foreground">Administrator</span>
-                    <span className="text-[0.65rem] text-muted-foreground">TAC (/admin)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="flex flex-col items-center justify-center rounded-md border border-border bg-background p-2 text-center text-xs transition hover:border-primary hover:bg-muted/50 cursor-pointer"
-                    onClick={() => {
-                      setEmail('sysadmin@dev.local');
-                      setPassword('RiskSense2026!');
-                    }}
-                  >
-                    <span className="font-semibold text-foreground">System Admin</span>
-                    <span className="text-[0.65rem] text-muted-foreground">Bayshore (/system)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="flex flex-col items-center justify-center rounded-md border border-border bg-background p-2 text-center text-xs transition hover:border-primary hover:bg-muted/50 cursor-pointer"
-                    onClick={() => {
-                      setEmail('audit@dev.local');
-                      setPassword('RiskSense2026!');
-                    }}
-                  >
-                    <span className="font-semibold text-foreground">Auditor</span>
-                    <span className="text-[0.65rem] text-muted-foreground">TAC (/audit)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="flex flex-col items-center justify-center rounded-md border border-border bg-background p-2 text-center text-xs transition hover:border-primary hover:bg-muted/50 cursor-pointer"
-                    onClick={() => {
-                      setEmail('requestor@tac.local');
-                      setPassword('RiskSense2026!');
-                    }}
-                  >
-                    <span className="font-semibold text-foreground">Requestor</span>
-                    <span className="text-[0.65rem] text-muted-foreground">TAC (/chat)</span>
-                  </button>
+                  {DEMO_ACCOUNTS.map((account) => (
+                    <button
+                      key={account.email}
+                      type="button"
+                      className="flex flex-col items-center justify-center rounded-md border border-border bg-background p-2 text-center text-xs transition hover:border-primary hover:bg-muted/50 cursor-pointer"
+                      onClick={() => {
+                        setEmail(account.email);
+                        setPassword(DEMO_PASSWORD);
+                      }}
+                    >
+                      <span className="font-semibold text-foreground">{account.label}</span>
+                      <span className="text-[0.65rem] text-muted-foreground">{account.hint}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -445,6 +415,23 @@ function LoginForm() {
     </Card>
   );
 }
+
+/**
+ * The shared sign-in for the public demo tenant. The password is read from the environment rather than
+ * written here, so it can be rotated without a release and is not carried in the repository. It is a
+ * NEXT_PUBLIC_ value, so it is inlined into the client bundle and readable by any visitor — that is
+ * inherent to a one-click public demo and is why these accounts are seeded, throwaway and tenant-scoped,
+ * never a real operator's credentials. With the variable unset the buttons still fill the address and
+ * leave the password to be typed, so a deployment without it degrades instead of offering a wrong value.
+ */
+const DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_PASSWORD ?? '';
+
+const DEMO_ACCOUNTS = [
+  { email: 'admin@dev.local', label: 'Administrator', hint: 'TAC (/admin)' },
+  { email: 'sysadmin@dev.local', label: 'System Admin', hint: 'Bayshore (/system)' },
+  { email: 'audit@dev.local', label: 'Auditor', hint: 'TAC (/audit)' },
+  { email: 'requestor@tac.local', label: 'Requestor', hint: 'TAC (/chat)' },
+] as const;
 
 export default function LoginPage() {
   const t = useTranslations('login');
