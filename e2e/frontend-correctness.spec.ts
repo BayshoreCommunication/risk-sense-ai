@@ -304,7 +304,10 @@ test('direct standard reports access follows the authoritative tenant feature [F
   reports = true;
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Standard reports' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Open report' })).toHaveCount(4);
+  // Each of the four FR-26 reports exposes its own CSV and PDF export (FR-28).
+  const reportList = page.getByRole('region', { name: 'Standard reports' });
+  await expect(reportList.getByRole('button', { name: 'CSV' })).toHaveCount(4);
+  await expect(reportList.getByRole('button', { name: 'PDF' })).toHaveCount(4);
 });
 
 test('analytics supports pie, table and persistent period drill-down views [DASH-03, FR-27, FR-28]', async ({ page }) => {
@@ -383,9 +386,6 @@ test('analytics supports pie, table and persistent period drill-down views [DASH
   await page.goto('/admin/analytics');
   await expect(page.getByRole('heading', { name: 'Analytics dashboard' })).toBeVisible();
 
-  await page.getByRole('button', { name: '2026-08: 12' }).click();
-  await expect(page.getByRole('status').filter({ hasText: '2026-08' })).toContainText('12');
-
   const monthlyPanel = page.locator('section.data-panel').filter({ has: page.getByRole('heading', { name: 'Monthly classification distribution', exact: true }) });
   const monthSelectors = monthlyPanel.getByRole('button', { name: /^Select / });
   await expect(monthSelectors).toHaveCount(5);
@@ -397,6 +397,11 @@ test('analytics supports pie, table and persistent period drill-down views [DASH
   await expect(riskSummary).toHaveAttribute('aria-pressed', 'true');
   const monthlyChart = monthlyPanel.getByRole('group', { name: 'Final classifications by month' });
   await expect(monthlyChart.getByRole('button', { name: / · Risk: 2$/ }).first()).toBeVisible();
+
+  // The four report views, the FR-27 trend breakdown and the exports live on the standard reports screen.
+  await page.goto('/admin/reports');
+  await page.getByRole('button', { name: '2026-08: 12' }).click();
+  await expect(page.getByRole('status').filter({ hasText: '2026-08' })).toContainText('12');
 
   await expect(page.locator('#report-volume')).toBeVisible();
   await expect(page.locator('#report-classification')).toBeVisible();
