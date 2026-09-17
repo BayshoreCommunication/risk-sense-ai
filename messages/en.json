@@ -215,6 +215,11 @@
       "title": "Persona management",
       "description": "Versioned role profiles used to guide scenario selection and intake language.",
       "entity": "persona",
+      "columns": {
+        "departments": "Departments",
+        "scenarios": "Scenarios"
+      },
+      "note": "Deactivated personas stay viewable on historical assessments but drop out of new sessions.",
       "fields": {
         "key": "Key",
         "name": "Name",
@@ -239,6 +244,7 @@
       "title": "Scenario library management",
       "description": "Versioned assessment journeys with structured question flow and outcome guidance.",
       "entity": "scenario",
+      "note": "Editing a scenario creates a new version; activation is blocked without a linked question set.",
       "fields": {
         "key": "Key",
         "personaKey": "Persona key",
@@ -266,6 +272,17 @@
       "title": "Question bank management",
       "description": "Reusable guided-intake questions with structured choices and optional follow-up branches.",
       "entity": "question",
+      "card": {
+        "created": "Created: {date}",
+        "updated": "Updated: {date}"
+      },
+      "note": "Every question is tagged by persona, scenario, and sector; retired questions are preserved on historical records.",
+      "summary": {
+        "total": "Total questions",
+        "active": "Active questions",
+        "retired": "Retired questions",
+        "sectors": "Sectors covered"
+      },
       "fields": {
         "key": "Key",
         "questionText": "Question text",
@@ -295,6 +312,12 @@
       "title": "Rule engine — hard business rules",
       "description": "Versioned hard rules that can force a classification before matrix scoring is presented.",
       "entity": "rule",
+      "note": "Rule activation takes effect on the next new assessment without a system restart.",
+      "card": {
+        "if": "If",
+        "then": "then force classification =",
+        "priority": "Priority {value}"
+      },
       "fields": {
         "key": "Key",
         "name": "Name",
@@ -405,9 +428,24 @@
     },
     "datasets": {
       "title": "AI training dataset management",
+      "note": "A dataset cannot move to active without approval from a reviewer other than its author.",
       "description": "Upload a content workbook; a second administrator approves it before activation.",
       "summary": {
         "label": "Dataset status summary",
+        "hints": {
+          "total": "All versions",
+          "active": "Ready to use",
+          "review": "Under validation",
+          "activation": "Approved, not yet live",
+          "unavailable": "Not in use"
+        },
+        "hints": {
+          "total": "All versions",
+          "active": "Ready to use",
+          "review": "Under validation",
+          "activation": "Approved, not yet live",
+          "unavailable": "Not in use"
+        },
         "total": "Total datasets",
         "active": "Active",
         "review": "Awaiting review",

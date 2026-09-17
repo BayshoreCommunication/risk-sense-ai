@@ -1,9 +1,18 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { AlertTriangle, ArrowUpCircle, ShieldCheck, Siren, type LucideIcon } from 'lucide-react';
 import { ContentManager, type FieldSpec } from '@/components/admin/ContentManager';
 import { Badge } from '@/components/ui/badge';
 import { rulesApi } from '@/lib/admin/content';
+
+/** Icon and colour per forced classification, following docs/design/figma-frames/14-admin-rule-engine.png. */
+const CLASSIFICATION_TONE: Record<string, { icon: LucideIcon; tile: string; text: string }> = {
+  monitor_only: { icon: ShieldCheck, tile: 'bg-emerald-500/10 text-emerald-700', text: 'text-emerald-700' },
+  risk: { icon: AlertTriangle, tile: 'bg-amber-500/10 text-amber-700', text: 'text-amber-700' },
+  elevated_risk: { icon: ArrowUpCircle, tile: 'bg-orange-500/12 text-orange-700', text: 'text-orange-700' },
+  issue: { icon: Siren, tile: 'bg-red-500/10 text-red-700', text: 'text-red-700' },
+};
 
 function ruleFields(t: ReturnType<typeof useTranslations>): FieldSpec[] {
   return [
@@ -38,23 +47,34 @@ export default function RulesPage() {
     return `${condition.factKey ?? 'fact'} ${operator[condition.op ?? ''] ?? condition.op ?? ''}${condition.op === 'exists' ? '' : ` ${Array.isArray(condition.value) ? condition.value.join(', ') : String(condition.value ?? '')}`}`;
   };
   return (
-    <ContentManager
+    <div className="space-y-5">
+      <ContentManager
       title={t('title')}
       description={t('description')}
       requirements={['FR-16', 'FR-17']}
       entity={t('entity')}
       apiClient={rulesApi}
       fields={fields}
-      columns={[
-        { key: 'priority', label: t('fields.priority') },
-        { key: 'key', label: t('fields.key') },
-        { key: 'name', label: t('fields.name') },
-        { key: 'trigger', label: t('fields.trigger'), render: (item) => <code className="text-xs">{formatCondition(item.trigger)}</code> },
-        { key: 'forcedClassification', label: t('columns.forces'), render: (item) => {
-          const value = String(item.forcedClassification ?? '');
-          return classification.has(value) ? classification(value) : value;
-        } },
-      ]}
+      columns={[]}
+      card={(item) => {
+        const forced = String(item.forcedClassification ?? '');
+        const tone = CLASSIFICATION_TONE[forced] ?? CLASSIFICATION_TONE.monitor_only!;
+        const Icon = tone.icon;
+        return {
+          icon: <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${tone.tile}`}><Icon className="size-5" aria-hidden="true" /></span>,
+          title: String(item.name ?? item.key ?? ''),
+          body: (
+            <span className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+              <span>
+                {t('card.if')} <code className="font-semibold text-foreground">{formatCondition(item.trigger)}</code> {t('card.then')}{' '}
+                <strong className={tone.text}>{classification.has(forced) ? classification(forced) : forced}</strong>
+              </span>
+              <span aria-hidden="true" className="text-muted-foreground/60">·</span>
+              <Badge variant="outline">{t('card.priority', { value: String(item.priority ?? 100) })}</Badge>
+            </span>
+          ),
+        };
+      }}
       callout={(
         <aside className="flex flex-col gap-3 rounded-xl border border-blue-200 bg-blue-50/55 p-4 sm:flex-row sm:items-center sm:justify-between" aria-label={t('lockoutExample.title')}>
           <div>
@@ -73,6 +93,8 @@ export default function RulesPage() {
       )}
       versioned
       approval
-    />
+      />
+      <p className="rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-xs leading-5 text-blue-950/75">{t('note')}</p>
+    </div>
   );
 }

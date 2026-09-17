@@ -236,8 +236,8 @@ test('dataset summary separates validation review from approved activation [FR-1
 
   await page.goto('/admin/datasets');
   const summary = page.getByRole('region', { name: 'Dataset status summary' });
-  await expect(summary.locator('[data-slot="card"]').filter({ hasText: 'Awaiting review' }).locator('[data-slot="card-title"]')).toHaveText('1');
-  await expect(summary.locator('[data-slot="card"]').filter({ hasText: 'Awaiting activation' }).locator('[data-slot="card-title"]')).toHaveText('1');
+  await expect(summary.locator('[data-counter="review"] .metric-value')).toHaveText('1');
+  await expect(summary.locator('[data-counter="activation"] .metric-value')).toHaveText('1');
 });
 
 test('administrator landing is useful and reports navigation follows /me features [DASH-02, DASH-03]', async ({ page }) => {

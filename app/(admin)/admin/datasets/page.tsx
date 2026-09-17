@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { CheckCircle2, ChevronDown, ChevronUp, Download, FileSpreadsheet, Power, UploadCloud } from 'lucide-react';
+import { CheckCircle2, ChevronDown, ChevronUp, CircleCheck, Clock, Database, Download, FileSpreadsheet, Power, ShieldX, UploadCloud } from 'lucide-react';
 import { PageHeader } from '@/components/shell/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -175,12 +175,29 @@ export default function DatasetsPage() {
         }
       />
 
-      <section className="grid overflow-hidden rounded-xl sm:grid-cols-2 xl:grid-cols-5" aria-label={t('summary.label')}>
-        <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.total')}</CardDescription><CardTitle className="metric-value">{loading ? '—' : items.length}</CardTitle></CardHeader></Card>
-        <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.active')}</CardDescription><CardTitle className="metric-value text-emerald-700">{loading ? '—' : activeCount}</CardTitle></CardHeader></Card>
-        <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.review')}</CardDescription><CardTitle className="metric-value text-amber-700">{loading ? '—' : reviewCount}</CardTitle></CardHeader></Card>
-        <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.activation')}</CardDescription><CardTitle className="metric-value text-blue-700">{loading ? '—' : activationCount}</CardTitle></CardHeader></Card>
-        <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.unavailable')}</CardDescription><CardTitle className="metric-value text-slate-600">{loading ? '—' : unavailableCount}</CardTitle></CardHeader></Card>
+      {/* Counter strip with an icon per state, as docs/design/figma-frames/16-admin-training-datasets.png. */}
+      <section className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2 xl:grid-cols-5" aria-label={t('summary.label')}>
+        {([
+          { key: 'total', value: items.length, icon: Database, tile: 'bg-blue-500/10 text-blue-700' },
+          { key: 'active', value: activeCount, icon: CircleCheck, tile: 'bg-emerald-500/10 text-emerald-700' },
+          { key: 'review', value: reviewCount, icon: Clock, tile: 'bg-amber-500/10 text-amber-700' },
+          { key: 'activation', value: activationCount, icon: Power, tile: 'bg-indigo-500/10 text-indigo-700' },
+          { key: 'unavailable', value: unavailableCount, icon: ShieldX, tile: 'bg-slate-500/10 text-slate-600' },
+        ] as const).map((counter) => {
+          const Icon = counter.icon;
+          return (
+            <div key={counter.key} data-counter={counter.key} className="flex items-center gap-3 bg-card p-4">
+              <span className={`grid size-10 shrink-0 place-items-center rounded-full ${counter.tile}`}>
+                <Icon className="size-5" aria-hidden="true" />
+              </span>
+              <div className="min-w-0">
+                <p className="metric-value">{loading ? '—' : counter.value}</p>
+                <p className="text-sm font-medium">{t(`summary.${counter.key}`)}</p>
+                <p className="text-xs text-muted-foreground">{t(`summary.hints.${counter.key}`)}</p>
+              </div>
+            </div>
+          );
+        })}
       </section>
 
       <Card className="shadow-none">
@@ -363,6 +380,7 @@ export default function DatasetsPage() {
           </CardContent>
         </Card>
       ) : null}
+      <p className="rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-xs leading-5 text-blue-950/75">{t('note')}</p>
     </div>
   );
 }

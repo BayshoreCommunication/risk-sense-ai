@@ -319,7 +319,7 @@ test('every lifecycle transition waits for an explicit confirmation [AI-05, AI-0
   });
 
   await page.goto('/admin/rules');
-  const draftRule = page.getByRole('row').filter({ hasText: 'draft_rule' });
+  const draftRule = page.locator('article').filter({ hasText: 'Draft rule' });
   await draftRule.getByRole('button', { name: 'Approve' }).click();
   await expect(page.getByRole('heading', { name: 'Confirm approve' })).toBeVisible();
   expect(calls).toEqual([]);
@@ -334,7 +334,7 @@ test('every lifecycle transition waits for an explicit confirmation [AI-05, AI-0
   await expect.poll(() => calls).toContain('/rules/rule-draft/approve');
   expect(approvalBody).toEqual({ changeRef: 'CHG-2026-1042' });
 
-  const activeRule = page.getByRole('row').filter({ hasText: 'active_rule' });
+  const activeRule = page.locator('article').filter({ hasText: 'Active rule' });
   await expect(activeRule).toContainText('(authorized = false AND (amount_usd > 100000 OR regulator_notified exists))');
   await activeRule.getByRole('button', { name: 'Retire' }).click();
   expect(calls).not.toContain('/rules/rule-active/retire');
@@ -389,7 +389,7 @@ test('failed lifecycle transition stays open and succeeds on retry [AI-05, AI-06
   });
 
   await page.goto('/admin/rules');
-  await page.getByRole('row').filter({ hasText: 'draft_rule' }).getByRole('button', { name: 'Approve' }).click();
+  await page.locator('article').filter({ hasText: 'Draft rule' }).getByRole('button', { name: 'Approve' }).click();
 
   const confirmation = page.getByRole('dialog', { name: 'Confirm approve' });
   const changeReference = confirmation.getByLabel('Change reference');

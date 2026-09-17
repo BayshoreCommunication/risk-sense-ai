@@ -35,6 +35,10 @@ export interface ContentManagerProps {
   requirements?: string[];
   /** Render a compact section heading instead of the page header, for screens that already have one. */
   hideHeader?: boolean;
+  /** Render each item as a card instead of a table row, for the screens whose frame is a card list. */
+  card?: (item: Item) => { icon?: React.ReactNode; title: React.ReactNode; body?: React.ReactNode };
+  /** Counters shown above the list, for the frames that lead with a summary strip. */
+  summary?: (items: Item[]) => React.ReactNode;
   entity: string;
   apiClient: EntityApi;
   fields: FieldSpec[];
@@ -155,7 +159,7 @@ export function ContentManager(props: ContentManagerProps) {
   const t = useTranslations('contentManager');
   const statusT = useTranslations('status');
   const structuredValidation = useTranslations('structured.validation');
-  const { title, description, requirements, hideHeader, apiClient, fields, columns, versioned, defaultQuery, approval, facets = [], callout } = props;
+  const { title, description, requirements, hideHeader, card, summary, apiClient, fields, columns, versioned, defaultQuery, approval, facets = [], callout } = props;
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -284,6 +288,47 @@ export function ContentManager(props: ContentManagerProps) {
     setPendingAction({ action, item, run });
   }
 
+  const itemActions = (item: Item) => (
+    <div className="flex min-w-max flex-wrap justify-end gap-1.5">
+                {item.status !== 'retired' && item.status !== 'deactivated' && (
+                  <Button size="sm" variant="outline" onClick={() => openEdit(item)}>
+                    <Pencil data-icon="inline-start" aria-hidden="true" />
+                    {t('actions.edit')}
+                  </Button>
+                )}
+                {approval && item.status === 'draft' && !item.approvedBy && apiClient.approve && (
+                  <Button size="sm" variant="secondary" onClick={() => askForConfirmation('approve', item, (reference) => apiClient.approve!(item._id, reference ?? ''))}>
+                    <CheckCircle2 data-icon="inline-start" aria-hidden="true" />
+                    {t('actions.approve')}
+                  </Button>
+                )}
+                {apiClient.activate && (item.status === 'approved' || (item.status === 'draft' && (!approval || Boolean(item.approvedBy)))) && (
+                  <Button size="sm" onClick={() => askForConfirmation('activate', item, () => apiClient.activate!(item._id))}>
+                    <Power data-icon="inline-start" aria-hidden="true" />
+                    {t('actions.activate')}
+                  </Button>
+                )}
+                {versioned && item.status === 'active' && apiClient.deactivate && (
+                  <Button size="sm" variant="destructive" onClick={() => askForConfirmation('deactivate', item, () => apiClient.deactivate!(item._id))}>
+                    <Power data-icon="inline-start" aria-hidden="true" />
+                    {t('actions.deactivate')}
+                  </Button>
+                )}
+                {(item.status === 'active' || item.status === 'approved') && apiClient.retire && (
+                  <Button size="sm" variant="destructive" onClick={() => askForConfirmation('retire', item, () => apiClient.retire!(item._id))}>
+                    <Archive data-icon="inline-start" aria-hidden="true" />
+                    {t('actions.retire')}
+                  </Button>
+                )}
+                {versioned && apiClient.history && (
+                  <Button size="sm" variant="ghost" onClick={() => void act(async () => setHistory(await apiClient.history!(item._id)))}>
+                    <History data-icon="inline-start" aria-hidden="true" />
+                    {t('actions.history')}
+                  </Button>
+                )}
+    </div>
+  );
+
   return (
     <div className="space-y-5">
       {(() => {
@@ -338,96 +383,92 @@ export function ContentManager(props: ContentManagerProps) {
 
       {error ? <p className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm text-destructive" role="alert">{error}</p> : null}
 
-      <section className="data-panel" aria-busy={loading}>
-        <Table className="min-w-[760px]">
-          <TableHeader className="bg-muted/45">
-            <TableRow>
-              {columns.map((c) => (
-                <TableHead key={c.key}>{c.label}</TableHead>
-              ))}
-              {versioned ? <TableHead>{t('version')}</TableHead> : null}
-              <TableHead>{t('status')}</TableHead>
-              <TableHead className="text-right">{t('actions.label')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading && (
-              <TableRow>
-                <TableCell colSpan={columns.length + (versioned ? 3 : 2)} className="h-32 text-center text-muted-foreground">
-                  {t('loading')}
-                </TableCell>
-              </TableRow>
-            )}
-            {!loading && visible.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={columns.length + (versioned ? 3 : 2)} className="h-32 text-center text-muted-foreground">
-                  {t('empty')}
-                </TableCell>
-              </TableRow>
-            )}
-            {visible.map((item) => (
-              <TableRow key={item._id} className="group/row">
-                {columns.map((c) => (
-                  <TableCell key={c.key} className="max-w-72 whitespace-normal leading-5">
-                    {c.render ? c.render(item) : String(getPath(item, c.key) ?? '')}
-                  </TableCell>
-                ))}
-                {versioned && (
-                  <TableCell className="tabular-nums">
-                    <span className="font-medium">v{String(item.version ?? 1)}</span>
-                    {item.isCurrent ? <span className="ml-1.5 text-xs text-muted-foreground">({t('current')})</span> : null}
-                  </TableCell>
-                )}
-                <TableCell>
+      {summary && !loading ? summary(items) : null}
+
+      {card ? (
+        <section className="space-y-3" aria-busy={loading}>
+          {loading && <p className="rounded-xl border bg-card p-8 text-center text-muted-foreground">{t('loading')}</p>}
+          {!loading && visible.length === 0 && <p className="rounded-xl border bg-card p-8 text-center text-muted-foreground">{t('empty')}</p>}
+          {visible.map((item) => {
+            const rendered = card(item);
+            return (
+              <article key={item._id} className="flex flex-wrap items-start gap-4 rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(15,35,65,0.04)]">
+                {rendered.icon}
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-heading text-base font-bold tracking-[-0.01em]">{rendered.title}</h3>
+                    {versioned ? (
+                      <span className="text-xs tabular-nums text-muted-foreground">
+                        v{String(item.version ?? 1)}
+                        {item.isCurrent ? ` (${t('current')})` : ''}
+                      </span>
+                    ) : null}
+                  </div>
+                  {rendered.body ? <div className="mt-1.5 text-sm leading-6 text-muted-foreground">{rendered.body}</div> : null}
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-2">
                   <Badge variant={STATUS_VARIANT[item.status] ?? 'secondary'} className={STATUS_CLASS[item.status]}>
                     {statusT.has(item.status) ? statusT(item.status) : item.status}
                   </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex min-w-max flex-wrap justify-end gap-1.5">
-                  {item.status !== 'retired' && item.status !== 'deactivated' && (
-                    <Button size="sm" variant="outline" onClick={() => openEdit(item)}>
-                      <Pencil data-icon="inline-start" aria-hidden="true" />
-                      {t('actions.edit')}
-                    </Button>
-                  )}
-                  {approval && item.status === 'draft' && !item.approvedBy && apiClient.approve && (
-                    <Button size="sm" variant="secondary" onClick={() => askForConfirmation('approve', item, (reference) => apiClient.approve!(item._id, reference ?? ''))}>
-                      <CheckCircle2 data-icon="inline-start" aria-hidden="true" />
-                      {t('actions.approve')}
-                    </Button>
-                  )}
-                  {apiClient.activate && (item.status === 'approved' || (item.status === 'draft' && (!approval || Boolean(item.approvedBy)))) && (
-                    <Button size="sm" onClick={() => askForConfirmation('activate', item, () => apiClient.activate!(item._id))}>
-                      <Power data-icon="inline-start" aria-hidden="true" />
-                      {t('actions.activate')}
-                    </Button>
-                  )}
-                  {versioned && item.status === 'active' && apiClient.deactivate && (
-                    <Button size="sm" variant="destructive" onClick={() => askForConfirmation('deactivate', item, () => apiClient.deactivate!(item._id))}>
-                      <Power data-icon="inline-start" aria-hidden="true" />
-                      {t('actions.deactivate')}
-                    </Button>
-                  )}
-                  {(item.status === 'active' || item.status === 'approved') && apiClient.retire && (
-                    <Button size="sm" variant="destructive" onClick={() => askForConfirmation('retire', item, () => apiClient.retire!(item._id))}>
-                      <Archive data-icon="inline-start" aria-hidden="true" />
-                      {t('actions.retire')}
-                    </Button>
-                  )}
-                  {versioned && apiClient.history && (
-                    <Button size="sm" variant="ghost" onClick={() => void act(async () => setHistory(await apiClient.history!(item._id)))}>
-                      <History data-icon="inline-start" aria-hidden="true" />
-                      {t('actions.history')}
-                    </Button>
-                  )}
-                  </div>
-                </TableCell>
+                  {itemActions(item)}
+                </div>
+              </article>
+            );
+          })}
+        </section>
+      ) : (
+        <section className="data-panel" aria-busy={loading}>
+          <Table className="min-w-[760px]">
+            <TableHeader className="bg-muted/45">
+              <TableRow>
+                {columns.map((c) => (
+                  <TableHead key={c.key}>{c.label}</TableHead>
+                ))}
+                {versioned ? <TableHead>{t('version')}</TableHead> : null}
+                <TableHead>{t('status')}</TableHead>
+                <TableHead className="text-right">{t('actions.label')}</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </section>
+            </TableHeader>
+            <TableBody>
+              {loading && (
+                <TableRow>
+                  <TableCell colSpan={columns.length + (versioned ? 3 : 2)} className="h-32 text-center text-muted-foreground">
+                    {t('loading')}
+                  </TableCell>
+                </TableRow>
+              )}
+              {!loading && visible.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={columns.length + (versioned ? 3 : 2)} className="h-32 text-center text-muted-foreground">
+                    {t('empty')}
+                  </TableCell>
+                </TableRow>
+              )}
+              {visible.map((item) => (
+                <TableRow key={item._id} className="group/row">
+                  {columns.map((c) => (
+                    <TableCell key={c.key} className="max-w-72 whitespace-normal leading-5">
+                      {c.render ? c.render(item) : String(getPath(item, c.key) ?? '')}
+                    </TableCell>
+                  ))}
+                  {versioned && (
+                    <TableCell className="tabular-nums">
+                      <span className="font-medium">v{String(item.version ?? 1)}</span>
+                      {item.isCurrent ? <span className="ml-1.5 text-xs text-muted-foreground">({t('current')})</span> : null}
+                    </TableCell>
+                  )}
+                  <TableCell>
+                    <Badge variant={STATUS_VARIANT[item.status] ?? 'secondary'} className={STATUS_CLASS[item.status]}>
+                      {statusT.has(item.status) ? statusT(item.status) : item.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{itemActions(item)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </section>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-[min(72rem,calc(100vw-3rem))]">

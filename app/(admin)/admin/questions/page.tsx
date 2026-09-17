@@ -1,8 +1,21 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
+import { BookmarkCheck, CircleCheck, Clock, FileQuestion } from 'lucide-react';
 import { ContentManager, type FieldSpec } from '@/components/admin/ContentManager';
-import { questionsApi } from '@/lib/admin/content';
+import { Badge } from '@/components/ui/badge';
+import { questionsApi, type Item } from '@/lib/admin/content';
+
+const SUMMARY_TONE = [
+  { icon: FileQuestion, tile: 'bg-blue-500/10 text-blue-700' },
+  { icon: CircleCheck, tile: 'bg-emerald-500/10 text-emerald-700' },
+  { icon: Clock, tile: 'bg-amber-500/10 text-amber-700' },
+  { icon: BookmarkCheck, tile: 'bg-violet-500/10 text-violet-700' },
+] as const;
+
+function tagsOf(item: Item) {
+  return (item.tags ?? {}) as { personaKeys?: string[]; scenarioKeys?: string[]; sectors?: string[] };
+}
 
 function questionFields(t: ReturnType<typeof useTranslations>): FieldSpec[] {
   return [
@@ -37,27 +50,68 @@ export default function QuestionsPage() {
   const locale = useLocale();
   const fields = questionFields(t);
   return (
-    <ContentManager
+    <div className="space-y-5">
+      <ContentManager
       title={t('title')}
       description={t('description')}
       requirements={['FR-15']}
       entity={t('entity')}
       apiClient={questionsApi}
       fields={fields}
-      columns={[
-        { key: 'key', label: t('fields.key') },
-        { key: 'text', label: t('columns.text') },
-        { key: 'type', label: t('fields.type') },
-        { key: 'factKey', label: t('fields.factKey') },
-        { key: 'tags.personaKeys', label: t('columns.personas'), render: (it) => ((it.tags as { personaKeys?: string[] })?.personaKeys ?? []).join(', ') },
-        { key: 'updatedAt', label: t('columns.updated'), render: (it) => it.updatedAt ? new Date(String(it.updatedAt)).toLocaleDateString(locale) : '—' },
-      ]}
+      columns={[]}
+      summary={(items) => {
+        const sectors = new Set(items.flatMap((item) => tagsOf(item).sectors ?? []));
+        const counters = [
+          { key: 'total', value: items.length },
+          { key: 'active', value: items.filter((item) => item.status !== 'retired').length },
+          { key: 'retired', value: items.filter((item) => item.status === 'retired').length },
+          { key: 'sectors', value: sectors.size },
+        ] as const;
+        return (
+          <section className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2 lg:grid-cols-4">
+            {counters.map((counter, index) => {
+              const tone = SUMMARY_TONE[index]!;
+              const Icon = tone.icon;
+              return (
+                <div key={counter.key} className="flex items-center gap-3 bg-card p-4">
+                  <span className={`grid size-10 shrink-0 place-items-center rounded-full ${tone.tile}`}>
+                    <Icon className="size-5" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <p className="metric-value">{counter.value.toLocaleString(locale)}</p>
+                    <p className="text-xs text-muted-foreground">{t(`summary.${counter.key}`)}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </section>
+        );
+      }}
+      card={(item) => {
+        const tags = tagsOf(item);
+        const pills = [...(tags.personaKeys ?? []), ...(tags.sectors ?? [])];
+        return {
+          icon: <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><FileQuestion className="size-5" aria-hidden="true" /></span>,
+          title: String(item.text ?? item.key ?? ''),
+          body: (
+            <span className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+              {pills.map((pill) => (
+                <Badge key={pill} variant="secondary">{pill}</Badge>
+              ))}
+              {item.createdAt ? <span className="text-xs">{t('card.created', { date: new Date(String(item.createdAt)).toLocaleDateString(locale) })}</span> : null}
+              {item.updatedAt ? <span className="text-xs">{t('card.updated', { date: new Date(String(item.updatedAt)).toLocaleDateString(locale) })}</span> : null}
+            </span>
+          ),
+        };
+      }}
       facets={[
         { key: 'tags.personaKeys', label: t('fields.personaKeys') },
         { key: 'tags.scenarioKeys', label: t('fields.scenarioKeys') },
         { key: 'tags.sectors', label: t('fields.sectors') },
       ]}
       versioned={false}
-    />
+      />
+      <p className="rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-xs leading-5 text-blue-950/75">{t('note')}</p>
+    </div>
   );
 }

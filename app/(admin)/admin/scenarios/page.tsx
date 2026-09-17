@@ -37,7 +37,8 @@ export default function ScenariosPage() {
   const t = useTranslations('admin.scenarios');
   const fields = scenarioFields(t);
   return (
-    <ContentManager
+    <div className="space-y-5">
+      <ContentManager
       title={t('title')}
       description={t('description')}
       requirements={['FR-11', 'FR-12']}
@@ -51,6 +52,8 @@ export default function ScenariosPage() {
         { key: 'conversationFlow', label: t('columns.questions'), render: (it) => String((it.conversationFlow as unknown[] | undefined)?.length ?? 0) },
       ]}
       versioned
-    />
+      />
+      <p className="rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-xs leading-5 text-blue-950/75">{t('note')}</p>
+    </div>
   );
 }

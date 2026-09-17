@@ -20,7 +20,8 @@ export default function PersonasPage() {
     { name: 'defaultScenarioKey', label: t('fields.defaultScenarioKey'), kind: 'text', help: t('help.defaultScenarioKey') },
   ];
   return (
-    <ContentManager
+    <div className="space-y-5">
+      <ContentManager
       title={t('title')}
       description={t('description')}
       requirements={['FR-09', 'FR-10']}
@@ -28,12 +29,13 @@ export default function PersonasPage() {
       apiClient={personasApi}
       fields={fields}
       columns={[
-        { key: 'key', label: t('fields.key') },
         { key: 'name', label: t('fields.name') },
+        { key: 'departmentIds', label: t('columns.departments'), render: (item) => String((item.departmentIds as string[] | undefined)?.length ?? 0) },
         { key: 'sector', label: t('fields.sector') },
-        { key: 'defaultScenarioKey', label: t('fields.defaultScenarioKey'), render: (item) => String(item.defaultScenarioKey ?? '—') },
       ]}
       versioned
-    />
+      />
+      <p className="rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-xs leading-5 text-blue-950/75">{t('note')}</p>
+    </div>
   );
 }
