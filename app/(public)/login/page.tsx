@@ -31,6 +31,15 @@ const DEV_ACCOUNTS = [
   { email: 'requestor@paid.local', labelKey: 'devAccounts.requestorPaid' },
 ];
 
+/** Seeded accounts the owner demonstrates with; the password is the seeded demo password, never a real credential. */
+const DEMO_ACCOUNTS = [
+  { role: 'Administrator', home: '/admin', email: 'admin@dev.local' },
+  { role: 'Sys admin', home: '/system', email: 'sysadmin@dev.local' },
+  { role: 'Auditor', home: '/audit', email: 'audit@dev.local' },
+  { role: 'Requestor', home: '/chat', email: 'requestor@tac.local' },
+];
+const DEMO_PASSWORD = 'RiskSense2026!';
+
 type Step = 'credentials' | 'otp';
 type Mode = 'signin' | 'signup';
 
@@ -134,19 +143,16 @@ function LoginForm() {
       { signOutOnError: true },
     );
 
+  const linkClass = 'underline underline-offset-2 hover:text-foreground disabled:no-underline disabled:opacity-60';
+
   return (
-    <Card className="w-full max-w-[34rem] border-border bg-card shadow-[0_24px_70px_rgba(15,35,65,0.10)]">
-      <CardHeader className="border-b pb-5">
-        <div className="mb-2 flex items-center justify-between gap-3">
-          <div className="flex size-10 items-center justify-center rounded-lg border border-primary/15 bg-primary/6 text-primary">
-            {step === 'otp' ? <KeyRound className="size-5" /> : <Fingerprint className="size-5" />}
-          </div>
-          <Badge variant="outline" className="bg-background/80">
-            {step === 'otp' ? t('steps.verify') : t('steps.identity')}
-          </Badge>
+    <Card className="w-full max-w-[26rem] border-border bg-card shadow-[0_20px_60px_rgba(15,35,65,0.09)]">
+      <CardHeader className="space-y-1.5 pb-5">
+        <div className="mb-1 flex size-9 items-center justify-center rounded-lg border border-primary/15 bg-primary/6 text-primary">
+          {step === 'otp' ? <KeyRound className="size-4.5" /> : <Fingerprint className="size-4.5" />}
         </div>
-        <CardTitle className="text-2xl sm:text-3xl">{t('title')}</CardTitle>
-        <CardDescription className="max-w-md leading-6">
+        <CardTitle className="text-2xl">{t('title')}</CardTitle>
+        <CardDescription className="leading-6">
           {step === 'otp'
             ? t('otpPrompt', { email: otpInfo?.sentTo ?? t('yourAddress') })
             : hasFirebase
@@ -158,7 +164,7 @@ function LoginForm() {
                 : t('authNotConfigured')}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-5 pt-1">
+      <CardContent className="space-y-4">
         {hasFirebase && step === 'credentials' && (
           <div className="space-y-4">
             <form
@@ -207,111 +213,55 @@ function LoginForm() {
                 {busy ? t('pleaseWait') : mode === 'signin' ? t('continue') : t('createAccount')}
                 {!busy && <ArrowRight data-icon="inline-end" className="size-4" />}
               </Button>
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <button type="button" className="underline" disabled={busy} onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                <button type="button" className={linkClass} disabled={busy} onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}>
                   {mode === 'signin' ? t('switchToSignUp') : t('switchToSignIn')}
                 </button>
                 {mode === 'signin' && (
-                  <button
-                    type="button"
-                    className="underline"
-                    disabled={busy || !email}
-                    onClick={() =>
-                      void run(async () => {
-                        await sendPasswordReset(email.trim());
-                        setNotice(t('resetSent', { email: email.trim() }));
-                      })
-                    }
-                  >
-                    {t('forgotPassword')}
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      className={linkClass}
+                      disabled={busy || !email}
+                      onClick={() =>
+                        void run(async () => {
+                          await sendPasswordReset(email.trim());
+                          setNotice(t('resetSent', { email: email.trim() }));
+                        })
+                      }
+                    >
+                      {t('forgotPassword')}
+                    </button>
+                    <button
+                      type="button"
+                      className={linkClass}
+                      disabled={busy || !email.includes('@') || password.length < 8}
+                      title={email.includes('@') && password.length >= 8 ? undefined : t('resendVerificationNeedsCredentials')}
+                      onClick={() =>
+                        void run(async () => {
+                          const normalizedEmail = email.trim();
+                          const result = await resendPasswordVerification(normalizedEmail, password);
+                          setNotice(
+                            result === 'already-verified'
+                              ? t('verificationAlreadyComplete', { email: normalizedEmail })
+                              : t('verificationResent', { email: normalizedEmail }),
+                          );
+                        })
+                      }
+                    >
+                      {t('resendVerification')}
+                    </button>
+                  </>
                 )}
               </div>
-              {mode === 'signin' && (
-                <p className="text-xs text-muted-foreground">
-                  {t('resendVerificationHint')}{' '}
-                  <button
-                    type="button"
-                    className="underline"
-                    disabled={busy || !email.includes('@') || password.length < 8}
-                    title={email.includes('@') && password.length >= 8 ? undefined : t('resendVerificationNeedsCredentials')}
-                    onClick={() =>
-                      void run(async () => {
-                        const normalizedEmail = email.trim();
-                        const result = await resendPasswordVerification(normalizedEmail, password);
-                        setNotice(
-                          result === 'already-verified'
-                            ? t('verificationAlreadyComplete', { email: normalizedEmail })
-                            : t('verificationResent', { email: normalizedEmail }),
-                        );
-                      })
-                    }
-                  >
-                    {t('resendVerification')}
-                  </button>
-                </p>
-              )}
             </form>
-            {mode === 'signin' && (
-              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-primary">Live Demo Accounts</span>
-                  <span className="text-[0.68rem] text-muted-foreground">Click to fill</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <button
-                    type="button"
-                    className="flex flex-col items-center justify-center rounded-md border border-border bg-background p-2 text-center text-xs transition hover:border-primary hover:bg-muted/50 cursor-pointer"
-                    onClick={() => {
-                      setEmail('admin@dev.local');
-                      setPassword('RiskSense2026!');
-                    }}
-                  >
-                    <span className="font-semibold text-foreground">Administrator</span>
-                    <span className="text-[0.65rem] text-muted-foreground">TAC (/admin)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="flex flex-col items-center justify-center rounded-md border border-border bg-background p-2 text-center text-xs transition hover:border-primary hover:bg-muted/50 cursor-pointer"
-                    onClick={() => {
-                      setEmail('sysadmin@dev.local');
-                      setPassword('RiskSense2026!');
-                    }}
-                  >
-                    <span className="font-semibold text-foreground">System Admin</span>
-                    <span className="text-[0.65rem] text-muted-foreground">Bayshore (/system)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="flex flex-col items-center justify-center rounded-md border border-border bg-background p-2 text-center text-xs transition hover:border-primary hover:bg-muted/50 cursor-pointer"
-                    onClick={() => {
-                      setEmail('audit@dev.local');
-                      setPassword('RiskSense2026!');
-                    }}
-                  >
-                    <span className="font-semibold text-foreground">Auditor</span>
-                    <span className="text-[0.65rem] text-muted-foreground">TAC (/audit)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="flex flex-col items-center justify-center rounded-md border border-border bg-background p-2 text-center text-xs transition hover:border-primary hover:bg-muted/50 cursor-pointer"
-                    onClick={() => {
-                      setEmail('requestor@tac.local');
-                      setPassword('RiskSense2026!');
-                    }}
-                  >
-                    <span className="font-semibold text-foreground">Requestor</span>
-                    <span className="text-[0.65rem] text-muted-foreground">TAC (/chat)</span>
-                  </button>
-                </div>
-              </div>
-            )}
-            <div className="flex items-center gap-3 text-center text-[0.68rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+
+            <div className="flex items-center gap-3 text-[0.68rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
               <span className="h-px flex-1 bg-border" />
               {t('or')}
               <span className="h-px flex-1 bg-border" />
             </div>
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-2">
               <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={() => void firstFactor(signInWithGoogle)}>
                 {t('google')}
               </Button>
@@ -319,6 +269,31 @@ function LoginForm() {
                 {t('sso')}
               </Button>
             </div>
+
+            {mode === 'signin' && (
+              <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+                <div className="flex items-baseline justify-between text-xs">
+                  <span className="font-semibold text-foreground">{t('demo.title')}</span>
+                  <span className="text-[0.68rem] text-muted-foreground">{t('demo.hint')}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                  {DEMO_ACCOUNTS.map((account) => (
+                    <button
+                      key={account.email}
+                      type="button"
+                      className="cursor-pointer rounded-md border bg-background px-2 py-1.5 text-center text-xs transition hover:border-primary hover:bg-background/60"
+                      onClick={() => {
+                        setEmail(account.email);
+                        setPassword(DEMO_PASSWORD);
+                      }}
+                    >
+                      <span className="block font-medium text-foreground whitespace-nowrap">{account.role}</span>
+                      <span className="block text-[0.65rem] text-muted-foreground">{account.home}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -361,13 +336,13 @@ function LoginForm() {
               {busy ? t('verifying') : t('verify')}
               {!busy && <ShieldCheck data-icon="inline-end" className="size-4" />}
             </Button>
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <button type="button" className="underline" onClick={() => void run(startSecondFactor)}>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              <button type="button" className={linkClass} onClick={() => void run(startSecondFactor)}>
                 {t('resend')}
               </button>
               <button
                 type="button"
-                className="underline"
+                className={linkClass}
                 onClick={() =>
                   void run(async () => {
                     await firebaseSignOut();
@@ -378,6 +353,10 @@ function LoginForm() {
                 {t('differentAccount')}
               </button>
             </div>
+            <p className="flex items-start gap-2 text-xs leading-5 text-muted-foreground">
+              <LockKeyhole className="mt-0.5 size-3.5 shrink-0 text-primary" />
+              <span>{t('recoveryNote')}</span>
+            </p>
           </form>
         )}
 
@@ -425,22 +404,8 @@ function LoginForm() {
           </p>
         )}
         {error && <p role="alert" className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">{error}</p>}
-        <div className="space-y-3 border-t pt-4">
-          <div className="grid gap-2 sm:grid-cols-2" aria-label={t('planPolicyLabel')}>
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3">
-              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800"><Badge variant="outline" className="border-emerald-300 bg-white/70 text-[0.6rem] text-emerald-800">FREE</Badge>{t('plans.freeTitle')}</div>
-              <p className="mt-1.5 text-xs leading-5 text-emerald-900/72">{t('plans.freeDescription')}</p>
-            </div>
-            <div className="rounded-lg border border-blue-200 bg-blue-50/65 p-3">
-              <div className="flex items-center gap-2 text-xs font-semibold text-blue-900"><Badge variant="outline" className="border-blue-300 bg-white/70 text-[0.6rem] text-blue-900">PAID</Badge>{t('plans.paidTitle')}</div>
-              <p className="mt-1.5 text-xs leading-5 text-blue-950/72">{t('plans.paidDescription')}</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-2 text-xs leading-5 text-muted-foreground">
-            <LockKeyhole className="mt-0.5 size-3.5 shrink-0 text-primary" />
-            <span>{t('recoveryNote')}</span>
-          </div>
-        </div>
+        {/* The plan split decides the role and the MFA step, so it stays on the page as one line (FR-02, SEC-03). */}
+        <p className="border-t pt-4 text-xs leading-5 text-muted-foreground">{t('planNote')}</p>
       </CardContent>
     </Card>
   );
@@ -450,17 +415,17 @@ export default function LoginPage() {
   const t = useTranslations('login');
   return (
     <main className="min-h-screen bg-background">
-      <div className="mx-auto grid min-h-screen max-w-[1540px] lg:grid-cols-[minmax(32rem,1.03fr)_minmax(30rem,0.97fr)]">
+      <div className="mx-auto grid min-h-screen max-w-[1540px] lg:grid-cols-2">
         <section className="relative flex min-h-screen items-center justify-center px-4 py-8 sm:px-8 lg:px-12 xl:px-16">
           <div aria-hidden="true" className="subtle-grid absolute inset-0 opacity-30" />
-          <div className="relative w-full">
+          <div className="relative flex w-full justify-center">
             <Suspense>
               <LoginForm />
             </Suspense>
           </div>
         </section>
 
-        <section className="relative hidden overflow-hidden border-l border-white/10 bg-[linear-gradient(160deg,#2a6ee4_0%,#1546a8_100%)] px-10 py-12 text-white lg:flex lg:flex-col lg:justify-between xl:px-14 xl:py-14">
+        <section className="relative hidden overflow-hidden border-l border-white/10 bg-[linear-gradient(160deg,#2a6ee4_0%,#1546a8_100%)] px-10 py-12 text-white lg:flex lg:flex-col xl:px-14 xl:py-14">
           <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#38a0ff] to-transparent" />
           <div aria-hidden="true" className="absolute -right-28 top-24 size-80 rounded-full bg-white/10 blur-3xl" />
           <div className="relative flex items-center gap-3">
@@ -468,24 +433,24 @@ export default function LoginPage() {
             <div className="font-semibold">{t('title')}</div>
           </div>
 
-          <div className="relative max-w-xl space-y-8 py-12">
-            <div className="space-y-4">
-              <div className="text-[0.68rem] font-semibold tracking-[0.17em] text-white/70 uppercase">{t('eyebrow')}</div>
-              <h1 className="max-w-lg text-4xl leading-[1.08] font-semibold tracking-[-0.045em] xl:text-[2.9rem]">{t('heroTitle')}</h1>
-              <p className="max-w-lg text-sm leading-6 text-white/75 xl:text-base xl:leading-7">{t('heroDescription')}</p>
-            </div>
-            <div className="divide-y divide-white/10 border-y border-white/10">
-              {(['guided', 'deterministic', 'auditable'] as const).map((key, index) => (
-                <div key={key} className="flex items-center gap-4 py-3.5 text-sm text-white/80">
-                  <span className="font-mono text-[0.65rem] text-white/70">0{index + 1}</span>
-                  <span className="flex-1">{t(`assurance.${key}`)}</span>
-                  <CheckCircle2 className="size-4 text-white/80" aria-hidden="true" />
-                </div>
-              ))}
+          <div className="relative flex flex-1 flex-col justify-center">
+            <div className="max-w-lg space-y-7">
+              <div className="space-y-4">
+                <div className="text-[0.68rem] font-semibold tracking-[0.17em] text-white/70 uppercase">{t('eyebrow')}</div>
+                <h1 className="text-4xl leading-[1.08] font-semibold tracking-[-0.045em] xl:text-[2.9rem]">{t('heroTitle')}</h1>
+                <p className="text-sm leading-6 text-white/75 xl:text-base xl:leading-7">{t('heroDescription')}</p>
+              </div>
+              <div className="divide-y divide-white/10 border-y border-white/10">
+                {(['guided', 'deterministic', 'auditable'] as const).map((key, index) => (
+                  <div key={key} className="flex items-center gap-4 py-3.5 text-sm text-white/80">
+                    <span className="font-mono text-[0.65rem] text-white/70">0{index + 1}</span>
+                    <span className="flex-1">{t(`assurance.${key}`)}</span>
+                    <CheckCircle2 className="size-4 text-white/80" aria-hidden="true" />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-
-          <p className="relative max-w-lg text-xs leading-5 text-white/70">{t('governanceNote')}</p>
         </section>
       </div>
     </main>

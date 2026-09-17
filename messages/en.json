@@ -72,10 +72,6 @@
     "heroDescription": "Capture the facts, apply deterministic policy, record the human decision.",
     "planNote": "Free accounts sign in as requestors. Paid workspaces add managed roles, SSO and email MFA.",
     "recoveryNote": "MFA or SSO did not complete? Try again, or contact your administrator.",
-    "steps": {
-      "identity": "Identity",
-      "verify": "Verification"
-    },
     "assurance": {
       "guided": "Guided, scenario-aware intake",
       "deterministic": "Deterministic rules and scoring",
@@ -101,8 +97,8 @@
     "continue": "Continue",
     "createAccount": "Create account",
     "pleaseWait": "Please wait…",
-    "switchToSignUp": "New here? Create an account",
-    "switchToSignIn": "Already have an account? Sign in",
+    "switchToSignUp": "Create an account",
+    "switchToSignIn": "Sign in instead",
     "forgotPassword": "Forgot password?",
     "resetSent": "Password reset email sent to {email}.",
     "or": "or",
