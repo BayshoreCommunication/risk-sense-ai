@@ -10,6 +10,8 @@ import {
   BarChart3,
   BookOpenCheck,
   Building2,
+  ChevronLeft,
+  ChevronRight,
   CircleGauge,
   ClipboardCheck,
   Database,
@@ -25,7 +27,6 @@ import {
   Menu,
   MessageSquareText,
   Network,
-  PanelLeft,
   RefreshCw,
   Settings2,
   ShieldCheck,
@@ -269,22 +270,9 @@ export function AppShell({ role, children }: { role: Role; children: React.React
             <X className="size-4" />
           </button>
         </div>
-      ) : (
-        <div className={`flex h-12 shrink-0 items-center border-b border-sidebar-border ${compact ? 'justify-center px-2' : 'justify-end px-3'}`}>
-          <button
-            type="button"
-            aria-label={compact ? t('app.expandNavigation') : t('app.collapseNavigation')}
-            aria-expanded={!compact}
-            title={compact ? t('app.expandNavigation') : t('app.collapseNavigation')}
-            className="rounded-lg p-2 text-sidebar-foreground/60 transition hover:bg-sidebar-accent hover:text-sidebar-foreground"
-            onClick={() => setCollapsed((current) => !current)}
-          >
-            <PanelLeft className="size-4" aria-hidden="true" />
-          </button>
-        </div>
-      )}
+      ) : null}
 
-      <div className="scrollbar-subtle min-h-0 flex-1 overflow-y-auto px-2.5 py-3">
+      <div className="scrollbar-subtle min-h-0 flex-1 overflow-y-auto px-2.5 pb-3 pt-2.5">
         <nav className="space-y-0.5" aria-label={t('app.navigation')}>
           {navigation.map((item, index) => {
             const active = isNavActive(pathname, item, home);
@@ -350,7 +338,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
           type="button"
           aria-label={t('app.signOut')}
           title={compact ? t('app.signOut') : undefined}
-          className={`flex w-full items-center rounded-md text-[0.82rem] font-medium text-sidebar-foreground/75 transition hover:bg-destructive/8 hover:text-destructive ${compact ? 'justify-center p-2' : 'gap-2.5 px-2.5 py-2'}`}
+          className={`flex w-full items-center rounded-md border border-destructive/15 bg-destructive/6 text-[0.82rem] font-medium text-destructive/90 transition hover:border-destructive/30 hover:bg-destructive/12 hover:text-destructive ${compact ? 'justify-center p-2' : 'gap-2.5 px-2.5 py-2'}`}
           onClick={() => void logout()}
         >
           <LogOut className="size-4 shrink-0" aria-hidden="true" />
@@ -397,8 +385,19 @@ export function AppShell({ role, children }: { role: Role; children: React.React
         </div>
         </header>
 
-        <aside className={`fixed bottom-0 left-0 top-14 z-40 hidden border-r border-sidebar-border bg-sidebar shadow-[1px_0_0_rgba(15,35,65,0.04)] transition-[width] lg:block ${collapsed ? 'w-[4.5rem]' : 'w-64'}`}>
+        <aside className={`fixed bottom-0 left-0 top-14 z-40 sidebar-surface hidden border-r border-sidebar-border transition-[width] lg:block ${collapsed ? 'w-[4.5rem]' : 'w-64'}`}>
           {renderNavigation()}
+          {/* Collapse handle, straddling the rail's edge. */}
+          <button
+            type="button"
+            aria-label={collapsed ? t('app.expandNavigation') : t('app.collapseNavigation')}
+            aria-expanded={!collapsed}
+            title={collapsed ? t('app.expandNavigation') : t('app.collapseNavigation')}
+            className="absolute left-full top-3 ml-1.5 grid size-6 place-items-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground/60 shadow-[0_1px_3px_rgba(15,35,65,0.14)] transition hover:border-sidebar-primary/40 hover:bg-sidebar-accent hover:text-sidebar-primary"
+            onClick={() => setCollapsed((current) => !current)}
+          >
+            {collapsed ? <ChevronRight className="size-3.5" aria-hidden="true" /> : <ChevronLeft className="size-3.5" aria-hidden="true" />}
+          </button>
         </aside>
       </div>
 
@@ -418,7 +417,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
             aria-modal="true"
             aria-label={t('app.navigation')}
             tabIndex={-1}
-            className="relative h-full w-[min(20rem,88vw)] border-r border-sidebar-border bg-sidebar shadow-2xl outline-none"
+            className="sidebar-surface relative h-full w-[min(20rem,88vw)] border-r border-sidebar-border shadow-2xl outline-none"
           >
             {renderNavigation(true)}
           </aside>
