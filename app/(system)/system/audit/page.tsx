@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PageHeader } from '@/components/shell/PageHeader';
 import { api, toApiError } from '@/lib/api/client';
 
 type Manifest = {
@@ -158,15 +159,14 @@ export default function SystemAuditArchivePage() {
 
   return (
     <div className="page-shell">
-      <header className="workspace-header">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="max-w-3xl">
-            <h1 className="page-heading">{t('title')}</h1>
-            <p className="page-description mt-2">{t('description')}</p>
-          </div>
+      <PageHeader
+        title={t('title')}
+        description={t('description')}
+        requirements={['FR-26', 'SEC-07']}
+        actions={
           <Badge variant={enabled ? 'outline' : 'secondary'}>{enabled ? t('enabled') : t('featureRequired')}</Badge>
-        </div>
-      </header>
+        }
+      />
 
       {enabled && (
         <div className="data-panel grid divide-y sm:grid-cols-3 sm:divide-x sm:divide-y-0">

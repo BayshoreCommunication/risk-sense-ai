@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PageHeader } from '@/components/shell/PageHeader';
 import { api, toApiError } from '@/lib/api/client';
 import type { components } from '@/lib/api/types';
 
@@ -49,20 +50,21 @@ export default function TenantSettingsPage() {
   const dirty = Object.keys(draft).length > 0;
   return (
     <div className="page-shell max-w-6xl">
-      <header className="workspace-header">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="page-heading">{t('title')}</h1>
-            <p className="page-description mt-2">{t('description')}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{merged.name} · <code>{merged.slug}</code></p>
-          </div>
-          <Badge variant={merged.plan === 'paid' ? 'default' : 'secondary'} className="px-3 py-1">{merged.plan.toUpperCase()}</Badge>
-        </div>
-      </header>
+      <PageHeader
+        title={t('title')}
+        description={
+          <>
+            {t('description')}
+            <span className="mt-1 block">{merged.name} · <code>{merged.slug}</code></span>
+          </>
+        }
+        requirements={['FR-03', 'SEC-02']}
+        actions={<Badge variant={merged.plan === 'paid' ? 'default' : 'secondary'} className="px-3 py-1">{merged.plan.toUpperCase()}</Badge>}
+      />
 
       <Card>
         <CardHeader className="border-b">
-          <CardTitle className="flex items-center gap-2"><Building2 className="size-4 text-primary" aria-hidden="true" />{t('plan.title')}</CardTitle>
+          <CardTitle className="flex items-center gap-3"><span className="card-icon"><Building2 className="size-5" aria-hidden="true" /></span>{t('plan.title')}</CardTitle>
           <CardDescription>{merged.plan === 'paid' ? t('plan.paidDescription') : t('plan.freeDescription')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 pt-1">
@@ -89,7 +91,7 @@ export default function TenantSettingsPage() {
 
       <Card>
         <CardHeader className="border-b">
-          <CardTitle className="flex items-center gap-2"><KeyRound className="size-4 text-primary" aria-hidden="true" />{t('sso.title')}</CardTitle>
+          <CardTitle className="flex items-center gap-3"><span className="card-icon"><KeyRound className="size-5" aria-hidden="true" /></span>{t('sso.title')}</CardTitle>
           <CardDescription>{t('sso.description')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 pt-1">
@@ -114,7 +116,7 @@ export default function TenantSettingsPage() {
 
       <Card>
         <CardHeader className="border-b">
-          <CardTitle className="flex items-center gap-2"><LockKeyhole className="size-4 text-primary" aria-hidden="true" />{t('policy.title')}</CardTitle>
+          <CardTitle className="flex items-center gap-3"><span className="card-icon"><LockKeyhole className="size-5" aria-hidden="true" /></span>{t('policy.title')}</CardTitle>
           <CardDescription>{t('policy.accountSemantics')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5 pt-1">

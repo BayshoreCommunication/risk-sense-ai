@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PageHeader } from '@/components/shell/PageHeader';
 import { api, toApiError } from '@/lib/api/client';
 import type { components, paths } from '@/lib/api/types';
 
@@ -216,15 +217,12 @@ export default function UsersPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">
-      <header className="workspace-header">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="max-w-3xl">
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('description')}</p>
-          </div>
-          <Button onClick={openCreate} disabled={controlsDisabled}><UserPlus aria-hidden="true" />{t('provision')}</Button>
-        </div>
-      </header>
+      <PageHeader
+        title={t('title')}
+        description={t('description')}
+        requirements={['FR-02', 'FR-10']}
+        actions={<Button onClick={openCreate} disabled={controlsDisabled}><UserPlus aria-hidden="true" />{t('provision')}</Button>}
+      />
 
       <div className="grid overflow-hidden rounded-xl sm:grid-cols-3">
         <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.total')}</CardDescription><CardTitle className="metric-value">{users.length}</CardTitle></CardHeader></Card>
@@ -234,7 +232,7 @@ export default function UsersPage() {
 
       <Card>
         <CardHeader className="border-b">
-          <CardTitle className="flex items-center gap-2"><KeyRound className="size-4 text-primary" aria-hidden="true" />{t('accessPolicy.title')}</CardTitle>
+          <CardTitle className="flex items-center gap-3"><span className="card-icon"><KeyRound className="size-5" aria-hidden="true" /></span>{t('accessPolicy.title')}</CardTitle>
           <CardDescription id="user-role-policy">
             {planState === 'loading' ? t('accessPolicy.loading') : planState === 'error' ? t('accessPolicy.error') : plan === 'free' ? t('accessPolicy.free') : t('accessPolicy.paid')}
           </CardDescription>

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PageHeader } from '@/components/shell/PageHeader';
 import { api, toApiError } from '@/lib/api/client';
 import type { components, paths } from '@/lib/api/types';
 
@@ -223,15 +224,14 @@ export default function DisasterRecoveryPage() {
 
   return (
     <div className="page-shell">
-      <header className="workspace-header">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="max-w-3xl">
-            <h1 className="page-heading">{t('title')}</h1>
-            <p className="page-description mt-2">{t('description')}</p>
-          </div>
+      <PageHeader
+        title={t('title')}
+        description={t('description')}
+        requirements={['NFR-06']}
+        actions={
           <Badge className="px-3 py-1" variant={status.readiness === 'ready' ? 'outline' : 'destructive'}>{status.readiness === 'ready' ? t('readiness.ready') : t('readiness.attention')}</Badge>
-        </div>
-      </header>
+        }
+      />
 
       <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
         <span className="font-medium">{t('operatorNotice.title')}:</span> {t('operatorNotice.description')}
@@ -257,7 +257,7 @@ export default function DisasterRecoveryPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('current.title')}</CardTitle>
+          <CardTitle className="flex items-center gap-3"><span className="card-icon"><DatabaseBackup className="size-5" aria-hidden="true" /></span>{t('current.title')}</CardTitle>
           <CardDescription>
             {t('current.backup', { date: formatDate(status.lastBackupAt, locale, t('notRecorded')) })} · {t('current.drill', { date: formatDate(status.lastRestoreDrillAt, locale, t('notRecorded')) })}
             {status.updatedAt ? ` · ${t('current.updated', { date: formatDate(status.updatedAt, locale, t('notRecorded')) })}` : ''}
@@ -280,7 +280,7 @@ export default function DisasterRecoveryPage() {
           void save();
         }}
       >
-        <CardHeader className="border-b"><CardTitle>{t('form.title')}</CardTitle><CardDescription>{t('form.description')}</CardDescription></CardHeader>
+        <CardHeader className="border-b"><CardTitle className="flex items-center gap-3"><span className="card-icon"><FileCheck2 className="size-5" aria-hidden="true" /></span>{t('form.title')}</CardTitle><CardDescription>{t('form.description')}</CardDescription></CardHeader>
         <CardContent className="space-y-4">
         <section className="rounded-xl border border-border/70 bg-muted/25 p-4" aria-labelledby="dr-target-policy-title">
           <div className="flex flex-wrap items-start justify-between gap-3">

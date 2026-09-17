@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PageHeader } from '@/components/shell/PageHeader';
 import { api, toApiError } from '@/lib/api/client';
 import type { components } from '@/lib/api/types';
 
@@ -85,13 +86,12 @@ export default function ConformancePage() {
 
   return (
     <div className="page-shell">
-      <header className="workspace-header">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="max-w-3xl">
-            <h1 className="page-heading">{t('title')}</h1>
-            <p className="page-description mt-2">{t('description')}</p>
-          </div>
-          {!confirmRun ? (
+      <PageHeader
+        title={t('title')}
+        description={t('description')}
+        requirements={['FR-30', 'AI-01']}
+        actions={
+          !confirmRun ? (
             <Button onClick={() => setConfirmRun(true)} disabled={running}><ScanSearch aria-hidden="true" />{t('runScan')}</Button>
           ) : (
             <div className="flex max-w-xl flex-wrap items-center justify-end gap-2 rounded-xl border border-amber-500/40 bg-amber-500/5 p-2">
@@ -99,9 +99,9 @@ export default function ConformancePage() {
               <Button size="sm" onClick={() => void runScan()} disabled={running}>{running ? t('scanning') : t('confirmScan')}</Button>
               <Button size="sm" variant="ghost" onClick={() => setConfirmRun(false)} disabled={running}>{t('cancel')}</Button>
             </div>
-          )}
-        </div>
-      </header>
+          )
+        }
+      />
 
       {error && (
         <div className="flex items-center justify-between gap-3 rounded-md border border-destructive/40 bg-destructive/5 p-3" role="alert">

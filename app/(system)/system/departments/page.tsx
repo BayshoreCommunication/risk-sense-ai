@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PageHeader } from '@/components/shell/PageHeader';
 import { api, toApiError } from '@/lib/api/client';
 import type { components, paths } from '@/lib/api/types';
 
@@ -130,15 +131,14 @@ export default function DepartmentsPage() {
 
   return (
     <div className="page-shell">
-      <header className="workspace-header">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="max-w-3xl">
-            <h1 className="page-heading">{t('title')}</h1>
-            <p className="page-description mt-2">{t('description')}</p>
-          </div>
+      <PageHeader
+        title={t('title')}
+        description={t('description')}
+        requirements={['FR-10']}
+        actions={
           <Button onClick={openCreate}><Plus aria-hidden="true" />{t('newDepartment')}</Button>
-        </div>
-      </header>
+        }
+      />
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Card size="sm"><CardHeader><div className="flex items-center justify-between"><CardDescription>{t('summary.departments')}</CardDescription><Building2 className="size-4 text-blue-700" aria-hidden="true" /></div><CardTitle className="mt-1 text-2xl tabular-nums">{departments.length}</CardTitle></CardHeader></Card>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { CheckCircle2, ChevronDown, ChevronUp, Download, FileSpreadsheet, Power, UploadCloud } from 'lucide-react';
+import { PageHeader } from '@/components/shell/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -162,21 +163,17 @@ export default function DatasetsPage() {
 
   return (
     <div className="page-shell">
-      <header className="workspace-header">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="max-w-3xl">
-            <h1 className="flex items-center gap-3 text-2xl font-semibold tracking-tight sm:text-3xl">
-              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><FileSpreadsheet className="size-5" aria-hidden="true" /></span>
-              {t('title')}
-            </h1>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('description')}</p>
-          </div>
+      <PageHeader
+        title={t('title')}
+        description={t('description')}
+        requirements={['FR-13', 'FR-14']}
+        actions={
           <Button variant="outline" onClick={() => void run(downloadTemplate)} disabled={busy} className="shrink-0 bg-background">
             <Download data-icon="inline-start" aria-hidden="true" />
             {t('downloadTemplate')}
           </Button>
-        </div>
-      </header>
+        }
+      />
 
       <section className="grid overflow-hidden rounded-xl sm:grid-cols-2 xl:grid-cols-5" aria-label={t('summary.label')}>
         <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.total')}</CardDescription><CardTitle className="metric-value">{loading ? '—' : items.length}</CardTitle></CardHeader></Card>

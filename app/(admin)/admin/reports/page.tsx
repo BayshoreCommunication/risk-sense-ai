@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowUpRight, BarChart3, Clock3, FileDown, LoaderCircle, Pie
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader } from '@/components/shell/PageHeader';
 import { api, toApiError } from '@/lib/api/client';
 
 const REPORTS = [
@@ -67,18 +68,11 @@ export default function StandardReportsPage() {
 
   return (
     <div className="page-shell">
-      <header className="workspace-header">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="max-w-3xl">
-            <h1 className="page-heading">{t('title')}</h1>
-            <p className="page-description mt-2">{t('description')}</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary">FR-26</Badge>
-            <Badge variant="secondary">FR-28</Badge>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title={t('title')}
+        description={t('description')}
+        requirements={['FR-26', 'FR-28']}
+      />
 
       <section className="grid gap-4 md:grid-cols-2" aria-label={t('listLabel')}>
         {REPORTS.map((report) => (

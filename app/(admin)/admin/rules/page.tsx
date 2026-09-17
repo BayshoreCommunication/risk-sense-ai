@@ -41,6 +41,7 @@ export default function RulesPage() {
     <ContentManager
       title={t('title')}
       description={t('description')}
+      requirements={['FR-16', 'FR-17']}
       entity={t('entity')}
       apiClient={rulesApi}
       fields={fields}

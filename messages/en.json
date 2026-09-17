@@ -317,7 +317,7 @@
       "lockoutExample": {
         "title": "Corrected low-risk authoring example",
         "notActive": "Example · not active",
-        "description": "A password lockout can be authored as a low-risk, Monitor Only example. It does not replace or weaken the active confirmed-fraud rule, and becomes executable only after save, independent approval and activation.",
+        "description": "A non-active authoring example: password lockout as low-risk, Monitor Only. It becomes executable only after approval and activation.",
         "condition": "password_locked = true"
       }
     },
@@ -414,7 +414,7 @@
     },
     "reviewQueue": {
       "title": "Mandatory review queue",
-      "description": "Assessments flagged because their confidence fell below the configured threshold. Oldest first. Open one to check the extracted facts and explanation; the requestor or assigned reviewer records the decision.",
+      "description": "Assessments whose confidence fell below the configured threshold, oldest first.",
       "tabs": { "pending": "Awaiting decision", "all": "All flagged" },
       "columns": {
         "started": "Started",
@@ -514,7 +514,7 @@
       },
       "monthly": {
         "title": "Monthly classification distribution",
-        "description": "Final classifications for the five most recently completed UTC months. Select a month to inspect every classification, or select a colored classification to trace it across months.",
+        "description": "The five most recently completed UTC months. Select a month or a classification to trace it.",
         "window": "Last 5 complete months",
         "chartTitle": "Final classifications by month",
         "selectedMonth": "{month} classification totals",
@@ -1098,7 +1098,7 @@
     "assessments": {
       "eyebrow": "Assessment evidence",
       "title": "Assessments (audit view)",
-      "description": "Every assessment in the tenant, newest first. “Stored” shows the saved record; “Reconstruct” rebuilds it from the tamper-evident audit history and flags any drift.",
+      "description": "Every assessment in the tenant, newest first. “Reconstruct” rebuilds a record from the audit history and flags drift.",
       "summary": { "pending": "open or pending" },
       "columns": {
         "started": "Started",
@@ -1278,7 +1278,7 @@
     "auditArchive": {
       "eyebrow": "Cold-storage handoff",
       "title": "Audit archive",
-      "description": "Create a bounded JSON export and keep an immutable SHA-256 manifest. Exporting never updates or deletes source audit entries.",
+      "description": "Create a bounded JSON export with an immutable SHA-256 manifest. Source entries are never changed.",
       "enabled": "Full audit enabled",
       "featureRequired": "Full audit required",
       "invalidResponse": "The export was created, but its manifest response was not valid.",
@@ -1331,7 +1331,7 @@
       "accessPolicy": {
         "title": "Account, role & MFA policy",
         "free": "FREE public access is requestor-only. Each person uses one account with exactly one role.",
-        "paid": "PAID workspaces support managed requestor, administrator, system administrator, and audit roles. Each account has exactly one role.",
+        "paid": "PAID adds managed administrator, system administrator and audit roles. Each account has exactly one role.",
         "default": "Each person uses one account with exactly one role.",
         "loading": "Loading the tenant plan before role controls are enabled.",
         "error": "The tenant plan is unavailable. Role controls remain disabled until it can be verified.",
@@ -1448,9 +1448,9 @@
       },
       "mfaPolicy": {
         "paidTitle": "Role-aware MFA policy",
-        "paidDescription": "Every PAID account completes MFA. Requestors use the configured identity provider, but RiskSense accepts its second factor only when the Firebase session explicitly proves it; otherwise an email code is required. Managed operators always complete the RiskSense verification step required for their role.",
+        "paidDescription": "Every PAID account completes MFA. RiskSense sends an email code whenever the session does not itself prove a second factor.",
         "freeTitle": "FREE authentication policy",
-        "freeDescription": "FREE public users are requestors and sign in without the PAID MFA step. Managed operator accounts are not available on FREE."
+        "freeDescription": "FREE users are requestors and sign in without the PAID MFA step."
       },
       "features": {
         "sso": {
@@ -1500,7 +1500,7 @@
           "evidenceDays": "Evidence (days)",
           "datasetHistoryDays": "Dataset history (days)"
         },
-        "description": "FREE: after the assessment window, records are reduced to login id, risk type, date/time and duration. PAID: archived. Enforcement runs nightly and is audited."
+        "description": "FREE reduces expired records to essential metadata; PAID archives them first. Enforcement runs nightly and is audited."
       },
       "saving": "Saving…",
       "save": "Save changes",
@@ -1645,7 +1645,7 @@
     "conformance": {
       "eyebrow": "Data assurance",
       "title": "Stored-record conformance",
-      "description": "Detect assessment schema drift, closed records without a human decision, and in-progress records with an invalid computed result.",
+      "description": "Detect schema drift, closed records without a human decision, and invalid computed results.",
       "runScan": "Run scan",
       "confirmation": "Scan every assessment in this tenant and persist flags?",
       "scanning": "Scanning…",

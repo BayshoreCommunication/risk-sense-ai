@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { CheckCircle2, ChevronDown, ChevronUp, RefreshCw, Search, ShieldAlert } from 'lucide-react';
+import { PageHeader } from '@/components/shell/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -62,37 +63,36 @@ export default function AuditLogsPage() {
 
   return (
     <div className="page-shell">
-      <header className="workspace-header">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="max-w-3xl">
-            <h1 className="page-heading">{t('title')}</h1>
-            <p className="page-description mt-2">{t('description')}</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary">{t('scopeBadge')}</Badge>
-            <Badge variant="outline">FR-24–26</Badge>
-            <Badge variant="outline">SEC-07</Badge>
-            {verify && (
-              <Badge variant={verify.ok ? 'outline' : 'destructive'} className="h-8 gap-1.5 px-3">
-                {verify.ok ? <CheckCircle2 className="size-3.5" aria-hidden="true" /> : <ShieldAlert className="size-3.5" aria-hidden="true" />}
-                {verify.ok ? t('verification.intact', { count: verify.checked }) : t('verification.broken', { sequence: verify.firstBadSeq ?? '', count: verify.checked })}
-              </Badge>
-            )}
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={verifying}
-              onClick={() => {
-                setVerifying(true);
-                auditApi.verify().then(setVerify).catch((e) => setError(toApiError(e).message)).finally(() => setVerifying(false));
-              }}
-            >
-              <RefreshCw className={verifying ? 'animate-spin' : ''} aria-hidden="true" />
-              {t('verify')}
-            </Button>
-          </div>
+      <PageHeader
+        title={t('title')}
+        description={t('description')}
+        requirements={['FR-24–26', 'SEC-07']}
+        actions={
+          <>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary">{t('scopeBadge')}</Badge>
+          {verify && (
+            <Badge variant={verify.ok ? 'outline' : 'destructive'} className="h-8 gap-1.5 px-3">
+              {verify.ok ? <CheckCircle2 className="size-3.5" aria-hidden="true" /> : <ShieldAlert className="size-3.5" aria-hidden="true" />}
+              {verify.ok ? t('verification.intact', { count: verify.checked }) : t('verification.broken', { sequence: verify.firstBadSeq ?? '', count: verify.checked })}
+            </Badge>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={verifying}
+            onClick={() => {
+              setVerifying(true);
+              auditApi.verify().then(setVerify).catch((e) => setError(toApiError(e).message)).finally(() => setVerifying(false));
+            }}
+          >
+            <RefreshCw className={verifying ? 'animate-spin' : ''} aria-hidden="true" />
+            {t('verify')}
+          </Button>
         </div>
-      </header>
+            </>
+        }
+      />
       <div className="control-strip grid gap-3 sm:grid-cols-3">
         <div className="space-y-1">
           <Label className="text-xs font-medium">{t('filters.category')}</Label>

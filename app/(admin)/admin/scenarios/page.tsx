@@ -40,6 +40,7 @@ export default function ScenariosPage() {
     <ContentManager
       title={t('title')}
       description={t('description')}
+      requirements={['FR-11', 'FR-12']}
       entity={t('entity')}
       apiClient={scenariosApi}
       fields={fields}

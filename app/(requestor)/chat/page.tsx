@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { AlertCircle, ArrowRight, Check, LoaderCircle, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
+import { PageHeader } from '@/components/shell/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,10 +40,7 @@ export default function NewAssessmentPage() {
 
   return (
     <div className="page-shell max-w-5xl">
-      <div className="space-y-2">
-        <h1 className="page-heading">{t('title')}</h1>
-        <p className="page-description">{t('description')}</p>
-      </div>
+      <PageHeader title={t('title')} description={t('description')} requirements={['FR-04', 'FR-14']} />
 
       <Card className="overflow-visible">
         <CardHeader className="border-b border-border/70 pb-5">

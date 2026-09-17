@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { BarChart3, ChartNoAxesColumn, ChartPie, FileDown, RefreshCw, SlidersHorizontal, Table2 } from 'lucide-react';
+import { ChartNoAxesColumn, ChartPie, FileDown, RefreshCw, SlidersHorizontal, Table2 } from 'lucide-react';
 import {
   BarChart,
   ChartStyles,
@@ -14,6 +14,7 @@ import {
   StatusBars,
   type StackedClassificationMonth,
 } from '@/components/analytics/Charts';
+import { PageHeader } from '@/components/shell/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -276,23 +277,17 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <ChartStyles />
-      <header className="workspace-header">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex max-w-3xl items-start gap-3">
-            <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg bg-indigo-500/10 text-indigo-700">
-              <BarChart3 className="size-5" aria-hidden="true" />
-            </span>
-            <div>
-              <h1 className="font-heading text-2xl font-semibold tracking-tight">{t('title')}</h1>
-              <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{t('description')}</p>
-            </div>
-          </div>
+      <PageHeader
+        title={t('title')}
+        description={t('description')}
+        requirements={['DASH-03', 'FR-27']}
+        actions={
           <Button size="sm" variant="outline" className="shrink-0 bg-background/90 shadow-sm" onClick={() => load(true)}>
             <RefreshCw data-icon="inline-start" aria-hidden="true" />
             {t('refresh')}
           </Button>
-        </div>
-      </header>
+        }
+      />
 
       <section className="control-strip">
         <div className="mb-3 flex items-center gap-2 text-sm font-medium">

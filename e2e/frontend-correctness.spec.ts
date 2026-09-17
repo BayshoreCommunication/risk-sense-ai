@@ -570,7 +570,8 @@ test('mobile workspace navigation traps focus and returns it to the trigger [NFR
   const drawer = page.getByRole('dialog', { name: 'Workspace navigation' });
   await expect(drawer).toBeVisible();
   await expect(drawer.getByRole('button', { name: 'Close navigation' })).toBeFocused();
-  expect(await page.locator('header').evaluate((header) => Boolean(header.closest('[inert][aria-hidden="true"]')))).toBe(true);
+  // The shell's top bar is the first <header> in the document; page headers render later, inside <main>.
+  expect(await page.locator('header').first().evaluate((header) => Boolean(header.closest('[inert][aria-hidden="true"]')))).toBe(true);
 
   await page.keyboard.press('Shift+Tab');
   await expect(drawer.getByRole('button', { name: 'Sign out' })).toBeFocused();

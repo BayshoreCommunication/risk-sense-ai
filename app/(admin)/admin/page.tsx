@@ -16,9 +16,9 @@ import {
   ListChecks,
   SlidersHorizontal,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader } from '@/components/shell/PageHeader';
 import { api, toApiError } from '@/lib/api/client';
 import type { components } from '@/lib/api/types';
 import { matricesApi, personasApi, questionsApi, rulesApi, scenariosApi, type Item } from '@/lib/admin/content';
@@ -139,18 +139,11 @@ export default function Page() {
 
   return (
     <div className="page-shell">
-      <header className="workspace-header">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="max-w-3xl">
-            <h1 className="page-heading">{t('title')}</h1>
-            <p className="page-description mt-2">{t('description')}</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="outline">{t('roleBadge')}</Badge>
-            <Badge variant="secondary">DASH-02</Badge>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title={t('title')}
+        description={t('description')}
+        requirements={['DASH-02']}
+      />
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label={t('configurationLabel')}>
         {ADMIN_AREAS.map((area) => {

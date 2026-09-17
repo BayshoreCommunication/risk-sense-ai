@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { ArrowRight, ClipboardCheck, Clock3, FileSearch, Fingerprint, ShieldCheck, TriangleAlert } from 'lucide-react';
+import { PageHeader } from '@/components/shell/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,18 +50,17 @@ export default function AuditOverviewPage() {
 
   return (
     <div className="page-shell">
-      <header className="workspace-header">
-        <div className="flex flex-wrap items-end justify-between gap-5">
-          <div className="max-w-3xl">
-            <h1 className="page-heading">{t('title')}</h1>
-            <p className="page-description mt-2">{t('description')}</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
+      <PageHeader
+        title={t('title')}
+        description={t('description')}
+        requirements={['FR-24', 'FR-26']}
+        actions={
+          <>
             <Button nativeButton={false} variant="outline" render={<Link href="/audit/logs" />}><Fingerprint aria-hidden="true" />{t('actions.logs')}</Button>
             <Button nativeButton={false} render={<Link href="/audit/assessments" />}><FileSearch aria-hidden="true" />{t('actions.assessments')}</Button>
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       {error && <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive" role="alert">{error}</div>}
 

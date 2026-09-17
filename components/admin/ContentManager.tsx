@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Archive, CheckCircle2, History, Pencil, Plus, Power, Search } from 'lucide-react';
+import { PageHeader } from '@/components/shell/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -30,6 +31,8 @@ export type FieldSpec =
 export interface ContentManagerProps {
   title: string;
   description: string;
+  /** Requirement IDs for this content screen, shown as chips in the page header. */
+  requirements?: string[];
   entity: string;
   apiClient: EntityApi;
   fields: FieldSpec[];
@@ -150,7 +153,7 @@ export function ContentManager(props: ContentManagerProps) {
   const t = useTranslations('contentManager');
   const statusT = useTranslations('status');
   const structuredValidation = useTranslations('structured.validation');
-  const { title, description, apiClient, fields, columns, versioned, defaultQuery, approval, facets = [], callout } = props;
+  const { title, description, requirements, apiClient, fields, columns, versioned, defaultQuery, approval, facets = [], callout } = props;
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -281,25 +284,24 @@ export function ContentManager(props: ContentManagerProps) {
 
   return (
     <div className="space-y-5">
-      <header className="workspace-header flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="max-w-3xl">
-          <div className="flex items-center gap-2.5">
-            <h1 className="font-heading text-2xl font-semibold tracking-tight">{title}</h1>
-            {!loading && <Badge variant="secondary" aria-label={`${visible.length} ${title}`}>{visible.length}</Badge>}
-          </div>
-          <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{description}</p>
-        </div>
-        <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
-          <div className="relative min-w-0 sm:w-56">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-            <Input aria-label={t('filter')} placeholder={t('filterPlaceholder')} value={filter} onChange={(e) => setFilter(e.target.value)} className="w-full pl-8" />
-          </div>
-          <Button onClick={openCreate}>
-            <Plus data-icon="inline-start" aria-hidden="true" />
-            {t('actions.new')}
-          </Button>
-        </div>
-      </header>
+      <PageHeader
+        title={title}
+        description={description}
+        requirements={requirements}
+        titleAdornment={!loading && <Badge variant="secondary" aria-label={`${visible.length} ${title}`}>{visible.length}</Badge>}
+        actions={
+          <>
+            <div className="relative min-w-0 sm:w-56">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+              <Input aria-label={t('filter')} placeholder={t('filterPlaceholder')} value={filter} onChange={(e) => setFilter(e.target.value)} className="w-full pl-8" />
+            </div>
+            <Button onClick={openCreate}>
+              <Plus data-icon="inline-start" aria-hidden="true" />
+              {t('actions.new')}
+            </Button>
+          </>
+        }
+      />
 
       {callout}
 

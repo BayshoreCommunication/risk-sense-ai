@@ -40,6 +40,7 @@ export default function QuestionsPage() {
     <ContentManager
       title={t('title')}
       description={t('description')}
+      requirements={['FR-15']}
       entity={t('entity')}
       apiClient={questionsApi}
       fields={fields}

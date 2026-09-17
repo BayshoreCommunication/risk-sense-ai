@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Eye, ShieldAlert } from 'lucide-react';
+import { Eye } from 'lucide-react';
+import { PageHeader } from '@/components/shell/PageHeader';
 import { AssessmentDetail } from '@/components/review/AssessmentDetail';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -48,17 +49,7 @@ export default function MandatoryReviewQueuePage() {
 
   return (
     <div className="space-y-6">
-      <header className="relative overflow-hidden rounded-2xl border border-amber-200/70 bg-[linear-gradient(125deg,rgba(251,191,36,0.12),var(--card)_58%)] px-5 py-5 shadow-sm sm:px-6">
-        <div className="flex max-w-3xl items-start gap-3">
-          <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-xl bg-amber-500/12 text-amber-700">
-            <ShieldAlert className="size-5" aria-hidden="true" />
-          </span>
-          <div>
-            <h1 className="font-heading text-2xl font-semibold tracking-tight">{t('title')}</h1>
-            <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{t('description')}</p>
-          </div>
-        </div>
-      </header>
+      <PageHeader title={t('title')} description={t('description')} requirements={['AI-03', 'FR-20']} />
       <div className="inline-flex rounded-xl border border-border/70 bg-muted/35 p-1 shadow-sm">
         <Button size="sm" variant={tab === 'pending' ? 'default' : 'ghost'} aria-pressed={tab === 'pending'} onClick={() => { setTab('pending'); setPage(1); }}>
           {t('tabs.pending')}{data ? ` ${data.counts.pending}` : ''}

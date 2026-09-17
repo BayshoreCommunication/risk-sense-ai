@@ -182,6 +182,7 @@ export default function ScoringPage() {
       <ContentManager
         title={t('title')}
         description={t('description')}
+      requirements={['FR-18', 'FR-19']}
         entity={t('entity')}
         apiClient={matricesApi}
         fields={fields}

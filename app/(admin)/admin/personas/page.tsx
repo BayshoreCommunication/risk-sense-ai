@@ -23,6 +23,7 @@ export default function PersonasPage() {
     <ContentManager
       title={t('title')}
       description={t('description')}
+      requirements={['FR-09', 'FR-10']}
       entity={t('entity')}
       apiClient={personasApi}
       fields={fields}

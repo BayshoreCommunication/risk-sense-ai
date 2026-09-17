@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { AlertCircle, CalendarClock, CheckCircle2, ChevronRight, Gauge, ClipboardCheck, Filter, Plus, RefreshCw, Search } from 'lucide-react';
+import { PageHeader } from '@/components/shell/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -213,18 +214,17 @@ function ReviewDashboard() {
 
   return (
     <div className="page-shell">
-      <section className="workspace-header">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div className="max-w-3xl">
-            <h1 className="page-heading">{t('title')}</h1>
-            <p className="page-description mt-1.5">{reviewer ? t('descriptionReviewer') : t('descriptionRequestor')}</p>
-          </div>
-          <Button className="self-start sm:self-center" onClick={() => router.push('/chat')}>
+      <PageHeader
+        title={t('title')}
+        description={reviewer ? t('descriptionReviewer') : t('descriptionRequestor')}
+        requirements={['DASH-01', 'DASH-04']}
+        actions={
+          <Button onClick={() => router.push('/chat')}>
             <Plus aria-hidden="true" data-icon="inline-start" />
             {t('newAssessment')}
           </Button>
-        </div>
-      </section>
+        }
+      />
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label={t('summaryLabel')}>
         <button

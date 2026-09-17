@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { Archive, ArrowUpRight, Building2, DatabaseZap, FileCheck2, KeyRound, ShieldCheck, Users } from 'lucide-react';
+import { PageHeader } from '@/components/shell/PageHeader';
 
 const SYSTEM_AREAS = [
   { href: '/system/users', key: 'users', icon: Users, tone: 'bg-blue-500/10 text-blue-700' },
@@ -17,12 +18,7 @@ export default async function Page() {
   const t = await getTranslations('system.overview');
   return (
     <div className="page-shell">
-      <header className="workspace-header">
-        <div className="max-w-3xl">
-          <h1 className="page-heading">{t('title')}</h1>
-          <p className="page-description mt-2">{t('description')}</p>
-        </div>
-      </header>
+      <PageHeader title={t('title')} description={t('description')} requirements={['DASH-04']} />
       <div className="data-panel divide-y">
         {SYSTEM_AREAS.map((area) => (
           <Link key={area.href} href={area.href} className="group grid min-h-24 grid-cols-[auto_1fr_auto] items-center gap-4 px-5 py-4 transition-colors hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-6">

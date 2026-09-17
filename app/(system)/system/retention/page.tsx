@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Archive, PlayCircle, ShieldCheck } from 'lucide-react';
+import { Archive, History, PlayCircle, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PageHeader } from '@/components/shell/PageHeader';
 import { api, toApiError } from '@/lib/api/client';
 import type { components } from '@/lib/api/types';
 
@@ -88,27 +89,19 @@ export default function RetentionPage() {
 
   return (
     <div className="page-shell">
-      <header className="workspace-header">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="max-w-3xl">
-            <h1 className="page-heading">{t('title')}</h1>
-            <p className="page-description mt-2">{t('description')}</p>
-          </div>
-          {settings && <Badge variant={settings.plan === 'paid' ? 'default' : 'secondary'}>{settings.plan.toUpperCase()}</Badge>}
-        </div>
-      </header>
+      <PageHeader
+        title={t('title')}
+        description={t('description')}
+        requirements={['SEC-06']}
+        actions={settings ? <Badge variant={settings.plan === 'paid' ? 'default' : 'secondary'}>{settings.plan.toUpperCase()}</Badge> : null}
+      />
 
       {settings && (
         <>
           <Card className="overflow-hidden shadow-none">
             <CardHeader className="border-b bg-muted/20">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <CardTitle>{t('policyTable.title')}</CardTitle>
-                  <CardDescription className="mt-1">{t('policyTable.description')}</CardDescription>
-                </div>
-                <Badge variant="outline">SEC-06</Badge>
-              </div>
+              <CardTitle className="flex items-center gap-3"><span className="card-icon"><ShieldCheck className="size-5" aria-hidden="true" /></span>{t('policyTable.title')}</CardTitle>
+              <CardDescription className="mt-1">{t('policyTable.description')}</CardDescription>
             </CardHeader>
             <CardContent className="px-0">
               <div className="divide-y md:hidden">
@@ -200,7 +193,7 @@ export default function RetentionPage() {
         </Card>
       )}
       <Card className="overflow-hidden shadow-none">
-        <CardHeader className="border-b"><CardTitle>{t('history.title')}</CardTitle><CardDescription>{t('history.description')}</CardDescription></CardHeader>
+        <CardHeader className="border-b"><CardTitle className="flex items-center gap-3"><span className="card-icon"><History className="size-5" aria-hidden="true" /></span>{t('history.title')}</CardTitle><CardDescription>{t('history.description')}</CardDescription></CardHeader>
         <CardContent className="px-0">
       <div className="divide-y md:hidden">
         {runs.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('empty')}</p>}

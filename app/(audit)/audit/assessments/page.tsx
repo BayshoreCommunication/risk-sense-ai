@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Database, History, ShieldCheck } from 'lucide-react';
 import { AssessmentDetail } from '@/components/review/AssessmentDetail';
 import { ReconstructionView } from '@/components/review/ReconstructionView';
+import { PageHeader } from '@/components/shell/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -40,12 +41,7 @@ export default function AuditAssessmentsPage() {
   const items = data?.items ?? [];
   return (
     <div className="page-shell">
-      <header className="workspace-header">
-        <div className="max-w-3xl">
-          <h1 className="page-heading">{t('title')}</h1>
-          <p className="page-description mt-2">{t('description')}</p>
-        </div>
-      </header>
+      <PageHeader title={t('title')} description={t('description')} requirements={['FR-26']} />
 
       {data && (
         <div className="data-panel grid divide-y sm:grid-cols-3 sm:divide-x sm:divide-y-0">
