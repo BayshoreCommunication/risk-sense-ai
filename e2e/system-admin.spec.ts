@@ -60,13 +60,15 @@ test.beforeEach(async ({ page }) => {
   await authenticate(page);
 });
 
-test('system landing exposes the complete operational workspace [DASH-04]', async ({ page }) => {
+test('/system lands on user provisioning and the rail exposes every workspace [DASH-04]', async ({ page }) => {
   await mockApi(page);
   await page.goto('/system');
 
-  await expect(page.getByRole('heading', { name: 'System administration' })).toBeVisible();
-  for (const name of ['Users', 'Departments', 'Tenant settings', 'Retention', 'Disaster recovery', 'Conformance']) {
-    await expect(page.getByRole('link', { name: new RegExp(`^${name}`) }).last()).toBeVisible();
+  // The frames give this role no landing screen, so /system redirects to its first workspace.
+  await expect(page).toHaveURL(/\/system\/users$/);
+  await expect(page.getByRole('heading', { name: 'User and role provisioning' })).toBeVisible();
+  for (const name of ['User & role provisioning', 'SSO & integration', 'Retention policy', 'Disaster recovery', 'Departments', 'Conformance', 'Audit archive']) {
+    await expect(page.getByRole('link', { name, exact: true })).toBeVisible();
   }
 });
 

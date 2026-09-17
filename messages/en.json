@@ -41,7 +41,6 @@
       "reports": "Standard reports"
     },
     "system_administrator": {
-      "overview": "Configuration home",
       "users": "User & role provisioning",
       "departments": "Departments",
       "tenant": "SSO & integration",
@@ -1313,41 +1312,6 @@
     "timeline": "Timeline ({count} entries)"
   },
   "system": {
-    "overview": {
-      "eyebrow": "Operational control plane",
-      "title": "System administration",
-      "description": "Manage tenant access, operational policy, recovery evidence, and stored-record integrity.",
-      "areas": {
-        "users": {
-          "title": "Users",
-          "description": "Provision accounts, assign one role, and control department access."
-        },
-        "departments": {
-          "title": "Departments",
-          "description": "Maintain departments and map the active personas available to each team."
-        },
-        "tenant": {
-          "title": "Tenant settings",
-          "description": "Configure plan features, SSO, session limits, and retention windows."
-        },
-        "retention": {
-          "title": "Retention",
-          "description": "Preview or enforce closed-record retention and review run history."
-        },
-        "dr": {
-          "title": "Disaster recovery",
-          "description": "Record external backup and restore-drill evidence against recovery targets."
-        },
-        "conformance": {
-          "title": "Conformance",
-          "description": "Scan stored assessments for schema drift and critical invariants."
-        },
-        "audit": {
-          "title": "Audit archive",
-          "description": "Create bounded immutable exports and review cold-storage manifests."
-        }
-      }
-    },
     "auditArchive": {
       "eyebrow": "Cold-storage handoff",
       "title": "Audit archive",

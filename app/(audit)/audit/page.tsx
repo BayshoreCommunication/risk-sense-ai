@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { ArrowRight, ClipboardCheck, Clock3, FileSearch, Fingerprint, ShieldCheck, TriangleAlert } from 'lucide-react';
+import { ArrowRight, ClipboardCheck, Clock3, ShieldCheck, TriangleAlert } from 'lucide-react';
 import { PageHeader } from '@/components/shell/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -54,12 +54,6 @@ export default function AuditOverviewPage() {
         title={t('title')}
         description={t('description')}
         requirements={['FR-24', 'FR-26']}
-        actions={
-          <>
-            <Button nativeButton={false} variant="outline" render={<Link href="/audit/logs" />}><Fingerprint aria-hidden="true" />{t('actions.logs')}</Button>
-            <Button nativeButton={false} render={<Link href="/audit/assessments" />}><FileSearch aria-hidden="true" />{t('actions.assessments')}</Button>
-          </>
-        }
       />
 
       {error && <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive" role="alert">{error}</div>}

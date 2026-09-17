@@ -13,7 +13,7 @@ export const COOKIE_DEV_USER = 'rs_dev_user'; // dev bypass identity (X-Dev-User
 export const ROLE_HOME: Record<Role, string> = {
   requestor: '/chat',
   administrator: '/admin',
-  system_administrator: '/system',
+  system_administrator: '/system/users',
   audit: '/audit',
 };
 

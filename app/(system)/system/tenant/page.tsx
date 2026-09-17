@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { BadgeCheck, Building2, Database, KeyRound, LockKeyhole, UsersRound } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -59,7 +58,6 @@ export default function TenantSettingsPage() {
           </>
         }
         requirements={['FR-03', 'SEC-02']}
-        actions={<Badge variant={merged.plan === 'paid' ? 'default' : 'secondary'} className="px-3 py-1">{merged.plan.toUpperCase()}</Badge>}
       />
 
       <Card>

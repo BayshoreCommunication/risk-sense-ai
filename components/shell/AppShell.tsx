@@ -12,7 +12,6 @@ import {
   Building2,
   ChevronLeft,
   ChevronRight,
-  CircleGauge,
   ClipboardCheck,
   Database,
   FileClock,
@@ -70,7 +69,6 @@ const NAV: Record<Role, NavItem[]> = {
     { href: '/admin/review', key: 'review', icon: ClipboardCheck },
   ],
   system_administrator: [
-    { href: '/system', key: 'overview', icon: CircleGauge },
     { href: '/system/users', key: 'users', icon: UserRoundCog },
     { href: '/system/tenant', key: 'tenant', icon: Settings2 },
     { href: '/system/retention', key: 'retention', icon: History },
@@ -95,13 +93,9 @@ function isNavActive(pathname: string, item: NavItem, home: string) {
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('');
+/** Avatar letter: the first character of the account name. */
+function avatarLetter(name: string) {
+  return name.trim().charAt(0).toUpperCase();
 }
 
 /**
@@ -316,15 +310,15 @@ export function AppShell({ role, children }: { role: Role; children: React.React
       <div className={`shrink-0 border-t border-sidebar-border ${compact ? 'space-y-1.5 p-2' : 'space-y-1.5 p-2'}`}>
         {compact ? (
           <div
-            className="mx-auto flex size-9 items-center justify-center rounded-lg bg-sidebar-accent text-xs font-bold text-sidebar-primary"
+            className="mx-auto flex size-9 items-center justify-center rounded-full bg-sidebar-accent text-sm font-bold text-sidebar-primary"
             title={`${me.user.name} · ${me.user.email} · ${me.tenant.plan.toUpperCase()}`}
           >
-            {initials(me.user.name) || 'RS'}
+            {avatarLetter(me.user.name) || 'R'}
           </div>
         ) : (
           <div className="flex items-center gap-2.5 rounded-md px-2 py-2">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-sidebar-accent text-[0.68rem] font-bold text-sidebar-primary">
-              {initials(me.user.name) || 'RS'}
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-sm font-bold text-sidebar-primary">
+              {avatarLetter(me.user.name) || 'R'}
             </div>
             <div className="min-w-0 flex-1 leading-tight">
               <div className="truncate text-[0.8rem] font-semibold text-sidebar-foreground">{me.user.name}</div>
@@ -374,13 +368,12 @@ export function AppShell({ role, children }: { role: Role; children: React.React
           )}
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-2 px-4 sm:px-5">
-          {/* Figma header: a single identity pill carrying the account initials and the verified role. */}
+          {/* Identity pill: the account's avatar letter beside the verified role. */}
           <div
             className="flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-[0.78rem] font-medium text-white"
             title={`${me.user.name} · ${me.user.email} · ${me.tenant.plan.toUpperCase()}`}
           >
-            <span className="font-semibold">{initials(me.user.name) || 'RS'}</span>
-            <span aria-hidden="true" className="text-white/40">·</span>
+            <span className="grid size-6 shrink-0 place-items-center rounded-full bg-white/15 text-[0.7rem] font-semibold">{avatarLetter(me.user.name) || 'R'}</span>
             <span className="truncate">{t(`roles.${trustedRole}`)}</span>
           </div>
         </div>

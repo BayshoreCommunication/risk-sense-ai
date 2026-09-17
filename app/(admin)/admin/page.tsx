@@ -4,19 +4,15 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState, type ComponentType } from 'react';
 import { useTranslations } from 'next-intl';
 import {
-  ArrowUpRight,
-  BarChart3,
   BookOpenCheck,
   BrainCircuit,
-  ClipboardCheck,
   Database,
-  FileText,
   GitBranch,
   ListChecks,
   SlidersHorizontal,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/shell/PageHeader';
 import { api, toApiError } from '@/lib/api/client';
 import type { components } from '@/lib/api/types';
@@ -64,7 +60,6 @@ export default function Page() {
   const t = useTranslations('admin.overview');
   const [snapshot, setSnapshot] = useState<Snapshot>(EMPTY_SNAPSHOT);
   const [availability, setAvailability] = useState<Availability>(LOADING_AVAILABILITY);
-  const [reportsEnabled, setReportsEnabled] = useState(false);
 
   const loadSnapshot = useCallback(async () => {
     setAvailability(LOADING_AVAILABILITY);
@@ -94,11 +89,6 @@ export default function Page() {
       scoring: results[4].status === 'fulfilled' ? results[4].value : current.scoring,
       datasets: results[5].status === 'fulfilled' ? results[5].value : current.datasets,
     }));
-    if (results[6].status === 'fulfilled') {
-      setReportsEnabled(Boolean(results[6].value.tenant.features.reports));
-    } else {
-      setReportsEnabled(false);
-    }
   }, []);
 
   useEffect(() => {
@@ -125,15 +115,6 @@ export default function Page() {
     } satisfies Record<AreaKey, { value: string | number; detail: string }>;
   }, [snapshot, t]);
 
-  const operations = [
-    ...(reportsEnabled
-      ? [
-          { href: '/admin/analytics', key: 'analytics', icon: BarChart3 },
-          { href: '/admin/reports', key: 'reports', icon: FileText },
-        ]
-      : []),
-    { href: '/admin/review', key: 'review', icon: ClipboardCheck },
-  ] as const;
   const unavailableSources = Object.values(availability).filter((state) => state === 'unavailable').length;
 
   return (
@@ -162,10 +143,6 @@ export default function Page() {
                   </div>
                   <span className={`grid size-9 place-items-center rounded-lg ${area.tone}`}><Icon className="size-4.5" aria-hidden="true" /></span>
                 </CardHeader>
-                <CardContent className="mt-auto flex items-end justify-between gap-3 border-t pt-4">
-                  <p className="text-xs leading-5 text-muted-foreground">{t(`areas.${area.key}.description`)}</p>
-                  <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden="true" />
-                </CardContent>
               </Card>
             </Link>
           );
@@ -179,23 +156,6 @@ export default function Page() {
         </div>
       ) : null}
 
-      <section className="data-panel" aria-labelledby="admin-operations-title">
-        <div className="border-b px-5 py-4">
-          <h2 id="admin-operations-title" className="text-sm font-semibold">{t('operations.title')}</h2>
-        </div>
-        <div className="grid divide-y sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-          {operations.map((operation) => (
-            <Link key={operation.href} href={operation.href} className="group flex min-h-24 items-center gap-3 px-5 py-4 transition hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
-              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/8 text-primary"><operation.icon className="size-4" aria-hidden="true" /></span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold">{t(`operations.${operation.key}.title`)}</span>
-                <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">{t(`operations.${operation.key}.description`)}</span>
-              </span>
-              <ArrowUpRight className="size-4 shrink-0 text-muted-foreground group-hover:text-primary" aria-hidden="true" />
-            </Link>
-          ))}
-        </div>
-      </section>
 
     </div>
   );

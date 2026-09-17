@@ -68,7 +68,6 @@ export default function ScoringPage() {
         columns={[
           { key: 'name', label: t('fields.name') },
           { key: 'sector', label: t('fields.sector') },
-          { key: 'approvedBy', label: t('columns.approved'), render: (it) => (it.approvedBy ? t('yes') : '—') },
         ]}
         versioned
         approval

@@ -93,7 +93,6 @@ export default function RetentionPage() {
         title={t('title')}
         description={t('description')}
         requirements={['SEC-06']}
-        actions={settings ? <Badge variant={settings.plan === 'paid' ? 'default' : 'secondary'}>{settings.plan.toUpperCase()}</Badge> : null}
       />
 
       {settings && (

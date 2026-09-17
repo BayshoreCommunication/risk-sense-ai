@@ -304,10 +304,10 @@ test('direct standard reports access follows the authoritative tenant feature [F
   reports = true;
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Standard reports' })).toBeVisible();
-  // Each of the four FR-26 reports exposes its own CSV and PDF export (FR-28).
-  const reportList = page.getByRole('region', { name: 'Standard reports' });
-  await expect(reportList.getByRole('button', { name: 'CSV' })).toHaveCount(4);
-  await expect(reportList.getByRole('button', { name: 'PDF' })).toHaveCount(4);
+  // Each of the four FR-26 report panels exposes its own CSV and PDF export (FR-28).
+  await expect(page.locator('#report-volume, #report-classification, #report-override, #report-time')).toHaveCount(4);
+  await expect(page.getByRole('button', { name: 'CSV' })).toHaveCount(4);
+  await expect(page.getByRole('button', { name: 'PDF' })).toHaveCount(4);
 });
 
 test('analytics supports pie, table and persistent period drill-down views [DASH-03, FR-27, FR-28]', async ({ page }) => {
