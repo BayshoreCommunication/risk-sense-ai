@@ -156,7 +156,14 @@
     scrollbar-color: color-mix(in oklch, var(--muted-foreground), transparent 60%) transparent;
     scrollbar-width: thin;
   }
-  /* The region that should absorb whatever height is left, so its own scroller is exact. */
+  /* Cards and panels set `overflow: hidden`, which zeroes their automatic minimum size. As flex
+     children they would then shrink past their content and clip it instead of letting the shell
+     scroll. Pin every section at its natural height; `.fills` below opts back in to flexing. */
+  .page-shell > * {
+    @apply shrink-0;
+  }
+  /* The region that should absorb whatever height is left, so its own scroller is exact.
+     Declared after `.page-shell > *` so its `flex-1` wins over the shrink-0 above. */
   .fills {
     @apply flex min-h-0 flex-1 flex-col [&_[data-slot=table-container]]:max-h-full;
   }

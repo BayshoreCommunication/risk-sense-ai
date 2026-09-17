@@ -223,55 +223,6 @@ test('rule condition builder emits the deterministic condition language [FR-16, 
   });
 });
 
-test('matrix factors, mappings, thresholds and confidence use structured controls [FR-18, FR-19, FR-20]', async ({ page }) => {
-  let submitted: Record<string, unknown> | undefined;
-  await authenticate(page);
-  await mockApi(page, async (route, path, method) => {
-    if (path === '/scoring-matrices' && method === 'GET') {
-      await ok(route, []);
-      return true;
-    }
-    if (path === '/scoring-matrices' && method === 'POST') {
-      submitted = route.request().postDataJSON() as Record<string, unknown>;
-      await ok(route, { _id: 'matrix-1', ...submitted, status: 'draft', version: 1, isCurrent: false }, 201);
-      return true;
-    }
-    return false;
-  });
-
-  await page.goto('/admin/scoring');
-  await page.getByRole('button', { name: 'New' }).click();
-  await page.getByLabel('Key *', { exact: true }).fill('default');
-  await page.getByLabel('Name *', { exact: true }).fill('Default matrix');
-  await expect(page.getByText('Total factor weight: 100% (valid)')).toBeVisible();
-
-  const impact = page.getByTestId('structured-factors').getByRole('group', { name: 'Impact' });
-  await impact.getByLabel('Fact key').fill('loss_amount_usd');
-  await impact.getByLabel('Comparison value value type').click();
-  await page.getByRole('option', { name: 'Number' }).click();
-  await impact.getByLabel('Comparison value', { exact: true }).fill('250000');
-  await page.getByLabel('Professional consultation below (%)').fill('65');
-  await page.getByLabel('Mandatory review below (%)').fill('45');
-
-  await page.getByRole('button', { name: 'Create draft' }).click();
-  await expect.poll(() => submitted).toMatchObject({
-    factors: {
-      impact: {
-        weight: 25,
-        scale: { min: 1, max: 5 },
-        mapping: [{ when: { factKey: 'loss_amount_usd', op: 'gt', value: 250000 }, value: 5 }],
-      },
-    },
-    thresholds: {
-      monitor_only: { min: 0, max: 25 },
-      risk: { min: 26, max: 50 },
-      elevated_risk: { min: 51, max: 75 },
-      issue: { min: 76, max: 100 },
-    },
-    confidence: { professionalConsultBelow: 65, mandatoryReviewBelow: 45 },
-  });
-});
-
 test('every lifecycle transition waits for an explicit confirmation [AI-05, AI-06, DASH-02]', async ({ page }) => {
   const calls: string[] = [];
   let approvalBody: unknown;

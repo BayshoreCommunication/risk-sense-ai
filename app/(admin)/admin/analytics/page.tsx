@@ -23,19 +23,17 @@ function lastFiveCompleteMonths(reference = new Date()) {
   });
 }
 
-function finiteNumber(value: unknown) {
-  return typeof value === 'number' && Number.isFinite(value) ? value : null;
-}
-
-function normalizeClassificationMonth(key: string, result: ReportResult): MonthlyClassificationResult {
-  const rowsByClassification = new Map(result.rows.map((row) => [String(row.classification), row]));
-  return {
-    key,
-    total: finiteNumber(result.summary.scored),
-    values: Object.fromEntries(
-      CLASSIFICATION_KEYS.map((classification) => [classification, finiteNumber(rowsByClassification.get(classification)?.count)]),
-    ) as Record<ClassificationKey, number | null>,
-  };
+/** Folds `period x classification` trend rows into one entry per month. */
+function monthsFromTrends(keys: string[], result: ReportResult): MonthlyClassificationResult[] {
+  const counts = new Map<string, number>();
+  for (const row of result.rows) counts.set(`${String(row.period)}|${String(row.group)}`, Number(row.count) || 0);
+  return keys.map((key) => {
+    const values = Object.fromEntries(
+      CLASSIFICATION_KEYS.map((classification) => [classification, counts.get(`${key}|${classification}`) ?? 0]),
+    ) as Record<ClassificationKey, number | null>;
+    const total = CLASSIFICATION_KEYS.reduce((sum, classification) => sum + (values[classification] ?? 0), 0);
+    return { key, total, values };
+  });
 }
 
 /**
@@ -70,14 +68,13 @@ export default function AnalyticsPage() {
           .then((r) => setData((d) => ({ ...d, [type]: r })))
           .catch((e) => setError(toApiError(e).message));
       }
-      Promise.all(
-        lastFiveCompleteMonths().map((month) =>
-          reports
-            .get('classification', { from: month.from, to: month.to, interval: 'month', ...(refresh ? { refresh: 'true' } : {}) })
-            .then((result) => normalizeClassificationMonth(month.key, result)),
-        ),
-      )
-        .then((months) => {
+      // One month-grouped trends call rather than one request per month: five report calls per page
+      // load pushed a normal browsing session past the 60/min per-session budget (SEC-04).
+      const window = lastFiveCompleteMonths();
+      reports
+        .trends({ from: window[0]!.from, to: window.at(-1)!.to, interval: 'month', by: 'classification', ...(refresh ? { refresh: 'true' } : {}) })
+        .then((result) => {
+          const months = monthsFromTrends(window.map((month) => month.key), result);
           setMonthlyClassification(months);
           setSelectedMonth((current) => (current && months.some((month) => month.key === current) ? current : (months.at(-1)?.key ?? null)));
         })

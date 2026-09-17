@@ -365,14 +365,15 @@ export function ContentManager(props: ContentManagerProps) {
           {facets.map((facet, index) => {
             const options = facetOptions[facet.key] ?? [];
             const selected = facetValues[facet.key] ?? ALL_FACET_VALUES;
+            // The trigger resolves its label from `items`; without it the raw value ("__all") showed.
+            const items = [{ value: ALL_FACET_VALUES, label: t('allValues') }, ...options.map((option) => ({ value: option, label: optionLabel(option) }))];
             return (
               <div key={facet.key} className="space-y-1.5">
                 <Label htmlFor={`content-facet-${index}`}>{facet.label}</Label>
-                <Select value={selected} onValueChange={(value) => setFacetValues((current) => ({ ...current, [facet.key]: value ?? ALL_FACET_VALUES }))}>
+                <Select items={items} value={selected} onValueChange={(value) => setFacetValues((current) => ({ ...current, [facet.key]: value ?? ALL_FACET_VALUES }))}>
                   <SelectTrigger id={`content-facet-${index}`} className="w-full"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={ALL_FACET_VALUES}>{t('allValues')}</SelectItem>
-                    {options.map((option) => <SelectItem key={option} value={option}>{optionLabel(option)}</SelectItem>)}
+                    {items.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

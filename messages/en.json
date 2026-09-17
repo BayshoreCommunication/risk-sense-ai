@@ -343,7 +343,6 @@
       "title": "Scoring matrix configuration",
       "description": "Versioned factor weights, mappings, classification thresholds, and confidence gates.",
       "entity": "scoring matrix",
-      "versionsTitle": "Matrix versions",
       "editor": {
         "heading": "Scoring matrix - {name}",
         "description": "Overall risk score is calculated <range>0–100</range> from these weighted factors.",

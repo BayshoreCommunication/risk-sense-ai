@@ -327,24 +327,6 @@ test('analytics supports pie, table and persistent period drill-down views [DASH
       return true;
     }
     if (path === '/reports/classification') {
-      const search = new URL(route.request().url()).searchParams;
-      const from = search.get('from') ?? '';
-      const to = search.get('to') ?? '';
-      const isCompleteMonth = from.endsWith('-01T00:00:00.000Z') && to.endsWith('T23:59:59.999Z');
-      if (isCompleteMonth) {
-        const monthNumber = Number(from.slice(5, 7));
-        await ok(route, {
-          columns: [{ key: 'classification', label: 'Classification', kind: 'text' }, { key: 'count', label: 'Count', kind: 'number' }],
-          rows: [
-            { classification: 'monitor_only', count: monthNumber, share: null },
-            { classification: 'risk', count: 2, share: null },
-            { classification: 'elevated_risk', count: 1, share: null },
-            { classification: 'issue', count: 0, share: null },
-          ],
-          summary: { scored: monthNumber + 3, ruleDriven: 0, professionalConsult: 0 },
-        });
-        return true;
-      }
       await ok(route, {
         columns: [{ key: 'classification', label: 'Classification', kind: 'text' }, { key: 'count', label: 'Count', kind: 'number' }],
         rows: [
@@ -373,6 +355,22 @@ test('analytics supports pie, table and persistent period drill-down views [DASH
       return true;
     }
     if (path === '/analytics/trends') {
+      const by = new URL(route.request().url()).searchParams.get('by');
+      if (by === 'classification') {
+        // The monthly chart reads one period x classification call.
+        const months = ['2026-04', '2026-05', '2026-06', '2026-07', '2026-08'];
+        await ok(route, {
+          columns: [{ key: 'period', label: 'Period', kind: 'text' }, { key: 'group', label: 'Classification', kind: 'text' }, { key: 'count', label: 'Count', kind: 'number' }],
+          rows: months.flatMap((period, index) => [
+            { period, group: 'monitor_only', count: index + 4 },
+            { period, group: 'risk', count: 2 },
+            { period, group: 'elevated_risk', count: 1 },
+            { period, group: 'issue', count: 0 },
+          ]),
+          summary: { by: 'classification', series: 'monitor_only|risk|elevated_risk|issue', total: 35 },
+        });
+        return true;
+      }
       await ok(route, {
         columns: [{ key: 'period', label: 'Period', kind: 'text' }, { key: 'group', label: 'Group', kind: 'text' }, { key: 'count', label: 'Count', kind: 'number' }],
         rows: [{ period: '2026-08', group: 'Finance', count: 12 }],

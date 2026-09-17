@@ -4760,7 +4760,7 @@ export interface paths {
                     scenarioKey?: string;
                     refresh?: "true" | "false";
                     unmask?: "true" | "false";
-                    by?: "department" | "persona" | "scenario";
+                    by?: "department" | "persona" | "scenario" | "classification";
                 };
                 header?: never;
                 path?: never;
