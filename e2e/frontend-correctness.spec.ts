@@ -901,3 +901,91 @@ test('a requestor can change a chosen persona before questions begin [FR-04]', a
   await page.getByTestId('persona-option').filter({ hasText: 'IT Support' }).click();
   await expect.poll(() => submitted).toEqual({ personaKey: 'it_support' });
 });
+
+test('a scoring weight change completes its approval lifecycle instead of stalling as an invisible draft [FR-18, FR-20, AI-05]', async ({ page }) => {
+  await authenticate(page, 'administrator');
+
+  const factors = (weights: Record<string, number>) =>
+    Object.fromEntries(Object.entries(weights).map(([key, weight]) => [key, { weight, scale: { min: 1, max: 5 }, mapping: [] }]));
+  const baseWeights = { controlEffectiveness: 20, impact: 20, severity: 20, likelihood: 15, duration: 10, regulatorySensitivity: 15 };
+  const matrix = (overrides: Record<string, unknown>) => ({
+    _id: 'm1',
+    key: 'default',
+    name: 'Default matrix',
+    versionGroupId: 'group-1',
+    version: 1,
+    isCurrent: true,
+    status: 'active',
+    factors: factors(baseWeights),
+    thresholds: { monitor_only: { min: 0, max: 25 }, risk: { min: 26, max: 50 }, elevated_risk: { min: 51, max: 75 }, issue: { min: 76, max: 100 } },
+    confidence: { professionalConsultBelow: 60, mandatoryReviewBelow: 40 },
+    ...overrides,
+  });
+
+  let versions: Record<string, unknown>[] = [matrix({})];
+  let patched: Record<string, unknown> | null = null;
+
+  await mockApi(page, () => currentUser('administrator'), async ({ route, path, method }) => {
+    if (path === '/scoring-matrices' && method === 'GET') {
+      // Mirror the server's filter: `view=current` hides drafts, which is what made a saved change look lost.
+      const view = new URL(route.request().url()).searchParams.get('view');
+      await ok(route, view === 'all' ? versions : versions.filter((v) => v.isCurrent && v.status === 'active'));
+      return true;
+    }
+    // Copy-on-write: patching the live version yields a new draft, which is exactly why the screen has to
+    // show that draft and be able to finish its lifecycle.
+    if (path === '/scoring-matrices/m1' && method === 'PATCH') {
+      patched = route.request().postDataJSON();
+      const draft = matrix({ _id: 'm2', version: 2, isCurrent: false, status: 'draft', ...patched });
+      versions = [versions[0]!, draft];
+      await ok(route, draft);
+      return true;
+    }
+    if (path === '/scoring-matrices/m2/approve' && method === 'POST') {
+      versions = versions.map((v) => (v._id === 'm2' ? { ...v, approvedBy: 'user-2', changeRef: route.request().postDataJSON().changeRef } : v));
+      await ok(route, versions.find((v) => v._id === 'm2'));
+      return true;
+    }
+    if (path === '/scoring-matrices/m2/activate' && method === 'POST') {
+      versions = versions.map((v) =>
+        v._id === 'm2' ? { ...v, status: 'active', isCurrent: true } : { ...v, status: 'deactivated', isCurrent: false },
+      );
+      await ok(route, versions.find((v) => v._id === 'm2'));
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/admin/scoring');
+  const panel = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Scoring matrix - Default matrix' }) });
+  await expect(panel.getByText('Version 2 is a draft')).toHaveCount(0);
+
+  // Redistribute one point so the six weights still total 100 and the save is allowed.
+  await panel.getByLabel('Impact', { exact: true }).press('ArrowRight');
+  await panel.getByLabel('Severity', { exact: true }).press('ArrowLeft');
+  await panel.getByRole('button', { name: 'Save configuration' }).click();
+
+  await expect.poll(() => (patched as { factors?: Record<string, { weight: number }> } | null)?.factors?.impact?.weight).toBe(21);
+
+  // The regression this test exists for: the saved draft stays on screen with its own weights, rather than
+  // the list snapping back to the live version and losing the change silently.
+  await expect(panel.getByText('Version 2 is a draft')).toBeVisible();
+  await expect(panel.getByText('21%')).toBeVisible();
+  await expect(panel.getByText('19%')).toBeVisible();
+
+  await panel.getByRole('button', { name: 'Approve', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('button', { name: 'Approve', exact: true }).click();
+  await expect(dialog.getByRole('alert')).toContainText('change reference is required');
+  await dialog.getByLabel('Change reference').fill('CHG-1042');
+  await dialog.getByRole('button', { name: 'Approve', exact: true }).click();
+
+  await expect(panel.getByText('This draft is approved.')).toBeVisible();
+  await panel.getByRole('button', { name: 'Activate', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Activate', exact: true }).click();
+
+  // Once activated the draft is gone and version 2 is what scores assessments.
+  await expect(panel.getByText('Version 2 is a draft')).toHaveCount(0);
+  await expect(panel.getByText('v2')).toBeVisible();
+  await expect(panel.getByText('Active', { exact: true })).toBeVisible();
+});

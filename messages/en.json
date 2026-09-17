@@ -403,6 +403,54 @@
           "risk": "Moderate risk - take action",
           "elevated_risk": "High risk - immediate review",
           "issue": "Critical risk - urgent action"
+        },
+        "savedDraft": "Draft version {version} updated. It applies once approved and activated.",
+        "confidenceTitle": "Confidence gates",
+        "confidenceGates": {
+          "professionalConsultBelow": "Professional consult below (%)",
+          "mandatoryReviewBelow": "Mandatory review below (%)"
+        },
+        "confidenceHints": {
+          "professionalConsultBelow": "Extraction confidence under this figure recommends a Professional Consult instead of a plain result (FR-20).",
+          "mandatoryReviewBelow": "Confidence under this figure flags the assessment for human review before it can be closed."
+        },
+        "confidenceHint": "Both gates must be between 0 and 100.",
+        "lifecycle": {
+          "title": "Version {version} is a draft",
+          "draftDescription": "Saving weights never changes the version that is scoring today. Version {active} keeps scoring until this draft is approved by another administrator and activated.",
+          "approvedDescription": "This draft is approved. Activating it replaces the version that is scoring today; the previous version stays readable and assessments already scored keep their own.",
+          "noActive": "none",
+          "approve": "Approve",
+          "activate": "Activate",
+          "discard": "Discard draft",
+          "changeRef": "Change reference",
+          "changeRefPlaceholder": "CHG-1042 / ticket or approval record",
+          "changeRefHelp": "Recorded with the approval in the audit log. A matrix must be approved by an administrator other than its author.",
+          "changeRefRequired": "A change reference is required.",
+          "cancel": "Cancel",
+          "working": "Working…",
+          "done": {
+            "approve": "Version {version} approved. It can now be activated.",
+            "activate": "Version {version} is active and scoring new assessments.",
+            "discard": "Draft version {version} was discarded."
+          },
+          "confirm": {
+            "title": {
+              "approve": "Approve this draft?",
+              "activate": "Activate this draft?",
+              "discard": "Discard this draft?"
+            },
+            "description": {
+              "approve": "Records your approval of version {version} against a change reference. It does not start scoring yet.",
+              "activate": "Version {version} becomes the matrix that scores new assessments. The current version is retained and stays readable.",
+              "discard": "Version {version} is abandoned and cannot be activated later. Saved weight and gate changes in it are lost."
+            },
+            "button": {
+              "approve": "Approve",
+              "activate": "Activate",
+              "discard": "Discard draft"
+            }
+          }
         }
       },
       "fields": {

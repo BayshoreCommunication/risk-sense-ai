@@ -5,19 +5,18 @@ import { PageHeader } from '@/components/shell/PageHeader';
 import { ScoringMatrixEditor } from '@/components/admin/ScoringMatrixEditor';
 
 /**
- * Administrator scoring matrix configuration (FR-18, FR-19), laid out as
+ * Administrator scoring matrix configuration (FR-18, FR-19, FR-20), laid out as
  * docs/design/figma-frames/15-admin-scoring-matrix.png.
  *
- * Only the weighted factors are editable here. Creating a matrix, fact→factor mappings, the FR-20
- * confidence gates and the AI-05 approval lifecycle have no screen — see ISS-033. Saving weights
- * still creates a draft version that an administrator other than the author must approve and
- * activate through the API before it scores anything.
+ * Weighted factors and the confidence gates are editable here, and the draft a save produces carries
+ * its own approve/activate controls so a change cannot be believed-made-but-inert (AI-05, ISS-033).
+ * Creating a matrix and editing fact→factor mappings remain API-only by decision, not oversight.
  */
 export default function ScoringPage() {
   const t = useTranslations('admin.scoring');
   return (
     <div className="page-shell">
-      <PageHeader title={t('title')} requirements={['FR-18', 'FR-19']} />
+      <PageHeader title={t('title')} requirements={['FR-18', 'FR-19', 'FR-20']} />
       <ScoringMatrixEditor />
     </div>
   );
