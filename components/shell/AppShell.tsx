@@ -313,7 +313,23 @@ export function AppShell({ role, children }: { role: Role; children: React.React
         </nav>
       </div>
 
-      <div className={`shrink-0 border-t border-sidebar-border ${compact ? 'space-y-1.5 p-2' : 'space-y-1.5 p-2'}`}>
+      <div className={`relative shrink-0 border-t border-sidebar-border ${compact ? 'space-y-1.5 p-2' : 'space-y-1.5 p-2'}`}>
+        {mobile ? null : (
+          /* Collapse handle, sitting on the joint where the footer's rule meets the rail's edge. */
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger
+                aria-label={compact ? t('app.expandNavigation') : t('app.collapseNavigation')}
+                aria-expanded={!compact}
+                className="absolute left-full top-0 ml-1.5 grid size-6 -translate-y-1/2 place-items-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground/60 shadow-[0_1px_3px_rgba(15,35,65,0.14)] transition hover:border-sidebar-primary/40 hover:bg-sidebar-accent hover:text-sidebar-primary"
+                onClick={() => setCollapsed((current) => !current)}
+              >
+                {compact ? <ChevronRight className="size-3.5" aria-hidden="true" /> : <ChevronLeft className="size-3.5" aria-hidden="true" />}
+              </TooltipTrigger>
+              <TooltipContent side="right">{compact ? t('app.expandNavigation') : t('app.collapseNavigation')}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
         {compact ? (
           <div
             className="mx-auto flex size-9 items-center justify-center rounded-lg bg-sidebar-accent text-xs font-bold text-sidebar-primary"
@@ -388,20 +404,6 @@ export function AppShell({ role, children }: { role: Role; children: React.React
 
         <aside className={`fixed bottom-0 left-0 top-14 z-40 sidebar-surface hidden border-r border-sidebar-border transition-[width] lg:block ${collapsed ? 'w-[4.5rem]' : 'w-64'}`}>
           {renderNavigation()}
-          {/* Collapse handle: centred on the rail's edge, clear of the navigation. */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger
-                aria-label={collapsed ? t('app.expandNavigation') : t('app.collapseNavigation')}
-                aria-expanded={!collapsed}
-                className="absolute left-full top-1/2 ml-1.5 grid size-6 -translate-y-1/2 place-items-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground/60 shadow-[0_1px_3px_rgba(15,35,65,0.14)] transition hover:border-sidebar-primary/40 hover:bg-sidebar-accent hover:text-sidebar-primary"
-                onClick={() => setCollapsed((current) => !current)}
-              >
-                {collapsed ? <ChevronRight className="size-3.5" aria-hidden="true" /> : <ChevronLeft className="size-3.5" aria-hidden="true" />}
-              </TooltipTrigger>
-              <TooltipContent side="right">{collapsed ? t('app.expandNavigation') : t('app.collapseNavigation')}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
         </aside>
       </div>
 

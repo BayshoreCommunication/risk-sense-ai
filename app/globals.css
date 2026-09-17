@@ -79,7 +79,7 @@
   --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: oklch(0.945 0.036 252);
   --sidebar-accent-foreground: oklch(0.29 0.125 257);
-  --sidebar-border: oklch(0.875 0.018 252);
+  --sidebar-border: oklch(0.924 0.012 252);
   --sidebar-ring: oklch(0.7 0.13 251);
   --success: oklch(0.63 0.17 158);
   --success-soft: oklch(0.96 0.04 158);
@@ -180,7 +180,6 @@
     background-image:
       linear-gradient(180deg, color-mix(in oklch, var(--sidebar-primary), transparent 96%) 0%, transparent 18rem),
       linear-gradient(180deg, transparent 60%, color-mix(in oklch, var(--sidebar-primary), transparent 97%) 100%);
-    box-shadow: inset -1px 0 0 color-mix(in oklch, var(--sidebar-border), transparent 35%);
   }
   .surface {
     @apply rounded-xl border bg-card shadow-[0_1px_2px_rgba(15,35,65,0.035)];

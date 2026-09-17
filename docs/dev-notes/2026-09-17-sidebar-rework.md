@@ -22,10 +22,11 @@ above the navigation, which the owner did not want — it pushed the first item 
 and left a gap. Removing the row means the navigation starts at the very top, so
 the handle is absolutely positioned at `left-full` with a small margin: it sits
 against the border in the content gutter and cannot collide with the full-width
-highlight of the active item, which it did at `-right-3`. It is centred vertically
-on the rail (`top-1/2 -translate-y-1/2`) and carries a `Tooltip` naming the action,
-rather than relying on the browser's slow native `title`. Collapsed navigation
-items still use `title` plus their `sr-only` label.
+highlight of the active item, which it did at `-right-3`. It is anchored to the
+joint where the footer's rule meets the rail's edge — the footer is the positioning
+context, so the handle stays on that junction at any viewport height — and carries a
+`Tooltip` naming the action rather than relying on the browser's slow native
+`title`. Collapsed navigation items still use `title` plus their `sr-only` label.
 
 **Layout transitions were removed on purpose.** Animating the content wrapper's
 padding animates the document width, and a width measurement taken right after a
@@ -41,8 +42,13 @@ stronger. Inactive item text moved from `/62` to `/80` and icons from `/38` to
 `/60`, so the list reads without hovering.
 
 On top of that the rail uses a `.sidebar-surface` utility: a soft top-down tint
-derived from `--sidebar-primary` plus an inset edge line, so it reads as its own
-surface rather than a flat white panel. The mobile drawer uses the same utility.
+derived from `--sidebar-primary`, so it reads as its own surface rather than a flat
+white panel. The mobile drawer uses the same utility.
+
+The edge was too heavy at first: the utility also drew an inset edge line, which
+doubled up with the rail's own `border-r`, and `--sidebar-border` had been darkened
+to `0.875`. The inset line is gone and the border sits at `0.924` — one light rule,
+not two dark ones.
 
 ## Removed
 
