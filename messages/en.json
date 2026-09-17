@@ -325,6 +325,42 @@
       "title": "Scoring matrix configuration",
       "description": "Versioned factor weights, mappings, classification thresholds, and confidence gates.",
       "entity": "scoring matrix",
+      "versionsTitle": "Matrix versions",
+      "editor": {
+        "heading": "Scoring matrix - {name}",
+        "description": "Overall risk score is calculated <range>0–100</range> from these weighted factors.",
+        "scoreRange": "0–100",
+        "columns": {
+          "factor": "Factor",
+          "weight": "Weight (%)",
+          "impact": "Impact on score"
+        },
+        "totalWeight": "Total weight: {total}%",
+        "totalWeightHint": "Weights must total exactly 100% before the configuration can be saved.",
+        "thresholdsTitle": "Classification thresholds",
+        "save": "Save configuration",
+        "saving": "Saving…",
+        "saved": "Saved as version {version}. It applies once approved and activated.",
+        "footnote": "Weights and thresholds are applied without code deployment.",
+        "empty": "No scoring matrix exists yet. Create one to configure weights and thresholds.",
+        "loading": "Loading the scoring matrix…",
+        "matrixLabel": "Matrix",
+        "versionLabel": "v{version}",
+        "factors": {
+          "controlEffectiveness": "Control effectiveness",
+          "impact": "Impact",
+          "severity": "Severity",
+          "likelihood": "Likelihood",
+          "duration": "Duration",
+          "regulatorySensitivity": "Regulatory sensitivity"
+        },
+        "thresholdHints": {
+          "monitor_only": "Low risk - monitor regularly",
+          "risk": "Moderate risk - take action",
+          "elevated_risk": "High risk - immediate review",
+          "issue": "Critical risk - urgent action"
+        }
+      },
       "fields": {
         "key": "Key",
         "name": "Name",

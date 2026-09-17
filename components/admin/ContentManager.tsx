@@ -33,6 +33,8 @@ export interface ContentManagerProps {
   description: string;
   /** Requirement IDs for this content screen, shown as chips in the page header. */
   requirements?: string[];
+  /** Render a compact section heading instead of the page header, for screens that already have one. */
+  hideHeader?: boolean;
   entity: string;
   apiClient: EntityApi;
   fields: FieldSpec[];
@@ -153,7 +155,7 @@ export function ContentManager(props: ContentManagerProps) {
   const t = useTranslations('contentManager');
   const statusT = useTranslations('status');
   const structuredValidation = useTranslations('structured.validation');
-  const { title, description, requirements, apiClient, fields, columns, versioned, defaultQuery, approval, facets = [], callout } = props;
+  const { title, description, requirements, hideHeader, apiClient, fields, columns, versioned, defaultQuery, approval, facets = [], callout } = props;
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -284,12 +286,9 @@ export function ContentManager(props: ContentManagerProps) {
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        title={title}
-        description={description}
-        requirements={requirements}
-        titleAdornment={!loading && <Badge variant="secondary" aria-label={`${visible.length} ${title}`}>{visible.length}</Badge>}
-        actions={
+      {(() => {
+        const count = !loading && <Badge variant="secondary" aria-label={`${visible.length} ${title}`}>{visible.length}</Badge>;
+        const controls = (
           <>
             <div className="relative min-w-0 sm:w-56">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
@@ -300,8 +299,19 @@ export function ContentManager(props: ContentManagerProps) {
               {t('actions.new')}
             </Button>
           </>
-        }
-      />
+        );
+        return hideHeader ? (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2.5">
+              <h2 className="font-heading text-base font-bold tracking-[-0.01em]">{title}</h2>
+              {count}
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">{controls}</div>
+          </div>
+        ) : (
+          <PageHeader title={title} description={description} requirements={requirements} titleAdornment={count} actions={controls} />
+        );
+      })()}
 
       {callout}
 
