@@ -22,7 +22,10 @@ above the navigation, which the owner did not want — it pushed the first item 
 and left a gap. Removing the row means the navigation starts at the very top, so
 the handle is absolutely positioned at `left-full` with a small margin: it sits
 against the border in the content gutter and cannot collide with the full-width
-highlight of the active item, which it did at `-right-3`.
+highlight of the active item, which it did at `-right-3`. It is centred vertically
+on the rail (`top-1/2 -translate-y-1/2`) and carries a `Tooltip` naming the action,
+rather than relying on the browser's slow native `title`. Collapsed navigation
+items still use `title` plus their `sr-only` label.
 
 **Layout transitions were removed on purpose.** Animating the content wrapper's
 padding animates the document width, and a width measurement taken right after a

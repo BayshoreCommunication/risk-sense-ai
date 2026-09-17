@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { api, toApiError } from '@/lib/api/client';
 import type { components } from '@/lib/api/types';
 import { firebaseSignOut } from '@/lib/firebase/client';
@@ -387,17 +388,20 @@ export function AppShell({ role, children }: { role: Role; children: React.React
 
         <aside className={`fixed bottom-0 left-0 top-14 z-40 sidebar-surface hidden border-r border-sidebar-border transition-[width] lg:block ${collapsed ? 'w-[4.5rem]' : 'w-64'}`}>
           {renderNavigation()}
-          {/* Collapse handle, straddling the rail's edge. */}
-          <button
-            type="button"
-            aria-label={collapsed ? t('app.expandNavigation') : t('app.collapseNavigation')}
-            aria-expanded={!collapsed}
-            title={collapsed ? t('app.expandNavigation') : t('app.collapseNavigation')}
-            className="absolute left-full top-3 ml-1.5 grid size-6 place-items-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground/60 shadow-[0_1px_3px_rgba(15,35,65,0.14)] transition hover:border-sidebar-primary/40 hover:bg-sidebar-accent hover:text-sidebar-primary"
-            onClick={() => setCollapsed((current) => !current)}
-          >
-            {collapsed ? <ChevronRight className="size-3.5" aria-hidden="true" /> : <ChevronLeft className="size-3.5" aria-hidden="true" />}
-          </button>
+          {/* Collapse handle: centred on the rail's edge, clear of the navigation. */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger
+                aria-label={collapsed ? t('app.expandNavigation') : t('app.collapseNavigation')}
+                aria-expanded={!collapsed}
+                className="absolute left-full top-1/2 ml-1.5 grid size-6 -translate-y-1/2 place-items-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground/60 shadow-[0_1px_3px_rgba(15,35,65,0.14)] transition hover:border-sidebar-primary/40 hover:bg-sidebar-accent hover:text-sidebar-primary"
+                onClick={() => setCollapsed((current) => !current)}
+              >
+                {collapsed ? <ChevronRight className="size-3.5" aria-hidden="true" /> : <ChevronLeft className="size-3.5" aria-hidden="true" />}
+              </TooltipTrigger>
+              <TooltipContent side="right">{collapsed ? t('app.expandNavigation') : t('app.collapseNavigation')}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </aside>
       </div>
 
