@@ -540,7 +540,8 @@ function AnswerBox({
     <div>
       <p className="mb-3 text-sm font-semibold leading-6 text-foreground">{q.text ?? t('textLabel')}</p>
       <label className="sr-only" htmlFor={inputId}>{q.text ?? t('textLabel')}</label>
-      <div className="relative">
+      {/* One composer surface: the field and its send share a frame and a focus ring. */}
+      <div className="rounded-2xl border bg-card shadow-[0_1px_2px_rgba(15,35,65,0.05)] transition focus-within:border-primary/40 focus-within:ring-4 focus-within:ring-primary/8">
         <Textarea
           id={inputId}
           rows={2}
@@ -548,7 +549,7 @@ function AnswerBox({
           placeholder={t('textPlaceholder')}
           value={text}
           onChange={(event) => setText(event.target.value)}
-          className="min-h-24 resize-none pr-24"
+          className="min-h-24 resize-none border-0 bg-transparent px-4 pt-3.5 shadow-none focus-visible:ring-0"
           onKeyDown={(event) => {
             if (event.key === 'Enter' && !event.shiftKey && !busy && !event.nativeEvent.isComposing) {
               event.preventDefault();
@@ -556,10 +557,13 @@ function AnswerBox({
             }
           }}
         />
-        <Button className="absolute right-2 bottom-2" disabled={busy || !text.trim()} onClick={submitText}>
-          <Send className="size-4" aria-hidden="true" />
-          {t('send')}
-        </Button>
+        <div className="flex items-center justify-between gap-3 border-t px-3 py-2">
+          <span className="text-[0.7rem] text-muted-foreground">{t('enterHint')}</span>
+          <Button size="sm" disabled={busy || !text.trim()} onClick={submitText}>
+            <Send className="size-4" aria-hidden="true" />
+            {t('send')}
+          </Button>
+        </div>
       </div>
     </div>
   );
