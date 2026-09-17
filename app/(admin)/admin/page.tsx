@@ -12,7 +12,6 @@ import {
   Database,
   FileText,
   GitBranch,
-  Info,
   ListChecks,
   SlidersHorizontal,
 } from 'lucide-react';
@@ -183,7 +182,6 @@ export default function Page() {
       <section className="data-panel" aria-labelledby="admin-operations-title">
         <div className="border-b px-5 py-4">
           <h2 id="admin-operations-title" className="text-sm font-semibold">{t('operations.title')}</h2>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('operations.description')}</p>
         </div>
         <div className="grid divide-y sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           {operations.map((operation) => (
@@ -199,10 +197,6 @@ export default function Page() {
         </div>
       </section>
 
-      <div className="flex items-start gap-2 rounded-xl border border-blue-200 bg-blue-50/55 p-3.5 text-xs leading-5 text-blue-950/75">
-        <Info className="mt-0.5 size-4 shrink-0 text-blue-700" aria-hidden="true" />
-        {t('configurationNote')}
-      </div>
     </div>
   );
 }

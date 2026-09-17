@@ -94,7 +94,6 @@ export default function RulesPage() {
       versioned
       approval
       />
-      <p className="rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-xs leading-5 text-blue-950/75">{t('note')}</p>
     </div>
   );
 }

@@ -153,7 +153,6 @@
       "description": "Manage personas, scenarios, questions, rules, scoring and datasets in one place.",
       "roleBadge": "Administrator",
       "configurationLabel": "Configuration portfolio",
-      "configurationNote": "All configuration access routes through this dashboard, not direct database or code access.",
       "partialError": "Some live data is unavailable ({count} sources). Available cards still show current tenant data.",
       "retry": "Retry unavailable data",
       "metrics": {
@@ -169,7 +168,6 @@
       },
       "operations": {
         "title": "Operational tools",
-        "description": "Requirement-backed review, analytics and reporting remain available without cluttering content configuration.",
         "analytics": {
           "title": "Analytics dashboard",
           "description": "Explore live risk and assessment trends."
@@ -222,7 +220,6 @@
         "departments": "Departments",
         "scenarios": "Scenarios"
       },
-      "note": "Deactivated personas stay viewable on historical assessments but drop out of new sessions.",
       "fields": {
         "key": "Key",
         "name": "Name",
@@ -247,7 +244,6 @@
       "title": "Scenario library management",
       "description": "Versioned assessment journeys with structured question flow and outcome guidance.",
       "entity": "scenario",
-      "note": "Editing a scenario creates a new version; activation is blocked without a linked question set.",
       "fields": {
         "key": "Key",
         "personaKey": "Persona key",
@@ -279,7 +275,6 @@
         "created": "Created: {date}",
         "updated": "Updated: {date}"
       },
-      "note": "Every question is tagged by persona, scenario, and sector; retired questions are preserved on historical records.",
       "summary": {
         "total": "Total questions",
         "active": "Active questions",
@@ -315,7 +310,6 @@
       "title": "Rule engine — hard business rules",
       "description": "Versioned hard rules that can force a classification before matrix scoring is presented.",
       "entity": "rule",
-      "note": "Rule activation takes effect on the next new assessment without a system restart.",
       "card": {
         "if": "If",
         "then": "then force classification =",
@@ -1069,7 +1063,6 @@
   "reviewDashboard": {
     "eyebrow": "Decision workspace",
     "title": "Requestor dashboard — pending queue",
-    "note": "Filtered by persona, department and date range. Results are scoped to your assigned departments.",
     "descriptionReviewer": "Track and manage pending assessments for you and your department.",
     "descriptionRequestor": "Track and manage all your pending assessments.",
     "newAssessment": "New assessment",
