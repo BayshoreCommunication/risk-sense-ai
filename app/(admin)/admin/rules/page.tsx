@@ -47,7 +47,7 @@ export default function RulesPage() {
     return `${condition.factKey ?? 'fact'} ${operator[condition.op ?? ''] ?? condition.op ?? ''}${condition.op === 'exists' ? '' : ` ${Array.isArray(condition.value) ? condition.value.join(', ') : String(condition.value ?? '')}`}`;
   };
   return (
-    <div className="space-y-5">
+    <div className="page-shell">
       <ContentManager
       title={t('title')}
       description={t('description')}

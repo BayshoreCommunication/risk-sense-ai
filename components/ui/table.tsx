@@ -7,7 +7,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      className="scrollbar-subtle relative max-h-[max(16rem,calc(100dvh-26rem))] w-full overflow-auto"
     >
       <table
         data-slot="table"
@@ -22,7 +22,7 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
       data-slot="table-header"
-      className={cn("bg-muted/45 text-muted-foreground [&_tr]:border-b", className)}
+      className={cn("sticky top-0 z-10 bg-muted text-muted-foreground [&_tr]:border-b", className)}
       {...props}
     />
   )

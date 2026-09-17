@@ -213,7 +213,7 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
+    <div className="page-shell max-w-7xl">
       <PageHeader
         title={t('title')}
         description={t('description')}
@@ -240,7 +240,7 @@ export default function UsersPage() {
         </div>
       )}
 
-      <div className="data-panel hidden overflow-x-auto rounded-t-none lg:block">
+      <div className="data-panel fills hidden rounded-t-none lg:block">
         <Table>
           <TableHeader>
             <TableRow>

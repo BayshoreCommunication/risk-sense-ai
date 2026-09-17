@@ -37,7 +37,7 @@ export default function ScenariosPage() {
   const t = useTranslations('admin.scenarios');
   const fields = scenarioFields(t);
   return (
-    <div className="space-y-5">
+    <div className="page-shell">
       <ContentManager
       title={t('title')}
       description={t('description')}

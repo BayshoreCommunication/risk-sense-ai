@@ -330,7 +330,7 @@ export function ContentManager(props: ContentManagerProps) {
   );
 
   return (
-    <div className="space-y-5">
+    <div className="flex min-h-0 flex-1 flex-col gap-5">
       {(() => {
         const count = !loading && <Badge variant="secondary" aria-label={`${visible.length} ${title}`}>{visible.length}</Badge>;
         const controls = (
@@ -386,7 +386,7 @@ export function ContentManager(props: ContentManagerProps) {
       {summary && !loading ? summary(items) : null}
 
       {card ? (
-        <section className="scrollbar-subtle max-h-[min(60vh,40rem)] space-y-3 overflow-y-auto pr-1" aria-busy={loading}>
+        <section className="scrollbar-subtle min-h-0 flex-1 space-y-3 overflow-y-auto pr-1" aria-busy={loading}>
           {loading && <p className="rounded-xl border bg-card p-8 text-center text-muted-foreground">{t('loading')}</p>}
           {!loading && visible.length === 0 && <p className="rounded-xl border bg-card p-8 text-center text-muted-foreground">{t('empty')}</p>}
           {visible.map((item) => {
@@ -417,9 +417,9 @@ export function ContentManager(props: ContentManagerProps) {
           })}
         </section>
       ) : (
-        <section className="data-panel scrollbar-subtle max-h-[min(62vh,42rem)] overflow-y-auto" aria-busy={loading}>
+        <section className="data-panel fills" aria-busy={loading}>
           <Table className="min-w-[760px]">
-            <TableHeader className="sticky top-0 z-10 bg-muted/45 backdrop-blur">
+            <TableHeader>
               <TableRow>
                 {columns.map((c) => (
                   <TableHead key={c.key}>{c.label}</TableHead>

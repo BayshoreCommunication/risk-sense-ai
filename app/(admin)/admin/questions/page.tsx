@@ -50,7 +50,7 @@ export default function QuestionsPage() {
   const locale = useLocale();
   const fields = questionFields(t);
   return (
-    <div className="space-y-5">
+    <div className="page-shell">
       <ContentManager
       title={t('title')}
       description={t('description')}

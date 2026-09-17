@@ -420,7 +420,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
       )}
 
       <div className={`min-w-0 pt-14 ${collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-64'}`} inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
-        <main className="scrollbar-subtle h-[calc(100dvh-3.5rem)] overflow-y-auto px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+        <main className="h-[calc(100dvh-3.5rem)] overflow-hidden px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
           <WorkspaceProvider value={{ role: trustedRole, plan: me.tenant.plan }}>{children}</WorkspaceProvider>
         </main>
       </div>

@@ -225,7 +225,7 @@ export default function DatasetsPage() {
 
       {error && <p className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</p>}
 
-      <section className="data-panel hidden overflow-x-auto lg:block" aria-busy={loading}>
+      <section className="data-panel fills hidden lg:block" aria-busy={loading}>
         <Table className="min-w-[980px]">
           <TableHeader>
             <TableRow>

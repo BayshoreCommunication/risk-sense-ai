@@ -258,7 +258,7 @@ export default function SystemAuditArchivePage() {
                 </article>
               ))}
             </div>
-            <div className="hidden overflow-x-auto md:block">
+            <div className="hidden md:block">
               <Table>
                 <TableHeader>
                   <TableRow>

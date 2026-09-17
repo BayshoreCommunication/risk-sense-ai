@@ -117,7 +117,7 @@ export default function RetentionPage() {
                   </article>
                 ))}
               </div>
-              <div className="hidden overflow-x-auto md:block">
+              <div className="hidden md:block">
                 <Table className="min-w-[760px] table-fixed">
                   <TableHeader>
                     <TableRow>
@@ -209,7 +209,7 @@ export default function RetentionPage() {
           </article>
         ))}
       </div>
-      <div className="hidden overflow-x-auto md:block">
+      <div className="hidden md:block">
         <Table>
           <TableHeader>
             <TableRow>
