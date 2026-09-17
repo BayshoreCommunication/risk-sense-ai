@@ -50,7 +50,6 @@
       "audit": "Audit archive"
     },
     "audit": {
-      "overview": "Overview",
       "assessments": "Assessments",
       "logs": "Audit log viewer"
     }
@@ -1135,36 +1134,6 @@
     }
   },
   "audit": {
-    "overview": {
-      "eyebrow": "Read-only assurance",
-      "title": "Audit evidence overview",
-      "description": "Monitor assessment lifecycle evidence and recent tenant activity without changing source records.",
-      "actions": {
-        "logs": "Open audit log",
-        "assessments": "Review assessments"
-      },
-      "metrics": {
-        "label": "Audit evidence summary",
-        "total": "Total assessments",
-        "open": "Open assessments",
-        "closed": "Closed assessments",
-        "attention": "Needs review"
-      },
-      "recentAssessments": {
-        "title": "Recent assessments",
-        "description": "Latest tenant records available for stored-record review and reconstruction.",
-        "empty": "No assessments are available.",
-        "viewAll": "View all assessments"
-      },
-      "unknownRequestor": "Unknown requestor",
-      "recentEvents": {
-        "title": "Recent audit events",
-        "description": "Newest append-only events across the tenant.",
-        "empty": "No audit events are available.",
-        "viewAll": "View full audit log"
-      },
-      "loading": "Loading audit evidence…"
-    },
     "assessments": {
       "eyebrow": "Assessment evidence",
       "title": "Assessments (audit view)",

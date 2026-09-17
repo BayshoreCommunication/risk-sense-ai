@@ -59,3 +59,36 @@ index, and the system landing spec now checks that `/system` redirects to user
 provisioning and that the rail exposes all seven workspaces.
 
 Both catalogues stay in sync at 1,316 strings.
+
+---
+
+## Follow-up: Audit, and keeping the window unscrolled
+
+### Audit
+
+The frame gives this role one screen. Section 8 of `docs/ai/BusinessRules.md` has
+four rules and none of them asks for a dashboard:
+
+- 8.1 append-only log and 8.3 hash-chained, no update/delete path → `/audit/logs`.
+- 8.2 reconstruction, integrity and stored-record comparison (FR-25/26, FR-30) →
+  `/audit/assessments`, so that screen **stays**.
+- 8.4 bounded export with a SHA-256 manifest → the system administrator's audit
+  archive, which is a different role.
+
+The `/audit` overview had no rule behind it and no frame, so it is gone. `/audit`
+redirects to `/audit/logs`, `ROLE_HOME.audit` points there, and the `audit.overview`
+copy and nav label were retired. Both catalogues stay in sync at 1,294 strings.
+
+### The window no longer scrolls
+
+`main` is now exactly the viewport below the top bar and scrolls its own content,
+so the top bar, the rail and the sign-out row stay put on every screen. It is
+`overflow-y-auto`, not `overflow-hidden`: several pages do not use `.page-shell`
+as their root, and hiding the overflow would have clipped them instead of
+scrolling.
+
+On top of that, `ContentManager` caps its list at `min(62vh, 42rem)` and scrolls it
+internally with a sticky column header, so the page title, the filter and the New
+button stay on screen no matter how long the list is. Verified on a 13-row scenario
+library at 1440×820: `document.documentElement.scrollHeight` equals
+`window.innerHeight`, so the window itself does not scroll at all.

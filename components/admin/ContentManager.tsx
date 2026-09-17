@@ -386,7 +386,7 @@ export function ContentManager(props: ContentManagerProps) {
       {summary && !loading ? summary(items) : null}
 
       {card ? (
-        <section className="space-y-3" aria-busy={loading}>
+        <section className="scrollbar-subtle max-h-[min(60vh,40rem)] space-y-3 overflow-y-auto pr-1" aria-busy={loading}>
           {loading && <p className="rounded-xl border bg-card p-8 text-center text-muted-foreground">{t('loading')}</p>}
           {!loading && visible.length === 0 && <p className="rounded-xl border bg-card p-8 text-center text-muted-foreground">{t('empty')}</p>}
           {visible.map((item) => {
@@ -417,9 +417,9 @@ export function ContentManager(props: ContentManagerProps) {
           })}
         </section>
       ) : (
-        <section className="data-panel" aria-busy={loading}>
+        <section className="data-panel scrollbar-subtle max-h-[min(62vh,42rem)] overflow-y-auto" aria-busy={loading}>
           <Table className="min-w-[760px]">
-            <TableHeader className="bg-muted/45">
+            <TableHeader className="sticky top-0 z-10 bg-muted/45 backdrop-blur">
               <TableRow>
                 {columns.map((c) => (
                   <TableHead key={c.key}>{c.label}</TableHead>

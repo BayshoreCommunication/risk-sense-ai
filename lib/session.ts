@@ -14,7 +14,7 @@ export const ROLE_HOME: Record<Role, string> = {
   requestor: '/chat',
   administrator: '/admin',
   system_administrator: '/system/users',
-  audit: '/audit',
+  audit: '/audit/logs',
 };
 
 /** Which URL prefixes each role may open (mirrors backend RBAC, DASH-04). */
