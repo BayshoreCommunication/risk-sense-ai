@@ -396,6 +396,20 @@ test('analytics supports pie, table and persistent period drill-down views [DASH
   const monthlyChart = monthlyPanel.getByRole('group', { name: 'Final classifications by month' });
   await expect(monthlyChart.getByRole('button', { name: / · Risk: 2$/ }).first()).toBeVisible();
 
+  // Client comment 50: the same month data is self-selectable as a pie and as a table on this screen.
+  await monthlyPanel.getByRole('button', { name: 'Pie', exact: true }).click();
+  const monthlyPie = monthlyPanel.getByRole('group', { name: /classification distribution as a pie chart$/ });
+  await expect(monthlyPie).toBeVisible();
+  await expect(monthlyPanel.getByRole('button', { name: /Monitor Only 4/ })).toHaveCount(1);
+
+  await monthlyPanel.getByRole('button', { name: 'Table', exact: true }).click();
+  await expect(monthlyPanel.getByRole('columnheader', { name: 'Month' })).toBeVisible();
+  await expect(monthlyPanel.getByRole('columnheader', { name: 'Total' })).toBeVisible();
+  await expect(monthlyPanel.getByRole('row')).toHaveCount(6);
+
+  await monthlyPanel.getByRole('button', { name: 'Chart', exact: true }).click();
+  await expect(monthlyChart).toBeVisible();
+
   // The four report views, the FR-27 trend breakdown and the exports live on the standard reports screen.
   await page.goto('/admin/reports');
   await page.getByRole('button', { name: '2026-08: 12' }).click();

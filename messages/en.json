@@ -618,7 +618,14 @@
         "notAvailable": "Not available",
         "segmentDetail": "{classification} in {month}: {count}",
         "selectMonth": "Select {month}: {total} scored assessments",
-        "empty": "Monthly classification data is unavailable for this window."
+        "empty": "Monthly classification data is unavailable for this window.",
+        "viewLabel": "Monthly classification view",
+        "monthLabel": "Month",
+        "pieTitle": "{month} classification distribution as a pie chart",
+        "columns": {
+          "month": "Month",
+          "total": "Total"
+        }
       },
       "trends": {
         "title": "Trends by {group}",
@@ -1399,7 +1406,7 @@
         "default": "Each person uses one account with exactly one role.",
         "loading": "Loading the tenant plan before role controls are enabled.",
         "error": "The tenant plan is unavailable. Role controls remain disabled until it can be verified.",
-        "paidMfa": "Each account may be used by one of the four roles. MFA is required for Administrator and System Administrator.",
+        "paidMfa": "Every PAID account completes MFA at sign-in. Managed roles use the RiskSense code; requestors may use their IdP's verified factor instead.",
         "freeMfa": "FREE requestors sign in without the PAID MFA step. Managed operator roles are unavailable in FREE workspaces.",
         "mfaLoading": "MFA requirements will appear after the tenant plan is verified.",
         "mfaError": "MFA requirements cannot be determined while the tenant plan is unavailable."

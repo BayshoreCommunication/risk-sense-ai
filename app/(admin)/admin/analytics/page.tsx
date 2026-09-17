@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { RefreshCw } from 'lucide-react';
-import { ChartStyles, STATUS, StackedClassificationChart, StatTile, type StackedClassificationMonth } from '@/components/analytics/Charts';
+import { ChartNoAxesColumn, ChartPie, RefreshCw, Table2 } from 'lucide-react';
+import { ChartStyles, PieChart, STATUS, StackedClassificationChart, StatTile, type StackedClassificationMonth } from '@/components/analytics/Charts';
 import { PageHeader } from '@/components/shell/PageHeader';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toApiError } from '@/lib/api/client';
 import { fmtSeconds, reports, type ReportQuery, type ReportResult, type ReportType } from '@/lib/reports';
 
@@ -48,6 +49,8 @@ export default function AnalyticsPage() {
   const [monthlyClassification, setMonthlyClassification] = useState<MonthlyClassificationResult[] | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [selectedClassification, setSelectedClassification] = useState<ClassificationKey | null>(null);
+  // Client comment 50: the viewer self-selects how the same month data is presented.
+  const [view, setView] = useState<'chart' | 'pie' | 'table'>('chart');
   const [error, setError] = useState<string | null>(null);
 
   // Headline metrics cover the trailing twelve months; the chart covers the five complete months the frame shows.
@@ -158,7 +161,24 @@ export default function AnalyticsPage() {
             <h2 className="font-heading font-semibold">{t('monthly.title')}</h2>
             <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('monthly.description')}</p>
           </div>
-          <span className="w-fit rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-800">{t('monthly.window')}</span>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Client comment 50: the same month data as a bar chart, a pie or a table, chosen by the viewer. */}
+            <div className="inline-flex rounded-lg bg-muted/60 p-0.5" role="group" aria-label={t('monthly.viewLabel')}>
+              <Button size="sm" variant={view === 'chart' ? 'default' : 'ghost'} aria-pressed={view === 'chart'} onClick={() => setView('chart')}>
+                <ChartNoAxesColumn data-icon="inline-start" aria-hidden="true" />
+                {t('views.chart')}
+              </Button>
+              <Button size="sm" variant={view === 'pie' ? 'default' : 'ghost'} aria-pressed={view === 'pie'} onClick={() => setView('pie')}>
+                <ChartPie data-icon="inline-start" aria-hidden="true" />
+                {t('views.pie')}
+              </Button>
+              <Button size="sm" variant={view === 'table' ? 'default' : 'ghost'} aria-pressed={view === 'table'} onClick={() => setView('table')}>
+                <Table2 data-icon="inline-start" aria-hidden="true" />
+                {t('views.table')}
+              </Button>
+            </div>
+            <span className="w-fit rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-800">{t('monthly.window')}</span>
+          </div>
         </div>
         <div className="p-4">
           {monthlyClassification === null ? (
@@ -196,18 +216,84 @@ export default function AnalyticsPage() {
                   );
                 })}
               </div>
-              <StackedClassificationChart
-                months={stackedClassificationMonths}
-                title={t('monthly.chartTitle')}
-                selectedMonth={selectedMonthData.key}
-                selectedClassification={selectedClassification}
-                onMonthSelect={setSelectedMonth}
-                onSegmentSelect={(month, classification) => {
-                  setSelectedMonth(month);
-                  setSelectedClassification((current) => (current === classification && selectedMonthData.key === month ? null : (classification as ClassificationKey)));
-                }}
-                selectMonthLabel={(month, total) => t('monthly.selectMonth', { month, total })}
-              />
+              {view === 'pie' ? (
+                <>
+                  {/* The bar chart carries its own month selection; the pie shows one month, so it needs these. */}
+                  <div className="mb-4 flex flex-wrap gap-1.5" role="group" aria-label={t('monthly.monthLabel')}>
+                    {stackedClassificationMonths.map((month) => (
+                      <Button
+                        key={month.key}
+                        size="sm"
+                        variant={month.key === selectedMonthData.key ? 'default' : 'outline'}
+                        aria-pressed={month.key === selectedMonthData.key}
+                        onClick={() => setSelectedMonth(month.key)}
+                      >
+                        {month.label}
+                      </Button>
+                    ))}
+                  </div>
+                  <PieChart
+                    rows={selectedMonthData.segments.map((segment) => ({ key: segment.key, label: segment.label, value: segment.value ?? 0 }))}
+                    title={t('monthly.pieTitle', { month: selectedMonthData.label })}
+                    totalLabel={t('total')}
+                  />
+                </>
+              ) : view === 'table' ? (
+                <div className="overflow-hidden rounded-xl border">
+                  <Table>
+                    <caption className="sr-only">{t('monthly.chartTitle')}</caption>
+                    <TableHeader className="bg-muted/45">
+                      <TableRow>
+                        <TableHead>{t('monthly.columns.month')}</TableHead>
+                        {CLASSIFICATION_KEYS.map((classification) => (
+                          <TableHead key={classification} className="text-right">
+                            {t(`classifications.${classification}`)}
+                          </TableHead>
+                        ))}
+                        <TableHead className="text-right">{t('monthly.columns.total')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {stackedClassificationMonths.map((month) => (
+                        <TableRow key={month.key} data-state={month.key === selectedMonthData.key ? 'selected' : undefined}>
+                          <TableCell>
+                            <button
+                              type="button"
+                              className="rounded-sm font-medium underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                              aria-pressed={month.key === selectedMonthData.key}
+                              aria-label={t('monthly.selectMonth', { month: month.label, total: month.total ?? 0 })}
+                              onClick={() => setSelectedMonth(month.key)}
+                            >
+                              {month.label}
+                            </button>
+                          </TableCell>
+                          {month.segments.map((segment) => (
+                            <TableCell key={segment.key} className="text-right tabular-nums">
+                              {segment.value === null ? t('monthly.notAvailable') : segment.value.toLocaleString(locale)}
+                            </TableCell>
+                          ))}
+                          <TableCell className="text-right font-semibold tabular-nums">
+                            {month.total === null ? t('monthly.notAvailable') : month.total.toLocaleString(locale)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <StackedClassificationChart
+                  months={stackedClassificationMonths}
+                  title={t('monthly.chartTitle')}
+                  selectedMonth={selectedMonthData.key}
+                  selectedClassification={selectedClassification}
+                  onMonthSelect={setSelectedMonth}
+                  onSegmentSelect={(month, classification) => {
+                    setSelectedMonth(month);
+                    setSelectedClassification((current) => (current === classification && selectedMonthData.key === month ? null : (classification as ClassificationKey)));
+                  }}
+                  selectMonthLabel={(month, total) => t('monthly.selectMonth', { month, total })}
+                />
+              )}
             </>
           ) : (
             <p className="grid h-64 place-items-center text-sm text-muted-foreground" role="status">
