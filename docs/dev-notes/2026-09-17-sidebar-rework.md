@@ -24,9 +24,12 @@ the handle is absolutely positioned at `left-full` with a small margin: it sits
 against the border in the content gutter and cannot collide with the full-width
 highlight of the active item, which it did at `-right-3`. It is anchored to the
 joint where the footer's rule meets the rail's edge — the footer is the positioning
-context, so the handle stays on that junction at any viewport height — and carries a
-`Tooltip` naming the action rather than relying on the browser's slow native
-`title`. Collapsed navigation items still use `title` plus their `sr-only` label.
+context, so the handle stays on that junction at any viewport height — and straddles
+the border itself (`left-full -translate-x-1/2 -translate-y-1/2`). That position is
+safe because the joint is the footer's top edge, below the scrolling navigation, so
+nothing else is drawn there. It carries a `Tooltip` naming the action rather than
+relying on the browser's slow native `title`; collapsed navigation items still use
+`title` plus their `sr-only` label.
 
 **Layout transitions were removed on purpose.** Animating the content wrapper's
 padding animates the document width, and a width measurement taken right after a

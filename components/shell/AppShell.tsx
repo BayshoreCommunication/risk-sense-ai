@@ -321,7 +321,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
               <TooltipTrigger
                 aria-label={compact ? t('app.expandNavigation') : t('app.collapseNavigation')}
                 aria-expanded={!compact}
-                className="absolute left-full top-0 ml-1.5 grid size-6 -translate-y-1/2 place-items-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground/60 shadow-[0_1px_3px_rgba(15,35,65,0.14)] transition hover:border-sidebar-primary/40 hover:bg-sidebar-accent hover:text-sidebar-primary"
+                className="absolute left-full top-0 z-10 grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground/60 shadow-[0_1px_3px_rgba(15,35,65,0.14)] transition hover:border-sidebar-primary/40 hover:bg-sidebar-accent hover:text-sidebar-primary"
                 onClick={() => setCollapsed((current) => !current)}
               >
                 {compact ? <ChevronRight className="size-3.5" aria-hidden="true" /> : <ChevronLeft className="size-3.5" aria-hidden="true" />}
