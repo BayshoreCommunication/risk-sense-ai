@@ -3,20 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import {
-  AlertCircle,
-  Bot,
-  Check,
-  CheckCircle2,
-  ChevronRight,
-  CircleDot,
-  FileCheck2,
-  Flag,
-  LoaderCircle,
-  LockKeyhole,
-  Send,
-  Sparkles,
-} from 'lucide-react';
+import { AlertCircle, Bot, Check, CheckCircle2, ChevronRight, CircleDot, FileCheck2, Flag, LoaderCircle, LockKeyhole, Send } from 'lucide-react';
 import { Conversation, ConversationContent, ConversationScrollButton } from '@/components/ai-elements/conversation';
 import { Message as AIMessage, MessageContent, MessageResponse } from '@/components/ai-elements/message';
 import { Suggestion, Suggestions } from '@/components/ai-elements/suggestion';
@@ -130,10 +117,6 @@ export function ChatSession({ id }: { id: string }) {
     <div className="page-shell max-w-[1480px] space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-2">
-          <div className="eyebrow flex items-center gap-2">
-            <Sparkles className="size-3.5" />
-            {t('eyebrow')}
-          </div>
           <div>
             <h1 className="page-heading">{t('title')}</h1>
             <p className="mt-1 text-sm text-muted-foreground">{t('assessmentId', { id: id.slice(-8).toUpperCase() })}</p>

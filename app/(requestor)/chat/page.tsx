@@ -40,10 +40,6 @@ export default function NewAssessmentPage() {
   return (
     <div className="page-shell max-w-5xl">
       <div className="space-y-2">
-        <div className="eyebrow flex items-center gap-2">
-          <Sparkles className="size-3.5" />
-          {t('eyebrow')}
-        </div>
         <h1 className="page-heading">{t('title')}</h1>
         <p className="page-description">{t('description')}</p>
       </div>

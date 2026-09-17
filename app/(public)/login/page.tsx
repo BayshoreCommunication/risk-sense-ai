@@ -86,8 +86,9 @@ function LoginForm() {
   async function startSecondFactor() {
     const res = await api.POST('/auth/otp/request');
     if (res.error || !res.data) throw res.error;
-    setOtpInfo(res.data.data);
-    if (res.data.data.devCode) {
+    // A development build may prefill the code; any other build must never hold or show it (SEC-03).
+    setOtpInfo(DEV_AUTH_ENABLED ? res.data.data : { ...res.data.data, devCode: undefined });
+    if (DEV_AUTH_ENABLED && res.data.data.devCode) {
       setOtp(res.data.data.devCode);
     } else {
       setOtp('');
@@ -342,7 +343,7 @@ function LoginForm() {
                 autoComplete="one-time-code"
                 autoFocus
               />
-              {otpInfo?.devCode && (
+              {DEV_AUTH_ENABLED && otpInfo?.devCode && (
                 <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5 text-xs">
                   <span className="font-medium text-foreground">{t('devCode')}</span>
                   <button

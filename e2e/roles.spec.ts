@@ -43,7 +43,7 @@ test.describe('requestor', () => {
     await page.getByRole('button', { name: 'Accept recommendation' }).click();
     await expect(page.getByText(/Decision recorded: accept/)).toBeVisible();
     await page.goto('/review');
-    await expect(page.getByRole('heading', { name: 'Assessments', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Requestor dashboard — pending queue' })).toBeVisible();
     await expect(page.getByText('Closed').first()).toBeVisible();
   });
 
@@ -61,11 +61,11 @@ test.describe('administrator', () => {
     await devLogin(page, ACCOUNTS.paidAdmin);
     await expect(page).toHaveURL(/\/admin/);
     await page.goto('/admin/personas');
-    await expect(page.getByRole('heading', { name: /Personas/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Persona management/ })).toBeVisible();
     await page.goto('/admin/review');
     await expect(page.getByRole('heading', { name: 'Mandatory review queue' })).toBeVisible();
     await page.goto('/admin/analytics');
-    await expect(page.getByRole('heading', { name: 'Analytics' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Analytics dashboard' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Assessment volume' })).toBeVisible();
     await expect(page.getByText(/Started/).first()).toBeVisible();
     await page.getByRole('button', { name: 'Table' }).first().click();
@@ -84,7 +84,7 @@ test.describe('system administrator', () => {
     await devLogin(page, ACCOUNTS.sysadmin);
     await expect(page).toHaveURL(/\/system$/);
     await page.goto('/system/tenant');
-    await expect(page.getByRole('heading', { name: 'Tenant settings' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'SSO and integration configuration' })).toBeVisible();
     const idle = page.getByLabel('Idle timeout (minutes, 5–30)');
     const current = await idle.inputValue();
     const next = current === '15' ? '20' : '15';

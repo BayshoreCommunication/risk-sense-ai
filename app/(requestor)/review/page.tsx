@@ -216,10 +216,6 @@ function ReviewDashboard() {
       <section className="workspace-header">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div className="max-w-3xl">
-            <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-              <ClipboardCheck aria-hidden="true" className="size-4" />
-              {t('eyebrow')}
-            </div>
             <h1 className="page-heading">{t('title')}</h1>
             <p className="page-description mt-1.5">{reviewer ? t('descriptionReviewer') : t('descriptionRequestor')}</p>
           </div>

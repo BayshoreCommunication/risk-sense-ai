@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { CloudCog, DatabaseBackup, FileCheck2, RotateCcw, TimerReset } from 'lucide-react';
+import { DatabaseBackup, FileCheck2, RotateCcw, TimerReset } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -226,7 +226,6 @@ export default function DisasterRecoveryPage() {
       <header className="workspace-header">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">
-            <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary"><CloudCog className="size-4" aria-hidden="true" />{t('eyebrow')}</div>
             <h1 className="page-heading">{t('title')}</h1>
             <p className="page-description mt-2">{t('description')}</p>
           </div>

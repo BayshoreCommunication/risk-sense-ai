@@ -70,7 +70,6 @@ export default function StandardReportsPage() {
       <header className="workspace-header">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">
-            <div className="eyebrow mb-2">{t('eyebrow')}</div>
             <h1 className="page-heading">{t('title')}</h1>
             <p className="page-description mt-2">{t('description')}</p>
           </div>

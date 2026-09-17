@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Database, FileSearch, History, ShieldCheck } from 'lucide-react';
+import { Database, History, ShieldCheck } from 'lucide-react';
 import { AssessmentDetail } from '@/components/review/AssessmentDetail';
 import { ReconstructionView } from '@/components/review/ReconstructionView';
 import { Badge } from '@/components/ui/badge';
@@ -42,10 +42,6 @@ export default function AuditAssessmentsPage() {
     <div className="page-shell">
       <header className="workspace-header">
         <div className="max-w-3xl">
-          <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
-            <FileSearch className="size-4" aria-hidden="true" />
-            {t('eyebrow')}
-          </div>
           <h1 className="page-heading">{t('title')}</h1>
           <p className="page-description mt-2">{t('description')}</p>
         </div>

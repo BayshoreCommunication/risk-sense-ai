@@ -151,10 +151,10 @@
 
 @layer components {
   .page-shell {
-    @apply mx-auto w-full max-w-[1480px] space-y-5;
+    @apply mx-auto w-full max-w-[1480px] space-y-6;
   }
   .page-heading {
-    @apply text-2xl font-semibold tracking-[-0.025em] text-foreground sm:text-3xl;
+    @apply font-heading text-[1.75rem] font-bold tracking-[-0.02em] text-foreground sm:text-[2.125rem];
   }
   .page-description {
     @apply max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base;
@@ -179,12 +179,9 @@
 }
 
 @layer utilities {
+  /* Figma page header: plain title block on the page background, no card or rule. */
   .workspace-header {
-    @apply relative overflow-hidden rounded-xl border bg-card px-5 py-5 shadow-[0_10px_30px_rgba(15,35,65,0.035)] sm:px-6;
-  }
-  .workspace-header::before {
-    content: "";
-    @apply absolute inset-x-0 top-0 h-px bg-gradient-to-r from-primary/0 via-primary/65 to-primary/0;
+    @apply relative;
   }
   .data-panel {
     @apply overflow-hidden rounded-xl border bg-card shadow-[0_8px_26px_rgba(15,35,65,0.032)];

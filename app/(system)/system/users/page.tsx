@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { BadgeCheck, KeyRound, UserPlus, UsersRound } from 'lucide-react';
+import { BadgeCheck, KeyRound, UserPlus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -219,7 +219,6 @@ export default function UsersPage() {
       <header className="workspace-header">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">
-            <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary"><UsersRound className="size-4" aria-hidden="true" />{t('eyebrow')}</div>
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('title')}</h1>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('description')}</p>
           </div>

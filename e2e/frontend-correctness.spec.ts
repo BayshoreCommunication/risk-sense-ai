@@ -114,7 +114,7 @@ test('backend /me role replaces a stale role cookie before protected content ren
 
   await page.goto('/admin');
   await expect(page).toHaveURL(/\/chat$/);
-  await expect(page.getByText('New risk assessment', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Persona and scenario selection' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Administrator workspace' })).toHaveCount(0);
 
   const roleCookie = (await page.context().cookies()).find((cookie) => cookie.name === 'rs_role');
@@ -246,7 +246,7 @@ test('administrator landing is useful and reports navigation follows /me feature
   await mockApi(page, () => currentUser('administrator', { reports }));
 
   await page.goto('/admin');
-  await expect(page.getByRole('heading', { name: 'Configuration home' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Admin configuration home' })).toBeVisible();
   await expect(page.locator('a[href="/admin/review"]').last()).toBeVisible();
   await expect(page.getByRole('link', { name: 'Analytics', exact: true })).toHaveCount(0);
 
@@ -381,7 +381,7 @@ test('analytics supports pie, table and persistent period drill-down views [DASH
   });
 
   await page.goto('/admin/analytics');
-  await expect(page.getByRole('heading', { name: 'Analytics' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Analytics dashboard' })).toBeVisible();
 
   await page.getByRole('button', { name: '2026-08: 12' }).click();
   await expect(page.getByRole('status').filter({ hasText: '2026-08' })).toContainText('12');
@@ -433,7 +433,7 @@ test('system navigation exposes every implemented operational workspace [DASH-04
   });
 
   await page.goto('/system/retention');
-  await expect(page.getByRole('heading', { name: 'Retention' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Retention policy configuration' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'User & role provisioning', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Departments', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Disaster recovery', exact: true })).toBeVisible();

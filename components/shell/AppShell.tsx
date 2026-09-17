@@ -26,7 +26,6 @@ import {
   Menu,
   MessageSquareText,
   Network,
-  PanelLeftClose,
   RefreshCw,
   Settings2,
   ShieldCheck,
@@ -237,7 +236,6 @@ export function AppShell({ role, children }: { role: Role; children: React.React
   const trustedRole = me.user.role;
   const navigation = NAV[trustedRole].filter((item) => !item.feature || me.tenant.features[item.feature]);
   const home = ROLE_HOME[trustedRole];
-  const activeItem = [...navigation].reverse().find((item) => isNavActive(pathname, item, home)) ?? navigation[0];
 
   const renderNavigation = (mobile = false) => (
     <div className="flex h-full min-h-0 flex-col">
@@ -345,7 +343,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
     <div className="min-h-screen bg-transparent">
       <div inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
         <header className="fixed inset-x-0 top-0 z-50 flex h-14 items-center bg-[#06224b] text-white shadow-[0_1px_0_rgba(255,255,255,0.08)]">
-        <div className="flex h-full w-full items-center gap-3 px-4 sm:px-5 lg:w-60 lg:border-r lg:border-white/10">
+        <div className="flex h-full w-full items-center gap-3 px-4 sm:px-5 lg:w-[19rem] lg:border-r lg:border-white/10">
           <button
             ref={mobileNavigationTriggerRef}
             type="button"
@@ -357,26 +355,25 @@ export function AppShell({ role, children }: { role: Role; children: React.React
           >
             <Menu className="size-5" />
           </button>
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-[#1674df] text-[0.66rem] font-bold text-white shadow-sm">R</div>
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-[#1674df] text-[0.72rem] font-bold text-white shadow-sm">R</div>
           <div className="min-w-0">
-            <div className="truncate text-sm font-semibold tracking-[-0.01em]">{t('app.name')}</div>
-            <div className="hidden truncate text-[0.58rem] font-medium tracking-[0.13em] text-white/52 uppercase sm:block">{t('app.secureWorkspace')}</div>
+            <div className="truncate text-[0.95rem] font-semibold tracking-[-0.01em]">{t('app.name')}</div>
           </div>
         </div>
-        <div className="hidden min-w-0 flex-1 items-center gap-2 px-5 lg:flex">
-          <PanelLeftClose className="size-4 text-white/36" aria-hidden="true" />
-          <span className="truncate text-xs font-medium text-white/72">{activeItem ? t(`nav.${trustedRole}.${activeItem.key}`) : t(`roles.${trustedRole}`)}</span>
-        </div>
         <div className="ml-auto flex shrink-0 items-center gap-2 px-4 sm:px-5">
-          <Badge className="hidden border-white/15 bg-white/8 text-[0.62rem] text-white sm:inline-flex" variant="outline">{t(`roles.${trustedRole}`)}</Badge>
-          <Badge className="border-white/15 bg-white/8 text-[0.62rem] text-white" variant="outline">{me.tenant.plan.toUpperCase()}</Badge>
-          <div className="flex size-8 items-center justify-center rounded-lg border border-white/15 bg-white/8 text-[0.68rem] font-bold text-white" title={`${me.user.name} · ${me.user.email}`}>
-            {initials(me.user.name) || 'RS'}
+          {/* Figma header: a single identity pill carrying the account initials and the verified role. */}
+          <div
+            className="flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-[0.78rem] font-medium text-white"
+            title={`${me.user.name} · ${me.user.email} · ${me.tenant.plan.toUpperCase()}`}
+          >
+            <span className="font-semibold">{initials(me.user.name) || 'RS'}</span>
+            <span aria-hidden="true" className="text-white/40">·</span>
+            <span className="truncate">{t(`roles.${trustedRole}`)}</span>
           </div>
         </div>
         </header>
 
-        <aside className="fixed bottom-0 left-0 top-14 z-40 hidden w-60 border-r border-sidebar-border bg-sidebar lg:block">
+        <aside className="fixed bottom-0 left-0 top-14 z-40 hidden w-[19rem] border-r border-sidebar-border bg-sidebar lg:block">
           {renderNavigation()}
         </aside>
       </div>
@@ -404,7 +401,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
         </div>
       )}
 
-      <div className="min-w-0 pt-14 lg:pl-60" inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
+      <div className="min-w-0 pt-14 lg:pl-[19rem]" inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
         <main className="min-h-[calc(100dvh-3.5rem)] px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">{children}</main>
       </div>
     </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { BadgeCheck, Building2, Database, KeyRound, LockKeyhole, Settings2, UsersRound } from 'lucide-react';
+import { BadgeCheck, Building2, Database, KeyRound, LockKeyhole, UsersRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,9 +52,9 @@ export default function TenantSettingsPage() {
       <header className="workspace-header">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary"><Settings2 className="size-4" aria-hidden="true" />{t('eyebrow')}</div>
             <h1 className="page-heading">{t('title')}</h1>
-            <p className="mt-2 text-sm text-muted-foreground">{merged.name} · <code>{merged.slug}</code></p>
+            <p className="page-description mt-2">{t('description')}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{merged.name} · <code>{merged.slug}</code></p>
           </div>
           <Badge variant={merged.plan === 'paid' ? 'default' : 'secondary'} className="px-3 py-1">{merged.plan.toUpperCase()}</Badge>
         </div>

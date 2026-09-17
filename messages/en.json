@@ -8,7 +8,7 @@
     "name": "RiskSense AI",
     "secureWorkspace": "Decision intelligence",
     "navigation": "Workspace navigation",
-    "roleNavigation": "{role} workspace",
+    "roleNavigation": "{role}",
     "advancedOperations": "Advanced operations",
     "openNavigation": "Open navigation",
     "closeNavigation": "Close navigation",
@@ -18,10 +18,10 @@
     "sessionVerifyFailed": "Your session could not be verified. Please sign in again."
   },
   "roles": {
-    "requestor": "requestor",
-    "administrator": "administrator",
-    "system_administrator": "system administrator",
-    "audit": "audit"
+    "requestor": "Requestor",
+    "administrator": "Administrator",
+    "system_administrator": "System Administrator",
+    "audit": "Audit"
   },
   "nav": {
     "requestor": { "chat": "New assessment", "review": "My assessments" },
@@ -146,11 +146,11 @@
   "admin": {
     "overview": {
       "eyebrow": "Administrator",
-      "title": "Configuration home",
-      "description": "Manage personas, scenarios, questions, deterministic rules, scoring matrices and approved training datasets from one controlled workspace.",
+      "title": "Admin configuration home",
+      "description": "Manage personas, scenarios, questions, rules, scoring and datasets in one place.",
       "roleBadge": "Administrator",
       "configurationLabel": "Configuration portfolio",
-      "configurationNote": "All configuration is managed through this dashboard. Active content changes remain versioned and audited; direct database or code edits are not part of this workflow.",
+      "configurationNote": "All configuration access routes through this dashboard, not direct database or code access.",
       "partialError": "Some live data is unavailable ({count} sources). Available cards still show current tenant data.",
       "retry": "Retry unavailable data",
       "metrics": {
@@ -212,7 +212,7 @@
       }
     },
     "personas": {
-      "title": "Personas",
+      "title": "Persona management",
       "description": "Versioned role profiles used to guide scenario selection and intake language.",
       "entity": "persona",
       "fields": {
@@ -236,7 +236,7 @@
       }
     },
     "scenarios": {
-      "title": "Scenarios",
+      "title": "Scenario library management",
       "description": "Versioned assessment journeys with structured question flow and outcome guidance.",
       "entity": "scenario",
       "fields": {
@@ -263,7 +263,7 @@
       "columns": { "persona": "Persona", "questions": "Questions" }
     },
     "questions": {
-      "title": "Questions",
+      "title": "Question bank management",
       "description": "Reusable guided-intake questions with structured choices and optional follow-up branches.",
       "entity": "question",
       "fields": {
@@ -292,7 +292,7 @@
       "columns": { "text": "Question", "personas": "Personas", "updated": "Updated" }
     },
     "rules": {
-      "title": "Rules",
+      "title": "Rule engine — hard business rules",
       "description": "Versioned hard rules that can force a classification before matrix scoring is presented.",
       "entity": "rule",
       "fields": {
@@ -322,7 +322,7 @@
       }
     },
     "scoring": {
-      "title": "Scoring matrices",
+      "title": "Scoring matrix configuration",
       "description": "Versioned factor weights, mappings, classification thresholds, and confidence gates.",
       "entity": "scoring matrix",
       "fields": {
@@ -368,8 +368,8 @@
       }
     },
     "datasets": {
-      "title": "Datasets",
-      "description": "Upload the content workbook for validation. A different administrator must approve it before activation versions the content.",
+      "title": "AI training dataset management",
+      "description": "Upload a content workbook; a second administrator approves it before activation.",
       "summary": {
         "label": "Dataset status summary",
         "total": "Total datasets",
@@ -440,8 +440,8 @@
       }
     },
     "analytics": {
-      "title": "Analytics",
-      "description": "Explore assessment volume, classification, overrides and completion time. Every export matches the selected filters.",
+      "title": "Analytics dashboard",
+      "description": "Assessment volume, classification, overrides and completion time.",
       "refresh": "Refresh",
       "loading": "Loading…",
       "milliseconds": "ms",
@@ -534,11 +534,11 @@
     "standardReports": {
       "eyebrow": "Administrator · Reporting",
       "title": "Standard reports",
-      "description": "Open a governed report, choose its chart or table view, and export the exact filtered result as CSV or PDF.",
+      "description": "Pre-built reports for monitoring and compliance.",
       "listLabel": "Available standard reports",
       "formatsLabel": "Export formats",
       "open": "Open report",
-      "note": "Reports support filter windows up to 12 months. Each export is generated from the same scoped result used by the on-screen table; target performance remains subject to deployment validation.",
+      "note": "Reports return within 10 seconds for up to 12 months of data; exports match the on-screen report exactly.",
       "featureGate": {
         "loadingTitle": "Verifying reporting access",
         "loadingDescription": "RiskSense is checking the current tenant feature policy before loading report data.",
@@ -847,8 +847,8 @@
   },
   "newAssessment": {
     "eyebrow": "Guided assessment",
-    "title": "New risk assessment",
-    "description": "Describe what happened in your own words. The assistant will pick the matching scenario and ask guided questions. Nothing is scored until you submit.",
+    "title": "Persona and scenario selection",
+    "description": "All assessments begin with selecting who you are and what scenario to assess.",
     "assistantTitle": "Tell us what happened",
     "assistantDescription": "Start with the details you already know. You can confirm the suggested assessment persona before guided questions begin.",
     "privateSession": "Protected intake",
@@ -991,9 +991,9 @@
   },
   "reviewDashboard": {
     "eyebrow": "Decision workspace",
-    "title": "Assessments",
-    "descriptionReviewer": "Your assessments and those of your department. Pending decisions come first — open one to review the recommendation and record your decision.",
-    "descriptionRequestor": "Your assessments. Pending decisions come first — open one to review the recommendation and record your decision.",
+    "title": "Requestor dashboard — pending queue",
+    "descriptionReviewer": "Track and manage pending assessments for you and your department.",
+    "descriptionRequestor": "Track and manage all your pending assessments.",
     "newAssessment": "New assessment",
     "statusTabsLabel": "Status",
     "summaryLabel": "Assessment summary",
@@ -1134,8 +1134,8 @@
     "logs": {
       "eyebrow": "Tamper-evident ledger",
       "scopeBadge": "Audit",
-      "title": "Audit log",
-      "description": "This ledger is append-only and tamper-evident. No role can edit or delete entries; “Verify chain” checks every recorded link.",
+      "title": "Audit log viewer",
+      "description": "Browse and review system audit events.",
       "loading": "Loading audit entries…",
       "allCategories": "All categories",
       "verify": "Verify chain",
@@ -1321,8 +1321,8 @@
     },
     "users": {
       "eyebrow": "Identity & access",
-      "title": "Users",
-      "description": "Pre-provision tenant accounts, assign exactly one role, and control requestor department scope.",
+      "title": "User and role provisioning",
+      "description": "Manage system users, roles, departments and MFA requirements.",
       "summary": {
         "total": "Tenant accounts",
         "active": "Active accounts",
@@ -1335,7 +1335,7 @@
         "default": "Each person uses one account with exactly one role.",
         "loading": "Loading the tenant plan before role controls are enabled.",
         "error": "The tenant plan is unavailable. Role controls remain disabled until it can be verified.",
-        "paidMfa": "Every PAID account completes MFA. Requestors use the tenant identity provider; administrators, system administrators and audit users also complete the RiskSense verification step required for their role.",
+        "paidMfa": "Each account may be used by one of the four roles. MFA is required for Administrator and System Administrator.",
         "freeMfa": "FREE requestors sign in without the PAID MFA step. Managed operator roles are unavailable in FREE workspaces.",
         "mfaLoading": "MFA requirements will appear after the tenant plan is verified.",
         "mfaError": "MFA requirements cannot be determined while the tenant plan is unavailable."
@@ -1437,7 +1437,8 @@
     },
     "tenant": {
       "eyebrow": "Tenant configuration",
-      "title": "Tenant settings",
+      "title": "SSO and integration configuration",
+      "description": "Configure single sign-on (SSO) and integration settings.",
       "loading": "Loading…",
       "saved": "Changes saved at {time} and recorded in the audit log.",
       "plan": {
@@ -1479,7 +1480,7 @@
       },
       "sso": {
         "title": "Single sign-on",
-        "description": "Connect an OIDC, OAuth, or supported SAML identity provider. People on the approved domain are provisioned into this tenant on first sign-in. Provider match alone does not prove MFA: a requestor's Firebase session must explicitly prove a second factor, otherwise RiskSense sends an email code.",
+        "description": "Set up your identity provider details.",
         "providerId": "Identity provider ID",
         "domain": "Email domain"
       },
@@ -1507,8 +1508,8 @@
     },
     "retention": {
       "eyebrow": "Lifecycle controls",
-      "title": "Retention",
-      "description": "Records older than the tenant's assessment window are flagged. After a seven-day grace period, FREE records are reduced to essential metadata; PAID records are archived before reduction. The audit ledger is preserved, and every lifecycle action is recorded.",
+      "title": "Retention policy configuration",
+      "description": "Configure data retention periods and automatic expiry actions.",
       "policy": {
         "freeTitle": "Fixed FREE retention",
         "freeDescription": "FREE uses the public retention windows shown in Tenant settings. Expired records are reduced after the seven-day grace period.",
@@ -1517,7 +1518,7 @@
       },
       "policyTable": {
         "title": "Retention policy",
-        "description": "The active tenant values are shown below. Coverage states distinguish enforced lifecycle behavior from policy values that are recorded or reported only.",
+        "description": "Retention settings for system data and artifacts.",
         "columns": { "record": "Record type", "window": "Retention window", "expiry": "At expiry", "coverage": "Coverage" },
         "records": { "assessments": "Assessment records", "evidence": "Evidence and attachments", "audit": "Audit trail", "datasets": "Training dataset versions" },
         "actions": {
@@ -1568,8 +1569,8 @@
     },
     "dr": {
       "eyebrow": "Resilience evidence",
-      "title": "Disaster recovery",
-      "description": "Track operator evidence against the tenant's recovery targets, daily backup control, and annual restore-drill control.",
+      "title": "Disaster recovery runbook",
+      "description": "Follow the runbook to restore services and validate system recovery.",
       "targets": {
         "rto": "Recovery time objective",
         "rpo": "Recovery point objective",

@@ -52,10 +52,6 @@ export default function AuditOverviewPage() {
       <header className="workspace-header">
         <div className="flex flex-wrap items-end justify-between gap-5">
           <div className="max-w-3xl">
-            <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
-              <Fingerprint className="size-4" aria-hidden="true" />
-              {t('eyebrow')}
-            </div>
             <h1 className="page-heading">{t('title')}</h1>
             <p className="page-description mt-2">{t('description')}</p>
           </div>

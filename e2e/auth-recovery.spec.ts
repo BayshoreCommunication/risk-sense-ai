@@ -239,7 +239,7 @@ test('a verified FREE requestor receives a session without entering the PAID MFA
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
 
   await expect(page).toHaveURL(/\/chat$/);
-  await expect(page.getByRole('heading', { name: 'New risk assessment' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Persona and scenario selection' })).toBeVisible();
   expect(sessionCalls).toBe(1);
   expect(otpRequests).toBe(0);
 });
