@@ -79,3 +79,24 @@ on. The header, copy and chips already follow the frame.
 Three assertions follow the new presentation rather than being weakened: the two
 rule lifecycle specs locate rules as cards by name instead of table rows by key,
 and the dataset counters are addressed through a `data-counter` attribute.
+
+## Follow-up: the monthly classification chart
+
+The owner asked for the chart to look better. Three real problems, not taste:
+
+- **Every column drew a full-height outlined box.** The month container was
+  `h-full` with `border-x border-t`, so an empty bordered rectangle sat above each
+  stack. The stack is now its own element sized to the month's share of the
+  maximum, with the rounded top and shadow on it, and the container only aligns it
+  to the baseline.
+- **Segment heights were a share of the chart maximum, not of the month.** Inside
+  a stack sized to the month, each segment is now a share of that month's total,
+  which is what a stacked bar means.
+- **Selecting a classification dropped everything else to 0.2 opacity**, which read
+  as washed-out rather than filtered, and unselected months sat at 0.72 so nothing
+  looked saturated. Unselected months are now full strength and a dimmed segment
+  sits at 0.45.
+
+Also adds the legend the frame shows, below the month labels and dimmed in step
+with the selection, a soft vertical gradient and inner highlight per segment, and
+narrower bars with wider gaps.

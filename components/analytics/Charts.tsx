@@ -412,35 +412,48 @@ export function StackedClassificationChart({
                   <span key={`${tick}-${index}`} className="block border-t border-dashed border-border/65 first:border-solid" />
                 ))}
               </div>
-              <div className="absolute inset-0 flex items-end justify-around gap-5 px-5">
+              <div className="absolute inset-0 flex items-end justify-around gap-8 px-6">
                 {months.map((month) => {
                   const total = observedTotal(month);
                   const isSelectedMonth = selectedMonth === month.key;
+                  // The column is only as tall as its data: no empty outline above the stack.
+                  const stackHeight = total === null || total <= 0 ? 0 : (total / maxTotal) * 100;
                   return (
                     <div
                       key={month.key}
-                      className={`relative flex h-full min-w-12 flex-1 flex-col-reverse justify-start overflow-hidden rounded-t-lg border-x border-t transition-shadow ${isSelectedMonth ? 'ring-2 ring-primary/45 ring-offset-2' : 'border-border/60'}`}
+                      className={`flex h-full min-w-12 max-w-24 flex-1 items-end rounded-t-xl transition-colors ${isSelectedMonth ? 'bg-primary/6' : ''}`}
                       aria-label={`${month.label}: ${total === null ? '—' : total.toLocaleString(locale)}`}
                     >
-                      {month.segments.map((segment, index) => {
-                        const status = STATUS[segment.key] ?? { color: `var(--s${index + 1})`, icon: '●' };
-                        const value = typeof segment.value === 'number' && segment.value > 0 ? segment.value : null;
-                        const dimmed = selectedClassification !== null && selectedClassification !== segment.key;
-                        if (value === null) return null;
-                        const height = (value / maxTotal) * 100;
-                        return (
-                          <button
-                            key={segment.key}
-                            type="button"
-                            className="group relative w-full border-t border-white/45 outline-none transition-[opacity,filter] first:border-0 hover:brightness-105 focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
-                            style={{ height: `${height}%`, minHeight: '0.45rem', background: status.color, opacity: dimmed ? 0.2 : isSelectedMonth ? 1 : 0.72 }}
-                            title={`${month.label} · ${status.icon} ${segment.label}: ${value.toLocaleString(locale)}`}
-                            aria-label={`${month.label} · ${segment.label}: ${value.toLocaleString(locale)}`}
-                            aria-pressed={isSelectedMonth && selectedClassification === segment.key}
-                            onClick={() => onSegmentSelect(month.key, segment.key)}
-                          />
-                        );
-                      })}
+                      <div
+                        className={`flex w-full flex-col-reverse overflow-hidden rounded-t-xl shadow-[0_2px_10px_rgba(15,35,65,0.10)] ring-1 transition-shadow ${isSelectedMonth ? 'ring-primary/45' : 'ring-black/5'}`}
+                        style={{ height: `${stackHeight}%` }}
+                      >
+                        {month.segments.map((segment, index) => {
+                          const status = STATUS[segment.key] ?? { color: `var(--s${index + 1})`, icon: '●' };
+                          const value = typeof segment.value === 'number' && segment.value > 0 ? segment.value : null;
+                          const dimmed = selectedClassification !== null && selectedClassification !== segment.key;
+                          if (value === null || total === null || total <= 0) return null;
+                          const height = (value / total) * 100;
+                          return (
+                            <button
+                              key={segment.key}
+                              type="button"
+                              className="group relative w-full outline-none transition-[filter,opacity] hover:brightness-110 focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
+                              style={{
+                                height: `${height}%`,
+                                minHeight: '0.3rem',
+                                backgroundImage: `linear-gradient(180deg, color-mix(in srgb, ${status.color} 88%, white) 0%, ${status.color} 100%)`,
+                                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.28)',
+                                opacity: dimmed ? 0.45 : 1,
+                              }}
+                              title={`${month.label} · ${status.icon} ${segment.label}: ${value.toLocaleString(locale)}`}
+                              aria-label={`${month.label} · ${segment.label}: ${value.toLocaleString(locale)}`}
+                              aria-pressed={isSelectedMonth && selectedClassification === segment.key}
+                              onClick={() => onSegmentSelect(month.key, segment.key)}
+                            />
+                          );
+                        })}
+                      </div>
                     </div>
                   );
                 })}
@@ -462,6 +475,19 @@ export function StackedClassificationChart({
                   <span className="block truncate">{month.label}</span>
                   <span className="mt-0.5 block text-[10px] font-medium tabular-nums">{total === null ? '—' : total.toLocaleString(locale)}</span>
                 </button>
+              );
+            })}
+          </div>
+          {/* Legend, as docs/design/figma-frames/17-admin-analytics-dashboard.png shows under the bars. */}
+          <div className="ml-[3.5rem] flex flex-wrap items-center gap-x-5 gap-y-2 border-t pt-3 mt-3" aria-hidden="true">
+            {(months[0]?.segments ?? []).map((segment, index) => {
+              const status = STATUS[segment.key] ?? { color: `var(--s${index + 1})`, icon: '●' };
+              const dimmed = selectedClassification !== null && selectedClassification !== segment.key;
+              return (
+                <span key={segment.key} className={`flex items-center gap-2 text-xs ${dimmed ? 'text-muted-foreground/55' : 'text-foreground/80'}`}>
+                  <span className="size-2.5 rounded-sm" style={{ background: status.color, opacity: dimmed ? 0.45 : 1 }} />
+                  {segment.label}
+                </span>
               );
             })}
           </div>
