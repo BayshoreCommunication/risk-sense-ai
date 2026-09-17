@@ -50,7 +50,7 @@ export default function MandatoryReviewQueuePage() {
   return (
     <div className="space-y-6">
       <PageHeader title={t('title')} description={t('description')} requirements={['AI-03', 'FR-20']} />
-      <div className="inline-flex rounded-xl border border-border/70 bg-muted/35 p-1 shadow-sm">
+      <div className="inline-flex rounded-xl border bg-muted/35 p-1 shadow-sm">
         <Button size="sm" variant={tab === 'pending' ? 'default' : 'ghost'} aria-pressed={tab === 'pending'} onClick={() => { setTab('pending'); setPage(1); }}>
           {t('tabs.pending')}{data ? ` ${data.counts.pending}` : ''}
         </Button>
@@ -59,7 +59,7 @@ export default function MandatoryReviewQueuePage() {
         </Button>
       </div>
       {error && <p className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</p>}
-      <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm" aria-busy={!data && !error}>
+      <section className="overflow-hidden rounded-2xl border bg-card shadow-sm" aria-busy={!data && !error}>
         <Table className="min-w-[980px]">
           <TableHeader className="bg-muted/45">
             <TableRow>

@@ -247,7 +247,7 @@ export default function DisasterRecoveryPage() {
         ] as const).map((target) => {
           const Icon = target.icon;
           return (
-            <div key={target.key} className="flex items-center gap-3.5 rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(15,35,65,0.04)]">
+            <div key={target.key} className="flex items-center gap-3.5 rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(15,35,65,0.05)]">
               <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${target.tile}`}>
                 <Icon className="size-5" aria-hidden="true" />
               </span>
@@ -298,7 +298,7 @@ export default function DisasterRecoveryPage() {
       >
         <CardHeader className="border-b"><CardTitle className="flex items-center gap-3"><span className="card-icon"><FileCheck2 className="size-5" aria-hidden="true" /></span>{t('form.title')}</CardTitle><CardDescription>{t('form.description')}</CardDescription></CardHeader>
         <CardContent className="space-y-4">
-        <section className="rounded-xl border border-border/70 bg-muted/25 p-4" aria-labelledby="dr-target-policy-title">
+        <section className="rounded-xl border bg-muted/25 p-4" aria-labelledby="dr-target-policy-title">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 id="dr-target-policy-title" className="text-sm font-semibold">{t('targets.policyTitle')}</h2>

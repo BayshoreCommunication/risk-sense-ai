@@ -136,7 +136,7 @@ function LoginForm() {
 
   return (
     <Card className="w-full max-w-[34rem] border-border bg-card shadow-[0_24px_70px_rgba(15,35,65,0.10)]">
-      <CardHeader className="border-b border-border/75 pb-5">
+      <CardHeader className="border-b pb-5">
         <div className="mb-2 flex items-center justify-between gap-3">
           <div className="flex size-10 items-center justify-center rounded-lg border border-primary/15 bg-primary/6 text-primary">
             {step === 'otp' ? <KeyRound className="size-5" /> : <Fingerprint className="size-5" />}

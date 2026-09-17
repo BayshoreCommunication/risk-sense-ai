@@ -392,7 +392,7 @@ export function ContentManager(props: ContentManagerProps) {
           {visible.map((item) => {
             const rendered = card(item);
             return (
-              <article key={item._id} className="flex flex-wrap items-start gap-4 rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(15,35,65,0.04)]">
+              <article key={item._id} className="flex flex-wrap items-start gap-4 rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(15,35,65,0.05)]">
                 {rendered.icon}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -472,7 +472,7 @@ export function ContentManager(props: ContentManagerProps) {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-[min(72rem,calc(100vw-3rem))]">
-          <DialogHeader className="border-b border-border/70 pb-4 pr-8">
+          <DialogHeader className="border-b pb-4 pr-8">
             <DialogTitle className="text-xl">
               {editing
                 ? t('form.editTitle', { entity: props.entity, version: String(editing.version ?? 1), status: editing.status })
@@ -600,7 +600,7 @@ export function ContentManager(props: ContentManagerProps) {
           </DialogHeader>
           <ul className="space-y-2 text-sm">
             {(history ?? []).map((h) => (
-              <li key={h._id} className="flex items-center justify-between rounded-lg border border-border/70 bg-muted/20 px-3 py-2.5">
+              <li key={h._id} className="flex items-center justify-between rounded-lg border bg-muted/20 px-3 py-2.5">
                 <span>
                   v{String(h.version)} · {String(h.name ?? h.key)}
                 </span>

@@ -151,7 +151,7 @@ function ConditionNodeEditor({
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-border/70 bg-muted/20 p-4" data-testid="condition-node">
+    <div className="space-y-3 rounded-lg border bg-muted/20 p-4" data-testid="condition-node">
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-40 flex-1">
           <Label htmlFor={`${id}-mode`}>{t('type')}</Label>
@@ -267,7 +267,7 @@ function StringListEditor({
 }) {
   const t = useTranslations('structured.list');
   return (
-    <fieldset className="space-y-2 rounded-lg border border-border/70 bg-muted/15 p-4">
+    <fieldset className="space-y-2 rounded-lg border bg-muted/15 p-4">
       <legend className="px-1.5 text-xs font-semibold text-foreground">{label}</legend>
       {values.length === 0 ? <p className="text-xs text-muted-foreground">{t('empty')}</p> : null}
       {values.map((value, index) => (
@@ -302,9 +302,9 @@ function FlowEditor({ value, onChange }: { value: string; onChange: (value: stri
 
   return (
     <div className="space-y-2" data-testid="structured-flow">
-      {flow.length === 0 ? <p className="rounded-lg border border-dashed border-border/80 bg-muted/15 p-4 text-xs text-muted-foreground">{t('empty')}</p> : null}
+      {flow.length === 0 ? <p className="rounded-lg border border-dashed border bg-muted/15 p-4 text-xs text-muted-foreground">{t('empty')}</p> : null}
       {flow.map((node, index) => (
-        <fieldset key={`flow-${index}`} className="space-y-3 rounded-lg border border-border/70 bg-muted/15 p-4">
+        <fieldset key={`flow-${index}`} className="space-y-3 rounded-lg border bg-muted/15 p-4">
           <legend className="px-1.5 text-xs font-semibold text-foreground">{t('question', { number: index + 1 })}</legend>
           <div className="flex flex-wrap items-end gap-2">
             <div className="min-w-48 flex-1">
@@ -345,7 +345,7 @@ function FlowEditor({ value, onChange }: { value: string; onChange: (value: stri
             </Select>
           </div>
           {node.showIf ? (
-            <div className="space-y-2 rounded-lg border border-border/60 bg-background/80 p-3">
+            <div className="space-y-2 rounded-lg border bg-background/80 p-3">
               <Label htmlFor={`flow-${index}-fact`}>{t('factKey')}</Label>
               <Input
                 id={`flow-${index}-fact`}
@@ -393,7 +393,7 @@ function ActionsEditor({ value, onChange }: { value: string; onChange: (value: s
       {CLASSIFICATIONS.map((classification) => {
         const action = actions[classification];
         return (
-          <fieldset key={classification} className="space-y-3 rounded-lg border border-border/70 bg-muted/15 p-4">
+          <fieldset key={classification} className="space-y-3 rounded-lg border bg-muted/15 p-4">
             <legend className="px-1.5 text-xs font-semibold text-foreground">{t(`classification.${classification}`)}</legend>
             {action ? (
               <>
@@ -449,9 +449,9 @@ function OptionsEditor({ value, onChange }: { value: string; onChange: (value: s
 
   return (
     <div className="space-y-2" data-testid="structured-options">
-      {options.length === 0 ? <p className="rounded-lg border border-dashed border-border/80 bg-muted/15 p-4 text-xs text-muted-foreground">{t('empty')}</p> : null}
+      {options.length === 0 ? <p className="rounded-lg border border-dashed border bg-muted/15 p-4 text-xs text-muted-foreground">{t('empty')}</p> : null}
       {options.map((option, index) => (
-        <fieldset key={`option-${index}`} className="space-y-3 rounded-lg border border-border/70 bg-muted/15 p-4">
+        <fieldset key={`option-${index}`} className="space-y-3 rounded-lg border bg-muted/15 p-4">
           <legend className="px-1.5 text-xs font-semibold text-foreground">{t('choice', { number: index + 1 })}</legend>
           <div className="grid gap-2 sm:grid-cols-2">
             <div>
@@ -497,7 +497,7 @@ function BranchEditor({ value, onChange }: { value: string; onChange: (value: st
 
   if (!branch) {
     return (
-      <div className="rounded-lg border border-dashed border-border/80 bg-muted/15 p-4" data-testid="structured-branch">
+      <div className="rounded-lg border border-dashed border bg-muted/15 p-4" data-testid="structured-branch">
         <p className="mb-2 text-xs text-muted-foreground">{t('empty')}</p>
         <Button type="button" size="sm" variant="outline" onClick={() => writeValue(onChange, { onValue: true, questionKeys: [''] })}>
           {t('add')}
@@ -507,7 +507,7 @@ function BranchEditor({ value, onChange }: { value: string; onChange: (value: st
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-border/70 bg-muted/15 p-4" data-testid="structured-branch">
+    <div className="space-y-3 rounded-lg border bg-muted/15 p-4" data-testid="structured-branch">
       <ScalarEditor id="branch-on-value" label={t('answer')} value={branch.onValue} onChange={(onValue) => writeValue(onChange, { ...branch, onValue })} />
       <StringListEditor
         id="branch-question-keys"
@@ -546,7 +546,7 @@ function FactorsEditor({ value, onChange }: { value: string; onChange: (value: s
       {FACTOR_KEYS.map((key) => {
         const factor = factors[key] ?? DEFAULT_FACTOR;
         return (
-          <fieldset key={key} className="space-y-4 rounded-lg border border-border/70 bg-muted/15 p-4">
+          <fieldset key={key} className="space-y-4 rounded-lg border bg-muted/15 p-4">
             <legend className="px-1.5 text-sm font-semibold text-foreground">{t(`names.${key}`)}</legend>
             <div className="grid gap-2 sm:grid-cols-3">
               <div>
@@ -583,11 +583,11 @@ function FactorsEditor({ value, onChange }: { value: string; onChange: (value: s
                 />
               </div>
             </div>
-            <div className="space-y-3 rounded-lg border border-border/60 bg-background/80 p-3">
+            <div className="space-y-3 rounded-lg border bg-background/80 p-3">
               <p className="text-xs font-medium">{t('mappings')}</p>
               {factor.mapping.length === 0 ? <p className="text-xs text-muted-foreground">{t('emptyMappings')}</p> : null}
               {factor.mapping.map((mapping, index) => (
-                <div key={`mapping-${key}-${index}`} className="space-y-3 rounded-lg border border-border/70 bg-muted/15 p-3">
+                <div key={`mapping-${key}-${index}`} className="space-y-3 rounded-lg border bg-muted/15 p-3">
                   <p className="text-xs font-medium">{t('mapping', { number: index + 1 })}</p>
                   <ConditionNodeEditor
                     condition={mapping.when}
@@ -656,7 +656,7 @@ function ThresholdsEditor({ value, onChange }: { value: string; onChange: (value
       {CLASSIFICATIONS.map((classification) => {
         const range = thresholds[classification] ?? { min: 0, max: 0 };
         return (
-          <fieldset key={classification} className="rounded-lg border border-border/70 bg-muted/15 p-4">
+          <fieldset key={classification} className="rounded-lg border bg-muted/15 p-4">
             <legend className="px-1.5 text-xs font-semibold text-foreground">{t(`classification.${classification}`)}</legend>
             <div className="grid grid-cols-2 gap-2">
               <div>

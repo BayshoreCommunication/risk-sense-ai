@@ -141,7 +141,7 @@ export function BarChart({ data, format = (v) => String(v), title }: { data: { l
       {active !== null && data[active] && <Tooltip x={PAD.left + active * slot + slot / 2} y={PAD.top + innerH - (data[active].value / max) * innerH} lines={[data[active].label, format(data[active].value)]} />}
     </svg>
     {selected !== null && data[selected] && (
-      <div className="mt-2 flex items-center justify-between gap-3 border-t border-border/70 pt-3 text-sm" role="status">
+      <div className="mt-2 flex items-center justify-between gap-3 border-t pt-3 text-sm" role="status">
         <span className="font-medium">{data[selected].label}</span>
         <span className="rounded-md bg-blue-50 px-2 py-1 font-semibold tabular-nums text-blue-700">{format(data[selected].value)}</span>
       </div>
@@ -246,7 +246,7 @@ export function LineChart({ periods, series, format = (v) => String(v), title, u
       )}
     </svg>
     {selected !== null && periods[selected] && (
-      <div className="mt-2 border-t border-border/70 pt-3" role="status">
+      <div className="mt-2 border-t pt-3" role="status">
         <div className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">{periods[selected]}</div>
         <div className="flex flex-wrap gap-2">
           {series.map((item, index) => (
@@ -308,7 +308,7 @@ export function PieChart({ rows, title, totalLabel }: { rows: { key: string; lab
         <text x="120" y="116" textAnchor="middle" fontSize="11" fill="var(--viz-muted)">{totalLabel}</text>
         <text x="120" y="139" textAnchor="middle" fontSize="22" fontWeight="700" fill="var(--viz-ink)">{total.toLocaleString(locale)}</text>
       </svg>
-      <div className="divide-y divide-border/70 border-y border-border/70">
+      <div className="divide-y divide-border/70 border-y">
         {rows.map((row, index) => {
           const statusColor = STATUS[row.key]?.color;
           return (
@@ -406,10 +406,10 @@ export function StackedClassificationChart({
                 <span key={`${tick}-${index}`}>{tick.toLocaleString(locale)}</span>
               ))}
             </div>
-            <div className="relative h-60 border-b border-border/80">
+            <div className="relative h-60 border-b">
               <div className="pointer-events-none absolute inset-0 flex flex-col justify-between" aria-hidden="true">
                 {tickValues.map((tick, index) => (
-                  <span key={`${tick}-${index}`} className="block border-t border-dashed border-border/65 first:border-solid" />
+                  <span key={`${tick}-${index}`} className="block border-t border-dashed border first:border-solid" />
                 ))}
               </div>
               <div className="absolute inset-0 flex items-end justify-around gap-8 px-6">
@@ -497,10 +497,10 @@ export function StackedClassificationChart({
   );
 }
 
+/** Sits inside a `gap-px bg-border` grid, which draws the dividers and wraps cleanly. */
 export function StatTile({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="relative min-h-24 overflow-hidden border-y border-r border-border/70 bg-card p-4 first:border-l">
-      <div className="absolute inset-x-0 top-0 h-px bg-primary/45" aria-hidden="true" />
+    <div className="min-h-24 bg-card p-4">
       <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className="mt-2 font-heading text-2xl font-semibold tracking-tight tabular-nums">{value}</div>
       {hint && <div className="mt-1 text-xs leading-5 text-muted-foreground">{hint}</div>}

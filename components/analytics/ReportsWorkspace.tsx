@@ -65,7 +65,7 @@ function ReportPanel({
 
   return (
     <section id={id} className="data-panel scroll-mt-20">
-      <div className="flex flex-col gap-3 border-b border-border/60 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-3 border-b px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="max-w-md">
           <h2 className="font-heading font-semibold">{title}</h2>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">{description}</p>
@@ -108,7 +108,7 @@ function ReportPanel({
             {t('loading')}
           </p>
         ) : view === 'table' ? (
-          <div className="overflow-hidden rounded-xl border border-border/70">
+          <div className="overflow-hidden rounded-xl border">
             <Table>
               <TableHeader className="bg-muted/45">
                 <TableRow>
@@ -312,8 +312,8 @@ export function ReportsWorkspace() {
         </ReportPanel>
       </div>
 
-      <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-border/60 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+      <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+        <div className="flex flex-col gap-3 border-b px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className="font-heading font-semibold">{t('trends.title', { group: t(`groups.${by}`) })}</h2>
             <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('trends.description', { group: t(`groups.${by}`).toLocaleLowerCase() })}</p>
@@ -335,7 +335,7 @@ export function ReportsWorkspace() {
               trendView === 'chart' ? (
                 <LineChart title={t('trends.chartTitle', { group: t(`groups.${by}`).toLocaleLowerCase() })} periods={trendSeries.periods} series={trendSeries.series} />
               ) : (
-                <div className="overflow-hidden rounded-xl border border-border/70">
+                <div className="overflow-hidden rounded-xl border">
                   <Table>
                     <TableHeader className="bg-muted/45">
                       <TableRow>

@@ -129,7 +129,7 @@ export function ScoringMatrixEditor() {
   if (!matrix) return <p className="text-sm text-muted-foreground">{t('empty')}</p>;
 
   return (
-    <section className="rounded-2xl border bg-card p-5 shadow-[0_1px_2px_rgba(15,35,65,0.04)] sm:p-6">
+    <section className="rounded-2xl border bg-card p-5 shadow-[0_1px_2px_rgba(15,35,65,0.05)] sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="font-heading text-xl font-bold tracking-[-0.01em]">{t('heading', { name: matrix.name })}</h2>

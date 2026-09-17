@@ -43,7 +43,7 @@ export default function NewAssessmentPage() {
       <PageHeader title={t('title')} description={t('description')} requirements={['FR-04', 'FR-14']} />
 
       <Card className="overflow-visible">
-        <CardHeader className="border-b border-border/70 pb-5">
+        <CardHeader className="border-b pb-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-1">
               <CardTitle className="flex items-center gap-2">

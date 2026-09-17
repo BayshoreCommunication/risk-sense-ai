@@ -132,7 +132,7 @@ export default function AnalyticsPage() {
         </p>
       )}
 
-      <div className="grid overflow-hidden rounded-xl sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2 lg:grid-cols-4">
         <StatTile
           label={t('stats.started')}
           value={vol ? Number(vol.summary.started).toLocaleString() : '—'}
@@ -156,7 +156,7 @@ export default function AnalyticsPage() {
       </div>
 
       <section id="monthly-classification" className="data-panel scroll-mt-20">
-        <div className="flex flex-col gap-3 border-b border-border/60 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-3 border-b px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-2xl">
             <h2 className="font-heading font-semibold">{t('monthly.title')}</h2>
             <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('monthly.description')}</p>

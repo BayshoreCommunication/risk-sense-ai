@@ -182,7 +182,7 @@
       linear-gradient(180deg, transparent 60%, color-mix(in oklch, var(--sidebar-primary), transparent 97%) 100%);
   }
   .surface {
-    @apply rounded-xl border bg-card shadow-[0_1px_2px_rgba(15,35,65,0.035)];
+    @apply rounded-xl border bg-card shadow-[0_1px_2px_rgba(15,35,65,0.05)];
   }
   .subtle-grid {
     background-image:
@@ -203,10 +203,10 @@
     @apply relative;
   }
   .data-panel {
-    @apply overflow-hidden rounded-xl border bg-card shadow-[0_8px_26px_rgba(15,35,65,0.032)];
+    @apply overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgba(15,35,65,0.05)];
   }
   .control-strip {
-    @apply rounded-xl border bg-card p-4 shadow-[0_8px_26px_rgba(15,35,65,0.032)];
+    @apply rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(15,35,65,0.05)];
   }
   .metric-value {
     @apply font-heading text-2xl font-semibold tracking-[-0.035em] tabular-nums;

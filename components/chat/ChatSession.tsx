@@ -132,7 +132,7 @@ export function ChatSession({ id }: { id: string }) {
         </div>
       </div>
 
-      <section aria-label={t('workspaceLabel')} className="overflow-hidden rounded-[1.25rem] border border-border/90 bg-card shadow-[0_18px_50px_rgba(15,35,65,0.07)]">
+      <section aria-label={t('workspaceLabel')} className="overflow-hidden rounded-[1.25rem] border bg-card shadow-[0_10px_28px_rgba(15,35,65,0.05)]">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b bg-card px-4 py-3.5 sm:px-5">
           <div className="flex items-center gap-3">
             <span className="flex size-9 items-center justify-center rounded-lg bg-slate-950 text-white">
@@ -455,7 +455,7 @@ function AnswerBox({
               suggestion={option.id}
               variant="outline"
               disabled={busy}
-              className="w-full border-border/90 bg-background hover:border-primary/35 hover:bg-primary/[0.04]"
+              className="w-full border bg-background hover:border-primary/35 hover:bg-primary/[0.04]"
               onClick={() => void onAnswer({ value: option.id })}
             >
               {option.label}

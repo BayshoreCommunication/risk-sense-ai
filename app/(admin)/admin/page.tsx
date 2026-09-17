@@ -163,7 +163,7 @@ export default function Page() {
                   </div>
                   <span className={`grid size-9 place-items-center rounded-lg ${area.tone}`}><Icon className="size-4.5" aria-hidden="true" /></span>
                 </CardHeader>
-                <CardContent className="mt-auto flex items-end justify-between gap-3 border-t border-border/60 pt-4">
+                <CardContent className="mt-auto flex items-end justify-between gap-3 border-t pt-4">
                   <p className="text-xs leading-5 text-muted-foreground">{t(`areas.${area.key}.description`)}</p>
                   <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden="true" />
                 </CardContent>
