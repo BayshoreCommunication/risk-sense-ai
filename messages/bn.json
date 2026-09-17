@@ -13,6 +13,9 @@
     "openNavigation": "নেভিগেশন খুলুন",
     "closeNavigation": "নেভিগেশন বন্ধ করুন",
     "signOut": "সাইন আউট",
+    "signedInAs": "সাইন ইন করা আছে",
+    "expandNavigation": "নেভিগেশন প্রসারিত করুন",
+    "collapseNavigation": "নেভিগেশন সংকুচিত করুন",
     "loading": "লোড হচ্ছে…",
     "openingWorkspace": "আপনার কর্মক্ষেত্র খোলা হচ্ছে…",
     "sessionVerifyFailed": "আপনার সেশন যাচাই করা যায়নি। আবার সাইন ইন করুন।"

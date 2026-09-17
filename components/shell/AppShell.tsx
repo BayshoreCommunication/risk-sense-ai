@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Activity,
@@ -18,7 +18,6 @@ import {
   FileText,
   Fingerprint,
   History,
-  Languages,
   LayoutDashboard,
   Library,
   LoaderCircle,
@@ -26,6 +25,7 @@ import {
   Menu,
   MessageSquareText,
   Network,
+  PanelLeft,
   RefreshCw,
   Settings2,
   ShieldCheck,
@@ -84,13 +84,9 @@ const NAV: Record<Role, NavItem[]> = {
   ],
 };
 
-const LOCALES = ['en', 'bn'] as const;
+const SIDEBAR_STORAGE_KEY = 'rs_sidebar_collapsed';
 const DRAWER_FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-function setLocaleCookie(locale: string) {
-  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-  document.cookie = `rs_locale=${locale}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax${secure}`;
-}
 
 function isNavActive(pathname: string, item: NavItem, home: string) {
   if (item.href === home) return pathname === item.href;
@@ -114,11 +110,11 @@ export function AppShell({ role, children }: { role: Role; children: React.React
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations();
-  const locale = useLocale();
   const [me, setMe] = useState<Me | null>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'redirecting' | 'error'>('loading');
   const [loadError, setLoadError] = useState<string | null>(null);
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const mobileNavigationRef = useRef<HTMLElement>(null);
   const mobileNavigationTriggerRef = useRef<HTMLButtonElement>(null);
 
@@ -151,6 +147,23 @@ export function AppShell({ role, children }: { role: Role; children: React.React
   useEffect(() => {
     void verifySession();
   }, [verifySession]);
+
+  // Remember the rail state per browser; storage can throw or be empty, so the default stands.
+  useEffect(() => {
+    try {
+      setCollapsed(window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === 'true');
+    } catch {
+      /* private mode or blocked storage: keep the expanded default */
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(collapsed));
+    } catch {
+      /* nothing to do: the rail still works for this page view */
+    }
+  }, [collapsed]);
 
   useEffect(() => {
     setMobileNavigationOpen(false);
@@ -238,15 +251,15 @@ export function AppShell({ role, children }: { role: Role; children: React.React
   const navigation = NAV[trustedRole].filter((item) => !item.feature || me.tenant.features[item.feature]);
   const home = ROLE_HOME[trustedRole];
 
-  const renderNavigation = (mobile = false) => (
+  const renderNavigation = (mobile = false) => {
+    // The rail collapses to icons only on large screens; the mobile drawer always shows labels.
+    const compact = collapsed && !mobile;
+    return (
     <div className="flex h-full min-h-0 flex-col">
       {mobile ? (
         <div className="flex h-14 shrink-0 items-center gap-3 border-b border-sidebar-border px-4">
           <div className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-xs font-bold text-sidebar-primary-foreground">R</div>
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold tracking-[-0.01em] text-sidebar-foreground">{t('app.name')}</div>
-            <div className="truncate text-[0.62rem] font-medium tracking-[0.12em] text-sidebar-foreground/50 uppercase">{t('app.secureWorkspace')}</div>
-          </div>
+          <div className="min-w-0 flex-1 truncate text-sm font-semibold tracking-[-0.01em] text-sidebar-foreground">{t('app.name')}</div>
           <button
             type="button"
             aria-label={t('app.closeNavigation')}
@@ -256,37 +269,54 @@ export function AppShell({ role, children }: { role: Role; children: React.React
             <X className="size-4" />
           </button>
         </div>
-      ) : null}
-
-      <div className="scrollbar-subtle min-h-0 flex-1 overflow-y-auto px-3 py-5">
-        <div className="mb-3 px-3 text-[0.62rem] font-semibold tracking-[0.16em] text-sidebar-foreground/45 uppercase">
-          {t('app.roleNavigation', { role: t(`roles.${trustedRole}`) })}
+      ) : (
+        <div className={`flex h-12 shrink-0 items-center border-b border-sidebar-border ${compact ? 'justify-center px-2' : 'justify-end px-3'}`}>
+          <button
+            type="button"
+            aria-label={compact ? t('app.expandNavigation') : t('app.collapseNavigation')}
+            aria-expanded={!compact}
+            title={compact ? t('app.expandNavigation') : t('app.collapseNavigation')}
+            className="rounded-lg p-2 text-sidebar-foreground/60 transition hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            onClick={() => setCollapsed((current) => !current)}
+          >
+            <PanelLeft className="size-4" aria-hidden="true" />
+          </button>
         </div>
+      )}
+
+      <div className="scrollbar-subtle min-h-0 flex-1 overflow-y-auto px-2.5 py-3">
         <nav className="space-y-0.5" aria-label={t('app.navigation')}>
           {navigation.map((item, index) => {
             const active = isNavActive(pathname, item, home);
             const Icon = item.icon;
+            const label = t(`nav.${trustedRole}.${item.key}`);
+            const startsAdvanced = item.section === 'advanced' && navigation[index - 1]?.section !== 'advanced';
             return (
               <div key={item.href}>
-                {item.section === 'advanced' && navigation[index - 1]?.section !== 'advanced' ? (
-                  <div className="mb-2 mt-5 border-t border-sidebar-border px-3 pt-4 text-[0.59rem] font-semibold tracking-[0.14em] text-sidebar-foreground/40 uppercase">
-                    {t('app.advancedOperations')}
-                  </div>
+                {startsAdvanced ? (
+                  compact ? (
+                    <div className="my-3 border-t border-sidebar-border" aria-hidden="true" />
+                  ) : (
+                    <div className="mb-2 mt-5 border-t border-sidebar-border px-3 pt-4 text-[0.59rem] font-semibold tracking-[0.14em] text-sidebar-foreground/45 uppercase">
+                      {t('app.advancedOperations')}
+                    </div>
+                  )
                 ) : null}
                 <Link
                   href={item.href}
                   aria-current={active ? 'page' : undefined}
-                  className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[0.84rem] transition ${
+                  title={compact ? label : undefined}
+                  className={`group relative flex items-center rounded-md text-sm transition ${compact ? 'justify-center px-0 py-2' : 'gap-2.5 px-2.5 py-2'} ${
                     active
                       ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground'
-                      : 'text-sidebar-foreground/62 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
+                      : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground'
                   }`}
                 >
-                  {active && <span aria-hidden="true" className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-sidebar-primary" />}
-                  <span className={`flex size-7 items-center justify-center transition ${active ? 'text-sidebar-primary' : 'text-sidebar-foreground/38 group-hover:text-sidebar-foreground/80'}`}>
-                    <Icon className="size-[1.05rem]" />
+                  {active && <span aria-hidden="true" className="absolute inset-y-1.5 -left-1 w-[3px] rounded-full bg-sidebar-primary" />}
+                  <span className={`flex size-6 shrink-0 items-center justify-center transition ${active ? 'text-sidebar-primary' : 'text-sidebar-foreground/60 group-hover:text-sidebar-foreground'}`}>
+                    <Icon className="size-4" />
                   </span>
-                  <span className="min-w-0 flex-1 truncate">{t(`nav.${trustedRole}.${item.key}`)}</span>
+                  {compact ? <span className="sr-only">{label}</span> : <span className="min-w-0 flex-1 truncate">{label}</span>}
                 </Link>
               </div>
             );
@@ -294,57 +324,48 @@ export function AppShell({ role, children }: { role: Role; children: React.React
         </nav>
       </div>
 
-      <div className="shrink-0 space-y-3 border-t border-sidebar-border p-4">
-        <div className="px-1 py-1">
-          <div className="flex items-center gap-2">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-sidebar-accent text-xs font-bold text-sidebar-primary">
+      <div className={`shrink-0 border-t border-sidebar-border ${compact ? 'space-y-1.5 p-2' : 'space-y-1.5 p-2'}`}>
+        {compact ? (
+          <div
+            className="mx-auto flex size-9 items-center justify-center rounded-lg bg-sidebar-accent text-xs font-bold text-sidebar-primary"
+            title={`${me.user.name} · ${me.user.email} · ${me.tenant.plan.toUpperCase()}`}
+          >
+            {initials(me.user.name) || 'RS'}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2.5 rounded-md px-2 py-2">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-sidebar-accent text-[0.68rem] font-bold text-sidebar-primary">
               {initials(me.user.name) || 'RS'}
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-xs font-semibold text-sidebar-foreground">{me.user.name}</div>
-              <div className="truncate text-[0.65rem] text-sidebar-foreground/60">{me.user.email}</div>
+            <div className="min-w-0 flex-1 leading-tight">
+              <div className="truncate text-[0.8rem] font-semibold text-sidebar-foreground">{me.user.name}</div>
+              <div className="truncate text-[0.68rem] text-sidebar-foreground/65">{me.user.email}</div>
             </div>
-            <Badge className="border-sidebar-border bg-sidebar-accent/70 text-[0.58rem] text-sidebar-foreground" variant="outline">
+            <Badge className="border-sidebar-border bg-sidebar-accent/70 text-[0.55rem] text-sidebar-foreground" variant="outline">
               {me.tenant.plan.toUpperCase()}
             </Badge>
           </div>
-        </div>
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1 text-xs text-sidebar-foreground/55">
-            <Languages className="mr-1 size-3.5" />
-            {LOCALES.map((nextLocale) => (
-              <button
-                key={nextLocale}
-                type="button"
-                aria-pressed={locale === nextLocale}
-                className={`rounded-md px-2 py-1 transition ${locale === nextLocale ? 'bg-sidebar-accent text-sidebar-foreground' : 'hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'}`}
-                onClick={() => {
-                  setLocaleCookie(nextLocale);
-                  window.location.reload();
-                }}
-              >
-                {t(`locale.${nextLocale}`)}
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            aria-label={t('app.signOut')}
-            className="rounded-lg p-2 text-sidebar-foreground/55 transition hover:bg-sidebar-accent hover:text-sidebar-foreground"
-            onClick={() => void logout()}
-          >
-            <LogOut className="size-4" />
-          </button>
-        </div>
+        )}
+        <button
+          type="button"
+          aria-label={t('app.signOut')}
+          title={compact ? t('app.signOut') : undefined}
+          className={`flex w-full items-center rounded-md text-[0.82rem] font-medium text-sidebar-foreground/75 transition hover:bg-destructive/8 hover:text-destructive ${compact ? 'justify-center p-2' : 'gap-2.5 px-2.5 py-2'}`}
+          onClick={() => void logout()}
+        >
+          <LogOut className="size-4 shrink-0" aria-hidden="true" />
+          {compact ? null : <span>{t('app.signOut')}</span>}
+        </button>
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-transparent">
       <div inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
         <header className="fixed inset-x-0 top-0 z-50 flex h-14 items-center bg-[#06224b] text-white shadow-[0_1px_0_rgba(255,255,255,0.08)]">
-        <div className="flex h-full w-full items-center gap-3 px-4 sm:px-5 lg:w-[19rem] lg:border-r lg:border-white/10">
+        <div className={`flex h-full w-full items-center gap-3 px-4 sm:px-5 lg:border-r lg:border-white/10 ${collapsed ? 'lg:w-[4.5rem] lg:justify-center lg:px-0' : 'lg:w-64'}`}>
           <button
             ref={mobileNavigationTriggerRef}
             type="button"
@@ -357,9 +378,11 @@ export function AppShell({ role, children }: { role: Role; children: React.React
             <Menu className="size-5" />
           </button>
           <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-[#1674df] text-[0.72rem] font-bold text-white shadow-sm">R</div>
-          <div className="min-w-0">
-            <div className="truncate text-[0.95rem] font-semibold tracking-[-0.01em]">{t('app.name')}</div>
-          </div>
+          {collapsed ? null : (
+            <div className="min-w-0">
+              <div className="truncate text-[0.95rem] font-semibold tracking-[-0.01em]">{t('app.name')}</div>
+            </div>
+          )}
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-2 px-4 sm:px-5">
           {/* Figma header: a single identity pill carrying the account initials and the verified role. */}
@@ -374,7 +397,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
         </div>
         </header>
 
-        <aside className="fixed bottom-0 left-0 top-14 z-40 hidden w-[19rem] border-r border-sidebar-border bg-sidebar lg:block">
+        <aside className={`fixed bottom-0 left-0 top-14 z-40 hidden border-r border-sidebar-border bg-sidebar shadow-[1px_0_0_rgba(15,35,65,0.04)] transition-[width] lg:block ${collapsed ? 'w-[4.5rem]' : 'w-64'}`}>
           {renderNavigation()}
         </aside>
       </div>
@@ -402,7 +425,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
         </div>
       )}
 
-      <div className="min-w-0 pt-14 lg:pl-[19rem]" inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
+      <div className={`min-w-0 pt-14 ${collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-64'}`} inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
         <main className="min-h-[calc(100dvh-3.5rem)] px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
           <WorkspaceProvider value={{ role: trustedRole, plan: me.tenant.plan }}>{children}</WorkspaceProvider>
         </main>

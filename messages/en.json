@@ -13,6 +13,9 @@
     "openNavigation": "Open navigation",
     "closeNavigation": "Close navigation",
     "signOut": "Sign out",
+    "signedInAs": "Signed in as",
+    "expandNavigation": "Expand navigation",
+    "collapseNavigation": "Collapse navigation",
     "loading": "Loading…",
     "openingWorkspace": "Opening your workspace…",
     "sessionVerifyFailed": "Your session could not be verified. Please sign in again."
