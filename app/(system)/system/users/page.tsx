@@ -2,10 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { BadgeCheck, KeyRound, UserPlus } from 'lucide-react';
+import { BadgeCheck, UserPlus, UsersRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -99,13 +98,11 @@ export default function UsersPage() {
   }, [load]);
 
   const departmentNames = useMemo(() => new Map(departments.map((department) => [department._id, department.name])), [departments]);
-  const activeUsers = users.filter((user) => user.status === 'active').length;
   const requiresRecordedMfa = (user: SystemUser) =>
     user.role === 'administrator' ||
     user.role === 'system_administrator' ||
     (plan === 'paid' && user.role === 'audit') ||
     (otpRequired === true && !(plan === 'paid' && user.role === 'requestor'));
-  const pendingMfa = users.filter((user) => !user.mfaEnrolled && requiresRecordedMfa(user)).length;
   const availableRoles: Role[] =
     plan === 'paid'
       ? ROLES
@@ -221,24 +218,18 @@ export default function UsersPage() {
         title={t('title')}
         description={t('description')}
         requirements={['FR-02', 'FR-10']}
-        actions={<Button onClick={openCreate} disabled={controlsDisabled}><UserPlus aria-hidden="true" />{t('provision')}</Button>}
       />
 
-      <div className="grid overflow-hidden rounded-xl sm:grid-cols-3">
-        <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.total')}</CardDescription><CardTitle className="metric-value">{users.length}</CardTitle></CardHeader></Card>
-        <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.active')}</CardDescription><CardTitle className="metric-value">{activeUsers}</CardTitle></CardHeader></Card>
-        <Card size="sm" className="rounded-none shadow-none"><CardHeader><CardDescription>{t('summary.mfaPending')}</CardDescription><CardTitle className={pendingMfa > 0 && plan === 'paid' ? 'metric-value text-destructive' : 'metric-value'}>{planState === 'ready' ? pendingMfa : '—'}</CardTitle></CardHeader></Card>
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-t-xl border border-b-0 bg-card px-4 py-4">
+        <div className="flex items-center gap-3">
+          <span className="card-icon"><UsersRound className="size-5" aria-hidden="true" /></span>
+          <div>
+            <h2 className="font-heading text-base font-bold tracking-[-0.01em]">{t('list.title')}</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">{t('list.description')}</p>
+          </div>
+        </div>
+        <Button variant="outline" onClick={openCreate} disabled={controlsDisabled}><UserPlus aria-hidden="true" />{t('provision')}</Button>
       </div>
-
-      <Card>
-        <CardHeader className="border-b">
-          <CardTitle className="flex items-center gap-3"><span className="card-icon"><KeyRound className="size-5" aria-hidden="true" /></span>{t('accessPolicy.title')}</CardTitle>
-          <CardDescription id="user-role-policy">
-            {planState === 'loading' ? t('accessPolicy.loading') : planState === 'error' ? t('accessPolicy.error') : plan === 'free' ? t('accessPolicy.free') : t('accessPolicy.paid')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex items-start gap-2 pt-1 text-xs leading-5 text-muted-foreground"><BadgeCheck className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" />{planState === 'loading' ? t('accessPolicy.mfaLoading') : planState === 'error' ? t('accessPolicy.mfaError') : plan === 'paid' ? t('accessPolicy.paidMfa') : t('accessPolicy.freeMfa')}</CardContent>
-      </Card>
 
       {pageError && (
         <div className="flex items-center justify-between gap-3 rounded-md border border-destructive/40 bg-destructive/5 p-3" role="alert">
@@ -249,7 +240,7 @@ export default function UsersPage() {
         </div>
       )}
 
-      <div className="data-panel hidden overflow-x-auto lg:block">
+      <div className="data-panel hidden overflow-x-auto rounded-t-none lg:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -315,6 +306,15 @@ export default function UsersPage() {
             <Button className="w-full" size="sm" variant="outline" onClick={() => openEdit(user)} disabled={controlsDisabled}>{t('edit')}</Button>
           </article>
         ))}
+      </div>
+
+      {/* The frame closes with one policy line; it carries the client's comment 46/51/52 wording. */}
+      <div id="user-role-policy" className="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-sm leading-6 text-blue-950/80">
+        <BadgeCheck className="mt-0.5 size-4 shrink-0 text-blue-800" aria-hidden="true" />
+        <p>
+          {planState === 'loading' ? t('accessPolicy.loading') : planState === 'error' ? t('accessPolicy.error') : plan === 'free' ? t('accessPolicy.free') : t('accessPolicy.paid')}{' '}
+          {planState === 'loading' ? t('accessPolicy.mfaLoading') : planState === 'error' ? t('accessPolicy.mfaError') : plan === 'paid' ? t('accessPolicy.paidMfa') : t('accessPolicy.freeMfa')}
+        </p>
       </div>
 
       <Dialog open={editor !== null} onOpenChange={(open) => !open && closeEditor()}>

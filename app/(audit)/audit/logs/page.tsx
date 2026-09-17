@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { CheckCircle2, ChevronDown, ChevronUp, RefreshCw, Search, ShieldAlert } from 'lucide-react';
+import { CheckCircle2, ChevronDown, ChevronUp, RefreshCw, Search, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { PageHeader } from '@/components/shell/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -70,7 +70,7 @@ export default function AuditLogsPage() {
         actions={
           <>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">{t('scopeBadge')}</Badge>
+          <Badge variant="secondary" className="gap-1.5"><ShieldCheck className="size-3.5" aria-hidden="true" />{t('readOnlyBadge')}</Badge>
           {verify && (
             <Badge variant={verify.ok ? 'outline' : 'destructive'} className="h-8 gap-1.5 px-3">
               {verify.ok ? <CheckCircle2 className="size-3.5" aria-hidden="true" /> : <ShieldAlert className="size-3.5" aria-hidden="true" />}
@@ -228,6 +228,7 @@ export default function AuditLogsPage() {
           </Button>
         </div>
       </div>
+      <p className="rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-xs leading-5 text-blue-950/75">{t('note')}</p>
     </div>
   );
 }

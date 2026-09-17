@@ -460,35 +460,32 @@ export default function LoginPage() {
           </div>
         </section>
 
-        <section className="relative hidden overflow-hidden border-l border-white/10 bg-[#061a33] px-10 py-12 text-white lg:flex lg:flex-col lg:justify-between xl:px-14 xl:py-14">
+        <section className="relative hidden overflow-hidden border-l border-white/10 bg-[linear-gradient(160deg,#2a6ee4_0%,#1546a8_100%)] px-10 py-12 text-white lg:flex lg:flex-col lg:justify-between xl:px-14 xl:py-14">
           <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#38a0ff] to-transparent" />
-          <div aria-hidden="true" className="absolute -right-28 top-24 size-80 rounded-full bg-blue-500/12 blur-3xl" />
+          <div aria-hidden="true" className="absolute -right-28 top-24 size-80 rounded-full bg-white/10 blur-3xl" />
           <div className="relative flex items-center gap-3">
             <div className="flex size-9 items-center justify-center rounded-lg bg-[#1674df] text-xs font-bold text-white">R</div>
-            <div>
-              <div className="font-semibold">{t('title')}</div>
-              <div className="text-[0.66rem] font-semibold tracking-[0.14em] text-white/55 uppercase">{t('eyebrow')}</div>
-            </div>
+            <div className="font-semibold">{t('title')}</div>
           </div>
 
           <div className="relative max-w-xl space-y-8 py-12">
             <div className="space-y-4">
-              <div className="text-[0.68rem] font-semibold tracking-[0.17em] text-[#55adff] uppercase">{t('eyebrow')}</div>
+              <div className="text-[0.68rem] font-semibold tracking-[0.17em] text-white/70 uppercase">{t('eyebrow')}</div>
               <h1 className="max-w-lg text-4xl leading-[1.08] font-semibold tracking-[-0.045em] xl:text-[2.9rem]">{t('heroTitle')}</h1>
-              <p className="max-w-lg text-sm leading-6 text-white/62 xl:text-base xl:leading-7">{t('heroDescription')}</p>
+              <p className="max-w-lg text-sm leading-6 text-white/75 xl:text-base xl:leading-7">{t('heroDescription')}</p>
             </div>
             <div className="divide-y divide-white/10 border-y border-white/10">
               {(['guided', 'deterministic', 'auditable'] as const).map((key, index) => (
                 <div key={key} className="flex items-center gap-4 py-3.5 text-sm text-white/80">
-                  <span className="font-mono text-[0.65rem] text-[#55adff]">0{index + 1}</span>
+                  <span className="font-mono text-[0.65rem] text-white/70">0{index + 1}</span>
                   <span className="flex-1">{t(`assurance.${key}`)}</span>
-                  <CheckCircle2 className="size-4 text-[#55adff]" aria-hidden="true" />
+                  <CheckCircle2 className="size-4 text-white/80" aria-hidden="true" />
                 </div>
               ))}
             </div>
           </div>
 
-          <p className="relative max-w-lg text-xs leading-5 text-white/62">{t('governanceNote')}</p>
+          <p className="relative max-w-lg text-xs leading-5 text-white/70">{t('governanceNote')}</p>
         </section>
       </div>
     </main>

@@ -237,11 +237,27 @@ export default function DisasterRecoveryPage() {
         <span className="font-medium">{t('operatorNotice.title')}:</span> {t('operatorNotice.description')}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Card size="sm"><CardHeader><div className="mb-2 flex items-center justify-between"><CardDescription>{t('targets.rto')}</CardDescription><TimerReset className="size-4 text-blue-700" aria-hidden="true" /></div><CardTitle className="text-2xl tabular-nums">{t('targets.hours', { value: status.targets.rtoHours })}</CardTitle></CardHeader></Card>
-        <Card size="sm"><CardHeader><div className="mb-2 flex items-center justify-between"><CardDescription>{t('targets.rpo')}</CardDescription><RotateCcw className="size-4 text-violet-700" aria-hidden="true" /></div><CardTitle className="text-2xl tabular-nums">{t('targets.hours', { value: status.targets.rpoHours })}</CardTitle></CardHeader></Card>
-        <Card size="sm"><CardHeader><div className="mb-2 flex items-center justify-between"><CardDescription>{t('targets.backup')}</CardDescription><DatabaseBackup className="size-4 text-emerald-700" aria-hidden="true" /></div><CardTitle className="text-2xl tabular-nums">{t('targets.hours', { value: status.targets.backupFrequencyHours })}</CardTitle></CardHeader></Card>
-        <Card size="sm"><CardHeader><div className="mb-2 flex items-center justify-between"><CardDescription>{t('targets.drill')}</CardDescription><FileCheck2 className="size-4 text-amber-700" aria-hidden="true" /></div><CardTitle className="text-2xl tabular-nums">{t('targets.days', { value: status.targets.drillFrequencyDays })}</CardTitle></CardHeader></Card>
+      {/* Target cards lead with a tinted icon tile, as docs/design/figma-frames/23-system-disaster-recovery.png. */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {([
+          { key: 'rto', icon: TimerReset, tile: 'bg-blue-500/10 text-blue-700', value: t('targets.hours', { value: status.targets.rtoHours }) },
+          { key: 'rpo', icon: RotateCcw, tile: 'bg-emerald-500/10 text-emerald-700', value: t('targets.hours', { value: status.targets.rpoHours }) },
+          { key: 'backup', icon: DatabaseBackup, tile: 'bg-violet-500/10 text-violet-700', value: t('targets.hours', { value: status.targets.backupFrequencyHours }) },
+          { key: 'drill', icon: FileCheck2, tile: 'bg-amber-500/10 text-amber-700', value: t('targets.days', { value: status.targets.drillFrequencyDays }) },
+        ] as const).map((target) => {
+          const Icon = target.icon;
+          return (
+            <div key={target.key} className="flex items-center gap-3.5 rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(15,35,65,0.04)]">
+              <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${target.tile}`}>
+                <Icon className="size-5" aria-hidden="true" />
+              </span>
+              <div className="min-w-0">
+                <p className="metric-value">{target.value}</p>
+                <p className="text-sm text-muted-foreground">{t(`targets.${target.key}`)}</p>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">

@@ -1066,6 +1066,7 @@
   "reviewDashboard": {
     "eyebrow": "Decision workspace",
     "title": "Requestor dashboard — pending queue",
+    "note": "Filtered by persona, department and date range. Results are scoped to your assigned departments.",
     "descriptionReviewer": "Track and manage pending assessments for you and your department.",
     "descriptionRequestor": "Track and manage all your pending assessments.",
     "newAssessment": "New assessment",
@@ -1208,6 +1209,8 @@
     "logs": {
       "eyebrow": "Tamper-evident ledger",
       "scopeBadge": "Audit",
+      "note": "No role, including administrators, can edit or delete audit records; the full lifecycle is reconstructable from the log alone.",
+      "readOnlyBadge": "Read-only, tamper-evident",
       "title": "Audit log viewer",
       "description": "Browse and review system audit events.",
       "loading": "Loading audit entries…",
@@ -1396,6 +1399,10 @@
     "users": {
       "eyebrow": "Identity & access",
       "title": "User and role provisioning",
+      "list": {
+        "title": "Provisioned users",
+        "description": "Manage access and role assignments for system users."
+      },
       "description": "Manage system users, roles, departments and MFA requirements.",
       "summary": {
         "total": "Tenant accounts",
