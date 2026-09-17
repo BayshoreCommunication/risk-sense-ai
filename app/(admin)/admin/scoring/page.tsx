@@ -66,7 +66,6 @@ export default function ScoringPage() {
         apiClient={matricesApi}
         fields={matrixFields(t)}
         columns={[
-          { key: 'key', label: t('fields.key') },
           { key: 'name', label: t('fields.name') },
           { key: 'sector', label: t('fields.sector') },
           { key: 'approvedBy', label: t('columns.approved'), render: (it) => (it.approvedBy ? t('yes') : '—') },

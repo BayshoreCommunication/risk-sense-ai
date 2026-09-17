@@ -47,7 +47,6 @@ export default function ScenariosPage() {
       fields={fields}
       columns={[
         { key: 'personaKey', label: t('columns.persona') },
-        { key: 'key', label: t('fields.key') },
         { key: 'name', label: t('fields.name') },
         { key: 'conversationFlow', label: t('columns.questions'), render: (it) => String((it.conversationFlow as unknown[] | undefined)?.length ?? 0) },
       ]}

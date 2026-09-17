@@ -342,13 +342,13 @@ test('every lifecycle transition waits for an explicit confirmation [AI-05, AI-0
   await expect.poll(() => calls).toContain('/rules/rule-active/retire');
 
   await page.goto('/admin/scenarios');
-  const draftScenario = page.getByRole('row').filter({ hasText: 'draft_scenario' });
+  const draftScenario = page.getByRole('row').filter({ hasText: 'Draft scenario' });
   await draftScenario.getByRole('button', { name: 'Activate' }).click();
   expect(calls).not.toContain('/scenarios/scenario-draft/activate');
   await page.getByRole('button', { name: 'Confirm Activate' }).click();
   await expect.poll(() => calls).toContain('/scenarios/scenario-draft/activate');
 
-  const activeScenario = page.getByRole('row').filter({ hasText: 'active_scenario' });
+  const activeScenario = page.getByRole('row').filter({ hasText: 'Active scenario' });
   await activeScenario.getByRole('button', { name: 'Deactivate' }).click();
   expect(calls).not.toContain('/scenarios/scenario-active/deactivate');
   await page.getByRole('button', { name: 'Confirm Deactivate' }).click();
