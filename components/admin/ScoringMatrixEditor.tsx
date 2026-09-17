@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
   AlertTriangle,
@@ -205,7 +206,17 @@ export function ScoringMatrixEditor() {
 
   if (loading) return <p className="text-sm text-muted-foreground">{t('loading')}</p>;
   if (error && !editing) return <p className="text-sm text-destructive" role="alert">{error}</p>;
-  if (!group || !editing) return <p className="text-sm text-muted-foreground">{t('empty')}</p>;
+  // A tenant with no matrix is not a dead end: the scoring sheet in a training dataset creates, approves and
+  // activates one. Say so, because this screen cannot create it and an unexplained empty state reads as broken.
+  if (!group || !editing)
+    return (
+      <div className="rounded-2xl border bg-card p-6 text-sm shadow-[0_1px_2px_rgba(15,35,65,0.05)]">
+        <p className="text-muted-foreground">{t('empty')}</p>
+        <Button className="mt-4" variant="outline" nativeButton={false} render={<Link href="/admin/datasets" />}>
+          {t('emptyAction')}
+        </Button>
+      </div>
+    );
 
   const draft = group.draft;
   const approved = Boolean(draft?.approvedBy);

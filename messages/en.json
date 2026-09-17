@@ -386,7 +386,7 @@
         "saving": "Saving…",
         "saved": "Saved as version {version}. It applies once approved and activated.",
         "footnote": "Weights and thresholds are applied without code deployment.",
-        "empty": "No scoring matrix exists yet. Create one to configure weights and thresholds.",
+        "empty": "No scoring matrix exists yet. Upload a training dataset containing the scoring sheet: activating it creates the matrix, records the reviewer as its approval and makes it live.",
         "loading": "Loading the scoring matrix…",
         "matrixLabel": "Matrix",
         "versionLabel": "v{version}",
@@ -451,7 +451,8 @@
               "discard": "Discard draft"
             }
           }
-        }
+        },
+        "emptyAction": "Go to training datasets"
       },
       "fields": {
         "key": "Key",

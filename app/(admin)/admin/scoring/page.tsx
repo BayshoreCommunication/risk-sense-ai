@@ -10,7 +10,9 @@ import { ScoringMatrixEditor } from '@/components/admin/ScoringMatrixEditor';
  *
  * Weighted factors and the confidence gates are editable here, and the draft a save produces carries
  * its own approve/activate controls so a change cannot be believed-made-but-inert (AI-05, ISS-033).
- * Creating a matrix and editing fact→factor mappings remain API-only by decision, not oversight.
+ * Creating a matrix and editing fact→factor mappings happen by uploading the scoring sheet on
+ * /admin/datasets, where a second administrator's review is the approval record. Only a per-sector
+ * matrix stays API-only, because the sheet parser always writes the `default` key.
  */
 export default function ScoringPage() {
   const t = useTranslations('admin.scoring');
