@@ -134,15 +134,12 @@ test.describe('audit', () => {
     await expect(page.getByText(/Chain intact/)).toBeVisible();
   });
 
-  test('language switcher changes the shell labels [NFR-08]', async ({ page }) => {
+  test('account menu exposes the English-only launch language [NFR-08]', async ({ page }) => {
     await devLogin(page, ACCOUNTS.audit);
     await page.locator('summary').filter({ hasText: /· Audit$/ }).click();
-    await page.getByRole('button', { name: 'বাংলা' }).click();
-    await expect(page.getByRole('link', { name: 'অডিট লগ ভিউয়ার' })).toBeVisible();
-    if (!(await page.getByRole('button', { name: 'English' }).isVisible())) {
-      await page.locator('summary').filter({ hasText: /· অডিট$/ }).click();
-    }
-    await page.getByRole('button', { name: 'English' }).click();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page.getByTestId('language-indicator')).toContainText('English');
+    await expect(page.getByText('বাংলা', { exact: true })).toHaveCount(0);
     await expect(page.getByRole('link', { name: 'Audit log viewer' })).toBeVisible();
   });
 });

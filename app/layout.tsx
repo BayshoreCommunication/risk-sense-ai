@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t('title'), description: t('description') };
 }
 
-/** NFR-08: locale from the `rs_locale` cookie (or Accept-Language); every client component may call `useTranslations`. */
+/** NFR-08: the current launch surface is English-only; every client component may call `useTranslations`. */
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const [locale, messages, cookieStore] = await Promise.all([getLocale(), getMessages(), cookies()]);
   const theme = normalizeTheme(cookieStore.get(THEME_COOKIE)?.value);

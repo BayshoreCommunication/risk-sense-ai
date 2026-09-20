@@ -122,16 +122,18 @@ test('account theme switch defaults to light, persists dark across reload, and r
   await expect.poll(async () => (await page.context().cookies()).find((cookie) => cookie.name === 'rs_theme')?.value).toBe('light');
 });
 
-test('theme switch uses its Bengali accessible label [NFR-08]', async ({ page }) => {
+test('theme switch stays English when a stale Bengali preference is present [NFR-08]', async ({ page }) => {
   await prepareWorkspace(page, 'bn');
   await page.goto('/chat');
-  await expect(page.locator('html')).toHaveAttribute('lang', 'bn');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 
   const accountMenu = await openAccountMenu(page);
   const themeSwitch = accountMenu.getByRole('switch');
   await expect(themeSwitch).toBeVisible();
-  await expect(themeSwitch).toHaveAccessibleName(/ডার্ক মোড/);
+  await expect(themeSwitch).toHaveAccessibleName(/dark mode/i);
   await expect(themeSwitch).toHaveAttribute('aria-checked', 'false');
+  await expect(accountMenu.getByTestId('language-indicator')).toContainText('English');
+  await expect(accountMenu.getByText('বাংলা', { exact: true })).toHaveCount(0);
 });
 
 test('theme switch remains available in the account menu at a 390px mobile viewport [DASH-04, NFR-08]', async ({ page }) => {

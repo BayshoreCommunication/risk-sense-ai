@@ -306,8 +306,9 @@ test('shared demo access uses the same Firebase requestor identity without the d
 
   await page.context().addCookies([{ name: 'rs_locale', value: 'bn', url: 'http://127.0.0.1:3100' }]);
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'ডেমো প্রবেশাধিকার' })).toBeVisible();
-  await page.getByRole('button', { name: 'ডেমো ব্যবহারকারী হিসেবে চালিয়ে যান' }).click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.getByRole('heading', { name: 'Demo access' })).toBeVisible();
+  await page.getByRole('button', { name: 'Continue as demo user' }).click();
 
   await expect(page).toHaveURL(/\/chat$/);
   expect(sessionCalls).toBe(1);
@@ -453,5 +454,6 @@ test('unverified password account sees a retryable resend flow without an applic
 
   await page.context().addCookies([{ name: 'rs_locale', value: 'bn', url: 'http://127.0.0.1:3100' }]);
   await page.reload();
-  await expect(page.getByRole('button', { name: 'যাচাইকরণ ইমেইল আবার পাঠান' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.getByRole('button', { name: 'Resend verification email' })).toBeVisible();
 });

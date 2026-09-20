@@ -105,13 +105,16 @@ test('development authentication stays hidden unless explicitly enabled [SEC-01]
   await expect(page.getByText('Development sign-in (seeded accounts, no OTP)')).toHaveCount(0);
 });
 
-test('login session context follows the selected locale [SEC-02, NFR-08]', async ({ page }) => {
+test('English-only launch mode ignores a stale Bengali preference [SEC-02, NFR-08]', async ({ page }) => {
+  await page.context().addCookies([{ name: 'rs_locale', value: 'bn', url: BASE_URL }]);
   await page.goto('/login?reason=session_expired');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await expect(page.getByText('Your session expired. Sign in again to continue.')).toBeVisible();
+  await expect(page.getByTestId('language-indicator')).toContainText('English');
+  await expect(page.getByText('বাংলা', { exact: true })).toHaveCount(0);
 
-  await page.getByRole('button', { name: 'বাংলা' }).click();
-  await expect(page.getByText('আপনার সেশনের মেয়াদ শেষ হয়েছে। চালিয়ে যেতে আবার সাইন ইন করুন।')).toBeVisible();
-  await expect(page.getByText('Your session expired. Sign in again to continue.')).toHaveCount(0);
+  const unsupportedLocale = await page.request.post('/api/locale', { data: { locale: 'bn' } });
+  expect(unsupportedLocale.status()).toBe(400);
 });
 
 test('post-login navigation stays same-origin and inside the verified role workspace [SEC-01, DASH-04]', () => {

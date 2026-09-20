@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const LOCALES = ['en', 'bn'] as const;
+const LOCALES = ['en'] as const;
 
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as { locale?: unknown } | null;
