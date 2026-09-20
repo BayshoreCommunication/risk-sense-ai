@@ -1133,6 +1133,7 @@
       "enterHint": "Enter to send · Shift + Enter for a new line",
       "responseLabel": "Your response",
       "chooseOne": "Choose the best match",
+      "chooseYesNo": "Choose Yes or No",
       "optionalExplanation": "Or add a short explanation",
       "numberHint": "Enter the requested amount or value",
       "sending": "Sending your answer"

@@ -1485,6 +1485,7 @@ test('the active yes/no question keeps inline binary choices above an optional e
   await expect(inlineCard).toBeVisible();
   await expect(inlineCard).toHaveAttribute('aria-busy', 'false');
   await expect(binaryOptions).toHaveCount(2);
+  await expect(inlineCard.getByText('Choose Yes or No', { exact: true })).toBeVisible();
   await expect(inlineCard.getByRole('button', { name: 'Yes', exact: true })).toBeVisible();
   await expect(inlineCard.getByRole('button', { name: 'No', exact: true })).toBeVisible();
   await expect(composer.getByTestId('binary-answer-option')).toHaveCount(0);
@@ -1509,6 +1510,7 @@ test('the active yes/no question keeps inline binary choices above an optional e
 
   const noOption = inlineCard.getByRole('button', { name: 'No', exact: true });
   const yesOption = inlineCard.getByRole('button', { name: 'Yes', exact: true });
+  await expect(noOption).toHaveAttribute('aria-pressed', 'false');
   await noOption.evaluate((element) => {
     const click = () => element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     click();
@@ -1519,6 +1521,7 @@ test('the active yes/no question keeps inline binary choices above an optional e
   expect(submitted).toEqual([{ text: 'The approver was unavailable.' }, { value: false }]);
   await expect(inlineCard).toHaveAttribute('aria-busy', 'true');
   await expect(noOption).toHaveAttribute('data-selected', 'true');
+  await expect(noOption).toHaveAttribute('aria-pressed', 'true');
   await expect(noOption).toBeDisabled();
   await expect(yesOption).toBeDisabled();
   await expect(composer).toHaveAttribute('data-busy', 'true');

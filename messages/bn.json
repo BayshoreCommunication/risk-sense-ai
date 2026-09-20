@@ -1133,6 +1133,7 @@
       "enterHint": "পাঠাতে Enter · নতুন লাইনে Shift + Enter",
       "responseLabel": "আপনার উত্তর",
       "chooseOne": "সবচেয়ে উপযুক্তটি বেছে নিন",
+      "chooseYesNo": "হ্যাঁ অথবা না বেছে নিন",
       "optionalExplanation": "অথবা সংক্ষিপ্ত ব্যাখ্যা যোগ করুন",
       "numberHint": "চাওয়া পরিমাণ বা মান লিখুন",
       "sending": "আপনার উত্তর পাঠানো হচ্ছে"

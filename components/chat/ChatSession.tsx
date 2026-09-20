@@ -664,19 +664,23 @@ function InlineChoiceCard({
 
   return (
     <fieldset
-      className="mt-2.5 overflow-hidden rounded-[1.1rem] border border-[#cbd9ea] bg-white shadow-[0_10px_26px_rgba(8,35,76,0.07),0_1px_2px_rgba(8,35,76,0.035)]"
+      className="mt-2.5 overflow-hidden rounded-[1.1rem] border border-[#c8d8ec] bg-[#f8fbff] shadow-[0_10px_26px_rgba(8,35,76,0.065),0_1px_2px_rgba(8,35,76,0.035)] dark:border-border dark:bg-card dark:shadow-[0_12px_30px_rgba(1,8,22,0.2)]"
       data-testid="inline-choice-card"
       aria-busy={busy}
     >
       <legend className="sr-only">{q.text ?? t('answer.optionsLabel')}</legend>
-      <div className="flex items-center justify-between gap-3 border-b border-[#dbe5f1] bg-[#f4f8fe] px-3.5 py-2.5 sm:px-4">
-        <span className="flex items-center gap-2 text-[0.72rem] font-semibold text-foreground">
-          <CircleDot className="size-3.5 text-[#2868cf]" aria-hidden="true" />
+      <div className="flex items-center justify-between gap-3 border-b border-[#d7e3f0] bg-[#f6f9fe] px-3.5 py-2.5 dark:border-border dark:bg-muted/45 sm:px-4">
+        <span className="flex items-center gap-2.5 text-[0.74rem] font-semibold text-[#17263d] dark:text-foreground">
+          <span className="grid size-6 place-items-center rounded-full border border-[#c8d9ef] bg-white shadow-[0_2px_6px_rgba(8,35,76,0.05)] dark:border-primary/35 dark:bg-card">
+            <CircleDot className="size-3.5 text-[#2468d6] dark:text-blue-300" aria-hidden="true" />
+          </span>
           {t('answer.responseLabel')}
         </span>
-        <span className="rounded-full border border-[#d4e0ed] bg-white px-2 py-1 text-[0.62rem] font-medium text-muted-foreground">{t('answer.chooseOne')}</span>
+        <span className="rounded-full border border-[#cedced] bg-white px-2.5 py-1 text-[0.64rem] font-medium text-[#40556f] shadow-[0_1px_3px_rgba(8,35,76,0.035)] dark:border-border dark:bg-card dark:text-muted-foreground">
+          {q.type === 'yes_no' ? t('answer.chooseYesNo') : t('answer.chooseOne')}
+        </span>
       </div>
-      <Suggestions className={`grid gap-2 bg-white p-3 sm:p-3.5 ${q.type === 'yes_no' ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'}`}>
+      <Suggestions className={`grid gap-2 bg-[#f8fbff] p-3 dark:bg-card sm:p-3.5 ${q.type === 'yes_no' ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'}`}>
         {choices.map((option) => {
           const selected = selectedOptionId === option.id;
           return (
@@ -684,25 +688,28 @@ function InlineChoiceCard({
               key={option.id}
               data-testid={q.type === 'yes_no' ? 'binary-answer-option' : 'answer-option'}
               data-selected={selected ? 'true' : 'false'}
+              aria-pressed={selected}
               suggestion={option.id}
               variant="outline"
               disabled={busy}
-              className={`group/choice min-h-11 w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition-[border-color,background-color,box-shadow,transform,opacity] focus-visible:ring-2 focus-visible:ring-[#2468d6]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white motion-reduce:hover:translate-y-0 ${
+              className={`group/choice min-h-11 w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition-[border-color,background-color,box-shadow,transform,opacity] disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-[#77a7ea] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f8fbff] motion-reduce:hover:translate-y-0 dark:focus-visible:ring-offset-card ${
                 selected
-                  ? 'border-[#5f91d5] bg-[#edf5ff] shadow-[0_5px_14px_rgba(25,84,166,0.1)] ring-1 ring-[#2868cf]/10 hover:border-[#4e83cd] hover:bg-[#e8f2ff]'
-                  : 'border-[#d4e0ed] bg-[#fbfdff] shadow-[0_2px_7px_rgba(8,35,76,0.03)] hover:-translate-y-px hover:border-[#92b2dc] hover:bg-[#f1f6fd] hover:shadow-[0_6px_16px_rgba(8,45,101,0.07)]'
+                  ? 'border-[#2468d6] bg-[#eaf3ff] text-[#123e78] shadow-[0_5px_14px_rgba(25,84,166,0.11),inset_0_0_0_1px_rgba(36,104,214,0.08)] hover:border-[#2468d6] hover:bg-[#eaf3ff] dark:border-primary dark:bg-primary/20 dark:text-blue-100 dark:hover:bg-primary/20'
+                  : 'border-[#cad8e8] bg-white text-[#162238] shadow-[0_2px_7px_rgba(8,35,76,0.025)] hover:-translate-y-px hover:border-[#88aee0] hover:bg-[#f4f8fe] hover:shadow-[0_6px_16px_rgba(8,45,101,0.065)] dark:border-border dark:bg-muted/35 dark:text-foreground dark:hover:border-primary/50 dark:hover:bg-muted/65'
               } ${busy && !selected ? 'opacity-60' : ''}`}
               onClick={() => choose(option)}
             >
               <span
                 aria-hidden="true"
-                className={`grid size-5 shrink-0 place-items-center rounded-full border-2 transition-colors ${
-                  selected ? 'border-[#2868cf] bg-[#2868cf] text-white' : 'border-[#b4c6dc] bg-white text-transparent group-hover/choice:border-[#5f91d5]'
+                className={`grid size-5 shrink-0 place-items-center rounded-full border-2 transition-[border-color,background-color,box-shadow] ${
+                  selected
+                    ? 'border-[#2468d6] bg-[#2468d6] text-white shadow-[0_0_0_3px_rgba(36,104,214,0.1)]'
+                    : 'border-[#a9bdd4] bg-white text-transparent group-hover/choice:border-[#6795d2] dark:border-muted-foreground dark:bg-card dark:group-hover/choice:border-primary'
                 }`}
               >
                 {selected && (busy ? <LoaderCircle className="size-3 animate-spin motion-reduce:animate-none" /> : <Check className="size-3" />)}
               </span>
-              <span className="min-w-0 flex-1 whitespace-normal text-[0.74rem] font-medium leading-[1.15rem] text-foreground">{option.label}</span>
+              <span className="min-w-0 flex-1 whitespace-normal text-[0.76rem] font-medium leading-[1.15rem]">{option.label}</span>
             </Suggestion>
           );
         })}
