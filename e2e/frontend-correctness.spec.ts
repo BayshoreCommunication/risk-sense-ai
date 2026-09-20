@@ -943,6 +943,7 @@ test('desktop sidebar collapse persists while mobile navigation stays labelled a
   const collapseNavigation = page.getByRole('button', { name: 'Collapse navigation' });
   await expect(collapseNavigation).toHaveAttribute('aria-expanded', 'true');
   await expect(collapseNavigation).toHaveAttribute('aria-controls', 'app-desktop-navigation');
+  await expect(collapseNavigation).toHaveCSS('background-color', 'rgb(6, 29, 67)');
   await collapseNavigation.click();
 
   const expandNavigation = page.getByRole('button', { name: 'Expand navigation' });

@@ -411,7 +411,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
               aria-label={desktopNavigationCollapsed ? t('app.expandNavigation') : t('app.collapseNavigation')}
               aria-controls="app-desktop-navigation"
               aria-expanded={!desktopNavigationCollapsed}
-              className={`fixed top-[4.75rem] z-50 hidden size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground/70 shadow-[0_2px_7px_rgba(15,35,65,0.18)] transition-[left,background-color,color,border-color] duration-200 motion-reduce:transition-none hover:border-sidebar-primary/40 hover:bg-sidebar-accent hover:text-sidebar-primary lg:grid ${desktopNavigationCollapsed ? 'left-[4.5rem]' : 'left-64'}`}
+              className={`fixed top-[4.75rem] z-50 hidden size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-[#061d43] text-white/80 shadow-[0_2px_8px_rgba(6,29,67,0.28)] transition-[left,background-color,color,border-color] duration-200 motion-reduce:transition-none hover:border-white/35 hover:bg-[#0b2c5c] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8bb9ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#061d43] lg:grid ${desktopNavigationCollapsed ? 'left-[4.5rem]' : 'left-64'}`}
               onClick={() => setSidebarCollapsed((current) => !(current ?? false))}
             >
               {desktopNavigationCollapsed ? <ChevronRight className="size-3.5" aria-hidden="true" /> : <ChevronLeft className="size-3.5" aria-hidden="true" />}
