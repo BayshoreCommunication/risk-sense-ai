@@ -153,7 +153,6 @@ export function ChatSession({ id }: { id: string }) {
                 </Badge>
               </div>
               <span className="mt-1 block text-sm font-semibold">{humanizeKey(a.scenarioKey)}</span>
-              <span className="block font-mono text-[0.64rem] text-muted-foreground">{a.scenarioKey}</span>
             </div>
           )}
         </header>

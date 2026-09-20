@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { GitBranch, ListChecks, ShieldAlert } from 'lucide-react';
 import { ContentManager, type FieldSpec } from '@/components/admin/ContentManager';
+import { formatIdentifierLabel } from '@/components/admin/format-identifier-label';
 import { Badge } from '@/components/ui/badge';
 import { scenariosApi, type Item } from '@/lib/admin/content';
 
@@ -59,7 +60,7 @@ export default function ScenariosPage() {
       apiClient={scenariosApi}
       fields={fields}
       columns={[
-        { key: 'personaKey', label: t('columns.persona') },
+        { key: 'personaKey', label: t('columns.persona'), render: (item) => formatIdentifierLabel(String(item.personaKey ?? '')) || '—' },
         { key: 'name', label: t('fields.name') },
         { key: 'conversationFlow', label: t('columns.questions'), render: (it) => String((it.conversationFlow as unknown[] | undefined)?.length ?? 0) },
       ]}
@@ -70,7 +71,7 @@ export default function ScenariosPage() {
               <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-sky-500/10 text-sky-700"><GitBranch className="size-5" aria-hidden="true" /></span>
               <div className="min-w-0">
                 <h2 className="truncate text-base font-semibold">{String(featured.name ?? featured.key ?? '')}</h2>
-                <p className="mt-1 text-xs text-muted-foreground">{String(featured.personaKey ?? '—')} · v{String(featured.version ?? 1)}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{formatIdentifierLabel(String(featured.personaKey ?? '')) || '—'} · v{String(featured.version ?? 1)}</p>
               </div>
             </div>
             <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700" variant="outline">{String(featured.status)}</Badge>

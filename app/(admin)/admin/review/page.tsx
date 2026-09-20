@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Eye } from 'lucide-react';
 import { PageHeader } from '@/components/shell/PageHeader';
 import { AssessmentDetail } from '@/components/review/AssessmentDetail';
+import { formatIdentifierLabel } from '@/components/admin/format-identifier-label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -94,16 +95,16 @@ export default function MandatoryReviewQueuePage() {
                 <TableCell className="whitespace-nowrap font-medium">{a.requestor?.name ?? '—'}</TableCell>
                 <TableCell className="whitespace-nowrap">{a.department?.name ?? '—'}</TableCell>
                 <TableCell>
-                  <div>{a.personaKey?.replace(/_/g, ' ') ?? '—'}</div>
-                  <div className="text-xs text-muted-foreground">{a.scenarioKey?.replace(/_/g, ' ') ?? '—'}</div>
+                  <div>{a.personaKey ? formatIdentifierLabel(a.personaKey) : '—'}</div>
+                  <div className="text-xs text-muted-foreground">{a.scenarioKey ? formatIdentifierLabel(a.scenarioKey) : '—'}</div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="secondary">{statusT.has(a.status) ? statusT(a.status) : a.status.replace(/_/g, ' ')}</Badge>
+                  <Badge variant="secondary">{statusT.has(a.status) ? statusT(a.status) : formatIdentifierLabel(a.status)}</Badge>
                 </TableCell>
                 <TableCell>
                   {a.result ? (
                     <Badge variant="outline" className={CLASSIFICATION_CLASS[a.result.classification]}>
-                      {classification.has(a.result.classification) ? classification(a.result.classification) : a.result.classification}
+                      {classification.has(a.result.classification) ? classification(a.result.classification) : formatIdentifierLabel(a.result.classification)}
                     </Badge>
                   ) : '—'}
                 </TableCell>

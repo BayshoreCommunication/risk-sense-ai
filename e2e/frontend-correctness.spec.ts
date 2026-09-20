@@ -378,6 +378,11 @@ test('mandatory review queue remains scroll-contained and its table region is na
   expect(await shell.evaluate((element) => getComputedStyle(element).overflowY)).toBe('auto');
   expect(await shell.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
   await expect(page.getByRole('region', { name: 'Mandatory review queue' })).toBeVisible();
+  const firstReviewRow = page.getByRole('row').filter({ hasText: 'Requestor 0' });
+  await expect(firstReviewRow).toContainText('Finance Officer');
+  await expect(firstReviewRow).toContainText('Wire Transfer');
+  await expect(firstReviewRow).not.toContainText('finance_officer');
+  await expect(firstReviewRow).not.toContainText('wire_transfer');
 });
 
 test('named escalatee keeps requestor and department context without broad review scope [FR-21, FR-22, DASH-01]', async ({ page }) => {
@@ -567,7 +572,12 @@ test('analytics supports pie, table and persistent period drill-down views [DASH
   const riskSummary = selectedMonthSummary.getByRole('button', { name: /^Risk in .*: 2$/ });
   await riskSummary.click();
   await expect(riskSummary).toHaveAttribute('aria-pressed', 'true');
-  await expect(monthlyPanel.getByRole('row').filter({ hasText: 'Treasury analyst' })).toBeVisible();
+  const treasuryRow = monthlyPanel.getByRole('row').filter({ hasText: 'Treasury analyst' });
+  await expect(treasuryRow).toBeVisible();
+  await expect(treasuryRow).toContainText('Finance Officer');
+  await expect(treasuryRow).toContainText('Wire Transfer');
+  await expect(treasuryRow).not.toContainText('finance_officer');
+  await expect(treasuryRow).not.toContainText('wire_transfer');
   await expect(monthlyPanel.getByRole('row').filter({ hasText: 'Security analyst' })).toContainText('Risk');
   const drilldownQuery = new URL(drilldownUrl).searchParams;
   expect(drilldownQuery.get('classification')).toBeNull();
@@ -916,10 +926,11 @@ test('mobile workspace navigation traps focus and returns it to the trigger [NFR
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
-test('a long chat transcript scrolls internally and keeps the composer visible [FR-06, NFR-07]', async ({ page }) => {
+test('a long chat transcript scrolls internally, keeps the composer visible, and presents a readable scenario label [FR-05, FR-06, NFR-07]', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await authenticate(page, 'requestor');
-  const currentAssessment = assessment();
+  const scenarioKey = 'fin_unauthorized_transaction';
+  const currentAssessment = assessment({ scenarioKey });
   const longMessages = Array.from({ length: 50 }, (_, index) => ({
     _id: `message-${index}`,
     role: index % 2 === 0 ? 'assistant' : 'user',
@@ -952,6 +963,8 @@ test('a long chat transcript scrolls internally and keeps the composer visible [
   await page.goto('/chat/assessment-1');
   const composer = page.getByTestId('composer');
   await expect(composer).toBeVisible();
+  await expect(page.getByText('Fin Unauthorized Transaction', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText(scenarioKey, { exact: true })).toHaveCount(0);
   const metrics = await page.evaluate(() => {
     const log = document.querySelector<HTMLElement>('[role="log"]');
     const scrollArea = log?.firstElementChild as HTMLElement | null;

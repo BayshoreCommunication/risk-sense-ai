@@ -130,19 +130,22 @@ test('scenario flow and recommendations are authored with structured controls [F
   });
 });
 
-test('question choices and branch triggers validate and preserve scalar types [FR-06, FR-07, FR-15, DASH-02]', async ({ page }) => {
+test('question choices and branch triggers preserve scalar types and readable catalog labels [FR-06, FR-07, FR-15, DASH-02, NFR-08]', async ({ page }) => {
   let submitted: Record<string, unknown> | undefined;
   let postCount = 0;
+  let questions: Record<string, unknown>[] = [];
   await authenticate(page);
   await mockApi(page, async (route, path, method) => {
     if (path === '/questions' && method === 'GET') {
-      await ok(route, []);
+      await ok(route, questions);
       return true;
     }
     if (path === '/questions' && method === 'POST') {
       postCount += 1;
       submitted = route.request().postDataJSON() as Record<string, unknown>;
-      await ok(route, { _id: 'question-1', ...submitted, status: 'active' }, 201);
+      const created = { _id: 'question-1', ...submitted, status: 'active' };
+      questions = [created];
+      await ok(route, created, 201);
       return true;
     }
     return false;
@@ -188,6 +191,11 @@ test('question choices and branch triggers validate and preserve scalar types [F
     ],
     branchTrigger: { onValue: true, questionKeys: ['wire_resolution_detail'] },
   });
+  const questionCard = page.locator('article').filter({ hasText: 'What is the current wire state?' });
+  await expect(questionCard).toContainText('Finance Officer');
+  await expect(questionCard).toContainText('Financial');
+  await expect(questionCard).not.toContainText('finance_officer');
+  await expect(page.getByText('wire_state', { exact: true })).toHaveCount(0);
 });
 
 test('rule condition builder emits the deterministic condition language [FR-16, FR-17, AI-05]', async ({ page }) => {
@@ -316,6 +324,8 @@ test('every lifecycle transition waits for an explicit confirmation [AI-05, AI-0
   await page.goto('/admin/scenarios');
   const scenarioCatalog = page.getByRole('region', { name: 'Scenario library management' });
   await expect(scenarioCatalog.getByRole('table')).toBeVisible();
+  await expect(page.getByText('Finance Officer', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('finance_officer', { exact: true })).toHaveCount(0);
   const draftScenario = page.getByRole('row').filter({ hasText: 'Draft scenario' });
   await draftScenario.getByRole('button', { name: 'Activate' }).click();
   expect(calls).not.toContain('/scenarios/scenario-draft/activate');

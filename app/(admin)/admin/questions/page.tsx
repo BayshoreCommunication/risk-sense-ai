@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { BookmarkCheck, CircleCheck, Clock, FileQuestion } from 'lucide-react';
 import { ContentManager, type FieldSpec } from '@/components/admin/ContentManager';
+import { formatIdentifierLabel } from '@/components/admin/format-identifier-label';
 import { Badge } from '@/components/ui/badge';
 import { questionsApi, type Item } from '@/lib/admin/content';
 import { useWorkspace } from '@/components/shell/workspace-context';
@@ -91,7 +92,7 @@ export default function QuestionsPage() {
       }}
       card={(item) => {
         const tags = tagsOf(item);
-        const pills = [...(tags.personaKeys ?? []), ...(tags.sectors ?? [])];
+        const pills = [...new Set([...(tags.personaKeys ?? []), ...(tags.sectors ?? [])].map(formatIdentifierLabel).filter(Boolean))];
         return {
           icon: <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><FileQuestion className="size-5" aria-hidden="true" /></span>,
           title: String(item.text ?? item.key ?? ''),

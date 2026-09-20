@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { StructuredFieldEditor, type StructuredFieldKind, validateStructuredField } from '@/components/admin/StructuredFieldEditor';
+import { formatIdentifierLabel } from '@/components/admin/format-identifier-label';
 import type { EntityApi, Item } from '@/lib/admin/content';
 import { toApiError } from '@/lib/api/client';
 
@@ -147,12 +148,6 @@ const STATUS_CLASS: Record<string, string> = {
   deactivated: 'border-slate-200 bg-slate-50 text-slate-600',
   retired: 'border-slate-200 bg-slate-50 text-slate-600',
 };
-
-function optionLabel(value: string) {
-  return value
-    .replaceAll('_', ' ')
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
 
 type LifecycleAction = 'approve' | 'activate' | 'deactivate' | 'retire';
 type PendingAction = { action: LifecycleAction; item: Item; run: (changeRef?: string) => Promise<unknown> };
@@ -368,7 +363,7 @@ export function ContentManager(props: ContentManagerProps) {
             const options = facetOptions[facet.key] ?? [];
             const selected = facetValues[facet.key] ?? ALL_FACET_VALUES;
             // The trigger resolves its label from `items`; without it the raw value ("__all") showed.
-            const items = [{ value: ALL_FACET_VALUES, label: t('allValues') }, ...options.map((option) => ({ value: option, label: optionLabel(option) }))];
+            const items = [{ value: ALL_FACET_VALUES, label: t('allValues') }, ...options.map((option) => ({ value: option, label: formatIdentifierLabel(option) }))];
             return (
               <div key={facet.key} className="space-y-1.5">
                 <Label htmlFor={`content-facet-${index}`}>{facet.label}</Label>
@@ -527,7 +522,7 @@ export function ContentManager(props: ContentManagerProps) {
                         <SelectContent>
                           {f.options.map((o) => (
                             <SelectItem key={o} value={o}>
-                              {optionLabel(o)}
+                              {formatIdentifierLabel(o)}
                             </SelectItem>
                           ))}
                         </SelectContent>

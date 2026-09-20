@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { ArrowLeft, CalendarDays, ChartNoAxesColumn, ChartPie, ClipboardList, Clock3, RefreshCw, ShieldX, Table2, TrendingUp, X } from 'lucide-react';
 import { ChartStyles, PieChart, STATUS, StackedClassificationChart, StatTile, type StackedClassificationMonth } from '@/components/analytics/Charts';
+import { formatIdentifierLabel } from '@/components/admin/format-identifier-label';
 import { PageHeader } from '@/components/shell/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -462,11 +463,11 @@ function AnalyticsDashboard() {
                               </TableCell>
                               <TableCell>{item.department?.name ?? '—'}</TableCell>
                               <TableCell>
-                                <span className="block font-medium">{item.personaKey ?? '—'}</span>
-                                <span className="block text-xs text-muted-foreground">{item.scenarioKey ?? '—'}</span>
+                                <span className="block font-medium">{item.personaKey ? formatIdentifierLabel(item.personaKey) : '—'}</span>
+                                <span className="block text-xs text-muted-foreground">{item.scenarioKey ? formatIdentifierLabel(item.scenarioKey) : '—'}</span>
                               </TableCell>
                               <TableCell>
-                                <Badge variant="outline">{statusT.has(item.status) ? statusT(item.status) : item.status}</Badge>
+                                <Badge variant="outline">{statusT.has(item.status) ? statusT(item.status) : formatIdentifierLabel(item.status)}</Badge>
                               </TableCell>
                               <TableCell>{classification ? selectedSegment.label : '—'}</TableCell>
                               <TableCell className="text-right tabular-nums">{item.result ? `${item.result.confidence}%` : '—'}</TableCell>
