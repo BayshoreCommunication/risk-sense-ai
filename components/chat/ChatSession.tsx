@@ -547,14 +547,14 @@ function PersonaChooser({
           variant={option.key === suggestedKey ? 'default' : 'outline'}
           disabled={busy}
           title={option.description}
-          className="min-h-14 w-full items-center justify-between rounded-xl border-[#d8e3f1] bg-white px-4 shadow-[0_2px_8px_rgba(8,35,76,0.045)] transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-primary/35 hover:shadow-[0_7px_18px_rgba(8,45,101,0.09)] motion-reduce:hover:translate-y-0"
+          className="min-h-14 w-full items-center justify-between rounded-xl border-[#d8e3f1] bg-white px-4 text-foreground shadow-[0_2px_8px_rgba(8,35,76,0.045)] transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-primary/35 hover:shadow-[0_7px_18px_rgba(8,45,101,0.09)] motion-reduce:hover:translate-y-0"
           onClick={onChoose}
         >
           <span>
             <span className="block font-medium">{option.name}</span>
             {option.description && <span className="mt-0.5 block text-xs font-normal opacity-75">{option.description}</span>}
           </span>
-          {option.key === suggestedKey && <span className="ml-2 text-xs font-medium">{t('suggestedSuffix')}</span>}
+          {option.key === suggestedKey && <span className="ml-2 text-xs font-medium text-primary">{t('suggestedSuffix')}</span>}
         </Suggestion>
       ))}
     </Suggestions>

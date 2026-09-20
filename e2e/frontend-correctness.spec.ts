@@ -1438,7 +1438,10 @@ test('a confident AI persona pauses for explicit confirmation without a next que
 
   await page.goto('/chat/assessment-1');
   await expect(page.getByText('Confirm the assessment persona')).toBeVisible();
-  await page.getByRole('button', { name: 'Finance Officer (suggested)' }).click();
+  const suggestedPersona = page.getByRole('button', { name: 'Finance Officer (suggested)' });
+  await expect(suggestedPersona).toBeVisible();
+  await expect(suggestedPersona).toHaveClass(/text-foreground/);
+  await suggestedPersona.click();
   await expect.poll(() => submitted).toEqual({ personaKey: 'finance_officer' });
 });
 
