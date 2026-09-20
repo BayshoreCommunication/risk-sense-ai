@@ -1,19 +1,27 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { ChartNoAxesColumn, ChartPie, RefreshCw, Table2 } from 'lucide-react';
+import { CalendarDays, ChartNoAxesColumn, ChartPie, ClipboardList, Clock3, RefreshCw, Table2, TrendingUp, X } from 'lucide-react';
 import { ChartStyles, PieChart, STATUS, StackedClassificationChart, StatTile, type StackedClassificationMonth } from '@/components/analytics/Charts';
 import { PageHeader } from '@/components/shell/PageHeader';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toApiError } from '@/lib/api/client';
+import { assessments, type AssessmentListItem } from '@/lib/assessments';
 import { fmtSeconds, reports, type ReportQuery, type ReportResult, type ReportType } from '@/lib/reports';
 
 const SUMMARY_TYPES: ReportType[] = ['volume', 'classification', 'override-rate', 'assessment-time'];
 const CLASSIFICATION_KEYS = ['monitor_only', 'risk', 'elevated_risk', 'issue'] as const;
 type ClassificationKey = (typeof CLASSIFICATION_KEYS)[number];
 type MonthlyClassificationResult = { key: string; total: number | null; values: Record<ClassificationKey, number | null> };
+type DrilldownState =
+  | { status: 'idle' | 'loading'; items: AssessmentListItem[]; error: null }
+  | { status: 'ready'; items: AssessmentListItem[]; error: null }
+  | { status: 'error'; items: AssessmentListItem[]; error: string };
+
+const EMPTY_DRILLDOWN: DrilldownState = { status: 'idle', items: [], error: null };
 
 function lastFiveCompleteMonths(reference = new Date()) {
   const currentMonth = new Date(Date.UTC(reference.getUTCFullYear(), reference.getUTCMonth(), 1));
@@ -22,6 +30,12 @@ function lastFiveCompleteMonths(reference = new Date()) {
     const next = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth() + 1, 1));
     return { key: from.toISOString().slice(0, 7), from: from.toISOString(), to: new Date(next.getTime() - 1).toISOString() };
   });
+}
+
+function finalClassification(item: AssessmentListItem) {
+  return item.decision?.type === 'override' && item.decision.overriddenTo
+    ? item.decision.overriddenTo
+    : item.result?.classification;
 }
 
 /** Folds `period x classification` trend rows into one entry per month. */
@@ -44,14 +58,21 @@ function monthsFromTrends(keys: string[], result: ReportResult): MonthlyClassifi
  */
 export default function AnalyticsPage() {
   const t = useTranslations('admin.analytics');
+  const reviewT = useTranslations('reviewDashboard');
+  const statusT = useTranslations('status');
+  const commonT = useTranslations('common');
   const locale = useLocale();
   const [data, setData] = useState<Partial<Record<ReportType, ReportResult>>>({});
   const [monthlyClassification, setMonthlyClassification] = useState<MonthlyClassificationResult[] | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [selectedClassification, setSelectedClassification] = useState<ClassificationKey | null>(null);
+  const [drilldown, setDrilldown] = useState<DrilldownState>(EMPTY_DRILLDOWN);
+  const drilldownCache = useRef(new Map<string, AssessmentListItem[]>());
+  const [refreshVersion, setRefreshVersion] = useState(0);
   // Client comment 50: the viewer self-selects how the same month data is presented.
   const [view, setView] = useState<'chart' | 'pie' | 'table'>('chart');
   const [error, setError] = useState<string | null>(null);
+  const monthWindow = useMemo(() => lastFiveCompleteMonths(), []);
 
   // Headline metrics cover the trailing twelve months; the chart covers the five complete months the frame shows.
   const summaryQuery = useMemo<ReportQuery>(() => {
@@ -61,6 +82,10 @@ export default function AnalyticsPage() {
 
   const load = useCallback(
     (refresh = false) => {
+      if (refresh) {
+        drilldownCache.current.clear();
+        setRefreshVersion((version) => version + 1);
+      }
       setData({});
       setMonthlyClassification(null);
       setError(null);
@@ -73,11 +98,10 @@ export default function AnalyticsPage() {
       }
       // One month-grouped trends call rather than one request per month: five report calls per page
       // load pushed a normal browsing session past the 60/min per-session budget (SEC-04).
-      const window = lastFiveCompleteMonths();
       reports
-        .trends({ from: window[0]!.from, to: window.at(-1)!.to, interval: 'month', by: 'classification', ...(refresh ? { refresh: 'true' } : {}) })
+        .trends({ from: monthWindow[0]!.from, to: monthWindow.at(-1)!.to, interval: 'month', by: 'classification', ...(refresh ? { refresh: 'true' } : {}) })
         .then((result) => {
-          const months = monthsFromTrends(window.map((month) => month.key), result);
+          const months = monthsFromTrends(monthWindow.map((month) => month.key), result);
           setMonthlyClassification(months);
           setSelectedMonth((current) => (current && months.some((month) => month.key === current) ? current : (months.at(-1)?.key ?? null)));
         })
@@ -86,7 +110,7 @@ export default function AnalyticsPage() {
           setError(toApiError(e).message);
         });
     },
-    [summaryQuery],
+    [monthWindow, summaryQuery],
   );
   useEffect(() => load(), [load]);
 
@@ -94,6 +118,11 @@ export default function AnalyticsPage() {
   const cls = data.classification;
   const ovr = data['override-rate'];
   const tim = data['assessment-time'];
+  const scored = cls ? Number(cls.summary.scored) : 0;
+  const elevatedCount = cls
+    ? cls.rows.reduce((total, row) => (row.classification === 'elevated_risk' || row.classification === 'issue' ? total + Number(row.count ?? 0) : total), 0)
+    : 0;
+  const elevatedRate = scored ? Math.round((elevatedCount / scored) * 1000) / 10 : null;
 
   const monthFormatter = useMemo(() => new Intl.DateTimeFormat(locale, { month: 'short', year: 'numeric', timeZone: 'UTC' }), [locale]);
   const stackedClassificationMonths = useMemo<StackedClassificationMonth[]>(
@@ -111,6 +140,55 @@ export default function AnalyticsPage() {
     [monthlyClassification, monthFormatter, t],
   );
   const selectedMonthData = stackedClassificationMonths.find((month) => month.key === selectedMonth) ?? stackedClassificationMonths.at(-1) ?? null;
+  const selectedSegment = selectedMonthData?.segments.find((segment) => segment.key === selectedClassification) ?? null;
+
+  // Comment 49 requires a real drill-down, not merely a highlighted aggregate. The list endpoint's
+  // `classification` filter is the AI class, while this chart uses the final class (human override wins),
+  // so read the selected UTC month and apply the same final-class rule client-side.
+  useEffect(() => {
+    if (!selectedMonth || !selectedClassification) {
+      setDrilldown(EMPTY_DRILLDOWN);
+      return;
+    }
+    const selectedWindow = monthWindow.find((month) => month.key === selectedMonth);
+    if (!selectedWindow) {
+      setDrilldown({ status: 'error', items: [], error: t('monthly.empty') });
+      return;
+    }
+
+    const cachedItems = drilldownCache.current.get(selectedMonth);
+    if (cachedItems) {
+      setDrilldown({ status: 'ready', items: cachedItems.filter((item) => finalClassification(item) === selectedClassification), error: null });
+      return;
+    }
+
+    let active = true;
+    setDrilldown({ status: 'loading', items: [], error: null });
+    void (async () => {
+      try {
+        const first = await assessments.list({ from: selectedWindow.from, to: selectedWindow.to, limit: 200, page: 1, sort: 'newest' });
+        const remaining = first.pages > 1
+          ? await Promise.all(Array.from({ length: first.pages - 1 }, (_, index) => assessments.list({ from: selectedWindow.from, to: selectedWindow.to, limit: 200, page: index + 2, sort: 'newest' })))
+          : [];
+        const monthItems = [first, ...remaining].flatMap((page) => page.items);
+        const items = monthItems.filter((item) => finalClassification(item) === selectedClassification);
+        if (active) {
+          drilldownCache.current.set(selectedMonth, monthItems);
+          setDrilldown({ status: 'ready', items, error: null });
+        }
+      } catch (loadError) {
+        if (active) setDrilldown({ status: 'error', items: [], error: toApiError(loadError).message });
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [monthWindow, refreshVersion, selectedClassification, selectedMonth, t]);
+
+  const dateFormatter = useMemo(
+    () => new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }),
+    [locale],
+  );
 
   return (
     <div className="page-shell">
@@ -132,26 +210,34 @@ export default function AnalyticsPage() {
         </p>
       )}
 
-      <div className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile
-          label={t('stats.started')}
+          label={t('reports.volume.title')}
           value={vol ? Number(vol.summary.started).toLocaleString() : '—'}
           hint={vol ? t('stats.startedHint', { closed: Number(vol.summary.closed), escalated: Number(vol.summary.escalated) }) : undefined}
-        />
-        <StatTile
-          label={t('stats.scored')}
-          value={cls ? Number(cls.summary.scored).toLocaleString() : '—'}
-          hint={cls ? t('stats.scoredHint', { ruleDriven: Number(cls.summary.ruleDriven), professionalConsult: Number(cls.summary.professionalConsult) }) : undefined}
+          icon={<ClipboardList className="size-6" />}
+          tone="blue"
         />
         <StatTile
           label={t('stats.overrideRate')}
           value={ovr && ovr.summary.overrideRate !== null ? `${ovr.summary.overrideRate}%` : '—'}
           hint={ovr ? t('stats.overrideHint', { overridden: Number(ovr.summary.overridden), decided: Number(ovr.summary.accepted) + Number(ovr.summary.overridden) }) : undefined}
+          icon={<ChartPie className="size-6" />}
+          tone="green"
         />
         <StatTile
-          label={t('stats.medianTime')}
-          value={tim ? fmtSeconds(tim.summary.medianTotalSec as number | null) : '—'}
+          label={t('reports.time.title')}
+          value={tim ? fmtSeconds(tim.summary.avgTotalSec as number | null) : '—'}
           hint={tim ? t('stats.timeHint', { p95: fmtSeconds(tim.summary.p95TotalSec as number | null), intake: fmtSeconds(tim.summary.avgIntakeSec as number | null) }) : undefined}
+          icon={<Clock3 className="size-6" />}
+          tone="amber"
+        />
+        <StatTile
+          label={`${t('classifications.elevated_risk')}+`}
+          value={cls && elevatedRate !== null ? `${elevatedRate}%` : '—'}
+          hint={cls ? `${elevatedCount.toLocaleString(locale)} / ${scored.toLocaleString(locale)} ${t('monthly.scored').toLocaleLowerCase(locale)}` : undefined}
+          icon={<TrendingUp className="size-6" />}
+          tone="violet"
         />
       </div>
 
@@ -177,7 +263,10 @@ export default function AnalyticsPage() {
                 {t('views.table')}
               </Button>
             </div>
-            <span className="w-fit rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-800">{t('monthly.window')}</span>
+            <span className="inline-flex w-fit items-center gap-2 rounded-lg border bg-background px-3 py-2 text-xs font-medium text-foreground shadow-sm">
+              <CalendarDays className="size-4 text-muted-foreground" aria-hidden="true" />
+              {t('monthly.window')}
+            </span>
           </div>
         </div>
         <div className="p-4">
@@ -294,6 +383,92 @@ export default function AnalyticsPage() {
                   selectMonthLabel={(month, total) => t('monthly.selectMonth', { month, total })}
                 />
               )}
+
+              {selectedClassification && selectedSegment ? (
+                <section className="mt-5 overflow-hidden rounded-xl border bg-background" aria-labelledby="classification-drilldown-title">
+                  <div className="flex flex-col gap-3 border-b bg-muted/25 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h3 id="classification-drilldown-title" className="font-heading text-sm font-semibold">
+                        {t('monthly.segmentDetail', {
+                          classification: selectedSegment.label,
+                          month: selectedMonthData.label,
+                          count: (selectedSegment.value ?? 0).toLocaleString(locale),
+                        })}
+                      </h3>
+                      {drilldown.status === 'ready' && drilldown.items.length > 0 ? (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {reviewT('pagination.range', {
+                            first: 1,
+                            last: drilldown.items.length,
+                            total: selectedSegment.value ?? drilldown.items.length,
+                          })}
+                        </p>
+                      ) : null}
+                    </div>
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      aria-label={commonT('close')}
+                      onClick={() => setSelectedClassification(null)}
+                    >
+                      <X aria-hidden="true" />
+                    </Button>
+                  </div>
+
+                  {drilldown.status === 'loading' || drilldown.status === 'idle' ? (
+                    <p className="grid min-h-28 place-items-center text-sm text-muted-foreground" role="status">{t('loading')}</p>
+                  ) : drilldown.status === 'error' ? (
+                    <p className="m-4 rounded-lg border border-destructive/25 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{drilldown.error}</p>
+                  ) : drilldown.items.length === 0 ? (
+                    <p className="grid min-h-28 place-items-center text-sm text-muted-foreground" role="status">{reviewT('empty.filtered')}</p>
+                  ) : (
+                    <Table>
+                      <caption className="sr-only">
+                        {t('monthly.segmentDetail', {
+                          classification: selectedSegment.label,
+                          month: selectedMonthData.label,
+                          count: selectedSegment.value ?? 0,
+                        })}
+                      </caption>
+                      <TableHeader className="bg-muted/35">
+                        <TableRow>
+                          <TableHead>{reviewT('columns.started')}</TableHead>
+                          <TableHead>{reviewT('columns.requestor')}</TableHead>
+                          <TableHead>{reviewT('columns.department')}</TableHead>
+                          <TableHead>{reviewT('columns.personaScenario')}</TableHead>
+                          <TableHead>{reviewT('columns.status')}</TableHead>
+                          <TableHead>{reviewT('columns.classification')}</TableHead>
+                          <TableHead className="text-right">{reviewT('columns.confidence')}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {drilldown.items.map((item) => {
+                          const classification = finalClassification(item);
+                          return (
+                            <TableRow key={item._id}>
+                              <TableCell className="whitespace-nowrap text-xs">{dateFormatter.format(new Date(item.createdAt))}</TableCell>
+                              <TableCell>
+                                <span className="block font-medium">{item.requestor?.name ?? item.requestorId}</span>
+                                {item.requestor?.email ? <span className="block text-xs text-muted-foreground">{item.requestor.email}</span> : null}
+                              </TableCell>
+                              <TableCell>{item.department?.name ?? '—'}</TableCell>
+                              <TableCell>
+                                <span className="block font-medium">{item.personaKey ?? '—'}</span>
+                                <span className="block text-xs text-muted-foreground">{item.scenarioKey ?? '—'}</span>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline">{statusT.has(item.status) ? statusT(item.status) : item.status}</Badge>
+                              </TableCell>
+                              <TableCell>{classification ? selectedSegment.label : '—'}</TableCell>
+                              <TableCell className="text-right tabular-nums">{item.result ? `${item.result.confidence}%` : '—'}</TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  )}
+                </section>
+              ) : null}
             </>
           ) : (
             <p className="grid h-64 place-items-center text-sm text-muted-foreground" role="status">

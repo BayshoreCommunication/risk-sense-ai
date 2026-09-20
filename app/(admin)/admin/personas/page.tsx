@@ -1,11 +1,28 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { ContentManager, type FieldSpec } from '@/components/admin/ContentManager';
-import { personasApi } from '@/lib/admin/content';
+import { personasApi, scenariosApi } from '@/lib/admin/content';
 
 export default function PersonasPage() {
   const t = useTranslations('admin.personas');
+  const [scenarioCounts, setScenarioCounts] = useState<Record<string, number>>({});
+  useEffect(() => {
+    let cancelled = false;
+    scenariosApi.list().then((scenarios) => {
+      if (cancelled) return;
+      const counts: Record<string, number> = {};
+      scenarios.filter((scenario) => scenario.status === 'active').forEach((scenario) => {
+        const personaKey = String(scenario.personaKey ?? '');
+        if (personaKey) counts[personaKey] = (counts[personaKey] ?? 0) + 1;
+      });
+      setScenarioCounts(counts);
+    }).catch(() => !cancelled && setScenarioCounts({}));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const fields: FieldSpec[] = [
     { name: 'key', label: t('fields.key'), kind: 'text', required: true, immutable: true, help: t('help.key') },
     { name: 'name', label: t('fields.name'), kind: 'text', required: true },
@@ -31,7 +48,7 @@ export default function PersonasPage() {
       columns={[
         { key: 'name', label: t('fields.name') },
         { key: 'departmentIds', label: t('columns.departments'), render: (item) => String((item.departmentIds as string[] | undefined)?.length ?? 0) },
-        { key: 'sector', label: t('fields.sector') },
+        { key: 'key', label: t('columns.scenarios'), render: (item) => String(scenarioCounts[String(item.key ?? '')] ?? 0) },
       ]}
       versioned
       />

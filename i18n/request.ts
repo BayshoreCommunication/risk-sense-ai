@@ -2,10 +2,8 @@ import { cookies } from 'next/headers';
 import { getRequestConfig } from 'next-intl/server';
 
 /**
- * NFR-08 — locale resolution without URL prefixes. The workspace ships English-only for now, so the
- * in-app switcher is gone and Accept-Language no longer selects a locale on its own: only an explicit
- * `rs_locale` cookie does. The Bangla catalogue stays in `messages/bn.json` for when it is turned back
- * on. A locale falls back to English for any missing key.
+ * NFR-08 — locale resolution without URL prefixes. The in-app language control writes `rs_locale`;
+ * English remains the safe default and every partial catalogue falls back to English by key.
  */
 export const LOCALES = ['en', 'bn'] as const;
 export type Locale = (typeof LOCALES)[number];

@@ -51,6 +51,8 @@ export interface ContentManagerProps {
   facets?: { key: string; label: string }[];
   /** Optional requirement or authoring guidance shown between the page header and data controls. */
   callout?: React.ReactNode;
+  /** Optional closing guidance shown after the catalog, matching the reference-frame note pattern. */
+  footer?: React.ReactNode;
 }
 
 const ALL_FACET_VALUES = '__all';
@@ -159,7 +161,7 @@ export function ContentManager(props: ContentManagerProps) {
   const t = useTranslations('contentManager');
   const statusT = useTranslations('status');
   const structuredValidation = useTranslations('structured.validation');
-  const { title, description, requirements, hideHeader, card, summary, apiClient, fields, columns, versioned, defaultQuery, approval, facets = [], callout } = props;
+  const { title, description, requirements, hideHeader, card, summary, apiClient, fields, columns, versioned, defaultQuery, approval, facets = [], callout, footer } = props;
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -289,43 +291,43 @@ export function ContentManager(props: ContentManagerProps) {
   }
 
   const itemActions = (item: Item) => (
-    <div className="flex min-w-max flex-wrap justify-end gap-1.5">
-                {item.status !== 'retired' && item.status !== 'deactivated' && (
-                  <Button size="sm" variant="outline" onClick={() => openEdit(item)}>
-                    <Pencil data-icon="inline-start" aria-hidden="true" />
-                    {t('actions.edit')}
-                  </Button>
-                )}
-                {approval && item.status === 'draft' && !item.approvedBy && apiClient.approve && (
-                  <Button size="sm" variant="secondary" onClick={() => askForConfirmation('approve', item, (reference) => apiClient.approve!(item._id, reference ?? ''))}>
-                    <CheckCircle2 data-icon="inline-start" aria-hidden="true" />
-                    {t('actions.approve')}
-                  </Button>
-                )}
-                {apiClient.activate && (item.status === 'approved' || (item.status === 'draft' && (!approval || Boolean(item.approvedBy)))) && (
-                  <Button size="sm" onClick={() => askForConfirmation('activate', item, () => apiClient.activate!(item._id))}>
-                    <Power data-icon="inline-start" aria-hidden="true" />
-                    {t('actions.activate')}
-                  </Button>
-                )}
-                {versioned && item.status === 'active' && apiClient.deactivate && (
-                  <Button size="sm" variant="destructive" onClick={() => askForConfirmation('deactivate', item, () => apiClient.deactivate!(item._id))}>
-                    <Power data-icon="inline-start" aria-hidden="true" />
-                    {t('actions.deactivate')}
-                  </Button>
-                )}
-                {(item.status === 'active' || item.status === 'approved') && apiClient.retire && (
-                  <Button size="sm" variant="destructive" onClick={() => askForConfirmation('retire', item, () => apiClient.retire!(item._id))}>
-                    <Archive data-icon="inline-start" aria-hidden="true" />
-                    {t('actions.retire')}
-                  </Button>
-                )}
-                {versioned && apiClient.history && (
-                  <Button size="sm" variant="ghost" onClick={() => void act(async () => setHistory(await apiClient.history!(item._id)))}>
-                    <History data-icon="inline-start" aria-hidden="true" />
-                    {t('actions.history')}
-                  </Button>
-                )}
+    <div className="flex min-w-max flex-wrap justify-end gap-1">
+      {item.status !== 'retired' && item.status !== 'deactivated' && (
+        <Button size="xs" variant="outline" onClick={() => openEdit(item)}>
+          <Pencil data-icon="inline-start" aria-hidden="true" />
+          {t('actions.edit')}
+        </Button>
+      )}
+      {approval && item.status === 'draft' && !item.approvedBy && apiClient.approve && (
+        <Button size="xs" variant="secondary" onClick={() => askForConfirmation('approve', item, (reference) => apiClient.approve!(item._id, reference ?? ''))}>
+          <CheckCircle2 data-icon="inline-start" aria-hidden="true" />
+          {t('actions.approve')}
+        </Button>
+      )}
+      {apiClient.activate && (item.status === 'approved' || (item.status === 'draft' && (!approval || Boolean(item.approvedBy)))) && (
+        <Button size="xs" onClick={() => askForConfirmation('activate', item, () => apiClient.activate!(item._id))}>
+          <Power data-icon="inline-start" aria-hidden="true" />
+          {t('actions.activate')}
+        </Button>
+      )}
+      {versioned && item.status === 'active' && apiClient.deactivate && (
+        <Button size="xs" variant="destructive" onClick={() => askForConfirmation('deactivate', item, () => apiClient.deactivate!(item._id))}>
+          <Power data-icon="inline-start" aria-hidden="true" />
+          {t('actions.deactivate')}
+        </Button>
+      )}
+      {(item.status === 'active' || item.status === 'approved') && apiClient.retire && (
+        <Button size="xs" variant="destructive" onClick={() => askForConfirmation('retire', item, () => apiClient.retire!(item._id))}>
+          <Archive data-icon="inline-start" aria-hidden="true" />
+          {t('actions.retire')}
+        </Button>
+      )}
+      {versioned && apiClient.history && (
+        <Button size="xs" variant="ghost" onClick={() => void act(async () => setHistory(await apiClient.history!(item._id)))}>
+          <History data-icon="inline-start" aria-hidden="true" />
+          {t('actions.history')}
+        </Button>
+      )}
     </div>
   );
 
@@ -382,18 +384,18 @@ export function ContentManager(props: ContentManagerProps) {
         </section>
       )}
 
-      {error ? <p className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm text-destructive" role="alert">{error}</p> : null}
+      {error ? <p className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</p> : null}
 
       {summary && !loading ? summary(items) : null}
 
       {card ? (
-        <section className="scrollbar-subtle min-h-0 flex-1 space-y-3 overflow-y-auto pr-1" aria-busy={loading}>
+        <section className="scrollbar-subtle min-h-0 flex-1 space-y-3 overflow-y-auto pr-1" aria-busy={loading} aria-label={title}>
           {loading && <p className="rounded-xl border bg-card p-8 text-center text-muted-foreground">{t('loading')}</p>}
           {!loading && visible.length === 0 && <p className="rounded-xl border bg-card p-8 text-center text-muted-foreground">{t('empty')}</p>}
           {visible.map((item) => {
             const rendered = card(item);
             return (
-              <article key={item._id} className="flex flex-wrap items-start gap-4 rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(15,35,65,0.05)]">
+              <article key={item._id} className="flex min-h-28 flex-wrap items-center gap-4 rounded-2xl border bg-card p-5 shadow-[0_4px_16px_rgba(15,35,65,0.045)] transition-shadow hover:shadow-[0_8px_24px_rgba(15,35,65,0.07)]">
                 {rendered.icon}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -405,9 +407,9 @@ export function ContentManager(props: ContentManagerProps) {
                       </span>
                     ) : null}
                   </div>
-                  {rendered.body ? <div className="mt-1.5 text-sm leading-6 text-muted-foreground">{rendered.body}</div> : null}
+                  {rendered.body ? <div className="mt-2 text-sm leading-6 text-muted-foreground">{rendered.body}</div> : null}
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-2">
+                <div className="flex w-full shrink-0 flex-row-reverse items-center justify-between gap-2 border-t pt-3 sm:w-auto sm:flex-col sm:items-end sm:justify-start sm:border-0 sm:pt-0">
                   <Badge variant={STATUS_VARIANT[item.status] ?? 'secondary'} className={STATUS_CLASS[item.status]}>
                     {statusT.has(item.status) ? statusT(item.status) : item.status}
                   </Badge>
@@ -419,7 +421,7 @@ export function ContentManager(props: ContentManagerProps) {
         </section>
       ) : (
         <section className="data-panel fills" aria-busy={loading}>
-          <Table className="min-w-[760px]">
+          <Table className="min-w-[760px]" containerClassName="scroll-pt-12" containerLabel={title}>
             <TableHeader>
               <TableRow>
                 {columns.map((c) => (
@@ -446,7 +448,7 @@ export function ContentManager(props: ContentManagerProps) {
                 </TableRow>
               )}
               {visible.map((item) => (
-                <TableRow key={item._id} className="group/row">
+                <TableRow key={item._id} className="group/row scroll-mt-12">
                   {columns.map((c) => (
                     <TableCell key={c.key} className="max-w-72 whitespace-normal leading-5">
                       {c.render ? c.render(item) : String(getPath(item, c.key) ?? '')}
@@ -471,9 +473,11 @@ export function ContentManager(props: ContentManagerProps) {
         </section>
       )}
 
+      {footer}
+
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-[min(72rem,calc(100vw-3rem))]">
-          <DialogHeader className="border-b pb-4 pr-8">
+        <DialogContent className="grid max-h-[92vh] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 sm:max-w-[min(72rem,calc(100vw-3rem))]">
+          <DialogHeader className="border-b bg-[linear-gradient(120deg,#ffffff,#f6f9ff)] px-5 py-5 pr-12 sm:px-6 sm:py-6 sm:pr-14">
             <DialogTitle className="text-xl">
               {editing
                 ? t('form.editTitle', { entity: props.entity, version: String(editing.version ?? 1), status: editing.status })
@@ -485,66 +489,69 @@ export function ContentManager(props: ContentManagerProps) {
                 : t('form.help')}
             </DialogDescription>
           </DialogHeader>
-          {formError ? <p className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm text-destructive" role="alert">{formError}</p> : null}
-          <div className="grid gap-4 py-1 lg:grid-cols-2">
-            {fields.map((f) => {
-              const disabled = Boolean(editing && 'immutable' in f && f.immutable);
-              const common = { id: f.name, disabled };
-              return (
-                <div
-                  key={f.name}
-                  className={isStructuredKind(f.kind) || f.kind === 'textarea' || f.kind === 'list' || f.kind === 'json' ? 'space-y-1.5 lg:col-span-2' : 'space-y-1.5'}
-                >
-                  <Label htmlFor={f.name}>
-                    {f.label}
-                    {f.required ? ' *' : ''}
-                  </Label>
-                  {isStructuredKind(f.kind) ? (
-                    <StructuredFieldEditor
-                      kind={f.kind}
-                      value={values[f.name] ?? ''}
-                      onChange={(next) => setValues((current) => ({ ...current, [f.name]: next }))}
-                    />
-                  ) : f.kind === 'textarea' || f.kind === 'list' || f.kind === 'json' ? (
-                    <Textarea
-                      {...common}
-                      rows={f.kind === 'json' ? 6 : 3}
-                      className={f.kind === 'json' ? 'font-mono text-xs' : undefined}
-                      value={values[f.name] ?? ''}
-                      onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
-                    />
-                  ) : f.kind === 'select' ? (
-                    <Select value={values[f.name] ?? ''} onValueChange={(val) => setValues((v) => ({ ...v, [f.name]: val ?? '' }))} disabled={disabled}>
-                      <SelectTrigger id={f.name}>
-                        <SelectValue placeholder={t('selectPlaceholder')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {f.options.map((o) => (
-                          <SelectItem key={o} value={o}>
-                            {optionLabel(o)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : f.kind === 'boolean' ? (
-                    <Select value={values[f.name] ?? 'true'} onValueChange={(val) => setValues((v) => ({ ...v, [f.name]: val ?? '' }))} disabled={disabled}>
-                      <SelectTrigger id={f.name}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="true">{t('boolean.true')}</SelectItem>
-                        <SelectItem value="false">{t('boolean.false')}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Input {...common} type={f.kind === 'number' ? 'number' : 'text'} value={values[f.name] ?? ''} onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))} />
-                  )}
-                  {f.help ? <p className="text-xs text-muted-foreground">{f.help}</p> : null}
-                </div>
-              );
-            })}
+          <div className="scrollbar-subtle min-h-0 overflow-y-auto px-5 py-5 sm:px-6">
+            {formError ? <p className="mb-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{formError}</p> : null}
+            <div className="grid gap-4 lg:grid-cols-2">
+              {fields.map((f) => {
+                const disabled = Boolean(editing && 'immutable' in f && f.immutable);
+                const common = { id: f.name, disabled };
+                const spansBothColumns = isStructuredKind(f.kind) || f.kind === 'textarea' || f.kind === 'list' || f.kind === 'json';
+                return (
+                  <div
+                    key={f.name}
+                    className={`space-y-2 rounded-xl border bg-muted/15 p-4 ${spansBothColumns ? 'lg:col-span-2' : ''}`}
+                  >
+                    <Label htmlFor={f.name} className="text-[0.8rem] font-semibold">
+                      {f.label}
+                      {f.required ? ' *' : ''}
+                    </Label>
+                    {isStructuredKind(f.kind) ? (
+                      <StructuredFieldEditor
+                        kind={f.kind}
+                        value={values[f.name] ?? ''}
+                        onChange={(next) => setValues((current) => ({ ...current, [f.name]: next }))}
+                      />
+                    ) : f.kind === 'textarea' || f.kind === 'list' || f.kind === 'json' ? (
+                      <Textarea
+                        {...common}
+                        rows={f.kind === 'json' ? 6 : 3}
+                        className={`bg-background ${f.kind === 'json' ? 'font-mono text-xs' : ''}`}
+                        value={values[f.name] ?? ''}
+                        onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
+                      />
+                    ) : f.kind === 'select' ? (
+                      <Select value={values[f.name] ?? ''} onValueChange={(val) => setValues((v) => ({ ...v, [f.name]: val ?? '' }))} disabled={disabled}>
+                        <SelectTrigger id={f.name} className="w-full bg-background">
+                          <SelectValue placeholder={t('selectPlaceholder')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {f.options.map((o) => (
+                            <SelectItem key={o} value={o}>
+                              {optionLabel(o)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : f.kind === 'boolean' ? (
+                      <Select value={values[f.name] ?? 'true'} onValueChange={(val) => setValues((v) => ({ ...v, [f.name]: val ?? '' }))} disabled={disabled}>
+                        <SelectTrigger id={f.name} className="w-full bg-background">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="true">{t('boolean.true')}</SelectItem>
+                          <SelectItem value="false">{t('boolean.false')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input {...common} className="bg-background" type={f.kind === 'number' ? 'number' : 'text'} value={values[f.name] ?? ''} onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))} />
+                    )}
+                    {f.help ? <p className="text-xs leading-5 text-muted-foreground">{f.help}</p> : null}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="m-0 shrink-0 rounded-none px-5 py-4 sm:px-6">
             <Button variant="outline" onClick={() => setOpen(false)}>
               {t('actions.cancel')}
             </Button>

@@ -107,6 +107,7 @@ export default function QuestionsPage() {
       facets={[
         { key: 'tags.personaKeys', label: t('fields.personaKeys') },
         { key: 'tags.scenarioKeys', label: t('fields.scenarioKeys') },
+        { key: 'tags.sectors', label: t('fields.sectors') },
       ]}
       versioned={false}
       />

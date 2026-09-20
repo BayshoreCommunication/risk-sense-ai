@@ -270,7 +270,10 @@ test('every lifecycle transition waits for an explicit confirmation [AI-05, AI-0
   });
 
   await page.goto('/admin/rules');
-  const draftRule = page.locator('article').filter({ hasText: 'Draft rule' });
+  const ruleCatalog = page.getByRole('region', { name: 'Rule engine — hard business rules' });
+  await expect(ruleCatalog.locator('article')).toHaveCount(2);
+  await expect(ruleCatalog.getByRole('switch')).toHaveCount(0);
+  const draftRule = ruleCatalog.locator('article').filter({ hasText: 'Draft rule' });
   await draftRule.getByRole('button', { name: 'Approve' }).click();
   await expect(page.getByRole('heading', { name: 'Confirm approve' })).toBeVisible();
   expect(calls).toEqual([]);
@@ -285,7 +288,7 @@ test('every lifecycle transition waits for an explicit confirmation [AI-05, AI-0
   await expect.poll(() => calls).toContain('/rules/rule-draft/approve');
   expect(approvalBody).toEqual({ changeRef: 'CHG-2026-1042' });
 
-  const activeRule = page.locator('article').filter({ hasText: 'Active rule' });
+  const activeRule = ruleCatalog.locator('article').filter({ hasText: 'Active rule' });
   await expect(activeRule).toContainText('(authorized = false AND (amount_usd > 100000 OR regulator_notified exists))');
   await activeRule.getByRole('button', { name: 'Retire' }).click();
   expect(calls).not.toContain('/rules/rule-active/retire');
@@ -293,6 +296,8 @@ test('every lifecycle transition waits for an explicit confirmation [AI-05, AI-0
   await expect.poll(() => calls).toContain('/rules/rule-active/retire');
 
   await page.goto('/admin/scenarios');
+  const scenarioCatalog = page.getByRole('region', { name: 'Scenario library management' });
+  await expect(scenarioCatalog.getByRole('table')).toBeVisible();
   const draftScenario = page.getByRole('row').filter({ hasText: 'Draft scenario' });
   await draftScenario.getByRole('button', { name: 'Activate' }).click();
   expect(calls).not.toContain('/scenarios/scenario-draft/activate');

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { AlertCircle, Bot, Check, CheckCircle2, ChevronRight, CircleDot, FileCheck2, Flag, LoaderCircle, LockKeyhole, Send } from 'lucide-react';
+import { AlertCircle, Bot, Check, CheckCircle2, ChevronRight, CircleDot, FileCheck2, Flag, LoaderCircle, LockKeyhole, Send, Sparkles } from 'lucide-react';
 import { Conversation, ConversationContent, ConversationScrollButton } from '@/components/ai-elements/conversation';
 import { Message as AIMessage, MessageContent, MessageResponse } from '@/components/ai-elements/message';
 import { Suggestion, Suggestions } from '@/components/ai-elements/suggestion';
@@ -114,7 +114,7 @@ export function ChatSession({ id }: { id: string }) {
   const currentStageKey = currentStageIndex >= 0 ? WORKFLOW_STAGES[currentStageIndex] : undefined;
 
   return (
-    <div className="page-shell max-w-[1480px]">
+    <div className="page-shell max-w-[1480px] gap-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-2">
           <div>
@@ -132,15 +132,16 @@ export function ChatSession({ id }: { id: string }) {
         </div>
       </div>
 
-      <section aria-label={t('workspaceLabel')} className="overflow-hidden rounded-[1.25rem] border bg-card shadow-[0_10px_28px_rgba(15,35,65,0.05)]">
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b bg-card px-4 py-3.5 sm:px-5">
+      <section aria-label={t('workspaceLabel')} className="overflow-hidden rounded-[1.6rem] border bg-card shadow-[0_22px_70px_rgba(15,35,65,0.09)]">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b bg-[linear-gradient(120deg,#ffffff_0%,#f6f9ff_100%)] px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
-            <span className="flex size-9 items-center justify-center rounded-lg bg-slate-950 text-white">
-              <Bot className="size-4.5" aria-hidden="true" />
+            <span className="relative flex size-11 items-center justify-center rounded-xl bg-[linear-gradient(145deg,#2864ef,#1748c8)] text-white shadow-[0_8px_24px_rgba(40,100,239,0.28)]">
+              <Bot className="size-5" aria-hidden="true" />
+              <Sparkles className="absolute -right-1 -top-1 size-3.5 rounded-full bg-white p-0.5 text-primary shadow-sm" aria-hidden="true" />
             </span>
             <div>
-              <h2 className="text-sm font-semibold tracking-tight">{t('assistantName')}</h2>
-              <p className="text-xs text-muted-foreground">{t('assistantDescription')}</p>
+              <h2 className="text-[0.95rem] font-semibold tracking-[-0.01em]">{t('assistantName')}</h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t('assistantDescription')}</p>
             </div>
           </div>
           {a?.scenarioKey && (
@@ -159,7 +160,7 @@ export function ChatSession({ id }: { id: string }) {
 
         <div className="grid min-h-0 xl:grid-cols-[minmax(0,1fr)_19rem]">
           <div className="min-w-0">
-            <Conversation className="h-[min(58dvh,38rem)] min-h-[25rem] bg-background sm:min-h-[30rem] xl:h-[calc(100dvh-20rem)] xl:max-h-[49rem]">
+            <Conversation className="h-[min(58dvh,38rem)] min-h-[25rem] bg-[radial-gradient(circle_at_70%_0%,rgba(40,100,239,0.055),transparent_24rem),var(--background)] sm:min-h-[30rem] xl:h-[calc(100dvh-24rem)] xl:min-h-[26rem] xl:max-h-[49rem]">
               <ConversationContent className="mx-auto w-full max-w-4xl gap-6 px-4 py-6 sm:px-7 sm:py-8">
                 {!a && messages.length === 0 && (
                   <div className="flex min-h-72 flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground" role="status">
@@ -196,13 +197,13 @@ export function ChatSession({ id }: { id: string }) {
                             <span className={`mb-1.5 block text-[0.66rem] font-semibold tracking-[0.12em] uppercase ${clarification ? 'text-amber-700' : 'text-muted-foreground'}`}>
                               {clarification ? t('messageKinds.clarification') : t('assistantName')}
                             </span>
-                            <MessageContent className={`w-full border-l-2 py-0 pl-4 ${clarification ? 'border-amber-300' : 'border-primary/20'}`}>
+                            <MessageContent className={`w-full rounded-r-xl border-l-2 py-2 pl-4 pr-3 ${clarification ? 'border-amber-300 bg-amber-50/50' : 'border-primary/25 bg-white/70'}`}>
                               <MessageResponse className="leading-6">{message.content}</MessageResponse>
                             </MessageContent>
                           </div>
                         </div>
                       ) : (
-                        <MessageContent className="rounded-xl rounded-br-sm bg-slate-950 px-4 py-3 text-white shadow-none">
+                        <MessageContent className="rounded-2xl rounded-br-sm bg-[#061d43] px-4 py-3 text-white shadow-[0_8px_20px_rgba(6,29,67,0.16)]">
                           <p className="whitespace-pre-wrap leading-6">{message.content}</p>
                         </MessageContent>
                       )}
@@ -229,7 +230,7 @@ export function ChatSession({ id }: { id: string }) {
             </Conversation>
 
             <div
-              className="max-h-[48dvh] overflow-y-auto border-t bg-card p-4 sm:p-5"
+              className="max-h-[48dvh] overflow-y-auto border-t bg-[linear-gradient(180deg,#ffffff,#fbfcff)] p-4 sm:p-5"
               data-testid="composer"
               data-busy={busy ? 'true' : 'false'}
               data-messages={messages.length}
@@ -300,7 +301,7 @@ export function ChatSession({ id }: { id: string }) {
             </div>
           </div>
 
-          <aside className="border-t bg-slate-50/65 xl:border-t-0 xl:border-l" aria-label={t('contextPanel')}>
+          <aside className="border-t bg-[#f7f9fd] xl:border-t-0 xl:border-l" aria-label={t('contextPanel')}>
             <section className="p-5">
               <h3 className="text-[0.68rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('workflow')}</h3>
               <ol className="mt-4 space-y-1" aria-label={t('workflow')}>
@@ -409,7 +410,7 @@ function PersonaChooser({
           variant={option.key === suggestedKey ? 'default' : 'outline'}
           disabled={busy}
           title={option.description}
-          className="min-h-12 w-full items-center justify-between"
+          className="min-h-14 w-full items-center justify-between rounded-xl px-4"
           onClick={onChoose}
         >
           <span>
@@ -448,17 +449,21 @@ function AnswerBox({
       <fieldset>
         <legend className="mb-3 text-sm font-semibold leading-6 text-foreground">{q.text ?? t('optionsLabel')}</legend>
         <Suggestions className="grid grid-cols-1 sm:grid-cols-2">
-          {q.options.map((option) => (
+          {q.options.map((option, index) => (
             <Suggestion
               key={option.id}
               data-testid="answer-option"
               suggestion={option.id}
               variant="outline"
               disabled={busy}
-              className="w-full border bg-background hover:border-primary/35 hover:bg-primary/[0.04]"
+              className="group/choice w-full items-center gap-3 border bg-background text-left hover:border-primary/35 hover:bg-primary/[0.04]"
               onClick={() => void onAnswer({ value: option.id })}
             >
-              {option.label}
+              <span aria-hidden="true" className="grid size-7 shrink-0 place-items-center rounded-lg border border-primary/15 bg-primary/[0.055] text-[0.7rem] font-bold text-primary transition group-hover/choice:border-primary/30 group-hover/choice:bg-primary group-hover/choice:text-white">
+                {String.fromCharCode(65 + index)}
+              </span>
+              <span className="min-w-0 flex-1">{option.label}</span>
+              <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-muted-foreground/50 transition group-hover/choice:translate-x-0.5 group-hover/choice:text-primary" />
             </Suggestion>
           ))}
         </Suggestions>

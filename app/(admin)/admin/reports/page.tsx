@@ -45,10 +45,9 @@ export default function StandardReportsPage() {
   return (
     <div className="page-shell">
       <PageHeader title={t('title')} description={t('description')} requirements={['FR-26', 'FR-28']} />
+      <ReportsWorkspace />
 
       <div className="rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-xs leading-5 text-blue-950/75">{t('note')}</div>
-
-      <ReportsWorkspace />
     </div>
   );
 }

@@ -29,6 +29,9 @@ const FACTOR_KEYS = ['impact', 'likelihood', 'severity', 'controlEffectiveness',
 const CLASSIFICATIONS = ['monitor_only', 'risk', 'elevated_risk', 'issue'] as const;
 const DEFAULT_LEAF: Condition = { factKey: '', op: 'eq', value: '' };
 const DEFAULT_FACTOR: Factor = { weight: 0, scale: { min: 1, max: 5 }, mapping: [] };
+const EDITOR_SURFACE = 'rounded-xl border border-border/80 bg-background p-4 shadow-[0_1px_2px_rgba(15,35,65,0.04)]';
+const NESTED_SURFACE = 'rounded-xl border border-border/70 bg-muted/20 p-3';
+const EMPTY_SURFACE = 'rounded-xl border border-dashed border-border bg-muted/10 p-4 text-xs text-muted-foreground';
 
 function parseValue<T>(raw: string, fallback: T): T {
   if (!raw.trim()) return fallback;
@@ -80,11 +83,11 @@ function ScalarEditor({
   }
 
   return (
-    <div className="grid gap-2 sm:grid-cols-[8rem_1fr]">
+    <div className="grid gap-3 sm:grid-cols-[9rem_1fr]">
       <div>
         <Label htmlFor={`${id}-type`}>{t('type')}</Label>
         <Select value={type} onValueChange={changeType}>
-          <SelectTrigger id={`${id}-type`} className="mt-1 w-full" aria-label={t('typeFor', { label })}>
+          <SelectTrigger id={`${id}-type`} className="mt-1 w-full bg-card" aria-label={t('typeFor', { label })}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -99,7 +102,7 @@ function ScalarEditor({
         <Label htmlFor={`${id}-value`}>{label}</Label>
         {type === 'boolean' ? (
           <Select value={String(value ?? true)} onValueChange={(next) => onChange(next === 'true')}>
-            <SelectTrigger id={`${id}-value`} className="mt-1 w-full" aria-label={label}>
+            <SelectTrigger id={`${id}-value`} className="mt-1 w-full bg-card" aria-label={label}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -110,7 +113,7 @@ function ScalarEditor({
         ) : (
           <Input
             id={`${id}-value`}
-            className="mt-1"
+            className="mt-1 bg-card"
             type={type === 'number' ? 'number' : 'text'}
             value={value === null || value === undefined ? '' : String(value)}
             disabled={type === 'null'}
@@ -151,12 +154,12 @@ function ConditionNodeEditor({
   }
 
   return (
-    <div className="space-y-3 rounded-lg border bg-muted/20 p-4" data-testid="condition-node">
+    <div className={`${EDITOR_SURFACE} space-y-4 ${depth > 0 ? 'border-l-[3px] border-l-primary/30' : ''}`} data-testid="condition-node">
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-40 flex-1">
           <Label htmlFor={`${id}-mode`}>{t('type')}</Label>
           <Select value={mode} onValueChange={changeMode}>
-            <SelectTrigger id={`${id}-mode`} className="mt-1 w-full" aria-label={t('type')}>
+            <SelectTrigger id={`${id}-mode`} className="mt-1 w-full bg-card" aria-label={t('type')}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -180,7 +183,7 @@ function ConditionNodeEditor({
               <Label htmlFor={`${id}-fact`}>{t('factKey')}</Label>
               <Input
                 id={`${id}-fact`}
-                className="mt-1 font-mono"
+                className="mt-1 bg-card font-mono"
                 value={condition.factKey ?? ''}
                 placeholder="amount_usd"
                 onChange={(event) => onChange({ ...condition, factKey: event.target.value })}
@@ -198,7 +201,7 @@ function ConditionNodeEditor({
                   onChange(nextCondition);
                 }}
               >
-                <SelectTrigger id={`${id}-operator`} className="mt-1 w-full" aria-label={t('operatorLabel')}>
+                <SelectTrigger id={`${id}-operator`} className="mt-1 w-full bg-card" aria-label={t('operatorLabel')}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -229,7 +232,7 @@ function ConditionNodeEditor({
           ) : null}
         </div>
       ) : (
-        <div className="space-y-3 border-l-2 border-primary/20 pl-3">
+        <div className="space-y-3 border-l-2 border-primary/15 pl-3 sm:pl-4">
           {groupItems.map((child, index) => (
             <ConditionNodeEditor
               key={`${id}-${index}`}
@@ -267,8 +270,8 @@ function StringListEditor({
 }) {
   const t = useTranslations('structured.list');
   return (
-    <fieldset className="space-y-2 rounded-lg border bg-muted/15 p-4">
-      <legend className="px-1.5 text-xs font-semibold text-foreground">{label}</legend>
+    <fieldset className={`${NESTED_SURFACE} space-y-2.5`}>
+      <legend className="rounded-full bg-background px-2.5 py-1 text-xs font-semibold text-foreground shadow-[0_0_0_1px_var(--border)]">{label}</legend>
       {values.length === 0 ? <p className="text-xs text-muted-foreground">{t('empty')}</p> : null}
       {values.map((value, index) => (
         <div key={`${id}-${index}`} className="flex items-center gap-2">
@@ -301,17 +304,17 @@ function FlowEditor({ value, onChange }: { value: string; onChange: (value: stri
   }
 
   return (
-    <div className="space-y-2" data-testid="structured-flow">
-      {flow.length === 0 ? <p className="rounded-lg border border-dashed border bg-muted/15 p-4 text-xs text-muted-foreground">{t('empty')}</p> : null}
+    <div className="space-y-3" data-testid="structured-flow">
+      {flow.length === 0 ? <p className={EMPTY_SURFACE}>{t('empty')}</p> : null}
       {flow.map((node, index) => (
-        <fieldset key={`flow-${index}`} className="space-y-3 rounded-lg border bg-muted/15 p-4">
-          <legend className="px-1.5 text-xs font-semibold text-foreground">{t('question', { number: index + 1 })}</legend>
+        <fieldset key={`flow-${index}`} className={`${EDITOR_SURFACE} space-y-4`}>
+          <legend className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">{t('question', { number: index + 1 })}</legend>
           <div className="flex flex-wrap items-end gap-2">
             <div className="min-w-48 flex-1">
               <Label htmlFor={`flow-${index}-question`}>{t('questionKey')}</Label>
               <Input
                 id={`flow-${index}-question`}
-                className="mt-1 font-mono"
+                className="mt-1 bg-card font-mono"
                 value={node.questionKey}
                 onChange={(event) => update(flow.map((item, itemIndex) => (itemIndex === index ? { ...item, questionKey: event.target.value } : item)))}
               />
@@ -335,7 +338,7 @@ function FlowEditor({ value, onChange }: { value: string; onChange: (value: stri
                 update(flow.map((item, itemIndex) => (itemIndex === index ? { questionKey: item.questionKey, ...(showIf ? { showIf } : {}) } : item)));
               }}
             >
-              <SelectTrigger id={`flow-${index}-visibility`} className="mt-1 w-full" aria-label={t('visibilityFor', { number: index + 1 })}>
+              <SelectTrigger id={`flow-${index}-visibility`} className="mt-1 w-full bg-card" aria-label={t('visibilityFor', { number: index + 1 })}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -345,11 +348,11 @@ function FlowEditor({ value, onChange }: { value: string; onChange: (value: stri
             </Select>
           </div>
           {node.showIf ? (
-            <div className="space-y-2 rounded-lg border bg-background/80 p-3">
+            <div className={`${NESTED_SURFACE} space-y-3`}>
               <Label htmlFor={`flow-${index}-fact`}>{t('factKey')}</Label>
               <Input
                 id={`flow-${index}-fact`}
-                className="font-mono"
+                className="bg-card font-mono"
                 value={node.showIf.factKey}
                 onChange={(event) =>
                   update(flow.map((item, itemIndex) => (itemIndex === index ? { ...item, showIf: { ...node.showIf!, factKey: event.target.value } } : item)))
@@ -389,12 +392,12 @@ function ActionsEditor({ value, onChange }: { value: string; onChange: (value: s
   }
 
   return (
-    <div className="grid gap-3" data-testid="structured-actions">
+    <div className="grid gap-3 lg:grid-cols-2" data-testid="structured-actions">
       {CLASSIFICATIONS.map((classification) => {
         const action = actions[classification];
         return (
-          <fieldset key={classification} className="space-y-3 rounded-lg border bg-muted/15 p-4">
-            <legend className="px-1.5 text-xs font-semibold text-foreground">{t(`classification.${classification}`)}</legend>
+          <fieldset key={classification} className={`${EDITOR_SURFACE} space-y-3`}>
+            <legend className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">{t(`classification.${classification}`)}</legend>
             {action ? (
               <>
                 <Label htmlFor={`action-${classification}-decision`}>{t('recommendation')}</Label>
@@ -448,17 +451,17 @@ function OptionsEditor({ value, onChange }: { value: string; onChange: (value: s
   }
 
   return (
-    <div className="space-y-2" data-testid="structured-options">
-      {options.length === 0 ? <p className="rounded-lg border border-dashed border bg-muted/15 p-4 text-xs text-muted-foreground">{t('empty')}</p> : null}
+    <div className="space-y-3" data-testid="structured-options">
+      {options.length === 0 ? <p className={EMPTY_SURFACE}>{t('empty')}</p> : null}
       {options.map((option, index) => (
-        <fieldset key={`option-${index}`} className="space-y-3 rounded-lg border bg-muted/15 p-4">
-          <legend className="px-1.5 text-xs font-semibold text-foreground">{t('choice', { number: index + 1 })}</legend>
+        <fieldset key={`option-${index}`} className={`${EDITOR_SURFACE} space-y-4`}>
+          <legend className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">{t('choice', { number: index + 1 })}</legend>
           <div className="grid gap-2 sm:grid-cols-2">
             <div>
               <Label htmlFor={`option-${index}-id`}>{t('id')}</Label>
               <Input
                 id={`option-${index}-id`}
-                className="mt-1 font-mono"
+                className="mt-1 bg-card font-mono"
                 value={option.id}
                 onChange={(event) => update(options.map((item, itemIndex) => (itemIndex === index ? { ...item, id: event.target.value } : item)))}
               />
@@ -467,7 +470,7 @@ function OptionsEditor({ value, onChange }: { value: string; onChange: (value: s
               <Label htmlFor={`option-${index}-label`}>{t('label')}</Label>
               <Input
                 id={`option-${index}-label`}
-                className="mt-1"
+                className="mt-1 bg-card"
                 value={option.label}
                 onChange={(event) => update(options.map((item, itemIndex) => (itemIndex === index ? { ...item, label: event.target.value } : item)))}
               />
@@ -497,7 +500,7 @@ function BranchEditor({ value, onChange }: { value: string; onChange: (value: st
 
   if (!branch) {
     return (
-      <div className="rounded-lg border border-dashed border bg-muted/15 p-4" data-testid="structured-branch">
+      <div className={EMPTY_SURFACE} data-testid="structured-branch">
         <p className="mb-2 text-xs text-muted-foreground">{t('empty')}</p>
         <Button type="button" size="sm" variant="outline" onClick={() => writeValue(onChange, { onValue: true, questionKeys: [''] })}>
           {t('add')}
@@ -507,7 +510,7 @@ function BranchEditor({ value, onChange }: { value: string; onChange: (value: st
   }
 
   return (
-    <div className="space-y-3 rounded-lg border bg-muted/15 p-4" data-testid="structured-branch">
+    <div className={`${EDITOR_SURFACE} space-y-4`} data-testid="structured-branch">
       <ScalarEditor id="branch-on-value" label={t('answer')} value={branch.onValue} onChange={(onValue) => writeValue(onChange, { ...branch, onValue })} />
       <StringListEditor
         id="branch-question-keys"
@@ -540,20 +543,20 @@ function FactorsEditor({ value, onChange }: { value: string; onChange: (value: s
 
   return (
     <div className="space-y-3" data-testid="structured-factors">
-      <p className={`rounded-md border p-2 text-sm ${totalWeight === 100 ? 'text-foreground' : 'border-destructive/40 text-destructive'}`} role="status">
+      <p className={`rounded-xl border px-3 py-2.5 text-sm font-medium ${totalWeight === 100 ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-destructive/30 bg-destructive/5 text-destructive'}`} role="status">
         {t('totalWeight', { total: totalWeight })} {totalWeight === 100 ? t('valid') : t('invalidTotal')}
       </p>
       {FACTOR_KEYS.map((key) => {
         const factor = factors[key] ?? DEFAULT_FACTOR;
         return (
-          <fieldset key={key} className="space-y-4 rounded-lg border bg-muted/15 p-4">
-            <legend className="px-1.5 text-sm font-semibold text-foreground">{t(`names.${key}`)}</legend>
+          <fieldset key={key} className={`${EDITOR_SURFACE} space-y-4`}>
+            <legend className="rounded-full bg-primary/10 px-2.5 py-1 text-sm font-semibold text-primary">{t(`names.${key}`)}</legend>
             <div className="grid gap-2 sm:grid-cols-3">
               <div>
                 <Label htmlFor={`factor-${key}-weight`}>{t('weight')}</Label>
                 <Input
                   id={`factor-${key}-weight`}
-                  className="mt-1"
+                  className="mt-1 bg-card"
                   type="number"
                   min={0}
                   max={100}
@@ -566,7 +569,7 @@ function FactorsEditor({ value, onChange }: { value: string; onChange: (value: s
                 <Label htmlFor={`factor-${key}-min`}>{t('scaleMin')}</Label>
                 <Input
                   id={`factor-${key}-min`}
-                  className="mt-1"
+                  className="mt-1 bg-card"
                   type="number"
                   value={factor.scale.min}
                   onChange={(event) => event.target.value !== '' && updateFactor(key, { ...factor, scale: { ...factor.scale, min: Number(event.target.value) } })}
@@ -576,18 +579,18 @@ function FactorsEditor({ value, onChange }: { value: string; onChange: (value: s
                 <Label htmlFor={`factor-${key}-max`}>{t('scaleMax')}</Label>
                 <Input
                   id={`factor-${key}-max`}
-                  className="mt-1"
+                  className="mt-1 bg-card"
                   type="number"
                   value={factor.scale.max}
                   onChange={(event) => event.target.value !== '' && updateFactor(key, { ...factor, scale: { ...factor.scale, max: Number(event.target.value) } })}
                 />
               </div>
             </div>
-            <div className="space-y-3 rounded-lg border bg-background/80 p-3">
+            <div className={`${NESTED_SURFACE} space-y-3`}>
               <p className="text-xs font-medium">{t('mappings')}</p>
               {factor.mapping.length === 0 ? <p className="text-xs text-muted-foreground">{t('emptyMappings')}</p> : null}
               {factor.mapping.map((mapping, index) => (
-                <div key={`mapping-${key}-${index}`} className="space-y-3 rounded-lg border bg-muted/15 p-3">
+                <div key={`mapping-${key}-${index}`} className="space-y-3 rounded-xl border bg-background p-3 shadow-[0_1px_2px_rgba(15,35,65,0.04)]">
                   <p className="text-xs font-medium">{t('mapping', { number: index + 1 })}</p>
                   <ConditionNodeEditor
                     condition={mapping.when}
@@ -602,7 +605,7 @@ function FactorsEditor({ value, onChange }: { value: string; onChange: (value: s
                       <Label htmlFor={`factor-${key}-mapping-${index}-value`}>{t('factorValue')}</Label>
                       <Input
                         id={`factor-${key}-mapping-${index}-value`}
-                        className="mt-1"
+                        className="mt-1 bg-card"
                         type="number"
                         min={factor.scale.min}
                         max={factor.scale.max}
@@ -652,18 +655,18 @@ function ThresholdsEditor({ value, onChange }: { value: string; onChange: (value
   }
 
   return (
-    <div className="grid gap-2 sm:grid-cols-2" data-testid="structured-thresholds">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" data-testid="structured-thresholds">
       {CLASSIFICATIONS.map((classification) => {
         const range = thresholds[classification] ?? { min: 0, max: 0 };
         return (
-          <fieldset key={classification} className="rounded-lg border bg-muted/15 p-4">
-            <legend className="px-1.5 text-xs font-semibold text-foreground">{t(`classification.${classification}`)}</legend>
+          <fieldset key={classification} className={`${EDITOR_SURFACE} p-4`}>
+            <legend className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">{t(`classification.${classification}`)}</legend>
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label htmlFor={`threshold-${classification}-min`}>{t('minimum')}</Label>
                 <Input
                   id={`threshold-${classification}-min`}
-                  className="mt-1"
+                  className="mt-1 bg-card"
                   type="number"
                   min={0}
                   max={100}
@@ -675,7 +678,7 @@ function ThresholdsEditor({ value, onChange }: { value: string; onChange: (value
                 <Label htmlFor={`threshold-${classification}-max`}>{t('maximum')}</Label>
                 <Input
                   id={`threshold-${classification}-max`}
-                  className="mt-1"
+                  className="mt-1 bg-card"
                   type="number"
                   min={0}
                   max={100}
@@ -699,12 +702,12 @@ function ConfidenceEditor({ value, onChange }: { value: string; onChange: (value
   });
 
   return (
-    <div className="grid gap-2 sm:grid-cols-2" data-testid="structured-confidence">
+    <div className={`${EDITOR_SURFACE} grid gap-3 sm:grid-cols-2`} data-testid="structured-confidence">
       <div>
         <Label htmlFor="confidence-consult">{t('consult')}</Label>
         <Input
           id="confidence-consult"
-          className="mt-1"
+          className="mt-1 bg-card"
           type="number"
           min={0}
           max={100}
@@ -716,7 +719,7 @@ function ConfidenceEditor({ value, onChange }: { value: string; onChange: (value
         <Label htmlFor="confidence-review">{t('review')}</Label>
         <Input
           id="confidence-review"
-          className="mt-1"
+          className="mt-1 bg-card"
           type="number"
           min={0}
           max={100}

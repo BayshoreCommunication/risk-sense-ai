@@ -285,7 +285,7 @@ export function ScoringMatrixEditor() {
         </div>
       )}
 
-      <div className="mt-6 grid grid-cols-[minmax(11rem,1fr)_minmax(0,2.4fr)_7rem] items-center gap-4 px-1 pb-2 text-sm font-semibold text-foreground/80">
+      <div className="mt-6 hidden grid-cols-[minmax(11rem,1fr)_minmax(0,2.4fr)_7rem] items-center gap-4 px-1 pb-2 text-sm font-semibold text-foreground/80 sm:grid">
         <span>{t('columns.factor')}</span>
         <span>{t('columns.weight')}</span>
         <span className="text-right">{t('columns.impact')}</span>
@@ -296,7 +296,7 @@ export function ScoringMatrixEditor() {
           const { icon: Icon, className } = FACTOR_ICON[key];
           const value = weights[key] ?? 0;
           return (
-            <div key={key} className="grid grid-cols-[minmax(11rem,1fr)_minmax(0,2.4fr)_7rem] items-center gap-4 border-b p-4 last:border-b-0">
+            <div key={key} className="grid grid-cols-[minmax(0,1fr)_4rem] items-center gap-x-4 gap-y-3 border-b p-4 last:border-b-0 sm:grid-cols-[minmax(11rem,1fr)_minmax(0,2.4fr)_7rem]">
               <div className="flex min-w-0 items-center gap-3">
                 <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${className}`}>
                   <Icon className="size-4.5" aria-hidden="true" />
@@ -305,6 +305,7 @@ export function ScoringMatrixEditor() {
                   {t(`factors.${key}`)}
                 </label>
               </div>
+              <span className="text-right text-sm font-bold tabular-nums sm:col-start-3 sm:row-start-1">{value}%</span>
               <input
                 id={`weight-${key}`}
                 type="range"
@@ -313,10 +314,9 @@ export function ScoringMatrixEditor() {
                 step={1}
                 value={value}
                 onChange={(e) => setWeights((w) => ({ ...w, [key]: Number(e.target.value) }))}
-                className="weight-slider"
+                className="weight-slider col-span-2 sm:col-span-1 sm:col-start-2 sm:row-start-1"
                 style={{ '--weight-fill': `${value}%` } as React.CSSProperties}
               />
-              <span className="text-right text-sm font-bold tabular-nums">{value}%</span>
             </div>
           );
         })}

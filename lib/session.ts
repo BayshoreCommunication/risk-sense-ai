@@ -25,6 +25,21 @@ export const ROLE_PREFIXES: Record<Role, string[]> = {
   audit: ['/audit'],
 };
 
+/** Keep post-login navigation same-origin and inside the verified role's workspace. */
+export function safeNextForRole(next: string | null | undefined, role: Role) {
+  if (!next || !next.startsWith('/') || next.startsWith('//')) return ROLE_HOME[role];
+  try {
+    const candidate = new URL(next, 'https://risksense.local');
+    if (candidate.origin !== 'https://risksense.local') return ROLE_HOME[role];
+    if (!ROLE_PREFIXES[role].some((prefix) => candidate.pathname === prefix || candidate.pathname.startsWith(`${prefix}/`))) {
+      return ROLE_HOME[role];
+    }
+    return `${candidate.pathname}${candidate.search}${candidate.hash}`;
+  } catch {
+    return ROLE_HOME[role];
+  }
+}
+
 export function isRole(value: unknown): value is Role {
   return typeof value === 'string' && (ROLES as readonly string[]).includes(value);
 }

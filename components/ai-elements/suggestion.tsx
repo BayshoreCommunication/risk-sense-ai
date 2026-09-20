@@ -41,7 +41,7 @@ export const Suggestion = ({
   return (
     <Button
       className={cn(
-        "h-auto min-h-10 cursor-pointer justify-start rounded-lg px-3.5 py-2 text-left whitespace-normal",
+        "h-auto min-h-11 cursor-pointer justify-start rounded-xl border-border/90 bg-card px-3.5 py-2.5 text-left whitespace-normal shadow-[0_2px_8px_rgba(15,35,65,0.04)] transition-[transform,border-color,background-color,box-shadow] hover:-translate-y-px hover:border-primary/35 hover:bg-primary/[0.035] hover:shadow-[0_8px_20px_rgba(15,35,65,0.08)]",
         className
       )}
       onClick={handleClick}

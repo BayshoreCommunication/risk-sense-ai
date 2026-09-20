@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 
 /**
@@ -497,13 +497,37 @@ export function StackedClassificationChart({
   );
 }
 
-/** Sits inside a `gap-px bg-border` grid, which draws the dividers and wraps cleanly. */
-export function StatTile({ label, value, hint }: { label: string; value: string; hint?: string }) {
+/** Figma-aligned headline metric with a semantic icon tile and live-data context. */
+export function StatTile({
+  label,
+  value,
+  hint,
+  icon,
+  tone = 'blue',
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  icon: ReactNode;
+  tone?: 'blue' | 'green' | 'amber' | 'violet';
+}) {
+  const tones = {
+    blue: 'bg-blue-500/10 text-blue-700',
+    green: 'bg-emerald-500/10 text-emerald-700',
+    amber: 'bg-amber-500/10 text-amber-700',
+    violet: 'bg-violet-500/10 text-violet-700',
+  } as const;
+
   return (
-    <div className="min-h-24 bg-card p-4">
-      <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className="mt-2 font-heading text-2xl font-semibold tracking-tight tabular-nums">{value}</div>
-      {hint && <div className="mt-1 text-xs leading-5 text-muted-foreground">{hint}</div>}
+    <div className="flex min-h-28 items-center gap-4 rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(15,35,65,0.05)]">
+      <span className={`grid size-12 shrink-0 place-items-center rounded-xl ${tones[tone]}`} aria-hidden="true">
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <div className="font-heading text-2xl font-semibold tracking-tight tabular-nums">{value}</div>
+        <div className="mt-0.5 text-sm font-medium text-foreground">{label}</div>
+        {hint ? <div className="mt-1 truncate text-xs leading-5 text-muted-foreground" title={hint}>{hint}</div> : null}
+      </div>
     </div>
   );
 }

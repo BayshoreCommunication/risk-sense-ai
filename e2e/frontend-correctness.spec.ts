@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from '@playwright/test';
+import { safeNextForRole } from '../lib/session';
 
 const BASE_URL = 'http://127.0.0.1:3100';
 type Role = 'requestor' | 'administrator' | 'system_administrator' | 'audit';
@@ -100,6 +101,22 @@ async function mockApi(page: Page, getMe: () => ReturnType<typeof currentUser>, 
 test('development authentication stays hidden unless explicitly enabled [SEC-01]', async ({ page }) => {
   await page.goto('/login');
   await expect(page.getByText('Development sign-in (seeded accounts, no OTP)')).toHaveCount(0);
+});
+
+test('login session context follows the selected locale [SEC-02, NFR-08]', async ({ page }) => {
+  await page.goto('/login?reason=session_expired');
+  await expect(page.getByText('Your session expired. Sign in again to continue.')).toBeVisible();
+
+  await page.getByRole('button', { name: 'বাংলা' }).click();
+  await expect(page.getByText('আপনার সেশনের মেয়াদ শেষ হয়েছে। চালিয়ে যেতে আবার সাইন ইন করুন।')).toBeVisible();
+  await expect(page.getByText('Your session expired. Sign in again to continue.')).toHaveCount(0);
+});
+
+test('post-login navigation stays same-origin and inside the verified role workspace [SEC-01, DASH-04]', () => {
+  expect(safeNextForRole('/review?tab=closed#latest', 'requestor')).toBe('/review?tab=closed#latest');
+  expect(safeNextForRole('/admin/analytics', 'requestor')).toBe('/chat');
+  expect(safeNextForRole('https://attacker.example/admin', 'administrator')).toBe('/admin');
+  expect(safeNextForRole('//attacker.example/audit', 'audit')).toBe('/audit/logs');
 });
 
 test('backend /me role replaces a stale role cookie before protected content renders [FR-02, SEC-01, DASH-04]', async ({ page }) => {
@@ -311,6 +328,8 @@ test('direct standard reports access follows the authoritative tenant feature [F
 });
 
 test('analytics supports pie, table and persistent period drill-down views [DASH-03, FR-27, FR-28]', async ({ page }) => {
+  let failNextClassification = false;
+  let drilldownUrl = '';
   await authenticate(page, 'administrator');
   await mockApi(page, () => currentUser('administrator', { reports: true }), async ({ route, path, method }) => {
     if (method !== 'GET') return false;
@@ -327,6 +346,11 @@ test('analytics supports pie, table and persistent period drill-down views [DASH
       return true;
     }
     if (path === '/reports/classification') {
+      if (failNextClassification) {
+        failNextClassification = false;
+        await apiError(route, 503, 'REPORT_UNAVAILABLE', 'Classification report is temporarily unavailable');
+        return true;
+      }
       await ok(route, {
         columns: [{ key: 'classification', label: 'Classification', kind: 'text' }, { key: 'count', label: 'Count', kind: 'number' }],
         rows: [
@@ -350,7 +374,49 @@ test('analytics supports pie, table and persistent period drill-down views [DASH
       await ok(route, {
         columns: [{ key: 'period', label: 'Period', kind: 'text' }, { key: 'medianTotalSec', label: 'Median', kind: 'seconds' }],
         rows: [{ period: '2026-08', medianTotalSec: 180, p95TotalSec: 420 }],
-        summary: { medianTotalSec: 180, p95TotalSec: 420, avgIntakeSec: 120 },
+        summary: { avgTotalSec: 240, medianTotalSec: 180, p95TotalSec: 420, avgIntakeSec: 120 },
+      });
+      return true;
+    }
+    if (path === '/assessments') {
+      drilldownUrl = route.request().url();
+      await ok(route, {
+        items: [
+          {
+            _id: 'assessment-direct-risk',
+            status: 'closed',
+            phase: 'done',
+            personaKey: 'finance_officer',
+            scenarioKey: 'wire_transfer',
+            requestorId: 'requestor-1',
+            requestor: { name: 'Treasury analyst', email: 'treasury@example.test' },
+            department: { name: 'Finance' },
+            result: { classification: 'risk', confidence: 91 },
+            decision: { type: 'accept', decidedAt: '2026-04-18T12:00:00.000Z' },
+            timing: { startedAt: '2026-04-18T11:00:00.000Z' },
+            createdAt: '2026-04-18T11:00:00.000Z',
+          },
+          {
+            _id: 'assessment-overridden-risk',
+            status: 'closed',
+            phase: 'done',
+            personaKey: 'it_support',
+            scenarioKey: 'account_compromise',
+            requestorId: 'requestor-2',
+            requestor: { name: 'Security analyst', email: 'security@example.test' },
+            department: { name: 'IT' },
+            result: { classification: 'monitor_only', confidence: 84 },
+            decision: { type: 'override', overriddenTo: 'risk', decidedAt: '2026-04-20T12:00:00.000Z' },
+            timing: { startedAt: '2026-04-20T11:00:00.000Z' },
+            createdAt: '2026-04-20T11:00:00.000Z',
+          },
+        ],
+        total: 2,
+        page: 1,
+        limit: 200,
+        pages: 1,
+        counts: { in_progress: 0, intake_complete: 0, awaiting_decision: 0, escalated: 0, closed: 2, error_review: 0, pending: 0, all: 2 },
+        summary: { averageConfidence: 87.5 },
       });
       return true;
     }
@@ -393,6 +459,12 @@ test('analytics supports pie, table and persistent period drill-down views [DASH
   const riskSummary = selectedMonthSummary.getByRole('button', { name: /^Risk in .*: 2$/ });
   await riskSummary.click();
   await expect(riskSummary).toHaveAttribute('aria-pressed', 'true');
+  await expect(monthlyPanel.getByRole('row').filter({ hasText: 'Treasury analyst' })).toBeVisible();
+  await expect(monthlyPanel.getByRole('row').filter({ hasText: 'Security analyst' })).toContainText('Risk');
+  const drilldownQuery = new URL(drilldownUrl).searchParams;
+  expect(drilldownQuery.get('classification')).toBeNull();
+  expect(drilldownQuery.get('from')).toContain('2026-04-01');
+  expect(drilldownQuery.get('to')).toContain('2026-04-30');
   const monthlyChart = monthlyPanel.getByRole('group', { name: 'Final classifications by month' });
   await expect(monthlyChart.getByRole('button', { name: / · Risk: 2$/ }).first()).toBeVisible();
 
@@ -405,13 +477,24 @@ test('analytics supports pie, table and persistent period drill-down views [DASH
   await monthlyPanel.getByRole('button', { name: 'Table', exact: true }).click();
   await expect(monthlyPanel.getByRole('columnheader', { name: 'Month' })).toBeVisible();
   await expect(monthlyPanel.getByRole('columnheader', { name: 'Total' })).toBeVisible();
-  await expect(monthlyPanel.getByRole('row')).toHaveCount(6);
+  await expect(monthlyPanel.getByRole('table').first().getByRole('row')).toHaveCount(6);
 
   await monthlyPanel.getByRole('button', { name: 'Chart', exact: true }).click();
   await expect(monthlyChart).toBeVisible();
 
   // The four report views, the FR-27 trend breakdown and the exports live on the standard reports screen.
   await page.goto('/admin/reports');
+  // Figma parity: all four rows are compact by default; charts load only after the viewer expands one.
+  await expect(page.getByRole('button', { name: 'Assessment volume', exact: true })).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByRole('button', { name: 'Classification distribution', exact: true })).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByRole('button', { name: 'Requestor override rates', exact: true })).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByRole('button', { name: 'Average assessment time', exact: true })).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByRole('button', { name: 'Chart', exact: true })).toHaveCount(0);
+
+  await page.getByRole('button', { name: /^Period/ }).click();
+  await expect(page.getByLabel('Period', { exact: true })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Assessment volume', exact: true }).click();
   await page.getByRole('button', { name: '2026-08: 12' }).click();
   await expect(page.getByRole('status').filter({ hasText: '2026-08' })).toContainText('12');
 
@@ -421,6 +504,11 @@ test('analytics supports pie, table and persistent period drill-down views [DASH
   await expect(page.locator('#report-time')).toBeVisible();
 
   const classificationPanel = page.locator('section.data-panel').filter({ has: page.getByRole('heading', { name: 'Classification distribution', exact: true }) });
+  failNextClassification = true;
+  await page.getByRole('button', { name: 'Classification distribution', exact: true }).click();
+  await expect(classificationPanel.getByRole('alert')).toContainText('Classification report is temporarily unavailable');
+  await expect(classificationPanel.getByText('Loading…')).toHaveCount(0);
+  await classificationPanel.getByRole('button', { name: 'Retry' }).click();
   await classificationPanel.getByRole('button', { name: 'Pie' }).click();
   const pie = classificationPanel.getByRole('group', { name: 'Classification distribution as a pie chart' });
   await expect(pie).toBeVisible();
@@ -563,6 +651,9 @@ test('mobile audit cards retain hash and human-decision evidence [FR-22, FR-26, 
   await page.goto('/audit/logs');
   await expect(page.getByText(fullHash, { exact: true })).toBeVisible();
   await expect(page.getByText('Log size', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Text filters the 50 loaded entries. An exact 24-character record ID queries the audit log.')).toBeVisible();
+  await page.getByRole('textbox', { name: 'Filter loaded page or search exact record ID' }).fill('missing-user');
+  await expect(page.getByText('No matches on this loaded page. Clear the filter or open Older entries.').first()).toBeVisible();
 
   await page.goto('/audit/assessments');
   await expect(page.getByText('Decision', { exact: true }).first()).toBeVisible();

@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { AlertCircle, CalendarClock, CheckCircle2, ChevronRight, Gauge, ClipboardCheck, Filter, Plus, RefreshCw, Search } from 'lucide-react';
+import { AlertCircle, CalendarClock, CheckCircle2, ChevronDown, ChevronRight, Gauge, ClipboardCheck, Filter, Plus, RefreshCw, Search } from 'lucide-react';
 import { PageHeader } from '@/components/shell/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -74,6 +74,20 @@ function toQuery(f: Filters): AssessmentListQuery {
 
 const DAY_MS = 86_400_000;
 
+function dateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function relativeDateInput(reference: number, daysAgo: number) {
+  const date = new Date(reference);
+  date.setHours(12, 0, 0, 0);
+  date.setDate(date.getDate() - daysAgo);
+  return dateInputValue(date);
+}
+
 /** Closed rows stop accumulating at the recorded decision close time. */
 function daysOpen(a: AssessmentListItem, now: number) {
   const started = new Date(a.timing.startedAt || a.createdAt).getTime();
@@ -133,6 +147,7 @@ function ReviewDashboard() {
   const [scenarioDraft, setScenarioDraft] = useState(filters.scenarioKey);
   const [requestVersion, setRequestVersion] = useState(0);
   const [dashboardOpenedAt] = useState(() => Date.now());
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   useEffect(() => {
     assessments.personas().then(setPersonas).catch(() => setPersonas([]));
@@ -205,11 +220,32 @@ function ReviewDashboard() {
   const first = total === 0 ? 0 : (filters.page - 1) * filters.limit + 1;
   const last = Math.min(total, filters.page * filters.limit);
   const columnCount = reviewer ? 9 : 7;
+  const today = relativeDateInput(dashboardOpenedAt, 0);
+  const datePreset = !filters.from && !filters.to
+    ? 'all'
+    : filters.to === today && filters.from === relativeDateInput(dashboardOpenedAt, 29)
+      ? '30'
+      : filters.to === today && filters.from === relativeDateInput(dashboardOpenedAt, 89)
+        ? '90'
+        : 'custom';
+  const dateOptions: Option[] = [
+    { value: 'all', label: t('filters.allDates') },
+    { value: '30', label: t('filters.last30Days') },
+    { value: '90', label: t('filters.last90Days') },
+    { value: 'custom', label: t('filters.customDates') },
+  ];
 
   const commitScenario = () => {
     const scenarioKey = normalizeScenarioKey(scenarioDraft);
     setScenarioDraft(scenarioKey);
     if (scenarioKey !== filters.scenarioKey) update({ scenarioKey });
+  };
+
+  const applyDatePreset = (value: string | null) => {
+    if (!value || value === 'all') update({ from: '', to: '' });
+    else if (value === '30') update({ from: relativeDateInput(dashboardOpenedAt, 29), to: today });
+    else if (value === '90') update({ from: relativeDateInput(dashboardOpenedAt, 89), to: today });
+    else if (value === 'custom') setAdvancedOpen(true);
   };
 
   return (
@@ -218,13 +254,23 @@ function ReviewDashboard() {
         title={t('title')}
         description={reviewer ? t('descriptionReviewer') : t('descriptionRequestor')}
         requirements={['DASH-01', 'DASH-04']}
-        actions={
-          <Button onClick={() => router.push('/chat')}>
-            <Plus aria-hidden="true" data-icon="inline-start" />
-            {t('newAssessment')}
-          </Button>
-        }
       />
+
+      <section className="surface flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5" aria-labelledby="my-assessments-heading">
+        <div className="flex items-center gap-3">
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+            <ClipboardCheck className="size-5" aria-hidden="true" />
+          </span>
+          <div>
+            <h2 id="my-assessments-heading" className="text-base font-semibold">{t('myAssessments')}</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">{t('myAssessmentsDescription')}</p>
+          </div>
+        </div>
+        <Button onClick={() => router.push('/chat')}>
+          <Plus aria-hidden="true" data-icon="inline-start" />
+          {t('newAssessment')}
+        </Button>
+      </section>
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label={t('summaryLabel')}>
         <button
@@ -273,35 +319,8 @@ function ReviewDashboard() {
       </section>
 
       <Card className="gap-0 py-0 shadow-none">
-        <CardContent className="px-3 py-3 sm:px-4">
-          <div className="flex gap-1 overflow-x-auto" aria-label={t('statusTabsLabel')}>
-            {tabs.map((tab) => {
-              const n = counts ? counts[tab.key] : undefined;
-              return (
-                <Button
-                  key={tab.key}
-                  aria-pressed={filters.tab === tab.key}
-                  size="sm"
-                  className="shrink-0"
-                  variant={filters.tab === tab.key ? 'default' : 'ghost'}
-                  onClick={() => update({ tab: tab.key })}
-                >
-                  {tab.label}
-                  {n !== undefined && <span className="ml-1 rounded-full bg-background/70 px-1.5 text-xs tabular-nums text-inherit">{n}</span>}
-                </Button>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-none">
-        <CardContent className="space-y-4">
-          <h2 className="flex items-center gap-2 text-sm font-medium">
-            <Filter aria-hidden="true" className="size-4 text-primary" />
-            {t('filters.title')}
-          </h2>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <CardContent className="space-y-4 p-4">
+          <div className={`grid gap-3 sm:grid-cols-2 ${departments.length > 0 ? 'xl:grid-cols-4' : 'xl:grid-cols-3'}`}>
             <div className="space-y-1.5">
               <Label className="text-xs">{t('filters.persona')}</Label>
               <Select items={personaOptions} value={filters.personaKey || ANY} onValueChange={(v) => update({ personaKey: v && v !== ANY ? v : '' })}>
@@ -364,32 +383,13 @@ function ReviewDashboard() {
               </div>
             )}
             <div className="space-y-1.5">
-              <Label className="text-xs">{t('filters.classification')}</Label>
-              <Select items={classOptions} value={filters.classification || ANY} onValueChange={(v) => update({ classification: v && v !== ANY ? v : '' })}>
-                <SelectTrigger size="sm" className="w-full" aria-label={t('filters.classification')}>
-                  <SelectValue placeholder={t('filters.any')} />
+              <Label className="text-xs">{t('filters.dateRange')}</Label>
+              <Select items={dateOptions} value={datePreset} onValueChange={applyDatePreset}>
+                <SelectTrigger size="sm" className="w-full" aria-label={t('filters.dateRange')}>
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {classOptions.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">{t('filters.mandatoryReview')}</Label>
-              <Select
-                items={reviewOptions}
-                value={filters.mandatoryReview || ANY}
-                onValueChange={(value) => update({ mandatoryReview: value === 'true' || value === 'false' ? value : '' })}
-              >
-                <SelectTrigger size="sm" className="w-full" aria-label={t('filters.mandatoryReview')}>
-                  <SelectValue placeholder={t('filters.anyReview')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {reviewOptions.map((option) => (
+                  {dateOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -397,44 +397,91 @@ function ReviewDashboard() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="from" className="text-xs">
-                {t('filters.from')}
-              </Label>
-              <Input id="from" type="date" value={filters.from} max={filters.to || undefined} onChange={(e) => update({ from: e.target.value })} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="to" className="text-xs">
-                {t('filters.to')}
-              </Label>
-              <Input id="to" type="date" value={filters.to} min={filters.from || undefined} onChange={(e) => update({ to: e.target.value })} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">{t('filters.sort')}</Label>
-              <Select items={sortOptions} value={filters.sort} onValueChange={(v) => update({ sort: (v as Filters['sort']) ?? 'pending_first' })}>
-                <SelectTrigger size="sm" className="w-full" aria-label={t('filters.sort')}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {sortOptions.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
-          {hasFilters && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-auto px-0 text-primary hover:bg-transparent"
-              onClick={() => update({ classification: '', personaKey: '', scenarioKey: '', departmentId: '', mandatoryReview: '', from: '', to: '' })}
-            >
-              {t('filters.clear')}
-            </Button>
-          )}
+
+          <details
+            className="group border-t border-border/70 pt-3"
+            open={advancedOpen || datePreset === 'custom'}
+            onToggle={(event) => setAdvancedOpen(event.currentTarget.open)}
+          >
+            <summary className="flex min-h-9 cursor-pointer list-none items-center gap-2 text-sm font-medium text-primary focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+              <Filter aria-hidden="true" className="size-4" />
+              {t('filters.advanced')}
+              <ChevronDown aria-hidden="true" className="ml-auto size-4 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="mt-3 space-y-4 border-t border-border/50 pt-4">
+              <div className="flex gap-1 overflow-x-auto" aria-label={t('statusTabsLabel')}>
+                {tabs.map((tab) => {
+                  const n = counts ? counts[tab.key] : undefined;
+                  return (
+                    <Button
+                      key={tab.key}
+                      aria-pressed={filters.tab === tab.key}
+                      size="sm"
+                      className="shrink-0"
+                      variant={filters.tab === tab.key ? 'default' : 'ghost'}
+                      onClick={() => update({ tab: tab.key })}
+                    >
+                      {tab.label}
+                      {n !== undefined && <span className="ml-1 rounded-full bg-background/70 px-1.5 text-xs tabular-nums text-inherit">{n}</span>}
+                    </Button>
+                  );
+                })}
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">{t('filters.classification')}</Label>
+                  <Select items={classOptions} value={filters.classification || ANY} onValueChange={(v) => update({ classification: v && v !== ANY ? v : '' })}>
+                    <SelectTrigger size="sm" className="w-full" aria-label={t('filters.classification')}>
+                      <SelectValue placeholder={t('filters.any')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {classOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">{t('filters.mandatoryReview')}</Label>
+                  <Select items={reviewOptions} value={filters.mandatoryReview || ANY} onValueChange={(value) => update({ mandatoryReview: value === 'true' || value === 'false' ? value : '' })}>
+                    <SelectTrigger size="sm" className="w-full" aria-label={t('filters.mandatoryReview')}>
+                      <SelectValue placeholder={t('filters.anyReview')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {reviewOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="from" className="text-xs">{t('filters.from')}</Label>
+                  <Input id="from" type="date" value={filters.from} max={filters.to || undefined} onChange={(event) => update({ from: event.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="to" className="text-xs">{t('filters.to')}</Label>
+                  <Input id="to" type="date" value={filters.to} min={filters.from || undefined} onChange={(event) => update({ to: event.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">{t('filters.sort')}</Label>
+                  <Select items={sortOptions} value={filters.sort} onValueChange={(v) => update({ sort: (v as Filters['sort']) ?? 'pending_first' })}>
+                    <SelectTrigger size="sm" className="w-full" aria-label={t('filters.sort')}><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {sortOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {hasFilters && (
+                <Button size="sm" variant="ghost" className="h-auto px-0 text-primary hover:bg-transparent" onClick={() => update({ classification: '', personaKey: '', scenarioKey: '', departmentId: '', mandatoryReview: '', from: '', to: '' })}>
+                  {t('filters.clear')}
+                </Button>
+              )}
+            </div>
+          </details>
         </CardContent>
       </Card>
 
@@ -452,7 +499,7 @@ function ReviewDashboard() {
       )}
 
       <Card className="gap-0 py-0 shadow-sm">
-        <Table aria-busy={loading} className={reviewer ? 'min-w-[1120px]' : 'min-w-[940px]'}>
+        <Table containerLabel={t('myAssessments')} aria-busy={loading} className={reviewer ? 'min-w-[1120px]' : 'min-w-[940px]'}>
           <TableHeader className="bg-muted/35">
             <TableRow className="hover:bg-transparent">
               {reviewer && <TableHead>{t('columns.requestor')}</TableHead>}
@@ -609,6 +656,7 @@ function ReviewDashboard() {
           </div>
         </CardFooter>
       </Card>
+      <p className="rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-xs leading-5 text-blue-950/75">{t('scopeNote')}</p>
     </div>
   );
 }

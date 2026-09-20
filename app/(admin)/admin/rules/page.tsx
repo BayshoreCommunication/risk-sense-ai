@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { AlertTriangle, ArrowUpCircle, ShieldCheck, Siren, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, ArrowUpCircle, Info, ShieldCheck, Siren, type LucideIcon } from 'lucide-react';
 import { ContentManager, type FieldSpec } from '@/components/admin/ContentManager';
 import { Badge } from '@/components/ui/badge';
 import { rulesApi } from '@/lib/admin/content';
@@ -38,6 +38,7 @@ export default function RulesPage() {
   const t = useTranslations('admin.rules');
   const classification = useTranslations('classification');
   const fields = ruleFields(t);
+
   const formatCondition = (value: unknown): string => {
     if (!value || typeof value !== 'object') return '—';
     const condition = value as { all?: unknown[]; any?: unknown[]; factKey?: string; op?: string; value?: unknown };
@@ -49,50 +50,54 @@ export default function RulesPage() {
   return (
     <div className="page-shell">
       <ContentManager
-      title={t('title')}
-      description={t('description')}
-      requirements={['FR-16', 'FR-17']}
-      entity={t('entity')}
-      apiClient={rulesApi}
-      fields={fields}
-      columns={[]}
-      card={(item) => {
-        const forced = String(item.forcedClassification ?? '');
-        const tone = CLASSIFICATION_TONE[forced] ?? CLASSIFICATION_TONE.monitor_only!;
-        const Icon = tone.icon;
-        return {
-          icon: <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${tone.tile}`}><Icon className="size-5" aria-hidden="true" /></span>,
-          title: String(item.name ?? item.key ?? ''),
-          body: (
-            <span className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-              <span>
-                {t('card.if')} <code className="font-semibold text-foreground">{formatCondition(item.trigger)}</code> {t('card.then')}{' '}
-                <strong className={tone.text}>{classification.has(forced) ? classification(forced) : forced}</strong>
+        title={t('title')}
+        description={t('description')}
+        requirements={['FR-16', 'FR-17']}
+        entity={t('entity')}
+        apiClient={rulesApi}
+        fields={fields}
+        columns={[]}
+        card={(item) => {
+          const forced = String(item.forcedClassification ?? '');
+          const tone = CLASSIFICATION_TONE[forced] ?? CLASSIFICATION_TONE.monitor_only!;
+          const Icon = tone.icon;
+          return {
+            icon: (
+              <span className={`grid size-14 shrink-0 place-items-center rounded-2xl ${tone.tile}`}>
+                <Icon className="size-7" strokeWidth={1.8} aria-hidden="true" />
               </span>
-              <span aria-hidden="true" className="text-muted-foreground/60">·</span>
-              <Badge variant="outline">{t('card.priority', { value: String(item.priority ?? 100) })}</Badge>
-            </span>
-          ),
-        };
-      }}
-      callout={(
-        <aside className="flex flex-col gap-3 rounded-xl border border-blue-200 bg-blue-50/55 p-4 sm:flex-row sm:items-center sm:justify-between" aria-label={t('lockoutExample.title')}>
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-semibold text-blue-950">{t('lockoutExample.title')}</span>
-              <Badge variant="outline" className="border-blue-300 bg-white/70 text-[0.62rem] text-blue-900">{t('lockoutExample.notActive')}</Badge>
+            ),
+            title: String(item.name ?? item.key ?? ''),
+            body: (
+              <span className="flex flex-wrap items-center gap-x-2 gap-y-2">
+                <span>
+                  {t('card.if')}{' '}
+                  <code className="rounded-md bg-muted px-1.5 py-1 font-mono text-[0.78rem] font-semibold text-foreground">{formatCondition(item.trigger)}</code>{' '}
+                  {t('card.then')}{' '}
+                  <strong className={tone.text}>{classification.has(forced) ? classification(forced) : forced}</strong>
+                </span>
+                <Badge variant="outline" className="bg-background text-[0.68rem]">{t('card.priority', { value: String(item.priority ?? 100) })}</Badge>
+              </span>
+            ),
+          };
+        }}
+        footer={(
+          <aside className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50/55 px-4 py-3 text-blue-950" aria-label={t('lockoutExample.title')}>
+            <Info className="mt-0.5 size-4 shrink-0 text-blue-600" aria-hidden="true" />
+            <div className="min-w-0 text-xs leading-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-semibold">{t('lockoutExample.title')}</span>
+                <Badge variant="outline" className="border-blue-300 bg-white/70 text-[0.62rem] text-blue-900">{t('lockoutExample.notActive')}</Badge>
+                <code className="rounded bg-white/75 px-1.5 py-0.5">{t('lockoutExample.condition')}</code>
+                <span aria-hidden="true">→</span>
+                <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800" variant="outline">{classification('monitor_only')}</Badge>
+              </div>
+              <p className="mt-0.5 text-blue-950/70">{t('lockoutExample.description')}</p>
             </div>
-            <p className="mt-1 text-xs leading-5 text-blue-950/70">{t('lockoutExample.description')}</p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2 rounded-lg border border-blue-200 bg-white/75 px-3 py-2 text-xs">
-            <code>{t('lockoutExample.condition')}</code>
-            <span aria-hidden="true">→</span>
-            <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800" variant="outline">{classification('monitor_only')}</Badge>
-          </div>
-        </aside>
-      )}
-      versioned
-      approval
+          </aside>
+        )}
+        versioned
+        approval
       />
     </div>
   );

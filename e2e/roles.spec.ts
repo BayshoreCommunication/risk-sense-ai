@@ -57,7 +57,7 @@ test.describe('requestor', () => {
 });
 
 test.describe('administrator', () => {
-  test('sees the content library, review queue and analytics [DASH-02, AI-03, DASH-03]', async ({ page }) => {
+  test('sees the content library, review queue, analytics and standard reports [DASH-02, AI-03, DASH-03, FR-26, FR-28]', async ({ page }) => {
     await devLogin(page, ACCOUNTS.paidAdmin);
     await expect(page).toHaveURL(/\/admin/);
     await page.goto('/admin/personas');
@@ -66,9 +66,22 @@ test.describe('administrator', () => {
     await expect(page.getByRole('heading', { name: 'Mandatory review queue' })).toBeVisible();
     await page.goto('/admin/analytics');
     await expect(page.getByRole('heading', { name: 'Analytics dashboard' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Assessment volume' })).toBeVisible();
-    await expect(page.getByText(/Started/).first()).toBeVisible();
-    await page.getByRole('button', { name: 'Table' }).first().click();
+    await expect(page.getByText('Assessment volume', { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Monthly classification distribution' })).toBeVisible();
+    const monthlyViews = page.getByRole('group', { name: 'Monthly classification view' });
+    await monthlyViews.getByRole('button', { name: 'Table' }).click();
+    await expect(page.getByRole('columnheader', { name: 'Month' })).toBeVisible();
+
+    await page.goto('/admin/reports');
+    await expect(page.getByRole('heading', { name: 'Standard reports' })).toBeVisible();
+    const volumeReport = page.getByRole('heading', { name: 'Assessment volume', exact: true });
+    await expect(volumeReport).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Classification distribution', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Assessment volume · CSV' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Assessment volume · PDF' })).toBeVisible();
+    await volumeReport.click();
+    const volumeViews = page.getByRole('group', { name: 'Assessment volume · Table view' });
+    await volumeViews.getByRole('button', { name: 'Table' }).click();
     await expect(page.getByRole('columnheader', { name: 'Period' })).toBeVisible();
   });
 
@@ -82,7 +95,8 @@ test.describe('administrator', () => {
 test.describe('system administrator', () => {
   test('edits tenant settings and runs a retention dry run [FR-03, SEC-02, SEC-06]', async ({ page }) => {
     await devLogin(page, ACCOUNTS.sysadmin);
-    await expect(page).toHaveURL(/\/system$/);
+    await expect(page).toHaveURL(/\/system\/users$/);
+    await expect(page.getByRole('heading', { name: 'User and role provisioning' })).toBeVisible();
     await page.goto('/system/tenant');
     await expect(page.getByRole('heading', { name: 'SSO and integration configuration' })).toBeVisible();
     const idle = page.getByLabel('Idle timeout (minutes, 5–30)');
@@ -105,7 +119,8 @@ test.describe('audit', () => {
     // Privileged seed roles live in the `tac` tenant, which carries no assessment history; reconstruction and chain
     // verification need the demo tenant's auditor.
     await devLogin(page, ACCOUNTS.paidAudit);
-    await expect(page).toHaveURL(/\/audit$/);
+    await expect(page).toHaveURL(/\/audit\/logs$/);
+    await expect(page.getByRole('heading', { name: 'Audit log viewer' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Assessments', exact: true })).toBeVisible();
     await page.getByRole('link', { name: 'Assessments', exact: true }).click();
     await expect(page).toHaveURL(/\/audit\/assessments/);
@@ -121,8 +136,12 @@ test.describe('audit', () => {
 
   test('language switcher changes the shell labels [NFR-08]', async ({ page }) => {
     await devLogin(page, ACCOUNTS.audit);
+    await page.locator('summary').filter({ hasText: /· Audit$/ }).click();
     await page.getByRole('button', { name: 'বাংলা' }).click();
     await expect(page.getByRole('link', { name: 'অডিট লগ ভিউয়ার' })).toBeVisible();
+    if (!(await page.getByRole('button', { name: 'English' }).isVisible())) {
+      await page.locator('summary').filter({ hasText: /· অডিট$/ }).click();
+    }
     await page.getByRole('button', { name: 'English' }).click();
     await expect(page.getByRole('link', { name: 'Audit log viewer' })).toBeVisible();
   });

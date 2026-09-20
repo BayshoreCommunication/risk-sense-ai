@@ -237,23 +237,23 @@ export default function DisasterRecoveryPage() {
         <span className="font-medium">{t('operatorNotice.title')}:</span> {t('operatorNotice.description')}
       </div>
 
-      {/* Target cards lead with a tinted icon tile, as docs/design/figma-frames/23-system-disaster-recovery.png. */}
+      {/* The first two cards are policy targets; the final two are operator-recorded recovery evidence. */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {([
-          { key: 'rto', icon: TimerReset, tile: 'bg-blue-500/10 text-blue-700', value: t('targets.hours', { value: status.targets.rtoHours }) },
-          { key: 'rpo', icon: RotateCcw, tile: 'bg-emerald-500/10 text-emerald-700', value: t('targets.hours', { value: status.targets.rpoHours }) },
-          { key: 'backup', icon: DatabaseBackup, tile: 'bg-violet-500/10 text-violet-700', value: t('targets.hours', { value: status.targets.backupFrequencyHours }) },
-          { key: 'drill', icon: FileCheck2, tile: 'bg-amber-500/10 text-amber-700', value: t('targets.days', { value: status.targets.drillFrequencyDays }) },
+          { key: 'rto', icon: TimerReset, tile: 'bg-blue-500/10 text-blue-700', value: t('targets.hours', { value: status.targets.rtoHours }), label: t('targets.rto') },
+          { key: 'rpo', icon: RotateCcw, tile: 'bg-emerald-500/10 text-emerald-700', value: t('targets.hours', { value: status.targets.rpoHours }), label: t('targets.rpo') },
+          { key: 'backup', icon: DatabaseBackup, tile: 'bg-violet-500/10 text-violet-700', value: formatDate(status.lastBackupAt, locale, t('notRecorded')), label: t('form.latestBackup') },
+          { key: 'drill', icon: FileCheck2, tile: 'bg-amber-500/10 text-amber-700', value: formatDate(status.lastRestoreDrillAt, locale, t('notRecorded')), label: t('form.latestDrill') },
         ] as const).map((target) => {
           const Icon = target.icon;
           return (
-            <div key={target.key} className="flex items-center gap-3.5 rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(15,35,65,0.05)]">
+            <div key={target.key} data-testid={`dr-summary-${target.key}`} className="flex items-center gap-3.5 rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(15,35,65,0.05)]">
               <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${target.tile}`}>
                 <Icon className="size-5" aria-hidden="true" />
               </span>
               <div className="min-w-0">
-                <p className="metric-value">{target.value}</p>
-                <p className="text-sm text-muted-foreground">{t(`targets.${target.key}`)}</p>
+                <p className={`${target.key === 'backup' || target.key === 'drill' ? 'truncate text-base font-bold tracking-[-0.02em]' : 'metric-value'}`} title={target.value}>{target.value}</p>
+                <p className="text-sm text-muted-foreground">{target.label}</p>
               </div>
             </div>
           );

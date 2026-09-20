@@ -49,7 +49,7 @@
 }
 
 :root {
-  --background: oklch(0.968 0.008 250);
+  --background: oklch(0.978 0.004 78);
   --foreground: oklch(0.205 0.038 258);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.23 0.045 255);
@@ -64,7 +64,7 @@
   --accent: oklch(0.937 0.027 252);
   --accent-foreground: oklch(0.36 0.12 255);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.89 0.014 252);
+  --border: oklch(0.895 0.01 252);
   --input: oklch(0.845 0.019 252);
   --ring: oklch(0.62 0.17 255);
   --chart-1: oklch(0.56 0.2 255);
@@ -72,7 +72,7 @@
   --chart-3: oklch(0.77 0.16 78);
   --chart-4: oklch(0.61 0.2 305);
   --chart-5: oklch(0.62 0.22 28);
-  --radius: 0.62rem;
+  --radius: 0.72rem;
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.225 0.042 258);
   --sidebar-primary: oklch(0.515 0.178 257);
@@ -129,9 +129,7 @@
   }
   body {
     @apply min-h-screen bg-background text-foreground;
-    background-image:
-      radial-gradient(circle at 72% -10%, color-mix(in oklch, var(--primary), transparent 94%), transparent 34rem),
-      linear-gradient(to bottom, color-mix(in oklch, var(--background), white 42%), var(--background) 17rem);
+    background-image: linear-gradient(to bottom, color-mix(in oklch, var(--background), white 58%), var(--background) 22rem);
   }
   html {
     @apply font-sans;
@@ -152,7 +150,7 @@
 @layer components {
   /* Fills the shell exactly; a page taller than the viewport scrolls inside it, never the window. */
   .page-shell {
-    @apply mx-auto flex h-full w-full max-w-[1480px] flex-col gap-6 overflow-y-auto;
+    @apply mx-auto flex h-full w-full max-w-[1480px] flex-col gap-7 overflow-y-auto;
     scrollbar-color: color-mix(in oklch, var(--muted-foreground), transparent 60%) transparent;
     scrollbar-width: thin;
   }
@@ -169,7 +167,7 @@
     @apply flex min-h-0 flex-1 flex-col;
   }
   .page-heading {
-    @apply font-heading text-[1.75rem] font-bold tracking-[-0.02em] text-foreground sm:text-[2.125rem];
+    @apply font-heading text-[1.75rem] font-bold tracking-[-0.035em] text-foreground sm:text-[2rem];
   }
   .page-description {
     @apply max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base;
@@ -179,10 +177,10 @@
   }
   /* Figma page-header chrome: a solid role pill followed by this screen's requirement IDs. */
   .role-pill {
-    @apply inline-flex items-center rounded-full bg-[#0b2447] px-3.5 py-1.5 text-xs font-semibold text-white;
+    @apply inline-flex items-center rounded-full bg-[#061d43] px-4 py-1.5 text-xs font-semibold text-white;
   }
   .req-chip {
-    @apply inline-flex items-center rounded-lg bg-primary/10 px-2.5 py-1.5 text-xs font-semibold tracking-[0.02em] text-primary;
+    @apply inline-flex items-center rounded-full bg-[#edf3ff] px-3 py-1.5 text-xs font-semibold tracking-[0.02em] text-[#155bd7];
   }
   /* Figma card headers lead with a tinted rounded icon tile before the title. */
   .card-icon {
@@ -197,7 +195,7 @@
       linear-gradient(180deg, transparent 60%, color-mix(in oklch, var(--sidebar-primary), transparent 97%) 100%);
   }
   .surface {
-    @apply rounded-xl border bg-card shadow-[0_1px_2px_rgba(15,35,65,0.05)];
+    @apply rounded-2xl border bg-card shadow-[0_4px_18px_rgba(15,35,65,0.06)];
   }
   .subtle-grid {
     background-image:
@@ -218,7 +216,7 @@
     @apply relative;
   }
   .data-panel {
-    @apply overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgba(15,35,65,0.05)];
+    @apply overflow-hidden rounded-2xl border bg-card shadow-[0_4px_18px_rgba(15,35,65,0.06)];
   }
   /* A filled panel already owns its height, so the scroller inside it stops guessing from the
      viewport. Declared here, in the utilities layer, to outrank the table's own `max-h-*`. */
@@ -226,7 +224,7 @@
     max-height: 100%;
   }
   .control-strip {
-    @apply rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(15,35,65,0.05)];
+    @apply rounded-2xl border bg-card p-4 shadow-[0_4px_18px_rgba(15,35,65,0.06)];
   }
   .metric-value {
     @apply font-heading text-2xl font-semibold tracking-[-0.035em] tabular-nums;

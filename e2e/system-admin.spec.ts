@@ -72,6 +72,59 @@ test('/system lands on user provisioning and the rail exposes every workspace [D
   }
 });
 
+test('SSO and session configuration mirrors the supported tenant contract only [FR-03, SEC-02]', async ({ page }) => {
+  const settings = {
+    ...me.tenant,
+    name: 'Test tenant',
+    retentionPolicy: { assessmentDays: 2555, evidenceDays: 2555, auditDays: 3650, datasetHistoryDays: 3650 },
+    authPolicy: { otpRequired: true },
+    sso: { providerId: 'oidc.current', domain: 'current.example' },
+  };
+  let patchBody: Record<string, unknown> | null = null;
+  await mockApi(page, async ({ route, path, method }) => {
+    if (path === '/system/tenant' && method === 'GET') {
+      await ok(route, settings);
+      return true;
+    }
+    if (path === '/system/tenant' && method === 'PATCH') {
+      patchBody = route.request().postDataJSON();
+      const patch = patchBody as { sso?: typeof settings.sso; sessionPolicy?: Partial<typeof settings.sessionPolicy> };
+      await ok(route, {
+        ...settings,
+        ...patch,
+        sso: { ...settings.sso, ...(patch.sso ?? {}) },
+        sessionPolicy: { ...settings.sessionPolicy, ...(patch.sessionPolicy ?? {}) },
+      });
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/system/tenant');
+  await expect(page.getByRole('heading', { name: 'Single sign-on', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Session policy', exact: true })).toBeVisible();
+  await expect(page.getByLabel('Identity provider ID')).toHaveValue('oidc.current');
+  await expect(page.getByRole('textbox', { name: 'Email domain', exact: true })).toHaveValue('current.example');
+  await expect(page.getByLabel('Idle timeout (minutes, 5–30)')).toHaveValue('15');
+  await expect(page.getByLabel('Max concurrent sessions (1–10)')).toHaveValue('1');
+
+  // The Figma-only fields have no backend contract and must not be fabricated.
+  await expect(page.getByLabel('Protocol', { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel('Metadata URL', { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel('Allow direct local login', { exact: true })).toHaveCount(0);
+
+  await page.getByLabel('Identity provider ID').fill('oidc.updated');
+  await page.getByRole('textbox', { name: 'Email domain', exact: true }).fill('updated.example');
+  await page.getByLabel('Idle timeout (minutes, 5–30)').fill('20');
+  await page.getByRole('button', { name: 'Save changes' }).click();
+
+  await expect.poll(() => patchBody).toEqual({
+    sso: { providerId: 'oidc.updated', domain: 'updated.example' },
+    sessionPolicy: { idleTimeoutMin: 20 },
+  });
+  await expect(page.getByRole('status')).toContainText('recorded in the audit log');
+});
+
 test('a system administrator provisions a requestor with department scope [FR-02, FR-10]', async ({ page }) => {
   const financeId = '64b000000000000000000020';
   let posted: unknown;
@@ -276,6 +329,82 @@ test('mobile retention policy presents configured lifetimes as evidence cards [S
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
+test('PAID retention settings save from the retention workspace through the tenant contract [SEC-06, NFR-08]', async ({ page }) => {
+  const settings = {
+    ...me.tenant,
+    name: 'Test tenant',
+    retentionPolicy: {
+      assessmentDays: 2555,
+      evidenceDays: 2555,
+      auditDays: 3650,
+      datasetHistoryDays: 3650,
+    },
+    authPolicy: { otpRequired: true },
+    sso: { providerId: null, domain: null },
+  };
+  let patchBody: Record<string, unknown> | null = null;
+  await mockApi(page, async ({ route, path, method }) => {
+    if (path === '/system/retention/runs' && method === 'GET') {
+      await ok(route, []);
+      return true;
+    }
+    if (path === '/system/tenant' && method === 'GET') {
+      await ok(route, settings);
+      return true;
+    }
+    if (path === '/system/tenant' && method === 'PATCH') {
+      patchBody = route.request().postDataJSON();
+      const patch = patchBody as { retentionPolicy: typeof settings.retentionPolicy };
+      await ok(route, { ...settings, retentionPolicy: { ...settings.retentionPolicy, ...patch.retentionPolicy } });
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/system/retention');
+  const assessmentDays = page.getByLabel('Assessments (days)').last();
+  await expect(assessmentDays).toBeEnabled();
+  await assessmentDays.fill('3000');
+  await page.getByRole('button', { name: 'Save changes' }).click();
+
+  await expect.poll(() => patchBody).toEqual({
+    retentionPolicy: {
+      assessmentDays: 3000,
+      evidenceDays: 2555,
+      auditDays: 3650,
+      datasetHistoryDays: 3650,
+    },
+  });
+  await expect(page.getByRole('status')).toContainText('recorded in the audit log');
+});
+
+test('FREE retention settings remain visible but fixed [SEC-06]', async ({ page }) => {
+  await mockApi(page, async ({ route, path, method }) => {
+    if (path === '/system/retention/runs' && method === 'GET') {
+      await ok(route, []);
+      return true;
+    }
+    if (path === '/system/tenant' && method === 'GET') {
+      await ok(route, {
+        ...me.tenant,
+        plan: 'free',
+        name: 'Public tenant',
+        retentionPolicy: { assessmentDays: 90, evidenceDays: 90, auditDays: 365, datasetHistoryDays: 1095 },
+        authPolicy: { otpRequired: false },
+        sso: { providerId: null, domain: null },
+      });
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/system/retention');
+  await expect(page.getByLabel('Assessments (days)').last()).toBeDisabled();
+  await expect(page.getByLabel('Dataset history (days)').last()).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Save changes' })).toBeDisabled();
+  await expect(page.getByText('FREE uses the fixed public retention windows shown below. Switch to PAID before configuring customer-specific windows.')).toBeVisible();
+});
+
 test('role changes require confirmation and surface backend self-lockout protection [FR-02, SEC-02]', async ({ page }) => {
   let patchCount = 0;
   let patchBody: unknown;
@@ -404,6 +533,10 @@ test('DR changes require an explicit external-evidence attestation [NFR-06, FR-2
 
   await page.goto('/system/dr');
   await expect(page.getByText('Operator-recorded evidence:')).toBeVisible();
+  await expect(page.getByTestId('dr-summary-backup')).toContainText('Not recorded');
+  await expect(page.getByTestId('dr-summary-drill')).toContainText('Not recorded');
+  await expect(page.getByTestId('dr-summary-backup')).not.toContainText('24 h');
+  await expect(page.getByTestId('dr-summary-drill')).not.toContainText('365 days');
   await page.getByLabel('Backup provider').fill('MongoDB Atlas');
   await page.getByLabel('Evidence URL').fill('https://example.test/evidence/backup-1');
   await page.getByLabel('Latest successful backup').fill('2026-09-14T10:30');
@@ -426,6 +559,8 @@ test('DR changes require an explicit external-evidence attestation [NFR-06, FR-2
   });
   await expect(page.getByText('Evidence ready')).toBeVisible();
   await expect(page.getByRole('status')).toContainText('Recovery evidence saved');
+  await expect(page.getByTestId('dr-summary-backup')).not.toContainText('Not recorded');
+  await expect(page.getByTestId('dr-summary-drill')).not.toContainText('Not recorded');
 });
 
 test('audit archive exposes immutable manifests and requires explicit export confirmation [FR-26, SEC-07]', async ({ page }) => {

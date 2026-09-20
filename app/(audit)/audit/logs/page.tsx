@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { CheckCircle2, ChevronDown, ChevronUp, RefreshCw, Search, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { PageHeader } from '@/components/shell/PageHeader';
@@ -29,7 +29,7 @@ export default function AuditLogsPage() {
   const locale = useLocale();
   const t = useTranslations('audit.logs');
   const [category, setCategory] = useState(ANY);
-  const [entityId, setEntityId] = useState('');
+  const [search, setSearch] = useState('');
   const [items, setItems] = useState<AuditLogEntry[]>([]);
   const [cursor, setCursor] = useState<number | null>(null);
   const [next, setNext] = useState<number | null>(null);
@@ -39,13 +39,15 @@ export default function AuditLogsPage() {
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const categoryOptions = [{ value: ANY, label: t('allCategories') }, ...CATEGORIES.map((category) => ({ value: category, label: category }))];
+  const searchEntityId = /^[a-f0-9]{24}$/i.test(search.trim()) ? search.trim() : '';
+  const isLoadedPageFilter = Boolean(search.trim()) && !searchEntityId;
 
   const load = useCallback(
     (cursorSeq: number | null) => {
       setLoading(true);
       const q: AuditListQuery = { limit: 50 };
       if (category !== ANY) q.category = category as AuditListQuery['category'];
-      if (entityId.trim()) q.entityId = entityId.trim();
+      if (searchEntityId) q.entityId = searchEntityId;
       if (cursorSeq) q.cursorSeq = cursorSeq;
       auditApi
         .list(q)
@@ -57,9 +59,16 @@ export default function AuditLogsPage() {
         .catch((e) => setError(toApiError(e).message))
         .finally(() => setLoading(false));
     },
-    [category, entityId],
+    [category, searchEntityId],
   );
   useEffect(() => load(cursor), [load, cursor]);
+
+  const visibleItems = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query || /^[a-f0-9]{24}$/i.test(query)) return items;
+    return items.filter((entry) => [entry.actorRole, entry.actorUserId, entry.action, entry.category, entry.entity.type, entry.entity.id]
+      .some((value) => value?.toLowerCase().includes(query)));
+  }, [items, search]);
 
   return (
     <div className="page-shell">
@@ -68,36 +77,34 @@ export default function AuditLogsPage() {
         description={t('description')}
         requirements={['FR-24–26', 'SEC-07']}
         actions={
-          <>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary" className="gap-1.5"><ShieldCheck className="size-3.5" aria-hidden="true" />{t('readOnlyBadge')}</Badge>
-          {verify && (
-            <Badge variant={verify.ok ? 'outline' : 'destructive'} className="h-8 gap-1.5 px-3">
-              {verify.ok ? <CheckCircle2 className="size-3.5" aria-hidden="true" /> : <ShieldAlert className="size-3.5" aria-hidden="true" />}
-              {verify.ok ? t('verification.intact', { count: verify.checked }) : t('verification.broken', { sequence: verify.firstBadSeq ?? '', count: verify.checked })}
-            </Badge>
-          )}
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={verifying}
-            onClick={() => {
-              setVerifying(true);
-              auditApi.verify().then(setVerify).catch((e) => setError(toApiError(e).message)).finally(() => setVerifying(false));
-            }}
-          >
-            <RefreshCw className={verifying ? 'animate-spin' : ''} aria-hidden="true" />
-            {t('verify')}
-          </Button>
-        </div>
-            </>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="secondary" className="gap-1.5"><ShieldCheck className="size-3.5" aria-hidden="true" />{t('readOnlyBadge')}</Badge>
+            {verify && (
+              <Badge variant={verify.ok ? 'outline' : 'destructive'} className="h-8 gap-1.5 px-3">
+                {verify.ok ? <CheckCircle2 className="size-3.5" aria-hidden="true" /> : <ShieldAlert className="size-3.5" aria-hidden="true" />}
+                {verify.ok ? t('verification.intact', { count: verify.checked }) : t('verification.broken', { sequence: verify.firstBadSeq ?? '', count: verify.checked })}
+              </Badge>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={verifying}
+              onClick={() => {
+                setVerifying(true);
+                auditApi.verify().then(setVerify).catch((e) => setError(toApiError(e).message)).finally(() => setVerifying(false));
+              }}
+            >
+              <RefreshCw className={verifying ? 'animate-spin' : ''} aria-hidden="true" />
+              {t('verify')}
+            </Button>
+          </div>
         }
       />
       <div className="control-strip grid gap-3 sm:grid-cols-3">
         <div className="space-y-1">
           <Label className="text-xs font-medium">{t('filters.category')}</Label>
           <Select items={categoryOptions} value={category} onValueChange={(v) => { setCategory(v ?? ANY); setCursor(null); }}>
-            <SelectTrigger size="sm" className="w-full">
+            <SelectTrigger size="sm" className="w-full" aria-label={t('filters.category')}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -110,20 +117,21 @@ export default function AuditLogsPage() {
           </Select>
         </div>
         <div className="space-y-1 sm:col-span-2">
-          <Label htmlFor="entity" className="text-xs">
-            {t('filters.entity')}
+          <Label htmlFor="audit-search" className="text-xs">
+            {t('filters.search')}
           </Label>
           <div className="relative">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-            <input id="entity" className="h-8 w-full rounded-lg border border-input bg-transparent pl-8 pr-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50" value={entityId} onChange={(e) => { setEntityId(e.target.value); setCursor(null); }} placeholder={t('filters.entityPlaceholder')} />
+            <input id="audit-search" className="h-9 w-full rounded-lg border border-input bg-transparent pl-8 pr-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50" value={search} onChange={(e) => { setSearch(e.target.value); setCursor(null); }} placeholder={t('filters.searchPlaceholder')} />
           </div>
+          <p className="text-[0.7rem] leading-5 text-muted-foreground">{t('filters.searchScope')}</p>
         </div>
       </div>
       {error && <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</div>}
       <div className="data-panel divide-y lg:hidden">
         {loading && <p className="p-8 text-center text-sm text-muted-foreground">{t('loading')}</p>}
-        {!loading && items.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('empty')}</p>}
-        {!loading && items.map((entry) => (
+        {!loading && visibleItems.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{isLoadedPageFilter ? t('emptyPageFilter') : t('empty')}</p>}
+        {!loading && visibleItems.map((entry) => (
           <article key={entry._id} className="space-y-3 p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -148,7 +156,7 @@ export default function AuditLogsPage() {
         ))}
       </div>
       <div className="data-panel fills hidden lg:flex">
-        <Table>
+        <Table containerLabel={t('title')}>
           <TableHeader>
             <TableRow>
               <TableHead>{t('columns.timestamp')}</TableHead>
@@ -166,12 +174,12 @@ export default function AuditLogsPage() {
                 </TableCell>
               </TableRow>
             )}
-            {!loading && items.length === 0 && (
+            {!loading && visibleItems.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">{t('empty')}</TableCell>
+                <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">{isLoadedPageFilter ? t('emptyPageFilter') : t('empty')}</TableCell>
               </TableRow>
             )}
-            {!loading && items.map((e) => (
+            {!loading && visibleItems.map((e) => (
               <TableRow key={e._id}>
                 <TableCell className="whitespace-nowrap align-top">{new Date(e.createdAt).toLocaleString(locale)}</TableCell>
                 <TableCell className="align-top">
@@ -218,7 +226,7 @@ export default function AuditLogsPage() {
         </Table>
       </div>
       <div className="flex items-center justify-between gap-2 text-sm">
-        <span className="text-xs text-muted-foreground">{t('visibleCount', { count: items.length })}</span>
+        <span className="text-xs text-muted-foreground">{t('visibleCount', { count: visibleItems.length })}</span>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" disabled={cursor === null} onClick={() => setCursor(null)}>
             {t('newest')}

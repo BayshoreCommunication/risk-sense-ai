@@ -1,8 +1,19 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
-import { ChartNoAxesColumn, ChartPie, FileDown, SlidersHorizontal, Table2 } from 'lucide-react';
+import {
+  ChartNoAxesColumn,
+  ChartPie,
+  ChevronDown,
+  Clock3,
+  FileDown,
+  RefreshCw,
+  SlidersHorizontal,
+  Table2,
+  UserRound,
+  type LucideIcon,
+} from 'lucide-react';
 import { BarChart, ChartStyles, LineChart, PieChart, STATUS, StatusBars } from '@/components/analytics/Charts';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -23,350 +34,449 @@ const BY = [
   { value: 'persona', key: 'persona' },
   { value: 'scenario', key: 'scenario' },
 ];
-const TYPES: ReportType[] = ['volume', 'classification', 'override-rate', 'assessment-time'];
 
-/** One report block: chart / pie / table toggle plus CSV and PDF export (FR-28: the export is the table view). */
+const REPORT_CONFIG: {
+  type: ReportType;
+  id: string;
+  messageKey: 'volume' | 'classification' | 'override' | 'time';
+  icon: LucideIcon;
+  tone: string;
+  calloutTone: string;
+}[] = [
+  { type: 'volume', id: 'report-volume', messageKey: 'volume', icon: ChartNoAxesColumn, tone: 'bg-blue-500/10 text-blue-700', calloutTone: 'border-blue-200/70 bg-blue-50 text-blue-950/75' },
+  { type: 'classification', id: 'report-classification', messageKey: 'classification', icon: ChartPie, tone: 'bg-emerald-500/10 text-emerald-700', calloutTone: 'border-emerald-200/70 bg-emerald-50 text-emerald-950/75' },
+  { type: 'override-rate', id: 'report-override', messageKey: 'override', icon: UserRound, tone: 'bg-amber-500/10 text-amber-700', calloutTone: 'border-amber-200/70 bg-amber-50 text-amber-950/75' },
+  { type: 'assessment-time', id: 'report-time', messageKey: 'time', icon: Clock3, tone: 'bg-violet-500/10 text-violet-700', calloutTone: 'border-violet-200/70 bg-violet-50 text-violet-950/75' },
+];
+
+type Loadable<T> =
+  | { status: 'idle' | 'loading'; data: null; error: null }
+  | { status: 'ready'; data: T; error: null }
+  | { status: 'error'; data: null; error: string };
+
+const idle = <T,>(): Loadable<T> => ({ status: 'idle', data: null, error: null });
+const initialReports = () => Object.fromEntries(REPORT_CONFIG.map(({ type }) => [type, idle<ReportResult>()])) as Record<ReportType, Loadable<ReportResult>>;
+
+function ReportFilter({
+  id,
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  return (
+    <div className="space-y-1">
+      <Label htmlFor={id} className="text-xs">{label}</Label>
+      <Select items={options} value={value} onValueChange={(next) => onChange(next ?? options[0]!.value)}>
+        <SelectTrigger id={id} size="sm" className="w-full" aria-label={label}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+function ResultTable({ result, title, positiveCountsOnly = false }: { result: ReportResult; title: string; positiveCountsOnly?: boolean }) {
+  const rows = positiveCountsOnly ? result.rows.filter((row) => Number(row.count) > 0) : result.rows;
+  return (
+    <div className="overflow-hidden rounded-xl border">
+      <Table>
+        <caption className="sr-only">{title}</caption>
+        <TableHeader className="bg-muted/45">
+          <TableRow>{result.columns.map((column) => <TableHead key={column.key}>{column.label}</TableHead>)}</TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((row, index) => (
+            <TableRow key={index}>
+              {result.columns.map((column) => <TableCell key={column.key}>{fmtCell(row[column.key], column.kind)}</TableCell>)}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+/** A compact Figma report row that reveals the live chart/table workspace on demand. */
 function ReportPanel({
   id,
   type,
   title,
+  scope,
+  callout,
   description,
-  result,
+  icon: Icon,
+  tone,
+  calloutTone,
+  state,
   query,
+  expanded,
+  onToggle,
+  onRetry,
   children,
   pie,
 }: {
   id: string;
   type: ReportType;
   title: string;
+  scope: string;
+  callout: string;
   description: string;
-  result: ReportResult | null;
+  icon: LucideIcon;
+  tone: string;
+  calloutTone: string;
+  state: Loadable<ReportResult>;
   query: ReportQuery;
-  children: React.ReactNode;
-  pie?: React.ReactNode;
+  expanded: boolean;
+  onToggle: () => void;
+  onRetry: () => void;
+  children: ReactNode;
+  pie?: ReactNode;
 }) {
   const t = useTranslations('admin.analytics');
+  const commonT = useTranslations('common');
   const [view, setView] = useState<'chart' | 'pie' | 'table'>('chart');
-  const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<'csv' | 'pdf' | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const contentId = `${id}-content`;
+  const titleId = `${id}-title`;
 
   async function download(format: 'csv' | 'pdf') {
     setBusy(format);
-    setError(null);
+    setExportError(null);
     try {
       const { blob, name } = await reports.export(type, format, query);
       saveBlob(blob, name);
-    } catch (e) {
-      setError(toApiError(e).message);
+    } catch (downloadError) {
+      setExportError(toApiError(downloadError).message);
     } finally {
       setBusy(null);
     }
   }
 
   return (
-    <section id={id} className="data-panel scroll-mt-20">
-      <div className="flex flex-col gap-3 border-b px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="max-w-md">
-          <h2 className="font-heading font-semibold">{title}</h2>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">{description}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex rounded-lg bg-muted/60 p-0.5">
-            <Button size="sm" variant={view === 'chart' ? 'default' : 'ghost'} aria-pressed={view === 'chart'} onClick={() => setView('chart')}>
-              <ChartNoAxesColumn data-icon="inline-start" aria-hidden="true" />
-              {t('views.chart')}
+    <section id={id} className="data-panel scroll-mt-20" aria-labelledby={titleId}>
+      <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+        <button
+          type="button"
+          className="group flex min-w-0 flex-1 items-center gap-4 rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-labelledby={titleId}
+          aria-expanded={expanded}
+          aria-controls={contentId}
+          onClick={onToggle}
+        >
+          <span className={`grid size-14 shrink-0 place-items-center rounded-xl ${tone}`} aria-hidden="true">
+            <Icon className="size-7" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span id={titleId} role="heading" aria-level={2} className="block font-heading font-semibold">{title}</span>
+            <span className="mt-1 block text-sm text-muted-foreground">{scope}</span>
+            <span className={`mt-2 block max-w-xl rounded-md border px-2.5 py-1 text-xs ${calloutTone}`}>{callout}</span>
+          </span>
+          <ChevronDown className={`size-5 shrink-0 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} aria-hidden="true" />
+        </button>
+
+        <div className="flex shrink-0 items-center gap-2 sm:ml-auto">
+          {(['csv', 'pdf'] as const).map((format) => (
+            <Button
+              key={format}
+              size="sm"
+              variant="outline"
+              disabled={busy !== null}
+              aria-label={`${title} · ${format.toUpperCase()}`}
+              onClick={() => void download(format)}
+            >
+              <FileDown data-icon="inline-start" aria-hidden="true" />
+              {format.toUpperCase()}
             </Button>
-            {pie ? (
-              <Button size="sm" variant={view === 'pie' ? 'default' : 'ghost'} aria-pressed={view === 'pie'} onClick={() => setView('pie')}>
-                <ChartPie data-icon="inline-start" aria-hidden="true" />
-                {t('views.pie')}
+          ))}
+        </div>
+      </div>
+
+      {exportError ? <p className="mx-4 mb-4 rounded-lg border border-destructive/25 bg-destructive/5 p-2 text-sm text-destructive" role="alert">{exportError}</p> : null}
+
+      {expanded ? (
+        <div id={contentId} className="border-t p-4">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="max-w-2xl text-xs leading-5 text-muted-foreground">{description}</p>
+            <div className="inline-flex self-start rounded-lg bg-muted/60 p-0.5" role="group" aria-label={`${title} · ${t('views.tableView')}`}>
+              <Button size="sm" variant={view === 'chart' ? 'default' : 'ghost'} aria-pressed={view === 'chart'} onClick={() => setView('chart')}>
+                <ChartNoAxesColumn data-icon="inline-start" aria-hidden="true" />{t('views.chart')}
               </Button>
-            ) : null}
-            <Button size="sm" variant={view === 'table' ? 'default' : 'ghost'} aria-pressed={view === 'table'} onClick={() => setView('table')}>
-              <Table2 data-icon="inline-start" aria-hidden="true" />
-              {t('views.table')}
-            </Button>
+              {pie ? (
+                <Button size="sm" variant={view === 'pie' ? 'default' : 'ghost'} aria-pressed={view === 'pie'} onClick={() => setView('pie')}>
+                  <ChartPie data-icon="inline-start" aria-hidden="true" />{t('views.pie')}
+                </Button>
+              ) : null}
+              <Button size="sm" variant={view === 'table' ? 'default' : 'ghost'} aria-pressed={view === 'table'} onClick={() => setView('table')}>
+                <Table2 data-icon="inline-start" aria-hidden="true" />{t('views.table')}
+              </Button>
+            </div>
           </div>
-          <Button size="sm" variant="outline" disabled={busy !== null} onClick={() => void download('csv')}>
-            <FileDown data-icon="inline-start" aria-hidden="true" />
-            CSV
-          </Button>
-          <Button size="sm" variant="outline" disabled={busy !== null} onClick={() => void download('pdf')}>
-            <FileDown data-icon="inline-start" aria-hidden="true" />
-            PDF
-          </Button>
+
+          {state.status === 'idle' || state.status === 'loading' ? (
+            <p className="grid h-52 place-items-center text-sm text-muted-foreground" role="status">{t('loading')}</p>
+          ) : state.status === 'error' ? (
+            <div className="grid min-h-40 place-items-center rounded-xl border border-destructive/25 bg-destructive/5 p-5 text-center">
+              <div>
+                <p className="text-sm text-destructive" role="alert">{state.error}</p>
+                <Button className="mt-3" size="sm" variant="outline" onClick={onRetry}>
+                  <RefreshCw data-icon="inline-start" aria-hidden="true" />{commonT('retry')}
+                </Button>
+              </div>
+            </div>
+          ) : view === 'table' ? <ResultTable result={state.data!} title={title} /> : view === 'pie' && pie ? pie : children}
         </div>
-      </div>
-      <div className="p-4">
-        {error && (
-          <p className="mb-3 rounded-lg border border-destructive/25 bg-destructive/5 p-2 text-sm text-destructive" role="alert">
-            {error}
-          </p>
-        )}
-        {!result ? (
-          <p className="grid h-56 place-items-center text-sm text-muted-foreground" role="status">
-            {t('loading')}
-          </p>
-        ) : view === 'table' ? (
-          <div className="overflow-hidden rounded-xl border">
-            <Table>
-              <TableHeader className="bg-muted/45">
-                <TableRow>
-                  {result.columns.map((c) => (
-                    <TableHead key={c.key}>{c.label}</TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {result.rows.map((r, i) => (
-                  <TableRow key={i}>
-                    {result.columns.map((c) => (
-                      <TableCell key={c.key}>{fmtCell(r[c.key], c.kind)}</TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        ) : view === 'pie' && pie ? (
-          pie
-        ) : (
-          children
-        )}
-      </div>
+      ) : null}
     </section>
   );
 }
 
-/**
- * The four FR-26 standard report views with their FR-28 exports and the FR-27 trend breakdown.
- * The Figma reports frame lists the reports and their CSV/PDF exports; the chart / pie / table
- * choice is the client's comment 50. Filters scope every panel on this screen.
- */
+/** Four FR-26 report rows with live expandable views, FR-28 exports and a collapsed FR-27 trend explorer. */
 export function ReportsWorkspace() {
   const t = useTranslations('admin.analytics');
+  const standardT = useTranslations('admin.standardReports');
+  const commonT = useTranslations('common');
   const [range, setRange] = useState('12m');
   const [by, setBy] = useState<'department' | 'persona' | 'scenario'>('department');
   const [departmentId, setDepartmentId] = useState(ANY);
   const [personaKey, setPersonaKey] = useState(ANY);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [personas, setPersonas] = useState<{ key: string; name: string }[]>([]);
-  const [data, setData] = useState<Partial<Record<ReportType | 'trends', ReportResult>>>({});
-  const [error, setError] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [expandedReport, setExpandedReport] = useState<ReportType | null>(null);
+  const [reportStates, setReportStates] = useState<Record<ReportType, Loadable<ReportResult>>>(initialReports);
+  const reportGeneration = useRef(0);
+  const [trendsOpen, setTrendsOpen] = useState(false);
   const [trendView, setTrendView] = useState<'chart' | 'table'>('chart');
+  const [trendState, setTrendState] = useState<Loadable<ReportResult>>(idle);
+  const trendGeneration = useRef(0);
 
   const query = useMemo<ReportQuery>(() => {
-    const r = RANGES.find((x) => x.value === range) ?? RANGES[2]!;
+    const selectedRange = RANGES.find((option) => option.value === range) ?? RANGES[2]!;
     const to = new Date();
-    const from = new Date(to.getTime() - r.days * 86400e3);
+    const from = new Date(to.getTime() - selectedRange.days * 86400e3);
     return {
       from: from.toISOString(),
       to: to.toISOString(),
-      interval: r.interval,
+      interval: selectedRange.interval,
       ...(departmentId !== ANY ? { departmentId } : {}),
       ...(personaKey !== ANY ? { personaKey } : {}),
     };
   }, [range, departmentId, personaKey]);
 
   useEffect(() => {
-    assessments.departments().then(setDepartments).catch(() => setDepartments([]));
-    assessments.personas().then(setPersonas).catch(() => setPersonas([]));
+    void Promise.all([assessments.departments(), assessments.personas()])
+      .then(([nextDepartments, nextPersonas]) => {
+        setDepartments(nextDepartments);
+        setPersonas(nextPersonas);
+      })
+      .catch(() => {
+        setDepartments([]);
+        setPersonas([]);
+      });
   }, []);
 
-  const load = useCallback(() => {
-    setData({});
-    setError(null);
-    for (const type of TYPES) {
-      reports
-        .get(type, query)
-        .then((r) => setData((d) => ({ ...d, [type]: r })))
-        .catch((e) => setError(toApiError(e).message));
-    }
-    reports
-      .trends({ ...query, by })
-      .then((r) => setData((d) => ({ ...d, trends: r })))
-      .catch((e) => setError(toApiError(e).message));
-  }, [query, by]);
-  useEffect(() => load(), [load]);
+  useEffect(() => {
+    reportGeneration.current += 1;
+    setReportStates(initialReports());
+  }, [query]);
 
-  const vol = data.volume;
-  const cls = data.classification;
-  const ovr = data['override-rate'];
-  const tim = data['assessment-time'];
-  const trends = data.trends;
+  useEffect(() => {
+    trendGeneration.current += 1;
+    setTrendState(idle());
+  }, [query, by]);
+
+  const loadReport = useCallback(async (type: ReportType) => {
+    const generation = reportGeneration.current;
+    setReportStates((current) => ({ ...current, [type]: { status: 'loading', data: null, error: null } }));
+    try {
+      const result = await reports.get(type, query);
+      if (generation !== reportGeneration.current) return;
+      setReportStates((current) => ({ ...current, [type]: { status: 'ready', data: result, error: null } }));
+    } catch (loadError) {
+      if (generation !== reportGeneration.current) return;
+      setReportStates((current) => ({ ...current, [type]: { status: 'error', data: null, error: toApiError(loadError).message } }));
+    }
+  }, [query]);
+
+  useEffect(() => {
+    if (expandedReport && reportStates[expandedReport].status === 'idle') void loadReport(expandedReport);
+  }, [expandedReport, loadReport, reportStates]);
+
+  const loadTrends = useCallback(async () => {
+    const generation = trendGeneration.current;
+    setTrendState({ status: 'loading', data: null, error: null });
+    try {
+      const result = await reports.trends({ ...query, by });
+      if (generation !== trendGeneration.current) return;
+      setTrendState({ status: 'ready', data: result, error: null });
+    } catch (loadError) {
+      if (generation !== trendGeneration.current) return;
+      setTrendState({ status: 'error', data: null, error: toApiError(loadError).message });
+    }
+  }, [by, query]);
+
+  useEffect(() => {
+    if (trendsOpen && trendState.status === 'idle') void loadTrends();
+  }, [loadTrends, trendState.status, trendsOpen]);
 
   const trendSeries = useMemo(() => {
-    if (!trends) return { periods: [] as string[], series: [] as { name: string; values: (number | null)[] }[] };
-    const names = String(trends.summary.series ?? '').split('|').filter(Boolean);
-    const periods = [...new Set(trends.rows.map((r) => String(r.period)))];
+    if (trendState.status !== 'ready') return { periods: [] as string[], series: [] as { name: string; values: (number | null)[] }[] };
+    const names = String(trendState.data.summary.series ?? '').split('|').filter(Boolean);
+    const periods = [...new Set(trendState.data.rows.map((row) => String(row.period)))];
     return {
       periods,
       series: names.map((name) => ({
         name,
-        values: periods.map((p) => {
-          const row = trends.rows.find((r) => r.period === p && r.group === name);
+        values: periods.map((period) => {
+          const row = trendState.data.rows.find((candidate) => candidate.period === period && candidate.group === name);
           return row ? Number(row.count) : 0;
         }),
       })),
     };
-  }, [trends]);
+  }, [trendState]);
 
-  const rangeOptions = RANGES.map((option) => ({ ...option, label: t(`ranges.${option.key}`) }));
-  const byOptions = BY.map((option) => ({ ...option, label: t(`groups.${option.key}`) }));
-  const departmentOptions = [{ value: ANY, label: t('filters.allDepartments') }, ...departments.map((d) => ({ value: d._id, label: d.name }))];
-  const personaOptions = [{ value: ANY, label: t('filters.allPersonas') }, ...personas.map((p) => ({ value: p.key, label: p.name }))];
+  const rangeOptions = RANGES.map((option) => ({ value: option.value, label: t(`ranges.${option.key}`) }));
+  const byOptions = BY.map((option) => ({ value: option.value, label: t(`groups.${option.key}`) }));
+  const departmentOptions = [{ value: ANY, label: t('filters.allDepartments') }, ...departments.map((department) => ({ value: department._id, label: department.name }))];
+  const personaOptions = [{ value: ANY, label: t('filters.allPersonas') }, ...personas.map((persona) => ({ value: persona.key, label: persona.name }))];
 
-  const filter = (label: string, options: { value: string; label: string }[], value: string, onChange: (next: string) => void) => (
-    <div className="space-y-1">
-      <Label className="text-xs">{label}</Label>
-      <Select items={options} value={value} onValueChange={(v) => onChange(v ?? options[0]!.value)}>
-        <SelectTrigger size="sm" className="w-full">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((o) => (
-            <SelectItem key={o.value} value={o.value}>
-              {o.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
+  const reportResult = (type: ReportType) => reportStates[type].status === 'ready' ? reportStates[type].data : null;
+  const volume = reportResult('volume');
+  const classification = reportResult('classification');
+  const overrideRate = reportResult('override-rate');
+  const assessmentTime = reportResult('assessment-time');
+
+  const visualization = (type: ReportType) => {
+    if (type === 'volume' && volume) {
+      return <BarChart title={t('reports.volume.chartTitle')} data={volume.rows.map((row) => ({ label: String(row.period), value: Number(row.started) }))} />;
+    }
+    if (type === 'classification' && classification) {
+      return (
+        <>
+          <StatusBars rows={classification.rows.map((row) => ({ key: String(row.classification), count: Number(row.count), share: row.share === null ? null : Number(row.share) }))} />
+          <p className="mt-2 text-xs text-muted-foreground">
+            {Object.entries(STATUS).map(([key, value]) => `${value.icon} ${t(`classifications.${key}`)}`).join(' · ')} — {t('reports.classification.ordered')}
+          </p>
+        </>
+      );
+    }
+    if (type === 'override-rate' && overrideRate) {
+      return <LineChart title={t('reports.override.chartTitle')} periods={overrideRate.rows.map((row) => String(row.period))} series={[{ name: t('reports.override.series'), values: overrideRate.rows.map((row) => row.overrideRate === null ? null : Number(row.overrideRate)) }]} format={(value) => `${value}%`} />;
+    }
+    if (type === 'assessment-time' && assessmentTime) {
+      return <LineChart title={t('reports.time.chartTitle')} periods={assessmentTime.rows.map((row) => String(row.period))} series={[{ name: t('reports.time.median'), values: assessmentTime.rows.map((row) => row.medianTotalSec === null ? null : Number(row.medianTotalSec) / 60) }, { name: 'p95', values: assessmentTime.rows.map((row) => row.p95TotalSec === null ? null : Number(row.p95TotalSec) / 60) }]} format={(value) => t('minutesShort', { value: Math.round(value) })} />;
+    }
+    return null;
+  };
+
+  const classificationPie = classification ? (
+    <PieChart
+      title={t('reports.classification.pieTitle')}
+      totalLabel={t('total')}
+      rows={classification.rows.map((row) => ({ key: String(row.classification), label: t(`classifications.${String(row.classification)}`), value: Number(row.count) }))}
+    />
+  ) : null;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <ChartStyles />
+
       <section className="control-strip">
-        <div className="mb-3 flex items-center gap-2 text-sm font-medium">
+        <button
+          type="button"
+          className="flex w-full items-center gap-2 rounded-lg text-left text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-expanded={filtersOpen}
+          aria-controls="report-filters"
+          onClick={() => setFiltersOpen((open) => !open)}
+        >
           <SlidersHorizontal className="size-4 text-primary" aria-hidden="true" />
-          <span>{t('filters.period')}</span>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {filter(t('filters.period'), rangeOptions, range, setRange)}
-          {filter(t('filters.department'), departmentOptions, departmentId, setDepartmentId)}
-          {filter(t('filters.persona'), personaOptions, personaKey, setPersonaKey)}
-          {filter(t('filters.trendsBy'), byOptions, by, (v) => setBy(v as typeof by))}
-        </div>
+          <span className="flex-1">{t('filters.period')}</span>
+          <span className="text-xs font-normal text-muted-foreground">{rangeOptions.find((option) => option.value === range)?.label}</span>
+          <ChevronDown className={`size-4 text-muted-foreground transition-transform ${filtersOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+        </button>
+        {filtersOpen ? (
+          <div id="report-filters" className="mt-4 grid gap-3 border-t pt-4 sm:grid-cols-2 lg:grid-cols-4">
+            <ReportFilter id="report-range" label={t('filters.period')} options={rangeOptions} value={range} onChange={setRange} />
+            <ReportFilter id="report-department" label={t('filters.department')} options={departmentOptions} value={departmentId} onChange={setDepartmentId} />
+            <ReportFilter id="report-persona" label={t('filters.persona')} options={personaOptions} value={personaKey} onChange={setPersonaKey} />
+            <ReportFilter id="report-trends-by" label={t('filters.trendsBy')} options={byOptions} value={by} onChange={(next) => setBy(next as typeof by)} />
+          </div>
+        ) : null}
       </section>
 
-      {error && (
-        <p className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">
-          {error}
-        </p>
-      )}
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <ReportPanel id="report-volume" type="volume" title={t('reports.volume.title')} description={t('reports.volume.description')} result={vol ?? null} query={query}>
-          {vol && <BarChart title={t('reports.volume.chartTitle')} data={vol.rows.map((r) => ({ label: String(r.period), value: Number(r.started) }))} />}
-        </ReportPanel>
-        <ReportPanel
-          id="report-classification"
-          type="classification"
-          title={t('reports.classification.title')}
-          description={t('reports.classification.description')}
-          result={cls ?? null}
-          query={query}
-          pie={
-            cls ? (
-              <PieChart
-                title={t('reports.classification.pieTitle')}
-                totalLabel={t('total')}
-                rows={cls.rows.map((r) => ({ key: String(r.classification), label: t(`classifications.${String(r.classification)}`), value: Number(r.count) }))}
-              />
-            ) : null
-          }
-        >
-          {cls && <StatusBars rows={cls.rows.map((r) => ({ key: String(r.classification), count: Number(r.count), share: r.share === null ? null : Number(r.share) }))} />}
-          {cls && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              {Object.entries(STATUS)
-                .map(([key, value]) => `${value.icon} ${t(`classifications.${key}`)}`)
-                .join(' · ')}{' '}
-              — {t('reports.classification.ordered')}
-            </p>
-          )}
-        </ReportPanel>
-        <ReportPanel id="report-override" type="override-rate" title={t('reports.override.title')} description={t('reports.override.description')} result={ovr ?? null} query={query}>
-          {ovr && (
-            <LineChart
-              title={t('reports.override.chartTitle')}
-              periods={ovr.rows.map((r) => String(r.period))}
-              series={[{ name: t('reports.override.series'), values: ovr.rows.map((r) => (r.overrideRate === null ? null : Number(r.overrideRate))) }]}
-              format={(v) => `${v}%`}
-            />
-          )}
-        </ReportPanel>
-        <ReportPanel id="report-time" type="assessment-time" title={t('reports.time.title')} description={t('reports.time.description')} result={tim ?? null} query={query}>
-          {tim && (
-            <LineChart
-              title={t('reports.time.chartTitle')}
-              periods={tim.rows.map((r) => String(r.period))}
-              series={[
-                { name: t('reports.time.median'), values: tim.rows.map((r) => (r.medianTotalSec === null ? null : Number(r.medianTotalSec) / 60)) },
-                { name: 'p95', values: tim.rows.map((r) => (r.p95TotalSec === null ? null : Number(r.p95TotalSec) / 60)) },
-              ]}
-              format={(v) => t('minutesShort', { value: Math.round(v) })}
-            />
-          )}
-        </ReportPanel>
+      <div className="space-y-3" aria-label={standardT('listLabel')}>
+        {REPORT_CONFIG.map((config) => {
+          const title = standardT(`reports.${config.messageKey}.title`);
+          return (
+            <ReportPanel
+              key={config.type}
+              {...config}
+              title={title}
+              scope={standardT(`reports.${config.messageKey}.scope`)}
+              callout={standardT(`reports.${config.messageKey}.description`)}
+              description={t(`reports.${config.messageKey}.description`)}
+              state={reportStates[config.type]}
+              query={query}
+              expanded={expandedReport === config.type}
+              onToggle={() => setExpandedReport((current) => current === config.type ? null : config.type)}
+              onRetry={() => void loadReport(config.type)}
+              pie={config.type === 'classification' ? classificationPie : undefined}
+            >
+              {visualization(config.type)}
+            </ReportPanel>
+          );
+        })}
       </div>
 
-      <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
-        <div className="flex flex-col gap-3 border-b px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="font-heading font-semibold">{t('trends.title', { group: t(`groups.${by}`) })}</h2>
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('trends.description', { group: t(`groups.${by}`).toLocaleLowerCase() })}</p>
+      <section className="data-panel">
+        <button
+          type="button"
+          className="flex w-full items-center gap-3 p-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          aria-expanded={trendsOpen}
+          aria-controls="report-trends-content"
+          onClick={() => setTrendsOpen((open) => !open)}
+        >
+          <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary" aria-hidden="true"><ChartNoAxesColumn className="size-5" /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-heading font-semibold">{t('trends.title', { group: t(`groups.${by}`) })}</span>
+            <span className="mt-1 block text-xs text-muted-foreground">{t('trends.description', { group: t(`groups.${by}`).toLocaleLowerCase() })}</span>
+          </span>
+          <ChevronDown className={`size-5 text-muted-foreground transition-transform ${trendsOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+        </button>
+
+        {trendsOpen ? (
+          <div id="report-trends-content" className="border-t p-4">
+            <div className="mb-4 inline-flex rounded-lg bg-muted/60 p-0.5" role="group" aria-label={t('views.tableView')}>
+              <Button size="sm" variant={trendView === 'chart' ? 'default' : 'ghost'} aria-pressed={trendView === 'chart'} onClick={() => setTrendView('chart')}><ChartNoAxesColumn data-icon="inline-start" aria-hidden="true" />{t('views.chart')}</Button>
+              <Button size="sm" variant={trendView === 'table' ? 'default' : 'ghost'} aria-pressed={trendView === 'table'} onClick={() => setTrendView('table')}><Table2 data-icon="inline-start" aria-hidden="true" />{t('views.table')}</Button>
+            </div>
+
+            {trendState.status === 'idle' || trendState.status === 'loading' ? (
+              <p className="grid h-52 place-items-center text-sm text-muted-foreground" role="status">{t('loading')}</p>
+            ) : trendState.status === 'error' ? (
+              <div className="grid min-h-40 place-items-center rounded-xl border border-destructive/25 bg-destructive/5 p-5 text-center">
+                <div><p className="text-sm text-destructive" role="alert">{trendState.error}</p><Button className="mt-3" size="sm" variant="outline" onClick={() => void loadTrends()}><RefreshCw data-icon="inline-start" aria-hidden="true" />{commonT('retry')}</Button></div>
+              </div>
+            ) : trendSeries.series.length === 0 ? (
+              <p className="grid h-52 place-items-center text-sm text-muted-foreground" role="status">{t('trends.empty')}</p>
+            ) : trendView === 'chart' ? (
+              <LineChart title={t('trends.chartTitle', { group: t(`groups.${by}`).toLocaleLowerCase() })} periods={trendSeries.periods} series={trendSeries.series} />
+            ) : <ResultTable result={trendState.data!} title={t('trends.title', { group: t(`groups.${by}`) })} positiveCountsOnly />}
           </div>
-          <div className="inline-flex self-start rounded-lg bg-muted/60 p-0.5">
-            <Button size="sm" variant={trendView === 'chart' ? 'default' : 'ghost'} aria-pressed={trendView === 'chart'} onClick={() => setTrendView('chart')}>
-              <ChartNoAxesColumn data-icon="inline-start" aria-hidden="true" />
-              {t('views.chart')}
-            </Button>
-            <Button size="sm" variant={trendView === 'table' ? 'default' : 'ghost'} aria-pressed={trendView === 'table'} onClick={() => setTrendView('table')}>
-              <Table2 data-icon="inline-start" aria-hidden="true" />
-              {t('views.table')}
-            </Button>
-          </div>
-        </div>
-        <div className="p-4">
-          {trends ? (
-            trendSeries.series.length ? (
-              trendView === 'chart' ? (
-                <LineChart title={t('trends.chartTitle', { group: t(`groups.${by}`).toLocaleLowerCase() })} periods={trendSeries.periods} series={trendSeries.series} />
-              ) : (
-                <div className="overflow-hidden rounded-xl border">
-                  <Table>
-                    <TableHeader className="bg-muted/45">
-                      <TableRow>
-                        {trends.columns.map((c) => (
-                          <TableHead key={c.key}>{c.label}</TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {trends.rows
-                        .filter((r) => Number(r.count) > 0)
-                        .map((r, i) => (
-                          <TableRow key={i}>
-                            {trends.columns.map((c) => (
-                              <TableCell key={c.key}>{fmtCell(r[c.key], c.kind)}</TableCell>
-                            ))}
-                          </TableRow>
-                        ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )
-            ) : (
-              <p className="grid h-56 place-items-center text-sm text-muted-foreground">{t('trends.empty')}</p>
-            )
-          ) : (
-            <p className="grid h-56 place-items-center text-sm text-muted-foreground" role="status">
-              {t('loading')}
-            </p>
-          )}
-        </div>
+        ) : null}
       </section>
     </div>
   );

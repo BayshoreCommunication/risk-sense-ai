@@ -3,12 +3,13 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Suspense, useState } from 'react';
-import { ArrowRight, CheckCircle2, Fingerprint, KeyRound, LockKeyhole, ShieldCheck } from 'lucide-react';
+import { ArrowRight, BarChart3, CheckCircle2, LockKeyhole, ShieldCheck, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { LanguageSwitcher } from '@/components/shell/LanguageSwitcher';
 import { api, toApiError } from '@/lib/api/client';
 import { DEV_AUTH_ENABLED } from '@/lib/environment';
 import {
@@ -21,7 +22,7 @@ import {
   signInWithSso,
   signUpWithPassword,
 } from '@/lib/firebase/client';
-import { ROLE_HOME, isRole, storeSession } from '@/lib/session';
+import { isRole, safeNextForRole, storeSession } from '@/lib/session';
 
 const DEV_ACCOUNTS = [
   { email: 'requestor@dev.local', labelKey: 'devAccounts.requestorFree' },
@@ -33,6 +34,10 @@ const DEV_ACCOUNTS = [
 
 type Step = 'credentials' | 'otp';
 type Mode = 'signin' | 'signup';
+type LoginNotice =
+  | { key: 'ssoNone' }
+  | { key: 'ssoRedirect'; tenant: string }
+  | { key: 'verificationEmailSent' | 'verificationResent' | 'verificationAlreadyComplete' | 'resetSent'; email: string };
 
 function LoginForm() {
   const t = useTranslations('login');
@@ -49,13 +54,22 @@ function LoginForm() {
   const [otpInfo, setOtpInfo] = useState<{ sentTo: string; expiresAt: string; devCode?: string } | null>(null);
   const [devEmail, setDevEmail] = useState('requestor@dev.local');
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(() => {
-    const reason = params.get('reason');
-    if (reason === 'session_expired') return t('sessionExpired');
-    if (reason === 'session_invalid') return t('sessionInvalid');
-    return null;
-  });
+  const [notice, setNotice] = useState<LoginNotice | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const routeNotice = params.get('reason') === 'session_expired'
+    ? t('sessionExpired')
+    : params.get('reason') === 'session_invalid'
+      ? t('sessionInvalid')
+      : null;
+  const actionNotice = notice?.key === 'ssoNone'
+    ? t('ssoNone')
+    : notice?.key === 'ssoRedirect'
+      ? t('ssoRedirect', { tenant: notice.tenant })
+      : notice
+        ? t(notice.key, { email: notice.email })
+        : null;
+  const visibleNotice = actionNotice ?? routeNotice;
 
   async function run(fn: () => Promise<void>, { signOutOnError = false } = {}) {
     setBusy(true);
@@ -78,8 +92,7 @@ function LoginForm() {
     const { sessionId, user } = res.data.data;
     if (!isRole(user.role)) throw new Error(t('unknownRole'));
     storeSession({ sessionId, role: user.role, devUser });
-    const next = params.get('next');
-    router.replace(next && next !== '/' ? next : ROLE_HOME[user.role]);
+    router.replace(safeNextForRole(params.get('next'), user.role));
   }
 
   /** After the first factor succeeded: ask the backend to email the code and move to the OTP step (FR-01). */
@@ -124,10 +137,10 @@ function LoginForm() {
         if (!lookup.data) throw toApiError((lookup as { error?: unknown }).error);
         const { providerId, tenant } = lookup.data.data;
         if (!providerId) {
-          setNotice(t('ssoNone'));
+          setNotice({ key: 'ssoNone' });
           return;
         }
-        setNotice(t('ssoRedirect', { tenant: tenant ?? '' }));
+        setNotice({ key: 'ssoRedirect', tenant: tenant ?? '' });
         await signInWithSso(providerId, email.trim());
         await exchangeOrRequestOtp();
       },
@@ -135,17 +148,17 @@ function LoginForm() {
     );
 
   return (
-    <Card className="w-full max-w-[34rem] border-border bg-card shadow-[0_24px_70px_rgba(15,35,65,0.10)]">
-      <CardHeader className="border-b pb-5">
-        <div className="mb-2 flex items-center justify-between gap-3">
-          <div className="flex size-10 items-center justify-center rounded-lg border border-primary/15 bg-primary/6 text-primary">
-            {step === 'otp' ? <KeyRound className="size-5" /> : <Fingerprint className="size-5" />}
+    <Card className="w-full max-w-[38rem] gap-0 border-0 bg-transparent py-0 shadow-none">
+      <CardHeader className="px-0 pb-8">
+        <div className="mb-7 flex items-center justify-between gap-3">
+          <div className="flex size-16 items-center justify-center rounded-xl bg-[#2864ef] text-2xl font-bold text-white shadow-[0_10px_30px_rgba(40,100,239,0.3)]">
+            R
           </div>
-          <Badge variant="outline" className="bg-background/80">
+          <Badge variant="outline" className="rounded-full bg-background/80 px-3 py-1.5">
             {step === 'otp' ? t('steps.verify') : t('steps.identity')}
           </Badge>
         </div>
-        <CardTitle className="text-2xl sm:text-3xl">{t('title')}</CardTitle>
+        <CardTitle className="text-3xl tracking-[-0.035em] sm:text-4xl">{t('title')}</CardTitle>
         <CardDescription className="max-w-md leading-6">
           {step === 'otp'
             ? t('otpPrompt', { email: otpInfo?.sentTo ?? t('yourAddress') })
@@ -158,7 +171,7 @@ function LoginForm() {
                 : t('authNotConfigured')}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-5 pt-1">
+      <CardContent className="space-y-6 px-0 pb-0 pt-0">
         {hasFirebase && step === 'credentials' && (
           <div className="space-y-4">
             <form
@@ -174,7 +187,7 @@ function LoginForm() {
                       await signUpWithPassword(normalizedEmail, password, name);
                       setMode('signin');
                       setPassword('');
-                      setNotice(t('verificationEmailSent', { email: normalizedEmail }));
+                      setNotice({ key: 'verificationEmailSent', email: normalizedEmail });
                     },
                     { signOutOnError: true },
                   );
@@ -219,7 +232,7 @@ function LoginForm() {
                     onClick={() =>
                       void run(async () => {
                         await sendPasswordReset(email.trim());
-                        setNotice(t('resetSent', { email: email.trim() }));
+                        setNotice({ key: 'resetSent', email: email.trim() });
                       })
                     }
                   >
@@ -239,11 +252,10 @@ function LoginForm() {
                       void run(async () => {
                         const normalizedEmail = email.trim();
                         const result = await resendPasswordVerification(normalizedEmail, password);
-                        setNotice(
-                          result === 'already-verified'
-                            ? t('verificationAlreadyComplete', { email: normalizedEmail })
-                            : t('verificationResent', { email: normalizedEmail }),
-                        );
+                        setNotice({
+                          key: result === 'already-verified' ? 'verificationAlreadyComplete' : 'verificationResent',
+                          email: normalizedEmail,
+                        });
                       })
                     }
                   >
@@ -252,30 +264,6 @@ function LoginForm() {
                 </p>
               )}
             </form>
-            {mode === 'signin' && (
-              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-primary">Live Demo Accounts</span>
-                  <span className="text-[0.68rem] text-muted-foreground">{DEMO_PASSWORD ? 'Click to fill' : 'Click to fill the address'}</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {DEMO_ACCOUNTS.map((account) => (
-                    <button
-                      key={account.email}
-                      type="button"
-                      className="flex flex-col items-center justify-center rounded-md border border-border bg-background p-2 text-center text-xs transition hover:border-primary hover:bg-muted/50 cursor-pointer"
-                      onClick={() => {
-                        setEmail(account.email);
-                        setPassword(DEMO_PASSWORD);
-                      }}
-                    >
-                      <span className="font-semibold text-foreground">{account.label}</span>
-                      <span className="text-[0.65rem] text-muted-foreground">{account.hint}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
             <div className="flex items-center gap-3 text-center text-[0.68rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
               <span className="h-px flex-1 bg-border" />
               {t('or')}
@@ -302,17 +290,31 @@ function LoginForm() {
           >
             <div className="space-y-1">
               <Label htmlFor="otp">{t('code')}</Label>
-              <Input
-                id="otp"
-                inputMode="numeric"
-                pattern="\d{6}"
-                maxLength={6}
-                required
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                autoComplete="one-time-code"
-                autoFocus
-              />
+              <div className="relative grid grid-cols-6 gap-2 rounded-xl outline-none focus-within:ring-3 focus-within:ring-ring/35">
+                <Input
+                  id="otp"
+                  inputMode="numeric"
+                  pattern="\d{6}"
+                  maxLength={6}
+                  required
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  autoComplete="one-time-code"
+                  autoFocus
+                  className="absolute inset-0 z-10 h-full w-full cursor-text opacity-0"
+                />
+                {Array.from({ length: 6 }, (_, index) => (
+                  <span
+                    key={index}
+                    aria-hidden="true"
+                    className={`grid aspect-square min-w-0 place-items-center rounded-xl border bg-background font-mono text-xl font-semibold shadow-sm transition ${
+                      otp.length === index ? 'border-primary ring-2 ring-primary/12' : 'border-input'
+                    }`}
+                  >
+                    {otp[index] ?? ''}
+                  </span>
+                ))}
+              </div>
               {DEV_AUTH_ENABLED && otpInfo?.devCode && (
                 <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5 text-xs">
                   <span className="font-medium text-foreground">{t('devCode')}</span>
@@ -388,27 +390,25 @@ function LoginForm() {
         )}
 
         {!DEV_AUTH_ENABLED && !hasFirebase && <p className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">{t('authNotConfigured')}</p>}
-        {notice && (
+        {visibleNotice && (
           <p role="status" className="flex items-start gap-2 rounded-lg border border-primary/15 bg-primary/5 p-3 text-sm text-foreground">
             <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
-            {notice}
+            {visibleNotice}
           </p>
         )}
         {error && <p role="alert" className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">{error}</p>}
-        <div className="space-y-3 border-t pt-4">
-          <div className="grid gap-2 sm:grid-cols-2" aria-label={t('planPolicyLabel')}>
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3">
-              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800"><Badge variant="outline" className="border-emerald-300 bg-white/70 text-[0.6rem] text-emerald-800">FREE</Badge>{t('plans.freeTitle')}</div>
-              <p className="mt-1.5 text-xs leading-5 text-emerald-900/72">{t('plans.freeDescription')}</p>
-            </div>
-            <div className="rounded-lg border border-blue-200 bg-blue-50/65 p-3">
-              <div className="flex items-center gap-2 text-xs font-semibold text-blue-900"><Badge variant="outline" className="border-blue-300 bg-white/70 text-[0.6rem] text-blue-900">PAID</Badge>{t('plans.paidTitle')}</div>
-              <p className="mt-1.5 text-xs leading-5 text-blue-950/72">{t('plans.paidDescription')}</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-2 text-xs leading-5 text-muted-foreground">
-            <LockKeyhole className="mt-0.5 size-3.5 shrink-0 text-primary" />
+        <div className="space-y-4 border-t pt-5">
+          <div className="flex items-start gap-3 rounded-xl border border-primary/15 bg-primary/[0.035] p-4 text-xs leading-5 text-muted-foreground">
+            <LockKeyhole className="mt-0.5 size-4 shrink-0 text-primary" />
             <span>{t('recoveryNote')}</span>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex gap-4 text-xs font-medium text-muted-foreground">
+              <span>{t('footer.help')}</span>
+              <span>{t('footer.privacy')}</span>
+              <span>{t('footer.terms')}</span>
+            </div>
+            <LanguageSwitcher compact />
           </div>
         </div>
       </CardContent>
@@ -416,30 +416,13 @@ function LoginForm() {
   );
 }
 
-/**
- * The shared sign-in for the public demo tenant. The password is read from the environment rather than
- * written here, so it can be rotated without a release and is not carried in the repository. It is a
- * NEXT_PUBLIC_ value, so it is inlined into the client bundle and readable by any visitor — that is
- * inherent to a one-click public demo and is why these accounts are seeded, throwaway and tenant-scoped,
- * never a real operator's credentials. With the variable unset the buttons still fill the address and
- * leave the password to be typed, so a deployment without it degrades instead of offering a wrong value.
- */
-const DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_PASSWORD ?? '';
-
-const DEMO_ACCOUNTS = [
-  { email: 'admin@dev.local', label: 'Administrator', hint: 'TAC (/admin)' },
-  { email: 'sysadmin@dev.local', label: 'System Admin', hint: 'Bayshore (/system)' },
-  { email: 'audit@dev.local', label: 'Auditor', hint: 'TAC (/audit)' },
-  { email: 'requestor@tac.local', label: 'Requestor', hint: 'TAC (/chat)' },
-] as const;
-
 export default function LoginPage() {
   const t = useTranslations('login');
   return (
-    <main className="min-h-screen bg-background">
-      <div className="mx-auto grid min-h-screen max-w-[1540px] lg:grid-cols-[minmax(32rem,1.03fr)_minmax(30rem,0.97fr)]">
-        <section className="relative flex min-h-screen items-center justify-center px-4 py-8 sm:px-8 lg:px-12 xl:px-16">
-          <div aria-hidden="true" className="subtle-grid absolute inset-0 opacity-30" />
+    <main className="flex min-h-screen items-center justify-center overflow-hidden bg-[#f5f8ff] p-0 lg:p-8">
+      <div className="grid min-h-screen w-full overflow-hidden bg-card lg:min-h-[min(900px,calc(100vh-4rem))] lg:max-w-[1320px] lg:grid-cols-[minmax(36rem,1.16fr)_minmax(29rem,0.84fr)] lg:rounded-[2rem] lg:border lg:shadow-[0_35px_100px_rgba(26,56,110,0.15)]">
+        <section className="relative flex min-h-screen items-center justify-center px-5 py-10 sm:px-10 lg:min-h-0 lg:px-16 xl:px-20">
+          <div aria-hidden="true" className="subtle-grid absolute inset-0 opacity-20" />
           <div className="relative w-full">
             <Suspense>
               <LoginForm />
@@ -447,32 +430,36 @@ export default function LoginPage() {
           </div>
         </section>
 
-        <section className="relative hidden overflow-hidden border-l border-white/10 bg-[linear-gradient(160deg,#2a6ee4_0%,#1546a8_100%)] px-10 py-12 text-white lg:flex lg:flex-col lg:justify-between xl:px-14 xl:py-14">
-          <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#38a0ff] to-transparent" />
-          <div aria-hidden="true" className="absolute -right-28 top-24 size-80 rounded-full bg-white/10 blur-3xl" />
+        <section className="relative hidden overflow-hidden bg-[linear-gradient(145deg,#2864ef_0%,#1748c8_100%)] px-12 py-14 text-white lg:flex lg:flex-col lg:justify-between">
+          <div aria-hidden="true" className="absolute -right-24 -top-16 size-80 rounded-full border border-white/10" />
           <div className="relative flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-lg bg-[#1674df] text-xs font-bold text-white">R</div>
-            <div className="font-semibold">{t('title')}</div>
+            <div className="flex size-10 items-center justify-center rounded-lg bg-white/15 text-sm font-bold text-white ring-1 ring-white/20">R</div>
+            <div className="text-lg font-semibold">{t('title')}</div>
           </div>
 
-          <div className="relative max-w-xl space-y-8 py-12">
-            <div className="space-y-4">
-              <div className="text-[0.68rem] font-semibold tracking-[0.17em] text-white/70 uppercase">{t('eyebrow')}</div>
-              <h1 className="max-w-lg text-4xl leading-[1.08] font-semibold tracking-[-0.045em] xl:text-[2.9rem]">{t('heroTitle')}</h1>
-              <p className="max-w-lg text-sm leading-6 text-white/75 xl:text-base xl:leading-7">{t('heroDescription')}</p>
+          <div className="relative flex flex-col items-center text-center">
+            <div className="grid size-52 place-items-center rounded-full border border-white/20 bg-white/[0.06] shadow-[0_0_80px_rgba(255,255,255,0.12)]">
+              <ShieldCheck aria-hidden="true" className="size-28 stroke-[1.25] text-white" />
             </div>
-            <div className="divide-y divide-white/10 border-y border-white/10">
-              {(['guided', 'deterministic', 'auditable'] as const).map((key, index) => (
-                <div key={key} className="flex items-center gap-4 py-3.5 text-sm text-white/80">
-                  <span className="font-mono text-[0.65rem] text-white/70">0{index + 1}</span>
-                  <span className="flex-1">{t(`assurance.${key}`)}</span>
-                  <CheckCircle2 className="size-4 text-white/80" aria-hidden="true" />
+            <h1 className="mt-10 text-[2rem] font-semibold tracking-[-0.04em]">{t('heroTitle')}</h1>
+            <p className="mt-3 max-w-sm text-sm leading-7 text-white/78">{t('heroDescription')}</p>
+          </div>
+
+          <div className="relative space-y-5">
+            {([
+              ['guided', LockKeyhole],
+              ['deterministic', Sparkles],
+              ['auditable', BarChart3],
+            ] as const).map(([key, Icon]) => (
+              <div key={key} className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-4">
+                <span className="grid size-12 place-items-center rounded-xl bg-white/12 ring-1 ring-white/10"><Icon aria-hidden="true" className="size-5" /></span>
+                <div>
+                  <p className="text-sm font-semibold">{t(`assurance.${key}`)}</p>
+                  <p className="mt-1 text-xs leading-5 text-white/65">{t(`assuranceDetails.${key}`)}</p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-
-          <p className="relative max-w-lg text-xs leading-5 text-white/70">{t('governanceNote')}</p>
         </section>
       </div>
     </main>

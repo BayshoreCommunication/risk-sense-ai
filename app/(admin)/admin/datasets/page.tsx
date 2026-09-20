@@ -28,6 +28,14 @@ const STATUS_VARIANT: Record<Dataset['status'], 'default' | 'secondary' | 'outli
   failed: 'destructive',
 };
 
+const STATUS_CLASS: Record<Dataset['status'], string> = {
+  active: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  approved: 'border-sky-200 bg-sky-50 text-sky-700',
+  validated: 'border-amber-200 bg-amber-50 text-amber-700',
+  rejected: 'border-red-200 bg-red-50 text-red-700',
+  failed: 'border-red-200 bg-red-50 text-red-700',
+};
+
 const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
 
 /** Raw fetch for the two calls the typed client cannot express well: multipart upload and binary download. */
@@ -176,7 +184,7 @@ export default function DatasetsPage() {
       />
 
       {/* Counter strip with an icon per state, as docs/design/figma-frames/16-admin-training-datasets.png. */}
-      <section className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2 xl:grid-cols-5" aria-label={t('summary.label')}>
+      <section className="grid gap-px overflow-hidden rounded-xl border bg-border shadow-[0_4px_16px_rgba(15,35,65,0.04)] sm:grid-cols-2 xl:grid-cols-5" aria-label={t('summary.label')}>
         {([
           { key: 'total', value: items.length, icon: Database, tile: 'bg-blue-500/10 text-blue-700' },
           { key: 'active', value: activeCount, icon: CircleCheck, tile: 'bg-emerald-500/10 text-emerald-700' },
@@ -186,37 +194,35 @@ export default function DatasetsPage() {
         ] as const).map((counter) => {
           const Icon = counter.icon;
           return (
-            <div key={counter.key} data-counter={counter.key} className="flex items-center gap-3 bg-card p-4">
-              <span className={`grid size-10 shrink-0 place-items-center rounded-full ${counter.tile}`}>
-                <Icon className="size-5" aria-hidden="true" />
+            <div key={counter.key} data-counter={counter.key} className="flex min-h-24 items-center gap-3 bg-card px-4 py-3">
+              <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${counter.tile}`}>
+                <Icon className="size-4.5" aria-hidden="true" />
               </span>
               <div className="min-w-0">
-                <p className="metric-value">{loading ? '—' : counter.value}</p>
-                <p className="text-sm font-medium">{t(`summary.${counter.key}`)}</p>
-                <p className="text-xs text-muted-foreground">{t(`summary.hints.${counter.key}`)}</p>
+                <p className="metric-value text-xl">{loading ? '—' : counter.value}</p>
+                <p className="text-xs font-semibold">{t(`summary.${counter.key}`)}</p>
+                <p className="mt-0.5 text-[0.68rem] leading-4 text-muted-foreground">{t(`summary.hints.${counter.key}`)}</p>
               </div>
             </div>
           );
         })}
       </section>
 
-      <Card className="shadow-none">
-        <CardHeader className="border-b pb-4">
-          <div className="flex items-start gap-3">
-            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+      <Card className="py-0 shadow-[0_4px_16px_rgba(15,35,65,0.04)]">
+        <CardContent className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[minmax(16rem,0.8fr)_minmax(22rem,1.2fr)_auto] lg:items-center">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
               <UploadCloud className="size-5" aria-hidden="true" />
             </span>
-            <div>
+            <div className="min-w-0">
               <CardTitle className="text-base">{t('upload.title')}</CardTitle>
-              <CardDescription className="mt-1 leading-5">{t('upload.description')}</CardDescription>
+              <CardDescription className="mt-1 text-xs leading-5">{t('upload.description')}</CardDescription>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative w-full max-w-xl rounded-lg border border-dashed border-primary/30 bg-primary/[0.025] p-2">
+          <div className="relative w-full rounded-xl border border-dashed border-primary/30 bg-primary/[0.025] p-1.5">
             <Input aria-label={t('upload.fileLabel')} type="file" accept=".xlsx" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="w-full border-0 bg-transparent shadow-none" />
           </div>
-          <Button onClick={() => void run(upload)} disabled={!file || busy} className="shrink-0">
+          <Button onClick={() => void run(upload)} disabled={!file || busy} className="shrink-0 lg:justify-self-end">
             <FileSpreadsheet data-icon="inline-start" aria-hidden="true" />
             {busy ? t('upload.working') : t('upload.submit')}
           </Button>
@@ -226,13 +232,11 @@ export default function DatasetsPage() {
       {error && <p className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</p>}
 
       <section className="data-panel fills hidden lg:flex" aria-busy={loading}>
-        <Table className="min-w-[980px]">
+        <Table className="min-w-[900px]" containerLabel={t('title')}>
           <TableHeader>
             <TableRow>
-              <TableHead>#</TableHead>
               <TableHead>{t('columns.file')}</TableHead>
               <TableHead className="text-right">{t('columns.rows')}</TableHead>
-              <TableHead className="text-right">{t('columns.errors')}</TableHead>
               <TableHead>{t('columns.author')}</TableHead>
               <TableHead>{t('columns.reviewer')}</TableHead>
               <TableHead>{t('columns.uploaded')}</TableHead>
@@ -243,25 +247,25 @@ export default function DatasetsPage() {
           <TableBody>
             {loading && (
               <TableRow>
-                <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
                   {commonT('loading')}
                 </TableCell>
               </TableRow>
             )}
             {!loading && items.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
                   {t('empty')}
                 </TableCell>
               </TableRow>
             )}
             {items.map((d) => (
               <TableRow key={d._id}>
-                <TableCell className="font-medium tabular-nums">{d.seq}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2 font-medium">
                     <FileSpreadsheet className="size-4 text-emerald-600" aria-hidden="true" />
-                    {d.fileName}
+                    <span className="text-xs font-semibold text-primary tabular-nums">#{d.seq}</span>
+                    <span className="max-w-60 truncate" title={d.fileName}>{d.fileName}</span>
                   </div>
                   <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                     <Badge variant="outline" className="h-5 rounded-md px-1.5 uppercase">{d.format}</Badge>
@@ -272,16 +276,19 @@ export default function DatasetsPage() {
                   <div className="mt-0.5 text-xs text-muted-foreground tabular-nums">
                     {t('columns.personas')} {d.counts.personas} · {t('columns.scenarios')} {d.counts.scenarios} · {t('columns.questions')} {d.counts.questions}
                   </div>
+                  <div className="mt-1 flex items-center justify-end gap-1 text-xs text-muted-foreground">
+                    <span>{t('columns.errors')}</span>
+                    {errorCountFor(d)}
+                  </div>
                 </TableCell>
-                <TableCell className="text-right tabular-nums">{errorCountFor(d)}</TableCell>
                 <TableCell className="max-w-44 truncate font-medium" title={d.author?.name}>{d.author?.name ?? '—'}</TableCell>
                 <TableCell className="max-w-44 truncate" title={d.reviewer?.name}>{d.reviewer?.name ?? '—'}</TableCell>
                 <TableCell className="text-muted-foreground"><time dateTime={d.createdAt}>{new Date(d.createdAt).toLocaleString(locale)}</time></TableCell>
                 <TableCell>
-                  <Badge variant={STATUS_VARIANT[d.status]}>{statusT.has(d.status) ? statusT(d.status) : d.status}</Badge>
+                  <Badge variant={STATUS_VARIANT[d.status]} className={STATUS_CLASS[d.status]}>{statusT.has(d.status) ? statusT(d.status) : d.status}</Badge>
                   {d.failure && <div className="mt-1 text-xs text-destructive">{d.failure}</div>}
                 </TableCell>
-                <TableCell>{actionsFor(d)}</TableCell>
+                <TableCell className="text-right">{actionsFor(d)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -303,7 +310,7 @@ export default function DatasetsPage() {
                   #{d.seq} · <span className="uppercase">{d.format}</span> · {t('columns.uploaded')} <time dateTime={d.createdAt}>{new Date(d.createdAt).toLocaleString(locale)}</time>
                 </p>
               </div>
-              <Badge variant={STATUS_VARIANT[d.status]}>{statusT.has(d.status) ? statusT(d.status) : d.status}</Badge>
+              <Badge variant={STATUS_VARIANT[d.status]} className={STATUS_CLASS[d.status]}>{statusT.has(d.status) ? statusT(d.status) : d.status}</Badge>
             </div>
 
             <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
@@ -342,7 +349,7 @@ export default function DatasetsPage() {
           </CardHeader>
           <CardContent>
             <div className="hidden md:block">
-              <Table className="min-w-[620px]">
+              <Table className="min-w-[620px]" containerLabel={t('validation.title', { sequence: items.find((d) => d._id === expanded)?.seq ?? '' })}>
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('validation.columns.sheet')}</TableHead>

@@ -3,11 +3,22 @@
 import * as React from "react"
 import { cn } from "cn"
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+type TableProps = React.ComponentProps<"table"> & {
+  containerClassName?: string
+  containerLabel?: string
+}
+
+function Table({ className, containerClassName, containerLabel, ...props }: TableProps) {
   return (
     <div
       data-slot="table-container"
-      className="scrollbar-subtle relative max-h-[max(16rem,calc(100dvh-26rem))] w-full overflow-auto"
+      role={containerLabel ? "region" : undefined}
+      aria-label={containerLabel}
+      tabIndex={0}
+      className={cn(
+        "scrollbar-subtle relative max-h-[max(16rem,calc(100dvh-26rem))] w-full overflow-auto outline-none focus-visible:ring-3 focus-visible:ring-ring/35",
+        containerClassName
+      )}
     >
       <table
         data-slot="table"

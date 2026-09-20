@@ -4,10 +4,12 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState, type ComponentType } from 'react';
 import { useTranslations } from 'next-intl';
 import {
+  ArrowUpRight,
   BookOpenCheck,
   BrainCircuit,
   Database,
   GitBranch,
+  Info,
   ListChecks,
   SlidersHorizontal,
 } from 'lucide-react';
@@ -132,16 +134,17 @@ export default function Page() {
           const sourceState = availability[area.key];
           return (
             <Link key={area.href} href={area.href} className="group rounded-xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
-              <Card className="h-full min-h-40 transition-[border-color,box-shadow,transform] duration-200 group-hover:-translate-y-0.5 group-hover:border-primary/25 group-hover:shadow-[0_16px_38px_rgba(15,35,65,0.08)]">
-                <CardHeader className="grid grid-cols-[1fr_auto] gap-4">
-                  <div className="min-w-0">
-                    <CardDescription>{t(`areas.${area.key}.title`)}</CardDescription>
-                    <CardTitle className="metric-value mt-3">{sourceState === 'available' ? metric.value : '—'}</CardTitle>
-                    <p className="mt-1 text-xs text-muted-foreground">
+              <Card className="h-full min-h-[13rem] overflow-hidden transition-[border-color,box-shadow,transform] duration-200 group-hover:-translate-y-0.5 group-hover:border-primary/25 group-hover:shadow-[0_18px_44px_rgba(15,35,65,0.1)]">
+                <CardHeader className="relative flex h-full flex-row items-start gap-5 p-7">
+                  <span className={`grid size-14 shrink-0 place-items-center rounded-2xl ${area.tone}`}><Icon className="size-7" aria-hidden="true" /></span>
+                  <div className="min-w-0 flex-1">
+                    <CardDescription className="text-sm font-semibold text-foreground">{t(`areas.${area.key}.title`)}</CardDescription>
+                    <CardTitle className="mt-4 text-[2.25rem] leading-none tracking-[-0.045em]">{sourceState === 'available' ? metric.value : '—'}</CardTitle>
+                    <p className="mt-3 text-sm text-muted-foreground">
                       {sourceState === 'loading' ? t('metrics.loading') : sourceState === 'unavailable' ? t('metrics.unavailable') : metric.detail}
                     </p>
                   </div>
-                  <span className={`grid size-9 place-items-center rounded-lg ${area.tone}`}><Icon className="size-4.5" aria-hidden="true" /></span>
+                  <ArrowUpRight className="size-4 shrink-0 text-muted-foreground/45 transition group-hover:text-primary" aria-hidden="true" />
                 </CardHeader>
               </Card>
             </Link>
@@ -155,8 +158,10 @@ export default function Page() {
           <Button size="sm" variant="outline" onClick={() => void loadSnapshot()}>{t('retry')}</Button>
         </div>
       ) : null}
-
-
+      <p className="flex max-w-2xl items-start gap-3 text-sm leading-6 text-muted-foreground">
+        <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground"><Info className="size-3.5" aria-hidden="true" /></span>
+        {t('accessNote')}
+      </p>
     </div>
   );
 }

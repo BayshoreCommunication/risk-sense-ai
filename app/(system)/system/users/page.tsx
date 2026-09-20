@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { BadgeCheck, UserPlus, UsersRound } from 'lucide-react';
+import { BadgeCheck, Ellipsis, UserPlus, UsersRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -32,6 +32,18 @@ type UserDraft = {
 type Editor = { mode: 'create'; user: null } | { mode: 'edit'; user: SystemUser };
 
 const ROLES: Role[] = ['requestor', 'administrator', 'system_administrator', 'audit'];
+const ROLE_BADGE_CLASS: Record<Role, string> = {
+  requestor: 'border-blue-200 bg-blue-50 text-blue-700',
+  administrator: 'border-violet-200 bg-violet-50 text-violet-700',
+  system_administrator: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  audit: 'border-amber-200 bg-amber-50 text-amber-700',
+};
+const AVATAR_CLASS: Record<Role, string> = {
+  requestor: 'bg-blue-50 text-blue-700',
+  administrator: 'bg-violet-50 text-violet-700',
+  system_administrator: 'bg-emerald-50 text-emerald-700',
+  audit: 'bg-amber-50 text-amber-700',
+};
 
 const EMPTY_USER: UserDraft = {
   email: '',
@@ -48,6 +60,16 @@ function errorMessage(result: { error?: unknown }) {
 
 function sortUsers(users: SystemUser[]) {
   return [...users].sort((a, b) => a.name.localeCompare(b.name) || a.email.localeCompare(b.email));
+}
+
+function userInitials(name: string) {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
 }
 
 /** Tenant-scoped provisioning and exactly-one-role administration (FR-02, FR-10, SEC-02). */
@@ -220,17 +242,6 @@ export default function UsersPage() {
         requirements={['FR-02', 'FR-10']}
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card px-4 py-4 shadow-[0_1px_2px_rgba(15,35,65,0.05)]">
-        <div className="flex items-center gap-3">
-          <span className="card-icon"><UsersRound className="size-5" aria-hidden="true" /></span>
-          <div>
-            <h2 className="font-heading text-base font-bold tracking-[-0.01em]">{t('list.title')}</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">{t('list.description')}</p>
-          </div>
-        </div>
-        <Button variant="outline" onClick={openCreate} disabled={controlsDisabled}><UserPlus aria-hidden="true" />{t('provision')}</Button>
-      </div>
-
       {pageError && (
         <div className="flex items-center justify-between gap-3 rounded-md border border-destructive/40 bg-destructive/5 p-3" role="alert">
           <p className="text-sm text-destructive">{pageError}</p>
@@ -240,82 +251,101 @@ export default function UsersPage() {
         </div>
       )}
 
-      <div className="data-panel fills hidden lg:flex">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('columns.user')}</TableHead>
-              <TableHead>{t('columns.role')}</TableHead>
-              <TableHead>{t('columns.departments')}</TableHead>
-              <TableHead>{t('columns.mfa')}</TableHead>
-              <TableHead>{t('columns.status')}</TableHead>
-              <TableHead>{t('columns.lastLogin')}</TableHead>
-              <TableHead className="text-right">{t('columns.action')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading && (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">{t('loading')}</TableCell>
-              </TableRow>
-            )}
-            {!loading && !pageError && users.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">{t('empty')}</TableCell>
-              </TableRow>
-            )}
-            {users.map((user) => (
-              <TableRow key={user._id}>
-                <TableCell>
-                  <div className="font-medium">{user.name}</div>
-                  <div className="text-xs text-muted-foreground">{user.email}</div>
-                </TableCell>
-                <TableCell>{roles.has(user.role) ? roles(user.role) : user.role}</TableCell>
-                <TableCell className="max-w-64 whitespace-normal">
-                  {user.role !== 'requestor'
-                    ? t('scope.notApplicable')
-                    : user.crossDepartmentAccess
-                      ? t('scope.allDepartments')
-                      : user.departmentIds.map((id) => departmentNames.get(id) ?? id).join(', ') || t('scope.ownOnly')}
-                </TableCell>
-                <TableCell><Badge variant={user.mfaEnrolled ? 'outline' : planState !== 'ready' ? 'secondary' : plan === 'paid' && user.role === 'requestor' ? 'secondary' : requiresRecordedMfa(user) ? 'destructive' : 'secondary'}>{user.mfaEnrolled ? t('mfa.enrolled') : planState !== 'ready' ? t('mfa.unavailable') : plan === 'paid' && user.role === 'requestor' ? t('mfa.signIn') : requiresRecordedMfa(user) ? t('mfa.pending') : t('mfa.notRequired')}</Badge></TableCell>
-                <TableCell><Badge variant={user.status === 'active' ? 'outline' : 'destructive'}>{status.has(user.status) ? status(user.status) : user.status}</Badge></TableCell>
-                <TableCell>{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString(locale) : t('never')}</TableCell>
-                <TableCell className="text-right"><Button size="sm" variant="outline" onClick={() => openEdit(user)} disabled={controlsDisabled}>{t('edit')}</Button></TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      <div className="data-panel divide-y lg:hidden" aria-busy={loading}>
-        {loading && <p className="p-8 text-center text-sm text-muted-foreground">{t('loading')}</p>}
-        {!loading && !pageError && users.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('empty')}</p>}
-        {users.map((user) => (
-          <article key={user._id} className="space-y-3 p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0"><h2 className="truncate font-semibold">{user.name}</h2><p className="truncate text-xs text-muted-foreground">{user.email}</p></div>
-              <Badge variant={user.status === 'active' ? 'outline' : 'destructive'}>{status.has(user.status) ? status(user.status) : user.status}</Badge>
+      <section className="overflow-hidden rounded-xl border bg-card shadow-[0_10px_30px_rgba(15,35,65,0.06)]" aria-busy={loading}>
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b px-4 py-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <span className="card-icon"><UsersRound className="size-5" aria-hidden="true" /></span>
+            <div>
+              <h2 className="font-heading text-base font-bold tracking-[-0.01em]">{t('list.title')}</h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">{t('list.description')}</p>
             </div>
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-              <div><dt className="text-muted-foreground">{t('columns.role')}</dt><dd className="mt-0.5 font-medium">{roles.has(user.role) ? roles(user.role) : user.role}</dd></div>
-              <div><dt className="text-muted-foreground">{t('columns.mfa')}</dt><dd className="mt-0.5 font-medium">{user.mfaEnrolled ? t('mfa.enrolled') : planState !== 'ready' ? t('mfa.unavailable') : plan === 'paid' && user.role === 'requestor' ? t('mfa.signIn') : requiresRecordedMfa(user) ? t('mfa.pending') : t('mfa.notRequired')}</dd></div>
-              <div className="col-span-2"><dt className="text-muted-foreground">{t('columns.departments')}</dt><dd className="mt-0.5 font-medium">{user.role !== 'requestor' ? t('scope.notApplicable') : user.crossDepartmentAccess ? t('scope.allDepartments') : user.departmentIds.map((id) => departmentNames.get(id) ?? id).join(', ') || t('scope.ownOnly')}</dd></div>
-              <div className="col-span-2"><dt className="text-muted-foreground">{t('columns.lastLogin')}</dt><dd className="mt-0.5 font-medium">{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString(locale) : t('never')}</dd></div>
-            </dl>
-            <Button className="w-full" size="sm" variant="outline" onClick={() => openEdit(user)} disabled={controlsDisabled}>{t('edit')}</Button>
-          </article>
-        ))}
-      </div>
+          </div>
+          <Button variant="outline" onClick={openCreate} disabled={controlsDisabled}><UserPlus aria-hidden="true" />{t('provision')}</Button>
+        </div>
 
-      {/* The frame closes with one policy line; it carries the client's comment 46/51/52 wording. */}
-      <div id="user-role-policy" className="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-sm leading-6 text-blue-950/80">
-        <BadgeCheck className="mt-0.5 size-4 shrink-0 text-blue-800" aria-hidden="true" />
-        <p>
-          {planState === 'loading' ? t('accessPolicy.loading') : planState === 'error' ? t('accessPolicy.error') : plan === 'free' ? t('accessPolicy.free') : t('accessPolicy.paid')}{' '}
-          {planState === 'loading' ? t('accessPolicy.mfaLoading') : planState === 'error' ? t('accessPolicy.mfaError') : plan === 'paid' ? t('accessPolicy.paidMfa') : t('accessPolicy.freeMfa')}
-        </p>
-      </div>
+        <div className="hidden lg:block">
+          <Table className="min-w-[840px] table-fixed">
+            <TableHeader className="bg-muted/35">
+              <TableRow>
+                <TableHead className="w-[28%]">{t('columns.user')}</TableHead>
+                <TableHead className="w-[18%]">{t('columns.role')}</TableHead>
+                <TableHead className="w-[22%]">{t('columns.departments')}</TableHead>
+                <TableHead className="w-[16%]">{t('columns.mfa')}</TableHead>
+                <TableHead className="w-[12%]">{t('columns.status')}</TableHead>
+                <TableHead className="w-[4%]"><span className="sr-only">{t('columns.action')}</span></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading && (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-28 text-center text-muted-foreground">{t('loading')}</TableCell>
+                </TableRow>
+              )}
+              {!loading && !pageError && users.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-28 text-center text-muted-foreground">{t('empty')}</TableCell>
+                </TableRow>
+              )}
+              {users.map((user) => (
+                <TableRow key={user._id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <span className={`grid size-10 shrink-0 place-items-center rounded-xl text-sm font-semibold ${AVATAR_CLASS[user.role]}`} aria-hidden="true">{userInitials(user.name)}</span>
+                      <div className="min-w-0">
+                        <div className="truncate font-semibold">{user.name}</div>
+                        <div className="truncate text-xs text-muted-foreground">{user.email}</div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell><Badge variant="outline" className={ROLE_BADGE_CLASS[user.role]}>{roles.has(user.role) ? roles(user.role) : user.role}</Badge></TableCell>
+                  <TableCell className="whitespace-normal">
+                    {user.role !== 'requestor'
+                      ? t('scope.notApplicable')
+                      : user.crossDepartmentAccess
+                        ? t('scope.allDepartments')
+                        : user.departmentIds.map((id) => departmentNames.get(id) ?? id).join(', ') || t('scope.ownOnly')}
+                  </TableCell>
+                  <TableCell><Badge variant={user.mfaEnrolled ? 'outline' : planState !== 'ready' ? 'secondary' : plan === 'paid' && user.role === 'requestor' ? 'secondary' : requiresRecordedMfa(user) ? 'destructive' : 'secondary'}>{user.mfaEnrolled ? t('mfa.enrolled') : planState !== 'ready' ? t('mfa.unavailable') : plan === 'paid' && user.role === 'requestor' ? t('mfa.signIn') : requiresRecordedMfa(user) ? t('mfa.pending') : t('mfa.notRequired')}</Badge></TableCell>
+                  <TableCell><Badge variant={user.status === 'active' ? 'outline' : 'destructive'} className={user.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : undefined}>{status.has(user.status) ? status(user.status) : user.status}</Badge></TableCell>
+                  <TableCell className="text-right"><Button size="icon-xs" variant="ghost" aria-label={t('edit')} title={t('edit')} onClick={() => openEdit(user)} disabled={controlsDisabled}><Ellipsis aria-hidden="true" /></Button></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        <div className="divide-y lg:hidden">
+          {loading && <p className="p-8 text-center text-sm text-muted-foreground">{t('loading')}</p>}
+          {!loading && !pageError && users.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('empty')}</p>}
+          {users.map((user) => (
+            <article key={user._id} className="space-y-3 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className={`grid size-10 shrink-0 place-items-center rounded-xl text-sm font-semibold ${AVATAR_CLASS[user.role]}`} aria-hidden="true">{userInitials(user.name)}</span>
+                  <div className="min-w-0"><h2 className="truncate font-semibold">{user.name}</h2><p className="truncate text-xs text-muted-foreground">{user.email}</p></div>
+                </div>
+                <Badge variant={user.status === 'active' ? 'outline' : 'destructive'} className={user.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : undefined}>{status.has(user.status) ? status(user.status) : user.status}</Badge>
+              </div>
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                <div><dt className="text-muted-foreground">{t('columns.role')}</dt><dd className="mt-1"><Badge variant="outline" className={ROLE_BADGE_CLASS[user.role]}>{roles.has(user.role) ? roles(user.role) : user.role}</Badge></dd></div>
+                <div><dt className="text-muted-foreground">{t('columns.mfa')}</dt><dd className="mt-0.5 font-medium">{user.mfaEnrolled ? t('mfa.enrolled') : planState !== 'ready' ? t('mfa.unavailable') : plan === 'paid' && user.role === 'requestor' ? t('mfa.signIn') : requiresRecordedMfa(user) ? t('mfa.pending') : t('mfa.notRequired')}</dd></div>
+                <div className="col-span-2"><dt className="text-muted-foreground">{t('columns.departments')}</dt><dd className="mt-0.5 font-medium">{user.role !== 'requestor' ? t('scope.notApplicable') : user.crossDepartmentAccess ? t('scope.allDepartments') : user.departmentIds.map((id) => departmentNames.get(id) ?? id).join(', ') || t('scope.ownOnly')}</dd></div>
+                <div className="col-span-2"><dt className="text-muted-foreground">{t('columns.lastLogin')}</dt><dd className="mt-0.5 font-medium">{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString(locale) : t('never')}</dd></div>
+              </dl>
+              <Button className="w-full" size="sm" variant="outline" onClick={() => openEdit(user)} disabled={controlsDisabled}>{t('edit')}</Button>
+            </article>
+          ))}
+        </div>
+
+        {/* The frame closes with one policy line; later client comments require every PAID account to complete MFA. */}
+        <div id="user-role-policy" className="m-4 flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-sm leading-6 text-blue-950/80 sm:m-6">
+          <BadgeCheck className="mt-0.5 size-4 shrink-0 text-blue-800" aria-hidden="true" />
+          <p>
+            {planState === 'loading' ? t('accessPolicy.loading') : planState === 'error' ? t('accessPolicy.error') : plan === 'free' ? t('accessPolicy.free') : t('accessPolicy.paid')}{' '}
+            {planState === 'loading' ? t('accessPolicy.mfaLoading') : planState === 'error' ? t('accessPolicy.mfaError') : plan === 'paid' ? t('accessPolicy.paidMfa') : t('accessPolicy.freeMfa')}
+          </p>
+        </div>
+      </section>
 
       <Dialog open={editor !== null} onOpenChange={(open) => !open && closeEditor()}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">

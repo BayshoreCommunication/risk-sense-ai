@@ -15,6 +15,7 @@
     "advancedOperations": "Advanced operations",
     "openNavigation": "Open navigation",
     "closeNavigation": "Close navigation",
+    "skipToContent": "Skip to main content",
     "signOut": "Sign out",
     "signedInAs": "Signed in as",
     "expandNavigation": "Expand navigation",
@@ -68,8 +69,8 @@
   "login": {
     "title": "RiskSense AI",
     "eyebrow": "Secure decision intelligence",
-    "heroTitle": "Turn uncertain incidents into auditable decisions.",
-    "heroDescription": "A guided workspace for capturing facts, applying deterministic policy, and recording accountable human decisions.",
+    "heroTitle": "Secure. Smart. Seamless.",
+    "heroDescription": "AI-powered risk insights with enterprise-grade security.",
     "governanceNote": "The assistant structures and explains. Rules and scoring stay deterministic, and only an authorized person records the final decision.",
     "planNote": "Free accounts are requestors. Paid workspaces add managed roles and tenant SSO; RiskSense email OTP follows role and tenant policy.",
     "planPolicyLabel": "Plan-aware sign-in policy",
@@ -85,9 +86,19 @@
       "verify": "Verification"
     },
     "assurance": {
-      "guided": "Guided, scenario-aware risk intake",
-      "deterministic": "Deterministic rules and scoring",
-      "auditable": "Tamper-evident decision history"
+      "guided": "Enterprise Security",
+      "deterministic": "Smart & Fast",
+      "auditable": "Built for Professionals"
+    },
+    "assuranceDetails": {
+      "guided": "Your data is protected with top-tier security standards.",
+      "deterministic": "AI-driven insights in real time.",
+      "auditable": "Designed to support confident, accountable risk decisions."
+    },
+    "footer": {
+      "help": "Help",
+      "privacy": "Privacy",
+      "terms": "Terms"
     },
     "otpPrompt": "Enter the 6-digit code we emailed to {email}.",
     "signInPrompt": "Sign in to start or review a risk assessment.",
@@ -166,6 +177,7 @@
       "configurationLabel": "Configuration portfolio",
       "partialError": "Some live data is unavailable ({count} sources). Available cards still show current tenant data.",
       "retry": "Retry unavailable data",
+      "accessNote": "All configuration access routes through this audited workspace, never direct database or code access.",
       "metrics": {
         "loading": "Loading current tenant data…",
         "unavailable": "Current data is unavailable",
@@ -1010,22 +1022,26 @@
     }
   },
   "newAssessment": {
-    "eyebrow": "Guided assessment",
     "title": "Persona and scenario selection",
     "description": "All assessments begin with selecting who you are and what scenario to assess.",
-    "assistantTitle": "Tell us what happened",
-    "assistantDescription": "Start with the details you already know. You can confirm the suggested assessment persona before guided questions begin.",
-    "privateSession": "Protected intake",
-    "incidentLabel": "Incident or decision context",
+    "assistantTitle": "Start a new risk assessment",
+    "assistantDescription": "All assessments begin with selecting who you are and what scenario to assess.",
+    "selectPersona": "Select assessment persona",
+    "personaHint": "Choose the role context that best matches this assessment. The scenario is resolved and shown before guided questions begin.",
+    "selected": "Selected",
+    "optionalContext": "Describe the incident (optional)",
+    "optionalContextHint": "Add the facts you already know to help the assistant find the right scenario, or continue with a persona alone.",
     "placeholder": "e.g. A vendor wire of $250,000 went out yesterday without the second approval…",
-    "characterHint": "{count} characters",
+    "characterHint": "{count} characters · 10 minimum when used",
     "privacyNote": "Use the facts needed for the assessment. Sensitive text is protected by role-aware access and retention controls.",
-    "rolePrompt": "Assessment persona (optional)",
-    "roleHint": "Select the context that best matches this assessment, or let the assistant suggest one for you to confirm.",
     "personaGroupLabel": "Available assessment personas",
     "loadingPersonas": "Loading available personas…",
+    "continue": "Continue",
+    "confirmSelection": "Confirm selection",
+    "confirmHintWithPersona": "{persona} will be used to resolve and show the scenario before guided questions begin.",
+    "confirmHintWithoutPersona": "Select a persona above, or describe the incident and the assistant will suggest a persona for you to confirm.",
     "starting": "Starting…",
-    "start": "Start"
+    "start": "Continue — start assessment"
   },
   "chatSession": {
     "eyebrow": "Guided risk conversation",
@@ -1166,6 +1182,9 @@
     "descriptionReviewer": "Track and manage pending assessments for you and your department.",
     "descriptionRequestor": "Track and manage all your pending assessments.",
     "newAssessment": "New assessment",
+    "myAssessments": "My assessments",
+    "myAssessmentsDescription": "View and filter your pending assessments.",
+    "scopeNote": "Filters and results are limited to assessments available to your account and assigned departments.",
     "statusTabsLabel": "Status",
     "summaryLabel": "Assessment summary",
     "averageConfidence": "Average confidence",
@@ -1188,6 +1207,12 @@
       "from": "From",
       "to": "To",
       "sort": "Sort",
+      "dateRange": "Date range",
+      "allDates": "All dates",
+      "last30Days": "Last 30 days",
+      "last90Days": "Last 90 days",
+      "customDates": "Custom dates",
+      "advanced": "More filters",
       "any": "Any",
       "anyPersona": "Any persona",
       "anyScenario": "Any scenario",
@@ -1296,6 +1321,9 @@
       },
       "filters": {
         "category": "Category",
+        "search": "Filter loaded page or search exact record ID",
+        "searchPlaceholder": "User, action, record type or 24-character ID",
+        "searchScope": "Text filters the 50 loaded entries. An exact 24-character record ID queries the audit log.",
         "entity": "Entity id (assessment, user, dataset…)",
         "entityPlaceholder": "24-character id"
       },
@@ -1319,6 +1347,7 @@
       },
       "visibleCount": "{count} entries on this page",
       "empty": "No entries.",
+      "emptyPageFilter": "No matches on this loaded page. Clear the filter or open Older entries.",
       "systemActor": "System",
       "sequenceValue": "seq {value}",
       "previousHashLabel": "Previous hash",
@@ -1611,7 +1640,7 @@
         "domain": "Email domain"
       },
       "policy": {
-        "title": "Sessions & retention",
+        "title": "Session policy",
         "accountSemantics": "One person uses one account with exactly one role. Session settings control access to that account, not extra roles.",
         "sessionSemantics": "This limits simultaneous devices or browser sessions for one account; it does not create another account or role.",
         "retentionTitle": "Retention windows",
