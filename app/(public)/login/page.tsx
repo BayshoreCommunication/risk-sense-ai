@@ -32,6 +32,10 @@ const DEV_ACCOUNTS = [
   { email: 'requestor@paid.local', labelKey: 'devAccounts.requestorPaid' },
 ];
 
+const DEMO_EMAIL = 'requestor@dev.local';
+// This is intentionally browser-visible build-time configuration for one disposable demo identity.
+const DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_PASSWORD ?? '';
+
 type Step = 'credentials' | 'otp';
 type Mode = 'signin' | 'signup';
 type LoginNotice =
@@ -174,6 +178,26 @@ function LoginForm() {
       <CardContent className="space-y-6 px-0 pb-0 pt-0">
         {hasFirebase && step === 'credentials' && (
           <div className="space-y-4">
+            {mode === 'signin' && (
+              <section aria-labelledby="demo-access-title" className="rounded-xl border border-primary/20 bg-primary/[0.045] p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <h2 id="demo-access-title" className="text-sm font-semibold text-foreground">{t('demo.title')}</h2>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('demo.description')}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="w-full shrink-0 sm:w-auto"
+                    disabled={busy || !DEMO_PASSWORD}
+                    onClick={() => void firstFactor(() => signInWithPassword(DEMO_EMAIL, DEMO_PASSWORD))}
+                  >
+                    {busy ? t('pleaseWait') : t('demo.continue')}
+                  </Button>
+                </div>
+                {!DEMO_PASSWORD && <p role="status" className="mt-2 text-xs text-destructive">{t('demo.unavailable')}</p>}
+              </section>
+            )}
             <form
               className="space-y-3"
               onSubmit={(e) => {

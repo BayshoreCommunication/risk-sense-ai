@@ -4,7 +4,7 @@ import { runVerificationRecovery } from '../lib/firebase/verification-recovery';
 
 const nextTurn = () => new Promise<void>((resolve) => setTimeout(resolve, 10));
 
-async function mockVerifiedPasswordSignIn(page: Page, email: string, uid: string) {
+async function mockVerifiedPasswordSignIn(page: Page, email: string, uid: string, expectedPassword?: string) {
   const now = Math.floor(Date.now() / 1_000);
   const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url');
   const idToken = `${encode({ alg: 'none', typ: 'JWT' })}.${encode({
@@ -23,6 +23,9 @@ async function mockVerifiedPasswordSignIn(page: Page, email: string, uid: string
   await page.route('https://identitytoolkit.googleapis.com/**', async (route) => {
     const path = new URL(route.request().url()).pathname;
     if (path.endsWith('/accounts:signInWithPassword')) {
+      const credentials = route.request().postDataJSON() as { email?: string; password?: string };
+      expect(credentials.email).toBe(email);
+      if (expectedPassword !== undefined) expect(credentials.password).toBe(expectedPassword);
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -240,6 +243,73 @@ test('a verified FREE requestor receives a session without entering the PAID MFA
 
   await expect(page).toHaveURL(/\/chat$/);
   await expect(page.getByRole('heading', { name: 'Persona and scenario selection' })).toBeVisible();
+  expect(sessionCalls).toBe(1);
+  expect(otpRequests).toBe(0);
+});
+
+test('shared demo access uses the same Firebase requestor identity without the development bypass [FR-01, FR-02, NFR-08]', async ({ page }, testInfo) => {
+  test.skip(testInfo.config.metadata.frontendMocks !== true, 'requires the isolated mocked-Firebase frontend build');
+  const email = 'requestor@dev.local';
+  const session = {
+    user: {
+      id: 'demo-requestor-1',
+      firebaseUid: 'firebase-demo-requestor-1',
+      email,
+      name: 'Demo Requestor',
+      role: 'requestor',
+      tenantId: 'public-tenant',
+      departmentIds: [],
+      crossDepartmentAccess: false,
+      mfaEnrolled: false,
+    },
+    tenant: {
+      id: 'public-tenant',
+      slug: 'public',
+      plan: 'free',
+      features: { sso: false, reviewDashboard: false, reports: false, fullAudit: false, departmentMapping: false, blockConcurrentLogin: false },
+      sessionPolicy: { idleTimeoutMin: 15, maxConcurrentSessions: 1 },
+    },
+    sessionId: 'demo-session-1',
+    expiresAt: '2026-09-15T10:00:00.000Z',
+  };
+  let sessionCalls = 0;
+  let otpRequests = 0;
+  await mockVerifiedPasswordSignIn(page, email, 'firebase-demo-requestor-1', 'frontend-demo-password');
+  await page.route('**/test-api/**', async (route) => {
+    const path = new URL(route.request().url()).pathname.replace(/^\/test-api/, '');
+    if (path === '/auth/session') {
+      sessionCalls += 1;
+      expect(route.request().headers().authorization).toMatch(/^Bearer /);
+      expect(route.request().headers()['x-dev-user']).toBeUndefined();
+      await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ data: session, meta: { requestId: 'demo-login' } }) });
+      return;
+    }
+    if (path === '/auth/otp/request') {
+      otpRequests += 1;
+      await route.fulfill({ status: 500, contentType: 'application/json', body: '{}' });
+      return;
+    }
+    if (path === '/me') {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: session, meta: { requestId: 'demo-me' } }) });
+      return;
+    }
+    if (path === '/personas') {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [], meta: { requestId: 'demo-personas' } }) });
+      return;
+    }
+    await route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
+  });
+
+  await page.goto('/login');
+  await expect(page.getByRole('heading', { name: 'Demo access' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Continue as demo user' })).toBeVisible();
+
+  await page.context().addCookies([{ name: 'rs_locale', value: 'bn', url: 'http://127.0.0.1:3100' }]);
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'ডেমো প্রবেশাধিকার' })).toBeVisible();
+  await page.getByRole('button', { name: 'ডেমো ব্যবহারকারী হিসেবে চালিয়ে যান' }).click();
+
+  await expect(page).toHaveURL(/\/chat$/);
   expect(sessionCalls).toBe(1);
   expect(otpRequests).toBe(0);
 });
