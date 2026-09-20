@@ -929,6 +929,17 @@ test('desktop sidebar collapse persists while mobile navigation stays labelled a
   expect(expandedMainBox).not.toBeNull();
   expect(expandedNavigationBox!.width).toBe(256);
 
+  const accountMenu = page.getByTestId('account-menu');
+  const accountMenuTrigger = accountMenu.locator('summary');
+  await accountMenuTrigger.click();
+  await expect(accountMenu).toHaveAttribute('open', '');
+  await expect(accountMenu.getByRole('button', { name: 'Sign out' })).toBeVisible();
+  await accountMenu.getByText('requestor@example.test', { exact: true }).click();
+  await expect(accountMenu).toHaveAttribute('open', '');
+  await main.click({ position: { x: 12, y: 12 } });
+  await expect(accountMenu).not.toHaveAttribute('open', '');
+  await expect(accountMenu.getByRole('button', { name: 'Sign out' })).toBeHidden();
+
   const collapseNavigation = page.getByRole('button', { name: 'Collapse navigation' });
   await expect(collapseNavigation).toHaveAttribute('aria-expanded', 'true');
   await expect(collapseNavigation).toHaveAttribute('aria-controls', 'app-desktop-navigation');

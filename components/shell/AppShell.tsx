@@ -113,6 +113,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean | null>(null);
   const mobileNavigationRef = useRef<HTMLElement>(null);
   const mobileNavigationTriggerRef = useRef<HTMLButtonElement>(null);
+  const accountMenuRef = useRef<HTMLDetailsElement>(null);
 
   const verifySession = useCallback(async () => {
     setState('loading');
@@ -164,6 +165,17 @@ export function AppShell({ role, children }: { role: Role; children: React.React
   useEffect(() => {
     setMobileNavigationOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const closeAccountMenuOutside = (event: PointerEvent) => {
+      const accountMenu = accountMenuRef.current;
+      if (!accountMenu?.open || event.composedPath().includes(accountMenu)) return;
+      accountMenu.open = false;
+    };
+
+    document.addEventListener('pointerdown', closeAccountMenuOutside, true);
+    return () => document.removeEventListener('pointerdown', closeAccountMenuOutside, true);
+  }, []);
 
   useEffect(() => {
     if (!mobileNavigationOpen) return;
@@ -360,7 +372,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
           <div className={`min-w-0 truncate text-lg font-semibold tracking-[-0.02em] ${desktopNavigationCollapsed ? 'lg:hidden' : ''}`}>{t('app.name')}</div>
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-2 pr-4 sm:px-7">
-          <details className="group relative">
+          <details ref={accountMenuRef} className="group relative" data-testid="account-menu">
             <summary className="flex cursor-pointer list-none items-center gap-2 rounded-full border border-white/25 bg-white/[0.04] px-3 py-2 text-[0.82rem] font-semibold text-white outline-none transition hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/70 sm:px-4 [&::-webkit-details-marker]:hidden">
               <span className="sm:hidden">{accountInitials(me.user.name)}</span>
               <span className="hidden truncate sm:inline">{accountInitials(me.user.name)} · {t(`roles.${trustedRole}`)}</span>
