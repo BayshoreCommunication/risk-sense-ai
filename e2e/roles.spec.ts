@@ -6,7 +6,9 @@ import { ACCOUNTS, devLogin } from './helpers';
 test.describe('requestor', () => {
   test('starts an assessment, answers structured questions, submits and records a decision [FR-03..08, FR-22, AI-01]', async ({ page }) => {
     test.setTimeout(300_000); // free-text turns call the real model (1–3 s each) on the dev backend
-    await devLogin(page, ACCOUNTS.requestor);
+    // The FREE requestor is also the interactive shared-demo identity. Use the dedicated PAID
+    // requestor so a developer reviewing the demo in another browser cannot supersede this session.
+    await devLogin(page, ACCOUNTS.paidRequestor);
     await expect(page).toHaveURL(/\/chat/);
     await page.getByRole('button', { name: 'Finance Officer' }).click();
     await page.getByPlaceholder(/vendor wire/).fill('A vendor wire of $250,000 went out yesterday without the second approval and nobody can find the request.');
@@ -38,7 +40,9 @@ test.describe('requestor', () => {
       else await page.waitForTimeout(500);
     }
     await page.getByRole('button', { name: /^Submit/ }).click();
-    await expect(page.getByText(/\/ 100 risk score/)).toBeVisible({ timeout: 30_000 });
+    const result = page.getByTestId('assessment-result');
+    await expect(result).toBeVisible({ timeout: 30_000 });
+    await expect(result.getByRole('img', { name: /\d+ \/ 100 risk score/ })).toBeVisible();
     await expect(page.getByText('Recommended action', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Accept recommendation' }).click();
     await expect(page.getByText(/Decision recorded: accept/)).toBeVisible();

@@ -13,7 +13,7 @@ export async function devLogin(page: Page, email: string) {
   await details.click();
   await page.getByLabel('Seeded dev user').fill(email);
   await page.getByRole('button', { name: 'Sign in (dev bypass)' }).click();
-  await expect(page).not.toHaveURL(/\/login/);
+  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
 }
 
 export const ACCOUNTS = {

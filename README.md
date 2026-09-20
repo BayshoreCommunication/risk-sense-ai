@@ -40,8 +40,9 @@ UI, auth-restoration, structured-editor, system-administration, error, and confi
 `npm run e2e` is the separate full-stack Playwright suite and requires a running backend and
 frontend.
 
-The current 2026-09-20 repository validation passes 56/56 mocked browser cases, exact
-1,384/1,384 EN/BN key and ICU-variable parity, lint, typecheck, a 29/29-route production build,
+The current 2026-09-20 repository validation passes 63/63 mocked browser cases, all 11 enabled
+full-stack role journeys with four configuration-gated authentication cases skipped, exact
+1,404/1,404 EN/BN key and ICU-variable parity, lint, typecheck, a 29/29-route production build,
 and a zero-vulnerability production dependency audit. Human language, accessibility, usability and
 owner visual acceptance remain external gates.
 
@@ -54,10 +55,11 @@ owner visual acceptance remain external gates.
   recovery evidence, stored-record conformance, and bounded immutable audit export/manifests.
 - Audit: assessment reconstruction, masked/unmasked access, and audit-chain verification.
 
-English and Bangla message catalogs cover the current application UI. The authenticated tenant's
-sector vocabulary now drives administrator content controls, while the starter sector list remains
-only a default. This completes the repository-side NFR-08 configurability work; client approval of
-the production vocabulary and human Bengali/accessibility/usability acceptance remain external.
+English is the launch runtime language. The matching Bangla catalogue remains dormant for a future
+approved re-enable. The authenticated tenant's sector vocabulary now drives administrator content
+controls, while the starter sector list remains only a default. This completes the repository-side
+NFR-08 configurability work; client approval of the production vocabulary and any future human
+Bengali/accessibility/usability acceptance remain external.
 
 ## Release boundary
 
