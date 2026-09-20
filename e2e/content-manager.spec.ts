@@ -110,9 +110,11 @@ test('scenario flow and recommendations are authored with structured controls [F
   await flow.getByLabel('Question key').fill('finance_wire_authorized');
   await flow.getByLabel('Question 1 visibility').click();
   await page.getByRole('option', { name: 'Only when a fact matches' }).click();
+  await expect(flow.getByLabel('Question 1 visibility')).toContainText('Only when a fact matches');
   await flow.getByLabel('Fact key to check').fill('wire_pending');
   await flow.getByLabel('Must equal value type').click();
   await page.getByRole('option', { name: 'True / false' }).click();
+  await expect(flow.getByLabel('Must equal value type')).toContainText('True / false');
 
   const actions = page.getByTestId('structured-actions');
   const riskAction = actions.getByRole('group', { name: 'Risk', exact: true });
@@ -156,7 +158,9 @@ test('question choices and branch triggers preserve scalar types and readable ca
   await page.getByLabel('Key *', { exact: true }).fill('wire_state');
   await page.getByLabel('Question text *', { exact: true }).fill('What is the current wire state?');
   await page.getByLabel('Type *', { exact: true }).click();
-  await page.getByRole('option', { name: 'mcq' }).click();
+  await page.getByRole('option', { name: 'MCQ' }).click();
+  await expect(page.getByLabel('Type *', { exact: true })).toContainText('MCQ');
+  await expect(page.getByLabel('Required', { exact: true })).toContainText('True');
   await page.getByLabel('Fact key *', { exact: true }).fill('wire_state');
   await page.getByLabel('Persona keys *', { exact: true }).fill('finance_officer');
   await page.getByLabel('Sectors *', { exact: true }).fill('financial');
@@ -221,6 +225,7 @@ test('rule condition builder emits the deterministic condition language [FR-16, 
   const condition = page.getByTestId('structured-condition');
   await condition.getByLabel('Condition type').click();
   await page.getByRole('option', { name: 'All conditions (AND)' }).click();
+  await expect(condition.getByLabel('Condition type').first()).toContainText('All conditions (AND)');
   const nodes = condition.getByTestId('condition-node');
   await nodes.nth(1).getByLabel('Fact key').fill('authorized');
   await nodes.nth(1).getByLabel('Comparison value value type').click();
@@ -231,11 +236,13 @@ test('rule condition builder emits the deterministic condition language [FR-16, 
   await nodes.nth(2).getByLabel('Fact key').fill('amount_usd');
   await nodes.nth(2).getByLabel('Condition operator').click();
   await page.getByRole('option', { name: 'Greater than', exact: true }).click();
+  await expect(nodes.nth(2).getByLabel('Condition operator')).toContainText('Greater than');
   await nodes.nth(2).getByLabel('Comparison value value type').click();
   await page.getByRole('option', { name: 'Number' }).click();
   await nodes.nth(2).getByLabel('Comparison value', { exact: true }).fill('100000');
   await page.getByLabel('Forced classification *', { exact: true }).click();
   await page.getByRole('option', { name: 'Issue', exact: true }).click();
+  await expect(page.getByLabel('Forced classification *', { exact: true })).toContainText('Issue');
 
   await page.getByRole('button', { name: 'Create draft' }).click();
   await expect.poll(() => submitted).toMatchObject({

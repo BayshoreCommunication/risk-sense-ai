@@ -584,7 +584,7 @@ function ReviewDashboard() {
                   {a.result ? (
                     <div className="flex max-w-48 flex-wrap items-center gap-1.5">
                       <Badge variant="outline" className={classificationTone(a.result.classification)}>
-                        {classification.has(a.result.classification) ? classification(a.result.classification) : a.result.classification}
+                        {classification.has(a.result.classification) ? classification(a.result.classification) : formatIdentifierLabel(a.result.classification)}
                       </Badge>
                       <span className="text-xs tabular-nums text-muted-foreground">{a.result.score}/100</span>
                       {a.result.ruleDriven && (
@@ -619,7 +619,7 @@ function ReviewDashboard() {
                 </TableCell>
                 <TableCell className="text-center text-base font-semibold tabular-nums">{daysOpen(a, dashboardOpenedAt)}</TableCell>
                 <TableCell>
-                  <Badge variant={PENDING.has(a.status) ? 'default' : 'secondary'}>{status.has(a.status) ? status(a.status) : a.status}</Badge>
+                  <Badge variant={PENDING.has(a.status) ? 'default' : 'secondary'}>{status.has(a.status) ? status(a.status) : formatIdentifierLabel(a.status)}</Badge>
                   {a.status === 'escalated' && a.escalatedTo && <div className="mt-1 text-xs text-muted-foreground">{t('routedTo', { name: a.escalatedTo.name })}</div>}
                 </TableCell>
                 <TableCell className="max-w-[18rem] whitespace-normal">
@@ -635,7 +635,7 @@ function ReviewDashboard() {
                     <Badge variant="outline" className="mt-2 max-w-full">
                       <span className="truncate">
                         {detail.has(`decision.types.${a.decision.type}`) ? detail(`decision.types.${a.decision.type}`) : a.decision.type}
-                        {a.decision.overriddenTo ? ` → ${classification.has(a.decision.overriddenTo) ? classification(a.decision.overriddenTo) : a.decision.overriddenTo}` : ''}
+                        {a.decision.overriddenTo ? ` → ${classification.has(a.decision.overriddenTo) ? classification(a.decision.overriddenTo) : formatIdentifierLabel(a.decision.overriddenTo)}` : ''}
                       </span>
                     </Badge>
                   )}

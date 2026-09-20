@@ -13,6 +13,7 @@ import { api, handleSessionResponse, toApiError } from '@/lib/api/client';
 import type { components } from '@/lib/api/types';
 import { DEV_AUTH_ENABLED } from '@/lib/environment';
 import { COOKIE_DEV_USER, COOKIE_SESSION, readCookie } from '@/lib/session';
+import { formatIdentifierLabel } from '@/lib/format-identifier-label';
 
 type Dataset = components['schemas']['Dataset'];
 
@@ -285,7 +286,7 @@ export default function DatasetsPage() {
                 <TableCell className="max-w-44 truncate" title={d.reviewer?.name}>{d.reviewer?.name ?? '—'}</TableCell>
                 <TableCell className="text-muted-foreground"><time dateTime={d.createdAt}>{new Date(d.createdAt).toLocaleString(locale)}</time></TableCell>
                 <TableCell>
-                  <Badge variant={STATUS_VARIANT[d.status]} className={STATUS_CLASS[d.status]}>{statusT.has(d.status) ? statusT(d.status) : d.status}</Badge>
+                  <Badge variant={STATUS_VARIANT[d.status]} className={STATUS_CLASS[d.status]}>{statusT.has(d.status) ? statusT(d.status) : formatIdentifierLabel(d.status)}</Badge>
                   {d.failure && <div className="mt-1 text-xs text-destructive">{d.failure}</div>}
                 </TableCell>
                 <TableCell className="text-right">{actionsFor(d)}</TableCell>
@@ -310,7 +311,7 @@ export default function DatasetsPage() {
                   #{d.seq} · <span className="uppercase">{d.format}</span> · {t('columns.uploaded')} <time dateTime={d.createdAt}>{new Date(d.createdAt).toLocaleString(locale)}</time>
                 </p>
               </div>
-              <Badge variant={STATUS_VARIANT[d.status]} className={STATUS_CLASS[d.status]}>{statusT.has(d.status) ? statusT(d.status) : d.status}</Badge>
+              <Badge variant={STATUS_VARIANT[d.status]} className={STATUS_CLASS[d.status]}>{statusT.has(d.status) ? statusT(d.status) : formatIdentifierLabel(d.status)}</Badge>
             </div>
 
             <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">

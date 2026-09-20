@@ -2,6 +2,7 @@
 
 import { useId, useState, type ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { formatIdentifierLabel } from '@/lib/format-identifier-label';
 
 /**
  * Minimal inline-SVG charts for DASH-03 (no chart library). Colors come from the validated reference
@@ -335,7 +336,7 @@ export function StatusBars({ rows }: { rows: { key: string; count: number; share
     <div className="viz space-y-1 rounded-xl" style={{ background: 'var(--viz-surface)' }}>
       {rows.map((r) => {
         const st = STATUS[r.key] ?? { color: 'var(--s9)', icon: '●' };
-        const label = classification.has(r.key) ? classification(r.key) : r.key;
+        const label = classification.has(r.key) ? classification(r.key) : formatIdentifierLabel(r.key);
         return (
           <button
             key={r.key}

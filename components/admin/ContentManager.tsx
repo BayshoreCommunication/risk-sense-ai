@@ -406,7 +406,7 @@ export function ContentManager(props: ContentManagerProps) {
                 </div>
                 <div className="flex w-full shrink-0 flex-row-reverse items-center justify-between gap-2 border-t pt-3 sm:w-auto sm:flex-col sm:items-end sm:justify-start sm:border-0 sm:pt-0">
                   <Badge variant={STATUS_VARIANT[item.status] ?? 'secondary'} className={STATUS_CLASS[item.status]}>
-                    {statusT.has(item.status) ? statusT(item.status) : item.status}
+                    {statusT.has(item.status) ? statusT(item.status) : formatIdentifierLabel(item.status)}
                   </Badge>
                   {itemActions(item)}
                 </div>
@@ -457,7 +457,7 @@ export function ContentManager(props: ContentManagerProps) {
                   )}
                   <TableCell>
                     <Badge variant={STATUS_VARIANT[item.status] ?? 'secondary'} className={STATUS_CLASS[item.status]}>
-                      {statusT.has(item.status) ? statusT(item.status) : item.status}
+                      {statusT.has(item.status) ? statusT(item.status) : formatIdentifierLabel(item.status)}
                     </Badge>
                   </TableCell>
                   <TableCell>{itemActions(item)}</TableCell>
@@ -475,7 +475,7 @@ export function ContentManager(props: ContentManagerProps) {
           <DialogHeader className="border-b bg-[linear-gradient(120deg,#ffffff,#f6f9ff)] px-5 py-5 pr-12 sm:px-6 sm:py-6 sm:pr-14">
             <DialogTitle className="text-xl">
               {editing
-                ? t('form.editTitle', { entity: props.entity, version: String(editing.version ?? 1), status: editing.status })
+                ? t('form.editTitle', { entity: props.entity, version: String(editing.version ?? 1), status: formatIdentifierLabel(editing.status) })
                 : t('form.newTitle', { entity: props.entity })}
             </DialogTitle>
             <DialogDescription>
@@ -491,6 +491,13 @@ export function ContentManager(props: ContentManagerProps) {
                 const disabled = Boolean(editing && 'immutable' in f && f.immutable);
                 const common = { id: f.name, disabled };
                 const spansBothColumns = isStructuredKind(f.kind) || f.kind === 'textarea' || f.kind === 'list' || f.kind === 'json';
+                const selectOptions = f.kind === 'select'
+                  ? f.options.map((option) => ({ value: option, label: formatIdentifierLabel(option) }))
+                  : [];
+                const booleanOptions = [
+                  { value: 'true', label: t('boolean.true') },
+                  { value: 'false', label: t('boolean.false') },
+                ];
                 return (
                   <div
                     key={f.name}
@@ -515,26 +522,25 @@ export function ContentManager(props: ContentManagerProps) {
                         onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
                       />
                     ) : f.kind === 'select' ? (
-                      <Select value={values[f.name] ?? ''} onValueChange={(val) => setValues((v) => ({ ...v, [f.name]: val ?? '' }))} disabled={disabled}>
+                      <Select items={selectOptions} value={values[f.name] ?? ''} onValueChange={(val) => setValues((v) => ({ ...v, [f.name]: val ?? '' }))} disabled={disabled}>
                         <SelectTrigger id={f.name} className="w-full bg-background">
                           <SelectValue placeholder={t('selectPlaceholder')} />
                         </SelectTrigger>
                         <SelectContent>
-                          {f.options.map((o) => (
-                            <SelectItem key={o} value={o}>
-                              {formatIdentifierLabel(o)}
+                          {selectOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     ) : f.kind === 'boolean' ? (
-                      <Select value={values[f.name] ?? 'true'} onValueChange={(val) => setValues((v) => ({ ...v, [f.name]: val ?? '' }))} disabled={disabled}>
+                      <Select items={booleanOptions} value={values[f.name] ?? 'true'} onValueChange={(val) => setValues((v) => ({ ...v, [f.name]: val ?? '' }))} disabled={disabled}>
                         <SelectTrigger id={f.name} className="w-full bg-background">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="true">{t('boolean.true')}</SelectItem>
-                          <SelectItem value="false">{t('boolean.false')}</SelectItem>
+                          {booleanOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     ) : (
@@ -608,7 +614,7 @@ export function ContentManager(props: ContentManagerProps) {
                   v{String(h.version)} · {String(h.name ?? h.key)}
                 </span>
                 <Badge variant={STATUS_VARIANT[h.status] ?? 'secondary'} className={STATUS_CLASS[h.status]}>
-                  {statusT.has(h.status) ? statusT(h.status) : h.status}
+                  {statusT.has(h.status) ? statusT(h.status) : formatIdentifierLabel(h.status)}
                 </Badge>
               </li>
             ))}

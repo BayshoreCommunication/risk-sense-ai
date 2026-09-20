@@ -100,6 +100,21 @@ export type Message = {
   createdAt: string;
 };
 
+/** Resolve only a pinned question option to its authored label; arbitrary evidence IDs stay exact. */
+export function factOptionLabel(fact: Fact, messages: Message[]) {
+  if (!fact.questionKey) return undefined;
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const question = messages[index]?.question;
+    if (question?.key !== fact.questionKey || !question.options?.length) continue;
+    const option = question.options.find((candidate) => {
+      const storedValue = candidate.factValue === undefined ? candidate.id : candidate.factValue;
+      return Object.is(storedValue, fact.value) || Object.is(candidate.id, fact.value);
+    });
+    if (option) return option.label;
+  }
+  return undefined;
+}
+
 function unwrap<T>(res: { data?: { data: unknown }; error?: unknown }): T {
   if (!res.data) throw toApiError(res.error);
   return res.data.data as T;

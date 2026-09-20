@@ -73,6 +73,16 @@ function ScalarEditor({
 }) {
   const t = useTranslations('structured.scalar');
   const type = scalarType(value);
+  const typeOptions = [
+    { value: 'string', label: t('text') },
+    { value: 'number', label: t('number') },
+    { value: 'boolean', label: t('boolean') },
+    { value: 'null', label: t('null') },
+  ];
+  const booleanOptions = [
+    { value: 'true', label: t('true') },
+    { value: 'false', label: t('false') },
+  ];
 
   function changeType(next: string | null) {
     const nextType = (next ?? 'string') as ReturnType<typeof scalarType>;
@@ -86,28 +96,24 @@ function ScalarEditor({
     <div className="grid gap-3 sm:grid-cols-[9rem_1fr]">
       <div>
         <Label htmlFor={`${id}-type`}>{t('type')}</Label>
-        <Select value={type} onValueChange={changeType}>
+        <Select items={typeOptions} value={type} onValueChange={changeType}>
           <SelectTrigger id={`${id}-type`} className="mt-1 w-full bg-card" aria-label={t('typeFor', { label })}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="string">{t('text')}</SelectItem>
-            <SelectItem value="number">{t('number')}</SelectItem>
-            <SelectItem value="boolean">{t('boolean')}</SelectItem>
-            <SelectItem value="null">{t('null')}</SelectItem>
+            {typeOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
       <div>
         <Label htmlFor={`${id}-value`}>{label}</Label>
         {type === 'boolean' ? (
-          <Select value={String(value ?? true)} onValueChange={(next) => onChange(next === 'true')}>
+          <Select items={booleanOptions} value={String(value ?? true)} onValueChange={(next) => onChange(next === 'true')}>
             <SelectTrigger id={`${id}-value`} className="mt-1 w-full bg-card" aria-label={label}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="true">{t('true')}</SelectItem>
-              <SelectItem value="false">{t('false')}</SelectItem>
+              {booleanOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
             </SelectContent>
           </Select>
         ) : (
@@ -142,6 +148,14 @@ function ConditionNodeEditor({
   const mode = condition.all ? 'all' : condition.any ? 'any' : 'leaf';
   const groupItems = mode === 'all' ? condition.all ?? [] : mode === 'any' ? condition.any ?? [] : [];
   const op = condition.op ?? 'eq';
+  const modeOptions = [
+    { value: 'leaf', label: t('factComparison') },
+    ...(depth < 2 ? [{ value: 'all', label: t('all') }, { value: 'any', label: t('any') }] : []),
+  ];
+  const operatorOptions = OPERATORS.map((operator) => ({
+    value: operator,
+    label: t.has(`operators.${operator}`) ? t(`operators.${operator}`) : operator,
+  }));
 
   function changeMode(next: string | null) {
     if (next === 'all') onChange({ all: [{ ...DEFAULT_LEAF }] });
@@ -158,14 +172,12 @@ function ConditionNodeEditor({
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-40 flex-1">
           <Label htmlFor={`${id}-mode`}>{t('type')}</Label>
-          <Select value={mode} onValueChange={changeMode}>
+          <Select items={modeOptions} value={mode} onValueChange={changeMode}>
             <SelectTrigger id={`${id}-mode`} className="mt-1 w-full bg-card" aria-label={t('type')}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="leaf">{t('factComparison')}</SelectItem>
-              {depth < 2 ? <SelectItem value="all">{t('all')}</SelectItem> : null}
-              {depth < 2 ? <SelectItem value="any">{t('any')}</SelectItem> : null}
+              {modeOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
@@ -192,6 +204,7 @@ function ConditionNodeEditor({
             <div>
               <Label htmlFor={`${id}-operator`}>{t('operator')}</Label>
               <Select
+                items={operatorOptions}
                 value={op}
                 onValueChange={(next) => {
                   const nextOp = (next ?? 'eq') as Operator;
@@ -205,9 +218,9 @@ function ConditionNodeEditor({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {OPERATORS.map((operator) => (
-                    <SelectItem key={operator} value={operator}>
-                      {t.has(`operators.${operator}`) ? t(`operators.${operator}`) : operator}
+                  {operatorOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -298,6 +311,10 @@ function StringListEditor({
 function FlowEditor({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   const t = useTranslations('structured.flow');
   const flow = parseValue<FlowNode[]>(value, []);
+  const visibilityOptions = [
+    { value: 'always', label: t('always') },
+    { value: 'conditional', label: t('conditional') },
+  ];
 
   function update(next: FlowNode[]) {
     writeValue(onChange, next);
@@ -332,6 +349,7 @@ function FlowEditor({ value, onChange }: { value: string; onChange: (value: stri
           <div>
             <Label htmlFor={`flow-${index}-visibility`}>{t('visibility')}</Label>
             <Select
+              items={visibilityOptions}
               value={node.showIf ? 'conditional' : 'always'}
               onValueChange={(next) => {
                 const showIf = next === 'conditional' ? node.showIf ?? { factKey: '', equals: '' } : undefined;
@@ -342,8 +360,7 @@ function FlowEditor({ value, onChange }: { value: string; onChange: (value: stri
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="always">{t('always')}</SelectItem>
-                <SelectItem value="conditional">{t('conditional')}</SelectItem>
+                {visibilityOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>

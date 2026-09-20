@@ -80,6 +80,12 @@
       "paidTitle": "Managed workspace",
       "paidDescription": "Managed roles and organization SSO are available, and every paid account must satisfy current-login MFA."
     },
+    "demo": {
+      "title": "Demo access",
+      "description": "Use the shared demo account to explore the requestor journey.",
+      "continue": "Continue as demo user",
+      "unavailable": "Demo access is not configured for this build."
+    },
     "recoveryNote": "MFA or SSO did not complete? Refresh your identity-provider access and try again, or contact your administrator.",
     "steps": {
       "identity": "Identity",
@@ -1135,6 +1141,16 @@
   "resultCard": {
     "title": "Assessment result",
     "scoreOutOf": "/ 100 risk score",
+    "scoreLabel": "Risk score",
+    "summaryLabel": "Why this result",
+    "yes": "Yes",
+    "no": "No",
+    "driverRelations": {
+      "above": "Above {value}",
+      "atLeast": "At least {value}",
+      "below": "Below {value}",
+      "atMost": "At most {value}"
+    },
     "ruleDriven": "Rule-driven: {rule}",
     "errorReview": "Error review — score 0",
     "confidence": "Confidence {value}%",
@@ -1144,6 +1160,10 @@
     "computedWithoutRule": "Without the rule, the computed classification would have been {classification}.",
     "factors": {
       "title": "Factor breakdown",
+      "factorLabel": "Factor",
+      "valueLabel": "Value",
+      "weightLabel": "Weight",
+      "contributionLabel": "Contribution",
       "value": "value {value}",
       "points": "{value} pts"
     },

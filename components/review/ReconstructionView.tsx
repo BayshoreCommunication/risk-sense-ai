@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { auditApi, type Reconstruction } from '@/lib/audit';
 import { toApiError } from '@/lib/api/client';
-import { formatIdentifierLabel, formatIdentifierTokensInText } from '@/lib/format-identifier-label';
+import { formatDisplayValue, formatIdentifierLabel, formatIdentifierTokensInText } from '@/lib/format-identifier-label';
 
 /**
  * FR-26: what the audit log alone says happened to an assessment — timeline, rebuilt state, per-entry hash
@@ -16,6 +16,7 @@ import { formatIdentifierLabel, formatIdentifierTokensInText } from '@/lib/forma
 export function ReconstructionView({ id }: { id: string }) {
   const locale = useLocale();
   const t = useTranslations('reconstruction');
+  const resultCard = useTranslations('resultCard');
   const classification = useTranslations('classification');
   const status = useTranslations('status');
   const [r, setR] = useState<Reconstruction | null>(null);
@@ -131,12 +132,18 @@ export function ReconstructionView({ id }: { id: string }) {
           </div>
           <div className="bg-card p-4">
             <div className="text-xs text-muted-foreground">{t('state.status')}</div>
-            <div className="mt-1"><Badge variant="outline">{s.status && status.has(s.status) ? status(s.status) : s.status ?? '—'}</Badge></div>
+            <div className="mt-1"><Badge variant="outline">{s.status && status.has(s.status) ? status(s.status) : s.status ? formatIdentifierLabel(s.status) : '—'}</Badge></div>
           </div>
           <div className="bg-card p-4">
             <div className="text-xs text-muted-foreground">{t('state.scoreClass')}</div>
             <div className="mt-1 font-medium tabular-nums">
-              {s.score ?? '—'} → {s.classification && classification.has(s.classification) ? classification(s.classification) : s.classification ?? s.computedClassification ?? '—'}
+              {s.score ?? '—'} → {s.classification && classification.has(s.classification)
+                ? classification(s.classification)
+                : s.classification
+                  ? formatIdentifierLabel(s.classification)
+                  : s.computedClassification
+                    ? formatIdentifierLabel(s.computedClassification)
+                    : '—'}
               {s.ruleDriven ? ` ${t('state.ruleDrivenSuffix')}` : ''}
             </div>
           </div>
@@ -168,7 +175,7 @@ export function ReconstructionView({ id }: { id: string }) {
                 {Object.entries(s.facts).map(([key, value]) => (
                   <tr key={key} className="border-b last:border-0">
                     <td className="py-3 pr-4 text-xs font-medium text-muted-foreground">{formatIdentifierLabel(key)}</td>
-                    <td className="max-w-xl whitespace-normal py-3 font-medium">{String(value)}</td>
+                    <td className="max-w-xl whitespace-normal py-3 font-medium">{formatDisplayValue(value, resultCard('yes'), resultCard('no'))}</td>
                   </tr>
                 ))}
               </tbody>
@@ -187,7 +194,7 @@ export function ReconstructionView({ id }: { id: string }) {
               <span aria-hidden="true" className={`absolute left-1.5 top-4 size-2.5 rounded-full ring-4 ring-background ${r.integrity.badSeqs.includes(entry.seq) ? 'bg-destructive' : 'bg-primary'}`} />
               {index < r.timeline.length - 1 && <span aria-hidden="true" className="absolute bottom-0 left-[10px] top-6 w-px bg-border" />}
               <span className="font-mono text-muted-foreground">#{entry.seq} · {entry.at ? new Date(entry.at).toLocaleString(locale) : '—'}</span>
-              <span className="capitalize text-muted-foreground">{entry.actor.role ?? 'system'}</span>
+              <span className="text-muted-foreground">{formatIdentifierLabel(entry.actor.role ?? 'system')}</span>
               <span className="leading-5 text-foreground">{formatIdentifierTokensInText(entry.summary)}</span>
             </li>
           ))}

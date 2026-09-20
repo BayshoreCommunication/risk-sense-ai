@@ -19,6 +19,7 @@ import { PageHeader } from '@/components/shell/PageHeader';
 import { api, toApiError } from '@/lib/api/client';
 import type { components } from '@/lib/api/types';
 import { matricesApi, personasApi, questionsApi, rulesApi, scenariosApi, type Item } from '@/lib/admin/content';
+import { formatIdentifierLabel } from '@/lib/format-identifier-label';
 
 type Dataset = components['schemas']['Dataset'];
 type AreaKey = 'personas' | 'scenarios' | 'questions' | 'rules' | 'scoring' | 'datasets';
@@ -112,7 +113,7 @@ export default function Page() {
       scoring: { value: active(snapshot.scoring), detail: t('metrics.sectorConfigurations') },
       datasets: {
         value: latestDataset ? `v${latestDataset.seq}` : '—',
-        detail: latestDataset ? t('metrics.datasetState', { status: latestDataset.status }) : t('metrics.noDataset'),
+        detail: latestDataset ? t('metrics.datasetState', { status: formatIdentifierLabel(latestDataset.status) }) : t('metrics.noDataset'),
       },
     } satisfies Record<AreaKey, { value: string | number; detail: string }>;
   }, [snapshot, t]);

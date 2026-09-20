@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { PageHeader } from '@/components/shell/PageHeader';
 import { api, toApiError } from '@/lib/api/client';
 import type { components, paths } from '@/lib/api/types';
+import { formatIdentifierLabel } from '@/lib/format-identifier-label';
 
 type Department = components['schemas']['SystemDepartment'];
 type Persona = components['schemas']['SystemPersona'];
@@ -237,7 +238,7 @@ export default function DepartmentsPage() {
                       <input className="mt-0.5" type="checkbox" checked={(draft.personaIds ?? []).includes(persona._id)} onChange={(event) => togglePersona(persona._id, event.target.checked)} />
                       <span>
                         <span className="font-medium">{persona.name}</span>
-                        <span className="block text-xs text-muted-foreground">{persona.sector} · {t('sourceContent', { source: persona.source })}</span>
+                        <span className="block text-xs text-muted-foreground">{formatIdentifierLabel(persona.sector)} · {t('sourceContent', { source: formatIdentifierLabel(persona.source) })}</span>
                       </span>
                     </label>
                   ))}

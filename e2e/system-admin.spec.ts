@@ -254,7 +254,7 @@ test('a verified FREE plan preserves a legacy current role while offering reques
   await expect(page.getByText('FREE requestors sign in without the PAID MFA step. Managed operator roles are unavailable in FREE workspaces.')).toBeVisible();
   await page.getByRole('button', { name: 'Edit' }).click();
   const dialog = page.getByRole('dialog');
-  await expect(dialog.getByLabel('Role')).toContainText('audit');
+  await expect(dialog.getByLabel('Role')).toContainText('Audit');
   await dialog.getByLabel('Role').click();
   await expect(page.getByRole('option', { name: 'Audit' })).toBeVisible();
   await expect(page.getByRole('option', { name: 'Requestor' })).toBeVisible();

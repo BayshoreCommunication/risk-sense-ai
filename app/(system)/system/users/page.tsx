@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { PageHeader } from '@/components/shell/PageHeader';
 import { api, toApiError } from '@/lib/api/client';
 import type { components, paths } from '@/lib/api/types';
+import { formatIdentifierLabel } from '@/lib/format-identifier-label';
 
 type SystemUser = components['schemas']['SystemUser'];
 type Department = components['schemas']['SystemDepartment'];
@@ -131,6 +132,11 @@ export default function UsersPage() {
       : plan === 'free' && draft.role !== 'requestor'
         ? [draft.role, 'requestor']
         : ['requestor'];
+  const roleOptions = availableRoles.map((role) => ({ value: role, label: roles(role) }));
+  const statusOptions = [
+    { value: 'active', label: status('active') },
+    { value: 'disabled', label: status('disabled') },
+  ];
   const controlsDisabled = planState !== 'ready' || pageError !== null;
 
   function updateDraft(next: Partial<UserDraft>) {
@@ -297,7 +303,7 @@ export default function UsersPage() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell><Badge variant="outline" className={ROLE_BADGE_CLASS[user.role]}>{roles.has(user.role) ? roles(user.role) : user.role}</Badge></TableCell>
+                  <TableCell><Badge variant="outline" className={ROLE_BADGE_CLASS[user.role]}>{roles.has(user.role) ? roles(user.role) : formatIdentifierLabel(user.role)}</Badge></TableCell>
                   <TableCell className="whitespace-normal">
                     {user.role !== 'requestor'
                       ? t('scope.notApplicable')
@@ -306,7 +312,7 @@ export default function UsersPage() {
                         : user.departmentIds.map((id) => departmentNames.get(id) ?? id).join(', ') || t('scope.ownOnly')}
                   </TableCell>
                   <TableCell><Badge variant={user.mfaEnrolled ? 'outline' : planState !== 'ready' ? 'secondary' : plan === 'paid' && user.role === 'requestor' ? 'secondary' : requiresRecordedMfa(user) ? 'destructive' : 'secondary'}>{user.mfaEnrolled ? t('mfa.enrolled') : planState !== 'ready' ? t('mfa.unavailable') : plan === 'paid' && user.role === 'requestor' ? t('mfa.signIn') : requiresRecordedMfa(user) ? t('mfa.pending') : t('mfa.notRequired')}</Badge></TableCell>
-                  <TableCell><Badge variant={user.status === 'active' ? 'outline' : 'destructive'} className={user.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : undefined}>{status.has(user.status) ? status(user.status) : user.status}</Badge></TableCell>
+                  <TableCell><Badge variant={user.status === 'active' ? 'outline' : 'destructive'} className={user.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : undefined}>{status.has(user.status) ? status(user.status) : formatIdentifierLabel(user.status)}</Badge></TableCell>
                   <TableCell className="text-right"><Button size="icon-xs" variant="ghost" aria-label={t('edit')} title={t('edit')} onClick={() => openEdit(user)} disabled={controlsDisabled}><Ellipsis aria-hidden="true" /></Button></TableCell>
                 </TableRow>
               ))}
@@ -324,10 +330,10 @@ export default function UsersPage() {
                   <span className={`grid size-10 shrink-0 place-items-center rounded-xl text-sm font-semibold ${AVATAR_CLASS[user.role]}`} aria-hidden="true">{userInitials(user.name)}</span>
                   <div className="min-w-0"><h2 className="truncate font-semibold">{user.name}</h2><p className="truncate text-xs text-muted-foreground">{user.email}</p></div>
                 </div>
-                <Badge variant={user.status === 'active' ? 'outline' : 'destructive'} className={user.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : undefined}>{status.has(user.status) ? status(user.status) : user.status}</Badge>
+                <Badge variant={user.status === 'active' ? 'outline' : 'destructive'} className={user.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : undefined}>{status.has(user.status) ? status(user.status) : formatIdentifierLabel(user.status)}</Badge>
               </div>
               <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                <div><dt className="text-muted-foreground">{t('columns.role')}</dt><dd className="mt-1"><Badge variant="outline" className={ROLE_BADGE_CLASS[user.role]}>{roles.has(user.role) ? roles(user.role) : user.role}</Badge></dd></div>
+                <div><dt className="text-muted-foreground">{t('columns.role')}</dt><dd className="mt-1"><Badge variant="outline" className={ROLE_BADGE_CLASS[user.role]}>{roles.has(user.role) ? roles(user.role) : formatIdentifierLabel(user.role)}</Badge></dd></div>
                 <div><dt className="text-muted-foreground">{t('columns.mfa')}</dt><dd className="mt-0.5 font-medium">{user.mfaEnrolled ? t('mfa.enrolled') : planState !== 'ready' ? t('mfa.unavailable') : plan === 'paid' && user.role === 'requestor' ? t('mfa.signIn') : requiresRecordedMfa(user) ? t('mfa.pending') : t('mfa.notRequired')}</dd></div>
                 <div className="col-span-2"><dt className="text-muted-foreground">{t('columns.departments')}</dt><dd className="mt-0.5 font-medium">{user.role !== 'requestor' ? t('scope.notApplicable') : user.crossDepartmentAccess ? t('scope.allDepartments') : user.departmentIds.map((id) => departmentNames.get(id) ?? id).join(', ') || t('scope.ownOnly')}</dd></div>
                 <div className="col-span-2"><dt className="text-muted-foreground">{t('columns.lastLogin')}</dt><dd className="mt-0.5 font-medium">{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString(locale) : t('never')}</dd></div>
@@ -375,20 +381,20 @@ export default function UsersPage() {
               </div>
               <div className="space-y-1">
                 <Label htmlFor="user-role">{t('fields.role')}</Label>
-                <Select disabled={planState !== 'ready'} value={draft.role} onValueChange={(value) => {
+                <Select items={roleOptions} disabled={planState !== 'ready'} value={draft.role} onValueChange={(value) => {
                     const role = (value ?? 'requestor') as Role;
                     updateDraft({ role, ...(role === 'requestor' ? {} : { departmentIds: [], crossDepartmentAccess: false }) });
                   }}>
                   <SelectTrigger id="user-role" className="w-full" aria-describedby="user-role-policy"><SelectValue /></SelectTrigger>
-                  <SelectContent>{availableRoles.map((role) => <SelectItem key={role} value={role}>{roles(role)}</SelectItem>)}</SelectContent>
+                  <SelectContent>{roleOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               {editor?.mode === 'edit' && (
                 <div className="space-y-1">
                   <Label htmlFor="user-status">{t('fields.status')}</Label>
-                  <Select value={draft.status} onValueChange={(value) => updateDraft({ status: (value ?? 'active') as SystemUser['status'] })}>
+                  <Select items={statusOptions} value={draft.status} onValueChange={(value) => updateDraft({ status: (value ?? 'active') as SystemUser['status'] })}>
                     <SelectTrigger id="user-status" className="w-full"><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value="active">{status('active')}</SelectItem><SelectItem value="disabled">{status('disabled')}</SelectItem></SelectContent>
+                    <SelectContent>{statusOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
               )}

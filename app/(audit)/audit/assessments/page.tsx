@@ -63,14 +63,14 @@ export default function AuditAssessmentsPage() {
                 <p className="truncate text-sm font-semibold">{a.requestor?.name ?? '—'}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{new Date(a.createdAt).toLocaleString(locale)}</p>
               </div>
-              <Badge variant="secondary">{status.has(a.status) ? status(a.status) : a.status}</Badge>
+              <Badge variant="secondary">{status.has(a.status) ? status(a.status) : formatIdentifierLabel(a.status)}</Badge>
             </div>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
               <div><dt className="text-muted-foreground">{t('columns.department')}</dt><dd className="mt-0.5 font-medium">{a.department?.name ?? '—'}</dd></div>
               <div><dt className="text-muted-foreground">{t('columns.personaScenario')}</dt><dd className="mt-0.5 font-medium">{a.personaKey ? formatIdentifierLabel(a.personaKey) : '—'} · {a.scenarioKey ? formatIdentifierLabel(a.scenarioKey) : '—'}</dd></div>
-              <div><dt className="text-muted-foreground">{t('columns.classification')}</dt><dd className="mt-0.5 font-medium">{a.result ? classification.has(a.result.classification) ? classification(a.result.classification) : a.result.classification : '—'}</dd></div>
+              <div><dt className="text-muted-foreground">{t('columns.classification')}</dt><dd className="mt-0.5 font-medium">{a.result ? classification.has(a.result.classification) ? classification(a.result.classification) : formatIdentifierLabel(a.result.classification) : '—'}</dd></div>
               <div><dt className="text-muted-foreground">{t('columns.confidence')}</dt><dd className="mt-0.5 font-medium tabular-nums">{a.result ? `${a.result.confidence}%` : '—'}</dd></div>
-              <div className="col-span-2"><dt className="text-muted-foreground">{t('columns.decision')}</dt><dd className="mt-0.5 font-medium">{a.decision ? `${t.has(`decisionTypes.${a.decision.type}`) ? t(`decisionTypes.${a.decision.type}`) : a.decision.type}${a.decision.overriddenTo ? ` → ${classification.has(a.decision.overriddenTo) ? classification(a.decision.overriddenTo) : a.decision.overriddenTo}` : ''}` : '—'}</dd></div>
+              <div className="col-span-2"><dt className="text-muted-foreground">{t('columns.decision')}</dt><dd className="mt-0.5 font-medium">{a.decision ? `${t.has(`decisionTypes.${a.decision.type}`) ? t(`decisionTypes.${a.decision.type}`) : formatIdentifierLabel(a.decision.type)}${a.decision.overriddenTo ? ` → ${classification.has(a.decision.overriddenTo) ? classification(a.decision.overriddenTo) : formatIdentifierLabel(a.decision.overriddenTo)}` : ''}` : '—'}</dd></div>
             </dl>
             <div className="grid grid-cols-2 gap-2">
               <Button size="sm" variant="outline" onClick={() => setOpen({ item: a, mode: 'stored' })}><Database aria-hidden="true" />{t('actions.stored')}</Button>
@@ -117,11 +117,11 @@ export default function AuditAssessmentsPage() {
                   <div className="text-xs text-muted-foreground">{a.scenarioKey ? formatIdentifierLabel(a.scenarioKey) : '—'}</div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="secondary">{status.has(a.status) ? status(a.status) : a.status}</Badge>
+                  <Badge variant="secondary">{status.has(a.status) ? status(a.status) : formatIdentifierLabel(a.status)}</Badge>
                 </TableCell>
-                <TableCell>{a.result ? classification.has(a.result.classification) ? classification(a.result.classification) : a.result.classification : '—'}</TableCell>
+                <TableCell>{a.result ? classification.has(a.result.classification) ? classification(a.result.classification) : formatIdentifierLabel(a.result.classification) : '—'}</TableCell>
                 <TableCell className="tabular-nums">{a.result ? `${a.result.confidence}%` : '—'}</TableCell>
-                <TableCell className="whitespace-nowrap">{a.decision ? `${t.has(`decisionTypes.${a.decision.type}`) ? t(`decisionTypes.${a.decision.type}`) : a.decision.type}${a.decision.overriddenTo ? ` → ${classification.has(a.decision.overriddenTo) ? classification(a.decision.overriddenTo) : a.decision.overriddenTo}` : ''}` : '—'}</TableCell>
+                <TableCell className="whitespace-nowrap">{a.decision ? `${t.has(`decisionTypes.${a.decision.type}`) ? t(`decisionTypes.${a.decision.type}`) : formatIdentifierLabel(a.decision.type)}${a.decision.overriddenTo ? ` → ${classification.has(a.decision.overriddenTo) ? classification(a.decision.overriddenTo) : formatIdentifierLabel(a.decision.overriddenTo)}` : ''}` : '—'}</TableCell>
                 <TableCell className="whitespace-nowrap text-right">
                   <Button size="sm" variant="outline" className="mr-1" onClick={() => setOpen({ item: a, mode: 'stored' })}>
                     <Database aria-hidden="true" />{t('actions.stored')}

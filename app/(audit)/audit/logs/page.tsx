@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toApiError } from '@/lib/api/client';
 import { auditApi, type AuditListQuery, type AuditLogEntry } from '@/lib/audit';
+import { formatIdentifierLabel } from '@/lib/format-identifier-label';
 
 const ANY = '__any';
 const CATEGORIES = ['auth', 'session', 'config', 'dataset', 'assessment', 'decision', 'retention', 'access'];
@@ -45,7 +46,7 @@ export default function AuditLogsPage() {
   // changes. Only the newest request may publish data; otherwise a late clear-text response could
   // overwrite a newer masked view.
   const listRequestGeneration = useRef(0);
-  const categoryOptions = [{ value: ANY, label: t('allCategories') }, ...CATEGORIES.map((category) => ({ value: category, label: category }))];
+  const categoryOptions = [{ value: ANY, label: t('allCategories') }, ...CATEGORIES.map((category) => ({ value: category, label: formatIdentifierLabel(category) }))];
   const searchEntityId = /^[a-f0-9]{24}$/i.test(search.trim()) ? search.trim() : '';
   const isLoadedPageFilter = Boolean(search.trim()) && !searchEntityId;
 
@@ -208,13 +209,13 @@ export default function AuditLogsPage() {
                 <p className="break-words text-sm font-semibold">{entry.action}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{new Date(entry.createdAt).toLocaleString(locale)}</p>
               </div>
-              <Badge variant="secondary">{entry.category}</Badge>
+              <Badge variant="secondary">{formatIdentifierLabel(entry.category)}</Badge>
             </div>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
               <div><dt className="text-muted-foreground">{t('columns.sequence')}</dt><dd className="mt-0.5 font-mono">{entry.seq}</dd></div>
               <div><dt className="text-muted-foreground">{t('columns.size')}</dt><dd className="mt-0.5 font-mono">{formatBytes(eventSize(entry), locale)}</dd></div>
-              <div><dt className="text-muted-foreground">{t('columns.user')}</dt><dd className="mt-0.5">{entry.actorRole ?? t('systemActor')}</dd></div>
-              <div><dt className="text-muted-foreground">{t('columns.record')}</dt><dd className="mt-0.5 font-mono">{entry.entity.type} {entry.entity.id.slice(-6)}</dd></div>
+              <div><dt className="text-muted-foreground">{t('columns.user')}</dt><dd className="mt-0.5">{entry.actorRole ? formatIdentifierLabel(entry.actorRole) : t('systemActor')}</dd></div>
+              <div><dt className="text-muted-foreground">{t('columns.record')}</dt><dd className="mt-0.5 font-mono">{formatIdentifierLabel(entry.entity.type)} {entry.entity.id.slice(-6)}</dd></div>
               <div className="col-span-2 min-w-0"><dt className="text-muted-foreground">{t('columns.hash')}</dt><dd className="mt-0.5 truncate font-mono" title={entry.hash}>{entry.hash}</dd></div>
             </dl>
             <Button size="sm" variant="outline" className="w-full" aria-expanded={expanded === entry._id} onClick={() => setExpanded(expanded === entry._id ? null : entry._id)}>
@@ -253,7 +254,7 @@ export default function AuditLogsPage() {
               <TableRow key={e._id}>
                 <TableCell className="whitespace-nowrap align-top">{new Date(e.createdAt).toLocaleString(locale)}</TableCell>
                 <TableCell className="align-top">
-                  <p className="whitespace-nowrap text-sm font-medium">{e.actorRole ?? t('systemActor')}</p>
+                  <p className="whitespace-nowrap text-sm font-medium">{e.actorRole ? formatIdentifierLabel(e.actorRole) : t('systemActor')}</p>
                   {e.actorUserId && <p className="mt-0.5 font-mono text-[0.68rem] text-muted-foreground" title={e.actorUserId}>…{e.actorUserId.slice(-8)}</p>}
                 </TableCell>
                 <TableCell>
@@ -261,7 +262,7 @@ export default function AuditLogsPage() {
                     <div>
                       <span className="font-medium">{e.action}</span>
                       <div className="mt-1 flex items-center gap-2">
-                        <Badge variant="secondary">{e.category}</Badge>
+                        <Badge variant="secondary">{formatIdentifierLabel(e.category)}</Badge>
                         <span className="font-mono text-[0.68rem] text-muted-foreground">{t('sequenceValue', { value: e.seq })}</span>
                       </div>
                     </div>
@@ -286,7 +287,7 @@ export default function AuditLogsPage() {
                   )}
                 </TableCell>
                 <TableCell className="whitespace-nowrap align-top text-xs">
-                  <p className="font-medium capitalize">{e.entity.type.replace(/_/g, ' ')}</p>
+                  <p className="font-medium">{formatIdentifierLabel(e.entity.type)}</p>
                   <p className="mt-0.5 font-mono text-muted-foreground" title={e.entity.id}>…{e.entity.id.slice(-8)}</p>
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-right align-top font-mono text-xs tabular-nums" title={t('columns.sizeHint')}>{formatBytes(eventSize(e), locale)}</TableCell>

@@ -5,6 +5,7 @@ import { AlertTriangle, ArrowUpCircle, Info, ShieldCheck, Siren, type LucideIcon
 import { ContentManager, type FieldSpec } from '@/components/admin/ContentManager';
 import { Badge } from '@/components/ui/badge';
 import { rulesApi } from '@/lib/admin/content';
+import { formatIdentifierLabel } from '@/lib/format-identifier-label';
 import { useWorkspace } from '@/components/shell/workspace-context';
 
 /** Icon and colour per forced classification, following docs/design/figma-frames/14-admin-rule-engine.png. */
@@ -76,7 +77,7 @@ export default function RulesPage() {
                   {t('card.if')}{' '}
                   <code className="rounded-md bg-muted px-1.5 py-1 font-mono text-[0.78rem] font-semibold text-foreground">{formatCondition(item.trigger)}</code>{' '}
                   {t('card.then')}{' '}
-                  <strong className={tone.text}>{classification.has(forced) ? classification(forced) : forced}</strong>
+                  <strong className={tone.text}>{classification.has(forced) ? classification(forced) : formatIdentifierLabel(forced)}</strong>
                 </span>
                 <Badge variant="outline" className="bg-background text-[0.68rem]">{t('card.priority', { value: String(item.priority ?? 100) })}</Badge>
               </span>

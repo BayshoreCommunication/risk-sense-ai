@@ -5,9 +5,9 @@ import { useLocale, useTranslations } from 'next-intl';
 import { AlertCircle, CheckCircle2, Eye, FileCheck2, Flag, ListChecks, MessageSquareText, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { assessments, type Assessment, type Message } from '@/lib/assessments';
+import { assessments, factOptionLabel, type Assessment, type Message } from '@/lib/assessments';
 import { toApiError } from '@/lib/api/client';
-import { formatIdentifierLabel, formatIdentifierTokensInText, formatSystemDisplayText } from '@/lib/format-identifier-label';
+import { formatDisplayValue, formatIdentifierLabel, formatIdentifierTokensInText, formatSystemDisplayText } from '@/lib/format-identifier-label';
 
 
 /**
@@ -62,6 +62,29 @@ export function AssessmentDetail({ id }: { id: string }) {
   }
   const r = a.result;
   const flagged = a.facts.filter((f) => f.flagged);
+  const distinctNextSteps = (r?.nextSteps ?? []).filter(
+    (step) => step.replace(/\s+/g, ' ').trim().toLocaleLowerCase()
+      !== r?.recommendedAction.replace(/\s+/g, ' ').trim().toLocaleLowerCase(),
+  );
+  const driverDisplay = (driver: string) => {
+    const match = /^(.+?)\s*(>=|<=|=|>|<)\s*(.+)$/.exec(driver.trim());
+    if (!match?.[1] || !match[2] || !match[3]) return formatIdentifierTokensInText(driver);
+
+    const rawValue = match[3].trim();
+    const value = /^true$/i.test(rawValue)
+      ? resultCard('yes')
+      : /^false$/i.test(rawValue)
+        ? resultCard('no')
+        : rawValue;
+    const relation = {
+      '>': 'above',
+      '>=': 'atLeast',
+      '<': 'below',
+      '<=': 'atMost',
+    }[match[2]];
+    const displayValue = relation ? resultCard(`driverRelations.${relation}`, { value }) : value;
+    return `${formatIdentifierLabel(match[1])}: ${displayValue}`;
+  };
 
   return (
     <div className={`space-y-4 text-sm transition-opacity ${loading ? 'opacity-60' : ''}`} aria-busy={loading}>
@@ -78,7 +101,7 @@ export function AssessmentDetail({ id }: { id: string }) {
       )}
       <section className="rounded-xl border bg-muted/15 p-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className="bg-background">{status.has(a.status) ? status(a.status) : a.status}</Badge>
+          <Badge variant="outline" className="bg-background">{status.has(a.status) ? status(a.status) : formatIdentifierLabel(a.status)}</Badge>
           <span className="text-muted-foreground">
             {a.personaKey ? formatIdentifierLabel(a.personaKey) : '—'} · {a.scenarioKey ? formatIdentifierLabel(a.scenarioKey) : '—'}
           </span>
@@ -97,8 +120,8 @@ export function AssessmentDetail({ id }: { id: string }) {
             </div>
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge>{classification.has(r.classification) ? classification(r.classification) : r.classification}</Badge>
-                {r.ruleDriven && <Badge variant="outline">{t('result.ruleDriven', { rule: r.ruleName ?? r.ruleKey ?? '' })}</Badge>}
+                <Badge>{classification.has(r.classification) ? classification(r.classification) : formatIdentifierLabel(r.classification)}</Badge>
+                {r.ruleDriven && <Badge variant="outline">{t('result.ruleDriven', { rule: r.ruleName ?? formatIdentifierLabel(r.ruleKey ?? '') })}</Badge>}
                 <Badge variant="outline">{t('result.confidence', { value: r.confidence })}</Badge>
                 {r.mandatoryReview && <Badge variant="destructive">{t('result.mandatoryReview')}</Badge>}
                 {r.professionalConsult && <Badge variant="secondary">{t('result.professionalConsult')}</Badge>}
@@ -123,23 +146,23 @@ export function AssessmentDetail({ id }: { id: string }) {
                 <div className="flex flex-wrap gap-1.5">
                   {r.keyDrivers.map((driver) => (
                     <Badge key={driver} variant="outline" className="h-auto whitespace-normal py-1 text-left font-normal">
-                      {formatIdentifierTokensInText(driver)}
+                      {driverDisplay(driver)}
                     </Badge>
                   ))}
                 </div>
               </div>
             )}
           </div>
-          {(r.nextSteps.length > 0 || Object.keys(r.factors).length > 0) && (
+          {(distinctNextSteps.length > 0 || Object.keys(r.factors).length > 0) && (
             <div className="grid gap-4 border-t p-4 lg:grid-cols-2">
-              {r.nextSteps.length > 0 && (
+              {distinctNextSteps.length > 0 && (
                 <div>
                   <div className="mb-2 flex items-center gap-2 font-medium">
                     <ListChecks aria-hidden="true" className="size-4 text-primary" />
                     {resultCard('nextSteps')}
                   </div>
                   <ol className="space-y-2">
-                    {r.nextSteps.map((step, index) => (
+                    {distinctNextSteps.map((step, index) => (
                       <li key={`${index}-${step}`} className="flex gap-2 text-muted-foreground">
                         <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">{index + 1}</span>
                         <span className="leading-5">{step}</span>
@@ -181,8 +204,8 @@ export function AssessmentDetail({ id }: { id: string }) {
             {a.facts.map((f) => (
               <tr key={f.key} className="border-b last:border-0">
                 <td className="py-3 pr-3 text-xs font-medium text-muted-foreground">{formatIdentifierLabel(f.key)}</td>
-                <td className="max-w-sm whitespace-normal py-3 pr-3 font-medium">{String(f.value)}</td>
-                <td className="py-3 pr-3 capitalize text-muted-foreground">{f.source}</td>
+                <td className="max-w-sm whitespace-normal py-3 pr-3 font-medium">{factOptionLabel(f, messages) ?? formatDisplayValue(f.value, resultCard('yes'), resultCard('no'))}</td>
+                <td className="py-3 pr-3 text-muted-foreground">{formatIdentifierLabel(f.source)}</td>
                 <td className="py-3 text-right tabular-nums text-muted-foreground">{f.flagged ? <Badge variant="destructive">{Math.round(f.confidence * 100)}%</Badge> : `${Math.round(f.confidence * 100)}%`}</td>
               </tr>
             ))}
@@ -199,7 +222,7 @@ export function AssessmentDetail({ id }: { id: string }) {
             <div>
               <div className={`font-medium ${a.status === 'escalated' ? 'text-amber-950' : 'text-emerald-950'}`}>
                 {t('decision.label')}: {t.has(`decision.types.${a.decision.type}`) ? t(`decision.types.${a.decision.type}`) : a.decision.type}
-                {a.decision.overriddenTo ? ` → ${classification.has(a.decision.overriddenTo) ? classification(a.decision.overriddenTo) : a.decision.overriddenTo}` : ''}
+                {a.decision.overriddenTo ? ` → ${classification.has(a.decision.overriddenTo) ? classification(a.decision.overriddenTo) : formatIdentifierLabel(a.decision.overriddenTo)}` : ''}
                 {a.status === 'escalated' && a.escalatedTo ? ` → ${a.escalatedTo.name}` : ''}
               </div>
               {a.status === 'escalated' && <div className="mt-1 text-sm font-medium text-amber-900">{resultCard('escalated.stillOpen')}</div>}
@@ -217,7 +240,7 @@ export function AssessmentDetail({ id }: { id: string }) {
         <ol className="space-y-0 px-4 py-2">
           {messages.map((m) => (
             <li key={m._id} className="grid gap-1 border-b py-3 last:border-0 sm:grid-cols-[8rem_1fr]">
-              <span className="font-medium capitalize text-foreground">{m.role} · {m.kind}</span>
+              <span className="font-medium text-foreground">{formatIdentifierLabel(m.role)} · {formatIdentifierLabel(m.kind)}</span>
               <span className="whitespace-pre-wrap leading-5">{m.role === 'assistant' ? formatSystemDisplayText(m.content) : m.content}</span>
             </li>
           ))}

@@ -437,7 +437,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
           id="main-content"
           tabIndex={-1}
           className={`h-[calc(100dvh-4.75rem)] overflow-hidden outline-none ${
-            isConversationWorkspace ? 'px-3 py-3 sm:px-5 sm:py-4 lg:px-7 lg:py-5' : 'px-4 py-5 sm:px-7 sm:py-7 lg:px-12 lg:py-10'
+            isConversationWorkspace ? 'px-3 py-2 sm:px-5 sm:py-2.5 lg:px-7 lg:py-3' : 'px-4 py-5 sm:px-7 sm:py-7 lg:px-12 lg:py-10'
           }`}
         >
           <WorkspaceProvider value={{ role: trustedRole, plan: me.tenant.plan, features: me.tenant.features, sectors: me.tenant.sectors ?? [] }}>{children}</WorkspaceProvider>

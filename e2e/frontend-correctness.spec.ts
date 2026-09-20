@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from '@playwright/test';
+import type { Message } from '../lib/assessments';
 import { safeNextForRole } from '../lib/session';
 
 const BASE_URL = 'http://127.0.0.1:3100';
@@ -986,15 +987,16 @@ test('desktop sidebar collapse persists while mobile navigation stays labelled a
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
-test('a long chat transcript stays viewport-contained with one transcript scroller and responsive context [FR-05, FR-06, NFR-07, NFR-08]', async ({ page }) => {
+test('a long chat transcript stays viewport-contained with one transcript scroller and responsive context [FR-05, FR-06, FR-20, NFR-07, NFR-08]', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await authenticate(page, 'requestor');
   const scenarioKey = 'fin_unauthorized_transaction';
   const longTransactionToken = `TXN-${'A'.repeat(96)}`;
+  const resultExplanation = 'The amount, bypassed controls, and active incident status make prompt professional review appropriate.';
   let submittedDecision: unknown;
   let releaseDecision: (() => void) | undefined;
   let assessmentState = assessment({ scenarioKey });
-  const longMessages = Array.from({ length: 50 }, (_, index) => ({
+  const longMessages: Message[] = Array.from({ length: 50 }, (_, index) => ({
     _id: `message-${index}`,
     role: index % 2 === 0 ? 'assistant' : 'user',
     kind: 'info',
@@ -1007,7 +1009,7 @@ test('a long chat transcript stays viewport-contained with one transcript scroll
     kind: 'info',
     content: 'Scenario: fin unauthorized transaction',
     createdAt: '2026-09-14T00:00:00.000Z',
-  } as (typeof longMessages)[number]);
+  });
   longMessages.push({
     _id: 'message-evidence-file',
     role: 'assistant',
@@ -1056,11 +1058,13 @@ test('a long chat transcript stays viewport-contained with one transcript scroll
   await page.goto('/chat/assessment-1');
   const composer = page.getByTestId('composer');
   await expect(composer).toBeVisible();
-  await expect(page.getByText('Financial Unauthorized Transaction', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Financial Unauthorized Transaction', { exact: true })).toHaveCount(2);
   await expect(page.getByText('Scenario: Financial Unauthorized Transaction', { exact: true })).toHaveCount(1);
   await expect(page.getByText('Evidence file: invoice_2024.pdf', { exact: true })).toHaveCount(1);
   await expect(page.getByText('Fin Unauthorized Transaction', { exact: true })).toHaveCount(0);
   await expect(page.getByText(scenarioKey, { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Selected scenario', { exact: true })).toHaveCount(0);
+  await expect(page.getByTestId('current-stage-label')).toBeVisible();
   const metrics = await page.evaluate(() => {
     const main = document.querySelector<HTMLElement>('#main-content');
     const shell = document.querySelector<HTMLElement>('[data-testid="assessment-conversation-page"]');
@@ -1097,6 +1101,7 @@ test('a long chat transcript stays viewport-contained with one transcript scroll
   await contextDisclosure.locator(':scope > summary').click();
   await expect(contextDisclosure).toHaveAttribute('open', '');
   await expect(contextDisclosure.getByRole('heading', { name: 'ASSESSMENT WORKFLOW' })).toBeVisible();
+  await expect(contextDisclosure.getByText('Financial Unauthorized Transaction', { exact: true })).toBeVisible();
   await contextDisclosure.locator(':scope > summary').click();
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -1107,14 +1112,15 @@ test('a long chat transcript stays viewport-contained with one transcript scroll
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
   assessmentState = assessment({
+    scenarioKey,
     status: 'awaiting_decision',
     phase: 'done',
     currentQuestionKey: undefined,
     facts: Array.from({ length: 16 }, (_, index) => ({
       key: index === 0 ? 'controls_bypassed' : index === 1 ? 'amount_usd' : `captured_fact_${index + 1}`,
-      value: index === 0 ? true : index === 1 ? 125000 : `Evidence value ${index + 1}`,
-      source: 'mcq' as const,
-      questionKey: `question_${index + 1}`,
+      value: index === 0 ? true : index === 1 ? 125000 : index === 2 ? 'customer_funds' : index === 3 ? 'txn_abc123' : `Evidence value ${index + 1}`,
+      source: index === 3 ? 'ai' as const : 'mcq' as const,
+      questionKey: index === 2 ? 'fund_ownership' : index === 3 ? undefined : `question_${index + 1}`,
       confidence: 1,
       flagged: false,
     })),
@@ -1126,21 +1132,90 @@ test('a long chat transcript stays viewport-contained with one transcript scroll
       confidence: 92,
       professionalConsult: true,
       mandatoryReview: false,
-      explanation: 'The amount, bypassed controls, and active incident status make prompt professional review appropriate.',
-      keyDrivers: ['Controls Bypassed = true', 'Amount Usd > 100000'],
+      explanation: resultExplanation,
+      keyDrivers: ['Controls Bypassed = true', 'Amount Usd > 100000', 'Reference Id = TXN_ABC123'],
       recommendedAction: 'Further Professional Risk Guidance Needed',
-      nextSteps: ['Disclose/Report Issue'],
-      factors: {},
+      nextSteps: ['Further Professional Risk Guidance Needed', 'Disclose/Report Issue'],
+      factors: {
+        control_effectiveness: { value: 5, weight: 15, contribution: 15, matchedMapping: 5 },
+        regulatory_sensitivity: { value: 1, weight: 15, contribution: 0, matchedMapping: 1 },
+      },
       computedAt: '2026-09-14T00:00:00.000Z',
     },
   });
-  messageState = longMessages.filter((message) => message._id !== 'message-long-token').slice(-3);
+  messageState = [
+    ...longMessages.filter((message) => message._id !== 'message-long-token').slice(-3),
+    {
+      _id: 'message-fund-ownership',
+      role: 'assistant',
+      kind: 'question',
+      content: 'Whose funds were involved?',
+      questionKey: 'fund_ownership',
+      question: {
+        key: 'fund_ownership',
+        text: 'Whose funds were involved?',
+        type: 'mcq',
+        factKey: 'fund_ownership',
+        required: true,
+        options: [{ id: 'customer_funds', label: 'Customer funds' }],
+      },
+      createdAt: '2026-09-14T00:00:00.500Z',
+    },
+    {
+      _id: 'message-result-explanation',
+      role: 'assistant',
+      kind: 'result',
+      content: resultExplanation,
+      createdAt: '2026-09-14T00:00:01.000Z',
+    },
+  ];
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Assessment result' })).toBeVisible();
+  await expect(page.getByRole('img', { name: '78 / 100 risk score' })).toBeVisible();
+  await expect(page.getByText('Why this result', { exact: true })).toBeVisible();
+  await expect(page.getByText(resultExplanation, { exact: true })).toHaveCount(1);
   await expect(page.getByText('Recommended action', { exact: true })).toBeVisible();
+  await expect(page.getByText('Further Professional Risk Guidance Needed', { exact: true })).toHaveCount(1);
+  const controlsBypassedDriver = page.locator('li').filter({ hasText: 'Controls Bypassed' });
+  await expect(controlsBypassedDriver.getByText('Controls Bypassed', { exact: true })).toBeVisible();
+  await expect(controlsBypassedDriver.getByText('Yes', { exact: true })).toBeVisible();
+  const referenceDriver = page.locator('li').filter({ hasText: 'Reference ID' });
+  await expect(referenceDriver.getByText('TXN_ABC123', { exact: true })).toBeVisible();
+  await expect(page.getByText('Txn Abc123', { exact: true })).toHaveCount(0);
+  const amountDriver = page.locator('li').filter({ hasText: 'Amount USD' });
+  await expect(amountDriver.getByText('Above 100000', { exact: true })).toBeVisible();
+  await expect(page.getByText('Controls Bypassed = true', { exact: true })).toHaveCount(0);
+  await page.getByText('Factor breakdown', { exact: true }).click();
+  await expect(page.getByText('Control Effectiveness', { exact: true })).toBeVisible();
+  await expect(page.getByText('Regulatory Sensitivity', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('assessment-result').getByText('Contribution', { exact: true }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Accept recommendation' })).toBeVisible();
   await expect(page.getByTestId('composer')).toHaveCount(0);
+  await expect(page.getByTestId('current-stage-label')).toBeHidden();
+  const contextAside = page.getByRole('complementary', { name: 'Assessment context' });
+  await expect(contextAside).toBeVisible();
+  await expect(contextAside.getByTestId('workflow-progress')).toHaveText('5/5');
+  await expect(contextAside.getByText('Financial Unauthorized Transaction', { exact: true })).toBeVisible();
+  await contextAside.locator('details').locator(':scope > summary').click();
+  const compactFactRows = contextAside.getByTestId('context-fact-row');
+  await expect(compactFactRows).toHaveCount(16);
+  await expect(contextAside.getByText('Customer funds', { exact: true })).toBeVisible();
+  await expect(contextAside.getByText('customer_funds', { exact: true })).toHaveCount(0);
+  await expect(contextAside.getByText('txn_abc123', { exact: true })).toBeVisible();
+  const factRowHeights = await compactFactRows.evaluateAll((rows) => rows.map((row) => row.getBoundingClientRect().height));
+  expect(Math.max(...factRowHeights)).toBeLessThanOrEqual(50);
+  const contextAsideBox = await contextAside.boundingBox();
+  expect(contextAsideBox).not.toBeNull();
+  expect(contextAsideBox!.width).toBeLessThanOrEqual(285);
+  await page.getByRole('button', { name: 'Override…' }).click();
+  const overrideClassification = page.getByRole('combobox', { name: 'Override classification' });
+  await overrideClassification.click();
+  await page.getByRole('option', { name: 'Elevated Risk', exact: true }).click();
+  await expect(overrideClassification).toContainText('Elevated Risk');
+  await expect(overrideClassification).not.toContainText('elevated_risk');
+  await page.getByRole('button', { name: 'Override…' }).click();
+  await contextAside.locator('details').locator(':scope > summary').click();
   const resultMetrics = await page.evaluate(() => {
     const shell = document.querySelector<HTMLElement>('[data-testid="assessment-conversation-page"]');
     const result = document.querySelector<HTMLElement>('[data-testid="assessment-result"]');
@@ -1172,6 +1247,280 @@ test('a long chat transcript stays viewport-contained with one transcript scroll
   await expect(page.getByRole('button', { name: 'Recording your decision…' })).toBeVisible();
   releaseDecision?.();
   await expect(acceptDecision).toBeVisible();
+});
+
+test('the active MCQ is an accessible inline assistant approval card in a fluid conversation shell [FR-06, DASH-04, NFR-07, NFR-08]', async ({ page }) => {
+  let postCount = 0;
+  let submitted: unknown;
+  let answered = false;
+  let releaseAnswer: (() => void) | undefined;
+  const activeQuestion = {
+    key: 'fund_ownership',
+    text: 'Whose funds were involved?',
+    type: 'mcq',
+    factKey: 'fund_ownership',
+    required: true,
+    options: [
+      { id: 'customer_funds', label: 'Customer funds' },
+      { id: 'company_funds', label: 'Company funds' },
+      { id: 'both', label: 'Both' },
+    ],
+  } as const;
+  const nextQuestion = { key: 'context', text: 'What happened next?', type: 'free_text', factKey: 'context', required: true } as const;
+  const currentAssessment = assessment({ currentQuestionKey: activeQuestion.key });
+  const answeredAssessment = assessment({ currentQuestionKey: nextQuestion.key });
+  const currentMessages = [
+    {
+      _id: 'message-historical-question',
+      role: 'assistant',
+      kind: 'question',
+      content: 'Which region was affected?',
+      questionKey: 'affected_region',
+      question: {
+        key: 'affected_region',
+        text: 'Which region was affected?',
+        type: 'mcq',
+        factKey: 'affected_region',
+        required: true,
+        options: [
+          { id: 'domestic', label: 'Domestic' },
+          { id: 'international', label: 'International' },
+        ],
+      },
+      createdAt: '2026-09-14T00:00:00.000Z',
+    },
+    {
+      _id: 'message-historical-answer',
+      role: 'user',
+      kind: 'answer',
+      content: 'Domestic',
+      createdAt: '2026-09-14T00:00:01.000Z',
+    },
+    {
+      _id: 'message-active-question',
+      role: 'assistant',
+      kind: 'question',
+      content: activeQuestion.text,
+      questionKey: activeQuestion.key,
+      question: activeQuestion,
+      createdAt: '2026-09-14T00:00:02.000Z',
+    },
+  ];
+  const answeredMessages = [
+    ...currentMessages,
+    {
+      _id: 'message-committed-answer',
+      role: 'user',
+      kind: 'answer',
+      content: 'Customer funds',
+      createdAt: '2026-09-14T00:00:03.000Z',
+    },
+    {
+      _id: 'message-next-question',
+      role: 'assistant',
+      kind: 'question',
+      content: nextQuestion.text,
+      questionKey: nextQuestion.key,
+      question: nextQuestion,
+      createdAt: '2026-09-14T00:00:04.000Z',
+    },
+  ];
+
+  await page.setViewportSize({ width: 1760, height: 900 });
+  await authenticate(page, 'requestor');
+  await mockApi(page, () => currentUser('requestor'), async ({ route, path, method }) => {
+    if (path === '/assessments/assessment-1' && method === 'GET') {
+      await ok(route, answered ? answeredAssessment : currentAssessment);
+      return true;
+    }
+    if (path === '/assessments/assessment-1/messages' && method === 'GET') {
+      await ok(route, answered ? answeredMessages : currentMessages);
+      return true;
+    }
+    if (path === '/assessments/assessment-1/messages' && method === 'POST') {
+      postCount += 1;
+      submitted = route.request().postDataJSON();
+      answered = true;
+      await new Promise<void>((resolve) => {
+        releaseAnswer = resolve;
+      });
+      await ok(route, { ...answeredAssessment, nextQuestion });
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/chat/assessment-1');
+  const conversation = page.getByTestId('conversation-log');
+  const historicalAssistant = conversation.locator('.is-assistant').filter({ hasText: 'Which region was affected?' });
+  const activeAssistant = conversation.locator('.is-assistant').filter({ hasText: activeQuestion.text }).last();
+  const inlineCard = activeAssistant.getByRole('group', { name: activeQuestion.text });
+  const composer = page.getByTestId('composer');
+
+  await expect(historicalAssistant.getByTestId('inline-choice-card')).toHaveCount(0);
+  await expect(inlineCard).toBeVisible();
+  await expect(inlineCard).toHaveAttribute('data-testid', 'inline-choice-card');
+  await expect(inlineCard).toHaveAttribute('aria-busy', 'false');
+  await expect(composer).toBeVisible();
+  await expect(composer.getByPlaceholder('Choose the best match')).toBeDisabled();
+  await expect(composer.getByRole('button', { name: 'Send' })).toBeDisabled();
+  await expect(composer.getByTestId('answer-option')).toHaveCount(0);
+  await expect(page.getByTestId('answer-option')).toHaveCount(3);
+  const activeAssistantBox = await activeAssistant.boundingBox();
+  expect(activeAssistantBox).not.toBeNull();
+  expect(activeAssistantBox!.width).toBeGreaterThan(850);
+
+  const workspace = page.getByRole('region', { name: 'Assessment conversation workspace' });
+  const expandedWorkspaceBox = await workspace.boundingBox();
+  expect(expandedWorkspaceBox).not.toBeNull();
+  await page.getByRole('button', { name: 'Collapse navigation' }).click();
+  await expect(page.getByRole('button', { name: 'Expand navigation' })).toBeVisible();
+  await expect.poll(async () => Math.round((await workspace.boundingBox())?.width ?? 0)).toBeGreaterThan(Math.round(expandedWorkspaceBox!.width + 120));
+  const collapsedWorkspaceBox = await workspace.boundingBox();
+  expect(collapsedWorkspaceBox).not.toBeNull();
+  expect(collapsedWorkspaceBox!.x).toBeLessThan(expandedWorkspaceBox!.x - 120);
+
+  const customerFunds = inlineCard.getByRole('button', { name: 'Customer funds', exact: true });
+  const companyFunds = inlineCard.getByRole('button', { name: 'Company funds', exact: true });
+  await customerFunds.focus();
+  await expect(customerFunds).toBeFocused();
+  await expect(customerFunds).toHaveAttribute('data-selected', 'false');
+
+  await customerFunds.evaluate((element) => {
+    const click = () => element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    click();
+    click();
+  });
+
+  await expect.poll(() => postCount).toBe(1);
+  expect(submitted).toEqual({ value: 'customer_funds' });
+  await expect(inlineCard).toHaveAttribute('aria-busy', 'true');
+  await expect(customerFunds).toHaveAttribute('data-selected', 'true');
+  await expect(customerFunds).toBeDisabled();
+  await expect(companyFunds).toBeDisabled();
+  await expect(page.getByTestId('optimistic-answer')).toContainText('Customer funds');
+  await expect(page.getByTestId('assistant-processing')).toBeVisible();
+
+  releaseAnswer?.();
+  await expect(conversation.getByText(nextQuestion.text, { exact: true })).toBeVisible();
+  await expect(page.getByTestId('optimistic-answer')).toHaveCount(0);
+  expect(postCount).toBe(1);
+});
+
+test('the active yes/no question keeps inline binary choices above an optional explanation composer [FR-06, NFR-07, NFR-08]', async ({ page }) => {
+  let postCount = 0;
+  let failExplanation = true;
+  let releaseBinaryAnswer: (() => void) | undefined;
+  const submitted: unknown[] = [];
+  const activeQuestion = {
+    key: 'controls_bypassed',
+    text: 'Were approval controls bypassed?',
+    type: 'yes_no',
+    factKey: 'controls_bypassed',
+    required: true,
+  } as const;
+  const currentAssessment = assessment({ currentQuestionKey: activeQuestion.key });
+  const currentMessages = [
+    {
+      _id: 'message-active-yes-no-question',
+      role: 'assistant',
+      kind: 'question',
+      content: activeQuestion.text,
+      questionKey: activeQuestion.key,
+      question: activeQuestion,
+      createdAt: '2026-09-14T00:00:00.000Z',
+    },
+  ];
+
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await authenticate(page, 'requestor');
+  await mockApi(page, () => currentUser('requestor'), async ({ route, path, method }) => {
+    if (path === '/assessments/assessment-1' && method === 'GET') {
+      await ok(route, currentAssessment);
+      return true;
+    }
+    if (path === '/assessments/assessment-1/messages' && method === 'GET') {
+      await ok(route, currentMessages);
+      return true;
+    }
+    if (path === '/assessments/assessment-1/messages' && method === 'POST') {
+      postCount += 1;
+      const body = route.request().postDataJSON();
+      submitted.push(body);
+      if (failExplanation && typeof body === 'object' && body !== null && 'text' in body) {
+        failExplanation = false;
+        await apiError(route, 500, 'TEMPORARY_FAILURE', 'Please try again.');
+        return true;
+      }
+      await new Promise<void>((resolve) => {
+        releaseBinaryAnswer = resolve;
+      });
+      await ok(route, currentAssessment);
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/chat/assessment-1');
+  const conversation = page.getByTestId('conversation-log');
+  const activeAssistant = conversation.locator('.is-assistant').filter({ hasText: activeQuestion.text }).last();
+  const inlineCard = activeAssistant.getByTestId('inline-choice-card');
+  const binaryOptions = inlineCard.getByTestId('binary-answer-option');
+  const composer = page.getByTestId('composer');
+  const explanation = composer.getByPlaceholder('or explain in words…');
+  const send = composer.getByRole('button', { name: 'Send' });
+
+  await expect(inlineCard).toBeVisible();
+  await expect(inlineCard).toHaveAttribute('aria-busy', 'false');
+  await expect(binaryOptions).toHaveCount(2);
+  await expect(inlineCard.getByRole('button', { name: 'Yes', exact: true })).toBeVisible();
+  await expect(inlineCard.getByRole('button', { name: 'No', exact: true })).toBeVisible();
+  await expect(composer.getByTestId('binary-answer-option')).toHaveCount(0);
+  await expect(composer.getByRole('button', { name: 'Yes', exact: true })).toHaveCount(0);
+  await expect(composer.getByRole('button', { name: 'No', exact: true })).toHaveCount(0);
+  await expect(page.getByText('Or add a short explanation', { exact: true })).toHaveCount(0);
+  await expect(explanation).toBeEnabled();
+  await expect(explanation).toHaveAccessibleName('Explain your answer');
+  const [inlineCardBox, composerBox] = await Promise.all([inlineCard.boundingBox(), composer.boundingBox()]);
+  expect(inlineCardBox).not.toBeNull();
+  expect(composerBox).not.toBeNull();
+  expect(inlineCardBox!.y + inlineCardBox!.height).toBeLessThanOrEqual(composerBox!.y + 1);
+
+  await explanation.fill('The approver was unavailable.');
+  await expect(send).toBeEnabled();
+  await send.click();
+  await expect.poll(() => postCount).toBe(1);
+  expect(submitted).toEqual([{ text: 'The approver was unavailable.' }]);
+  await expect(composer).toHaveAttribute('data-busy', 'false');
+  await expect(explanation).toHaveValue('The approver was unavailable.');
+  await expect(inlineCard.getByRole('alert')).toContainText('Please try again.');
+
+  const noOption = inlineCard.getByRole('button', { name: 'No', exact: true });
+  const yesOption = inlineCard.getByRole('button', { name: 'Yes', exact: true });
+  await noOption.evaluate((element) => {
+    const click = () => element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    click();
+    click();
+  });
+
+  await expect.poll(() => postCount).toBe(2);
+  expect(submitted).toEqual([{ text: 'The approver was unavailable.' }, { value: false }]);
+  await expect(inlineCard).toHaveAttribute('aria-busy', 'true');
+  await expect(noOption).toHaveAttribute('data-selected', 'true');
+  await expect(noOption).toBeDisabled();
+  await expect(yesOption).toBeDisabled();
+  await expect(composer).toHaveAttribute('data-busy', 'true');
+  await expect(explanation).toBeDisabled();
+  await expect(page.getByTestId('optimistic-answer')).toContainText('No');
+  await expect(page.getByTestId('assistant-processing')).toBeVisible();
+
+  releaseBinaryAnswer?.();
+  await expect(composer).toHaveAttribute('data-busy', 'false');
+  await expect(explanation).toBeEnabled();
+  await expect(explanation).toHaveValue('');
+  await expect(page.getByTestId('optimistic-answer')).toHaveCount(0);
+  expect(postCount).toBe(2);
+  expect(submitted.filter((body) => JSON.stringify(body) === JSON.stringify({ value: false }))).toHaveLength(1);
 });
 
 test('pressing Enter on a number question sends a structured number [FR-06, NFR-07]', async ({ page }) => {
