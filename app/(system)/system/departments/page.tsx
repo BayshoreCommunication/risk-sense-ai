@@ -142,9 +142,9 @@ export default function DepartmentsPage() {
       />
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <Card size="sm"><CardHeader><div className="flex items-center justify-between"><CardDescription>{t('summary.departments')}</CardDescription><Building2 className="size-4 text-blue-700" aria-hidden="true" /></div><CardTitle className="mt-1 text-2xl tabular-nums">{departments.length}</CardTitle></CardHeader></Card>
-        <Card size="sm"><CardHeader><div className="flex items-center justify-between"><CardDescription>{t('summary.restricted')}</CardDescription><Network className="size-4 text-violet-700" aria-hidden="true" /></div><CardTitle className="mt-1 text-2xl tabular-nums">{restrictedDepartments}</CardTitle></CardHeader></Card>
-        <Card size="sm"><CardHeader><div className="flex items-center justify-between"><CardDescription>{t('summary.personas')}</CardDescription><Layers3 className="size-4 text-emerald-700" aria-hidden="true" /></div><CardTitle className="mt-1 text-2xl tabular-nums">{personas.length}</CardTitle></CardHeader></Card>
+        <Card size="sm"><CardHeader><div className="flex items-center justify-between"><CardDescription>{t('summary.departments')}</CardDescription><Building2 className="size-4 text-blue-700 dark:text-blue-300" aria-hidden="true" /></div><CardTitle className="mt-1 text-2xl tabular-nums">{departments.length}</CardTitle></CardHeader></Card>
+        <Card size="sm"><CardHeader><div className="flex items-center justify-between"><CardDescription>{t('summary.restricted')}</CardDescription><Network className="size-4 text-violet-700 dark:text-violet-300" aria-hidden="true" /></div><CardTitle className="mt-1 text-2xl tabular-nums">{restrictedDepartments}</CardTitle></CardHeader></Card>
+        <Card size="sm"><CardHeader><div className="flex items-center justify-between"><CardDescription>{t('summary.personas')}</CardDescription><Layers3 className="size-4 text-emerald-700 dark:text-emerald-300" aria-hidden="true" /></div><CardTitle className="mt-1 text-2xl tabular-nums">{personas.length}</CardTitle></CardHeader></Card>
       </div>
 
       {pageError && (

@@ -94,7 +94,7 @@ export default function ConformancePage() {
           !confirmRun ? (
             <Button onClick={() => setConfirmRun(true)} disabled={running}><ScanSearch aria-hidden="true" />{t('runScan')}</Button>
           ) : (
-            <div className="flex max-w-xl flex-wrap items-center justify-end gap-2 rounded-xl border border-amber-500/40 bg-amber-500/5 p-2">
+            <div className="flex max-w-xl flex-wrap items-center justify-end gap-2 rounded-xl border border-amber-500/40 bg-amber-500/5 p-2 dark:bg-amber-400/10">
               <span className="text-xs">{t('confirmation')}</span>
               <Button size="sm" onClick={() => void runScan()} disabled={running}>{running ? t('scanning') : t('confirmScan')}</Button>
               <Button size="sm" variant="ghost" onClick={() => setConfirmRun(false)} disabled={running}>{t('cancel')}</Button>
@@ -113,8 +113,8 @@ export default function ConformancePage() {
       {summary ? (
         <div className="grid gap-3 sm:grid-cols-4">
           <Card size="sm"><CardHeader><CardTitle className="text-2xl tabular-nums">{summary.scanned}</CardTitle><CardDescription>{t('summary.scanned')}</CardDescription></CardHeader></Card>
-          <Card size="sm"><CardHeader><div className="flex items-center justify-between"><CardTitle className="text-2xl tabular-nums">{summary.valid}</CardTitle><CheckCircle2 className="size-4 text-emerald-700" aria-hidden="true" /></div><CardDescription>{t('summary.valid')}</CardDescription></CardHeader></Card>
-          <Card size="sm"><CardHeader><div className="flex items-center justify-between"><CardTitle className={summary.flagged ? 'text-destructive text-2xl tabular-nums' : 'text-2xl tabular-nums'}>{summary.flagged}</CardTitle><FileWarning className="size-4 text-rose-700" aria-hidden="true" /></div><CardDescription>{t('summary.flagged')}</CardDescription></CardHeader></Card>
+          <Card size="sm"><CardHeader><div className="flex items-center justify-between"><CardTitle className="text-2xl tabular-nums">{summary.valid}</CardTitle><CheckCircle2 className="size-4 text-emerald-700 dark:text-emerald-300" aria-hidden="true" /></div><CardDescription>{t('summary.valid')}</CardDescription></CardHeader></Card>
+          <Card size="sm"><CardHeader><div className="flex items-center justify-between"><CardTitle className={summary.flagged ? 'text-destructive text-2xl tabular-nums' : 'text-2xl tabular-nums'}>{summary.flagged}</CardTitle><FileWarning className="size-4 text-rose-700 dark:text-rose-300" aria-hidden="true" /></div><CardDescription>{t('summary.flagged')}</CardDescription></CardHeader></Card>
           <Card size="sm"><CardHeader><CardTitle className="text-2xl tabular-nums">{summary.resolved}</CardTitle><CardDescription>{t('summary.resolved')}</CardDescription></CardHeader></Card>
         </div>
       ) : !loading ? (

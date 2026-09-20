@@ -66,15 +66,15 @@ export default function ScenariosPage() {
       ]}
       callout={featured ? (
         <section className="overflow-hidden rounded-2xl border bg-card shadow-[0_8px_28px_rgba(15,35,65,0.06)]" aria-label={String(featured.name ?? featured.key ?? t('entity'))}>
-          <header className="flex flex-wrap items-start justify-between gap-4 border-b bg-[linear-gradient(120deg,#ffffff,#f6f9ff)] px-5 py-4 sm:px-6">
+          <header className="flex flex-wrap items-start justify-between gap-4 border-b bg-[linear-gradient(120deg,#ffffff,#f6f9ff)] px-5 py-4 dark:bg-[linear-gradient(120deg,var(--card),color-mix(in_srgb,var(--card)_90%,var(--primary)_10%))] sm:px-6">
             <div className="flex min-w-0 items-start gap-3">
-              <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-sky-500/10 text-sky-700"><GitBranch className="size-5" aria-hidden="true" /></span>
+              <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-sky-500/10 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300"><GitBranch className="size-5" aria-hidden="true" /></span>
               <div className="min-w-0">
                 <h2 className="truncate text-base font-semibold">{String(featured.name ?? featured.key ?? '')}</h2>
                 <p className="mt-1 text-xs text-muted-foreground">{formatIdentifierLabel(String(featured.personaKey ?? '')) || '—'} · v{String(featured.version ?? 1)}</p>
               </div>
             </div>
-            <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700" variant="outline">{String(featured.status)}</Badge>
+            <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-300" variant="outline">{String(featured.status)}</Badge>
           </header>
           <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(16rem,0.6fr)]">
             <div className="space-y-5">

@@ -59,9 +59,9 @@ export function ReconstructionView({ id }: { id: string }) {
   return (
     <div className={`space-y-4 text-sm transition-opacity ${loading ? 'opacity-60' : ''}`} aria-busy={loading}>
       <section className="grid gap-3 md:grid-cols-3">
-        <div className={`rounded-xl border p-4 ${r.integrity.ok ? 'border-emerald-200 bg-emerald-50/60' : 'border-destructive/25 bg-destructive/5'}`}>
+        <div className={`rounded-xl border p-4 ${r.integrity.ok ? 'border-emerald-200 bg-emerald-50/60 dark:border-emerald-400/30 dark:bg-emerald-400/10' : 'border-destructive/25 bg-destructive/5'}`}>
           <div className="mb-3 flex size-8 items-center justify-center rounded-lg bg-background shadow-sm">
-            {r.integrity.ok ? <ShieldCheck aria-hidden="true" className="size-4 text-emerald-700" /> : <ShieldAlert aria-hidden="true" className="size-4 text-destructive" />}
+            {r.integrity.ok ? <ShieldCheck aria-hidden="true" className="size-4 text-emerald-700 dark:text-emerald-300" /> : <ShieldAlert aria-hidden="true" className="size-4 text-destructive" />}
           </div>
           <div className="font-medium leading-5">{r.integrity.ok ? t('integrity.verified', { count: r.integrity.checked }) : t('integrity.tampered', { sequences: r.integrity.badSeqs.join(', ') })}</div>
         </div>
@@ -71,26 +71,26 @@ export function ReconstructionView({ id }: { id: string }) {
           </div>
           <div className="font-medium leading-5">{r.completeness === 'full' ? t('completeness.full') : r.completeness === 'partial' ? t('completeness.partial', { plan: r.plan.toUpperCase() }) : t('completeness.none')}</div>
         </div>
-        <div className={`rounded-xl border p-4 ${r.conformance.matches ? 'border-emerald-200 bg-emerald-50/60' : 'border-destructive/25 bg-destructive/5'}`}>
+        <div className={`rounded-xl border p-4 ${r.conformance.matches ? 'border-emerald-200 bg-emerald-50/60 dark:border-emerald-400/30 dark:bg-emerald-400/10' : 'border-destructive/25 bg-destructive/5'}`}>
           <div className="mb-3 flex size-8 items-center justify-center rounded-lg bg-background shadow-sm">
-            {r.conformance.matches ? <CheckCircle2 aria-hidden="true" className="size-4 text-emerald-700" /> : <GitCompareArrows aria-hidden="true" className="size-4 text-destructive" />}
+            {r.conformance.matches ? <CheckCircle2 aria-hidden="true" className="size-4 text-emerald-700 dark:text-emerald-300" /> : <GitCompareArrows aria-hidden="true" className="size-4 text-destructive" />}
           </div>
           <div className="font-medium leading-5">{r.conformance.matches ? t('conformance.matches') : t('conformance.differences', { count: r.conformance.differences.length })}</div>
         </div>
       </section>
       {r.missing.length > 0 && (
-        <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs leading-5 text-amber-950">
-          <AlertCircle aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-amber-700" />
+        <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs leading-5 text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
+          <AlertCircle aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-amber-700 dark:text-amber-300" />
           {t('missing', { fields: r.missing.join(', ') })}
         </div>
       )}
       {r.masked && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-950">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
           <span className="flex items-start gap-2 leading-5">
-            <Eye aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-amber-700" />
+            <Eye aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-amber-700 dark:text-amber-300" />
             {t('masked', { plan: r.masked.toUpperCase() })}
           </span>
-          <Button type="button" size="sm" variant="outline" className="border-amber-300 bg-background/80" disabled={loading || unmask} onClick={() => setUnmask(true)}>
+          <Button type="button" size="sm" variant="outline" className="border-amber-300 bg-background/80 dark:border-amber-400/35" disabled={loading || unmask} onClick={() => setUnmask(true)}>
             {t('unmask')}
           </Button>
         </div>

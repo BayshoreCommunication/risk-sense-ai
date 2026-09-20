@@ -109,10 +109,10 @@ function normalizeScenarioKey(value: string) {
 }
 
 function classificationTone(value: string) {
-  if (value === 'monitor_only') return 'border-emerald-200 bg-emerald-50 text-emerald-800';
-  if (value === 'risk') return 'border-amber-200 bg-amber-50 text-amber-800';
-  if (value === 'elevated_risk') return 'border-orange-200 bg-orange-50 text-orange-800';
-  if (value === 'issue') return 'border-red-200 bg-red-50 text-red-800';
+  if (value === 'monitor_only') return 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-300';
+  if (value === 'risk') return 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300';
+  if (value === 'elevated_risk') return 'border-orange-200 bg-orange-50 text-orange-800 dark:border-orange-400/30 dark:bg-orange-400/10 dark:text-orange-300';
+  if (value === 'issue') return 'border-red-200 bg-red-50 text-red-800 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-300';
   return '';
 }
 
@@ -312,18 +312,18 @@ function ReviewDashboard() {
           type="button"
           aria-pressed={filters.tab === 'pending'}
           onClick={() => update({ tab: 'pending' })}
-          className={`rounded-xl border bg-card p-4 text-left shadow-[0_10px_28px_rgba(15,35,65,0.05)] transition-colors hover:border-amber-300 hover:bg-amber-50/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${filters.tab === 'pending' ? 'border-amber-300 bg-amber-50/50 ring-1 ring-amber-200' : ''}`}
+          className={`rounded-xl border bg-card p-4 text-left shadow-[0_10px_28px_rgba(15,35,65,0.05)] transition-colors hover:border-amber-300 hover:bg-amber-50/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 dark:hover:border-amber-400/50 dark:hover:bg-amber-400/10 ${filters.tab === 'pending' ? 'border-amber-300 bg-amber-50/50 ring-1 ring-amber-200 dark:border-amber-400/50 dark:bg-amber-400/10 dark:ring-amber-400/25' : ''}`}
         >
           <span className="flex items-center justify-between text-xs font-medium text-muted-foreground">
             {t('tabs.pending')}
-            <CalendarClock aria-hidden="true" className="size-4 text-amber-600" />
+            <CalendarClock aria-hidden="true" className="size-4 text-amber-600 dark:text-amber-300" />
           </span>
           <span className="mt-3 block text-2xl font-semibold tabular-nums">{counts?.pending ?? '—'}</span>
         </button>
         <div className="rounded-xl border bg-card p-4 text-left shadow-[0_10px_28px_rgba(15,35,65,0.05)]">
           <span className="flex items-center justify-between text-xs font-medium text-muted-foreground">
             {t('averageConfidence')}
-            <Gauge aria-hidden="true" className="size-4 text-sky-600" />
+            <Gauge aria-hidden="true" className="size-4 text-sky-600 dark:text-sky-300" />
           </span>
           <span className="mt-3 block text-2xl font-semibold tabular-nums">{averageConfidence === null ? '—' : `${averageConfidence.toLocaleString(locale, { maximumFractionDigits: 1 })}%`}</span>
         </div>
@@ -331,11 +331,11 @@ function ReviewDashboard() {
           type="button"
           aria-pressed={filters.tab === 'closed'}
           onClick={() => update({ tab: 'closed' })}
-          className={`rounded-xl border bg-card p-4 text-left shadow-[0_10px_28px_rgba(15,35,65,0.05)] transition-colors hover:border-emerald-300 hover:bg-emerald-50/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 ${filters.tab === 'closed' ? 'border-emerald-300 bg-emerald-50/50 ring-1 ring-emerald-200' : ''}`}
+          className={`rounded-xl border bg-card p-4 text-left shadow-[0_10px_28px_rgba(15,35,65,0.05)] transition-colors hover:border-emerald-300 hover:bg-emerald-50/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 dark:hover:border-emerald-400/50 dark:hover:bg-emerald-400/10 ${filters.tab === 'closed' ? 'border-emerald-300 bg-emerald-50/50 ring-1 ring-emerald-200 dark:border-emerald-400/50 dark:bg-emerald-400/10 dark:ring-emerald-400/25' : ''}`}
         >
           <span className="flex items-center justify-between text-xs font-medium text-muted-foreground">
             {t('tabs.closed')}
-            <CheckCircle2 aria-hidden="true" className="size-4 text-emerald-600" />
+            <CheckCircle2 aria-hidden="true" className="size-4 text-emerald-600 dark:text-emerald-300" />
           </span>
           <span className="mt-3 block text-2xl font-semibold tabular-nums">{counts?.closed ?? '—'}</span>
         </button>
@@ -602,7 +602,7 @@ function ReviewDashboard() {
                     <div className="min-w-24" title={a.result.professionalConsult ? t('professionalConsultTitle') : undefined}>
                       <div className="flex items-center justify-between gap-2 text-xs">
                         <span className="font-medium tabular-nums">{a.result.confidence}%</span>
-                        {a.result.professionalConsult && <AlertCircle aria-hidden="true" className="size-3.5 text-amber-600" />}
+                        {a.result.professionalConsult && <AlertCircle aria-hidden="true" className="size-3.5 text-amber-600 dark:text-amber-300" />}
                       </div>
                       <div aria-hidden="true" className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
                         <div className="h-full rounded-full bg-primary" style={{ width: `${Math.max(0, Math.min(100, a.result.confidence))}%` }} />
@@ -679,7 +679,7 @@ function ReviewDashboard() {
           </div>
         </CardFooter>
       </Card>
-      <p className="rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-xs leading-5 text-blue-950/75">{t('scopeNote')}</p>
+      <p className="rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-xs leading-5 text-blue-950/75 dark:border-blue-400/25 dark:bg-blue-400/10 dark:text-blue-100/85">{t('scopeNote')}</p>
     </div>
   );
 }

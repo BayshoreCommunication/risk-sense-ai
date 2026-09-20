@@ -240,8 +240,8 @@ export function ChatSession({ id }: { id: string }) {
         </div>
       </div>
 
-      <section aria-label={t('workspaceLabel')} className="fills overflow-hidden rounded-[1.35rem] border border-[#d7e1ee] bg-[#fbfcff] shadow-[0_18px_55px_rgba(8,32,68,0.1)] ring-1 ring-[#082044]/[0.03]">
-        <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#dfe7f2] bg-white px-4 py-2 sm:px-5">
+      <section aria-label={t('workspaceLabel')} className="fills overflow-hidden rounded-[1.35rem] border border-[#d7e1ee] bg-[#fbfcff] shadow-[0_18px_55px_rgba(8,32,68,0.1)] ring-1 ring-[#082044]/[0.03] dark:border-border dark:bg-card dark:shadow-[0_20px_60px_rgba(1,8,22,0.28)] dark:ring-white/[0.03]">
+        <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#dfe7f2] bg-white px-4 py-2 dark:border-border dark:bg-card sm:px-5">
           <div className="flex items-center gap-2.5">
             <span className="relative flex size-8 items-center justify-center rounded-lg bg-[linear-gradient(145deg,#082451_0%,#216ce7_100%)] text-white shadow-[0_6px_16px_rgba(18,71,150,0.24)] ring-1 ring-white/70">
               <Bot className="size-3.5" aria-hidden="true" />
@@ -268,7 +268,7 @@ export function ChatSession({ id }: { id: string }) {
 
         <div className="grid min-h-0 flex-1 min-[1360px]:grid-cols-[minmax(0,1fr)_17.5rem]">
           <div className="flex min-h-0 min-w-0 flex-col">
-            <Conversation className="min-h-0 flex-1 bg-[#fbfcff]" data-testid="conversation-log">
+            <Conversation className="min-h-0 flex-1 bg-[#fbfcff] dark:bg-background/55" data-testid="conversation-log">
               <ConversationContent className="mx-auto w-full max-w-[64rem] gap-3 px-4 py-3.5 sm:px-6 sm:py-4" data-testid="conversation-content">
                 {!a && messages.length === 0 && (
                   <div className="flex min-h-72 flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground" role="status">
@@ -307,16 +307,18 @@ export function ChatSession({ id }: { id: string }) {
                         <div className="grid grid-cols-[1.75rem_minmax(0,1fr)] items-start gap-2.5">
                           <span
                             className={`flex size-7 items-center justify-center rounded-lg border shadow-[0_3px_10px_rgba(8,43,94,0.08)] ${
-                              clarification ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-[#bcd2f3] bg-[linear-gradient(145deg,#f7fbff,#e8f1ff)] text-[#155bd7]'
+                              clarification
+                                ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
+                                : 'border-[#bcd2f3] bg-[linear-gradient(145deg,#f7fbff,#e8f1ff)] text-[#155bd7] dark:border-primary/35 dark:bg-info-soft dark:text-blue-300'
                             }`}
                           >
                             {clarification ? <Flag className="size-3" aria-hidden="true" /> : <Bot className="size-3" aria-hidden="true" />}
                           </span>
                           <div className="min-w-0">
-                            <span className={`mb-1 block text-[0.62rem] font-semibold tracking-[0.12em] uppercase ${clarification ? 'text-amber-700' : 'text-muted-foreground'}`}>
+                            <span className={`mb-1 block text-[0.62rem] font-semibold tracking-[0.12em] uppercase ${clarification ? 'text-amber-700 dark:text-amber-300' : 'text-muted-foreground'}`}>
                               {clarification ? t('messageKinds.clarification') : t('assistantName')}
                             </span>
-                            <MessageContent className={`w-full py-0.5 ${clarification ? 'rounded-r-xl border-l-2 border-amber-300 bg-amber-50/50 py-2 pl-3 pr-2' : ''}`}>
+                            <MessageContent className={`w-full py-0.5 ${clarification ? 'rounded-r-xl border-l-2 border-amber-300 bg-amber-50/50 py-2 pl-3 pr-2 dark:border-amber-400/50 dark:bg-amber-400/[0.08]' : ''}`}>
                               <MessageResponse className="text-[0.8rem] leading-[1.55]">{displayContent}</MessageResponse>
                               {activeInlineChoice && inlineChoiceQuestion && (
                                 <InlineChoiceCard
@@ -354,7 +356,7 @@ export function ChatSession({ id }: { id: string }) {
                 {busy && busyAction !== 'decision' && (
                   <AIMessage from="assistant" className="mx-auto max-w-[60rem]" data-testid="assistant-processing">
                     <div className="grid grid-cols-[1.75rem_minmax(0,1fr)] items-start gap-2.5">
-                      <span className="flex size-7 items-center justify-center rounded-lg border border-[#bcd2f3] bg-[linear-gradient(145deg,#f7fbff,#e8f1ff)] text-[#155bd7] shadow-[0_3px_10px_rgba(8,43,94,0.08)]">
+                      <span className="flex size-7 items-center justify-center rounded-lg border border-[#bcd2f3] bg-[linear-gradient(145deg,#f7fbff,#e8f1ff)] text-[#155bd7] shadow-[0_3px_10px_rgba(8,43,94,0.08)] dark:border-primary/35 dark:bg-info-soft dark:text-blue-300">
                         <LoaderCircle className="size-3 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                       </span>
                       <div className="min-w-0 pt-0.5">
@@ -379,7 +381,7 @@ export function ChatSession({ id }: { id: string }) {
 
             {showComposer && (
               <div
-                className="scrollbar-subtle max-h-[min(40dvh,22rem)] shrink-0 overflow-y-auto border-t border-[#dfe7f2] bg-[#f5f8fc] px-3 py-3 shadow-[0_-8px_24px_rgba(8,32,68,0.035)] sm:px-5"
+                className="scrollbar-subtle max-h-[min(40dvh,22rem)] shrink-0 overflow-y-auto border-t border-[#dfe7f2] bg-[#f5f8fc] px-3 py-3 shadow-[0_-8px_24px_rgba(8,32,68,0.035)] dark:border-border dark:bg-muted/55 dark:shadow-[0_-12px_28px_rgba(1,8,22,0.18)] sm:px-5"
                 data-testid="composer"
                 aria-busy={busy}
                 data-busy={busy ? 'true' : 'false'}
@@ -432,9 +434,9 @@ export function ChatSession({ id }: { id: string }) {
               )}
 
               {a?.status === 'intake_complete' && (
-                <div className="mx-auto flex max-w-[64rem] flex-col gap-3 rounded-r-xl border-l-2 border-emerald-500 bg-emerald-50/60 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="mx-auto flex max-w-[64rem] flex-col gap-3 rounded-r-xl border-l-2 border-emerald-500 bg-emerald-50/60 px-3.5 py-3 dark:border-emerald-400/70 dark:bg-emerald-400/10 sm:flex-row sm:items-center sm:justify-between">
                   <span className="flex items-center gap-2 text-sm font-medium">
-                    <FileCheck2 className="size-4 text-emerald-700" aria-hidden="true" />
+                    <FileCheck2 className="size-4 text-emerald-700 dark:text-emerald-300" aria-hidden="true" />
                     {t('submission.ready')}
                   </span>
                   <Button disabled={busy} onClick={() => void run(() => assessments.submit(id), 'submit')}>
@@ -446,7 +448,7 @@ export function ChatSession({ id }: { id: string }) {
 
               {a?.status === 'closed' && (
                 <p className="mx-auto flex max-w-[64rem] items-center justify-center gap-2 py-1 text-center text-sm text-muted-foreground">
-                  <CheckCircle2 className="size-4 text-emerald-600" aria-hidden="true" />
+                  <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-300" aria-hidden="true" />
                   {t('closed')}
                 </p>
               )}
@@ -454,7 +456,7 @@ export function ChatSession({ id }: { id: string }) {
             )}
           </div>
 
-          <aside className="scrollbar-subtle hidden min-h-0 overflow-y-auto overscroll-contain border-l border-[#e2e8f0] bg-[#f8fafc] min-[1360px]:block" aria-label={t('contextPanel')}>
+          <aside className="scrollbar-subtle hidden min-h-0 overflow-y-auto overscroll-contain border-l border-[#e2e8f0] bg-[#f8fafc] dark:border-border dark:bg-muted/35 min-[1360px]:block" aria-label={t('contextPanel')}>
             <AssessmentContext a={a} currentStageIndex={currentStageIndex} messages={messages} />
           </aside>
         </div>
@@ -477,12 +479,12 @@ function AssessmentContext({
 
   return (
     <div className="space-y-2 p-2.5" data-testid="assessment-context-panel">
-      <section className="rounded-xl border border-[#e2e8f0] bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.025)]">
+      <section className="rounded-xl border border-[#e2e8f0] bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:border-border dark:bg-card">
         <div className="flex items-center justify-between gap-3">
           <h3 className="text-[0.62rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('workflow')}</h3>
           {stagePosition !== null && (
             <span
-              className="rounded-full bg-[#eef4fb] px-2 py-0.5 text-[0.62rem] font-semibold tabular-nums text-[#315b91]"
+              className="rounded-full bg-[#eef4fb] px-2 py-0.5 text-[0.62rem] font-semibold tabular-nums text-[#315b91] dark:bg-primary/15 dark:text-blue-300"
               aria-label={`${stagePosition} / ${WORKFLOW_STAGES.length}`}
               data-testid="workflow-progress"
             >
@@ -496,14 +498,14 @@ function AssessmentContext({
             const current = index === currentStageIndex && !complete;
             return (
               <li key={stage} className="relative flex min-h-6 gap-2 pb-1.5 last:min-h-0 last:pb-0" aria-current={current ? 'step' : undefined}>
-                {index < WORKFLOW_STAGES.length - 1 && <span className="absolute top-4 bottom-0 left-[0.4375rem] w-px bg-[#dce4ee]" aria-hidden="true" />}
+                {index < WORKFLOW_STAGES.length - 1 && <span className="absolute top-4 bottom-0 left-[0.4375rem] w-px bg-[#dce4ee] dark:bg-border" aria-hidden="true" />}
                 <span
                   className={`relative z-[1] flex size-4 shrink-0 items-center justify-center rounded-full border text-[0.55rem] font-semibold ${
                     complete
                       ? 'border-emerald-600 bg-emerald-600 text-white'
                       : current
                         ? 'border-primary bg-primary text-primary-foreground ring-2 ring-primary/10'
-                        : 'border-[#d6dee9] bg-white text-muted-foreground'
+                        : 'border-[#d6dee9] bg-white text-muted-foreground dark:border-border dark:bg-card'
                   }`}
                 >
                   {complete ? <Check className="size-2.5" aria-hidden="true" /> : current ? <CircleDot className="size-2.5" aria-hidden="true" /> : index + 1}
@@ -516,7 +518,7 @@ function AssessmentContext({
       </section>
 
       {(a?.personaKey || a?.scenarioKey) && (
-        <section className="rounded-xl border border-[#e2e8f0] bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.025)]">
+        <section className="rounded-xl border border-[#e2e8f0] bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:border-border dark:bg-card">
           <h3 className="text-[0.62rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('assessmentContext')}</h3>
           <dl className="mt-1.5 grid gap-1.5">
             {a.personaKey && (
@@ -536,24 +538,24 @@ function AssessmentContext({
         </section>
       )}
 
-      <details className="group/facts overflow-hidden rounded-xl border border-[#e2e8f0] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.025)]">
-        <summary className="flex min-h-9 cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 outline-none transition hover:bg-[#f8fafc] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+      <details className="group/facts overflow-hidden rounded-xl border border-[#e2e8f0] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:border-border dark:bg-card">
+        <summary className="flex min-h-9 cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 outline-none transition hover:bg-[#f8fafc] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50 dark:hover:bg-muted/60 [&::-webkit-details-marker]:hidden">
           <span className="text-[0.62rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('capturedFacts')}</span>
           <span className="flex items-center gap-1.5">
-            <span className="min-w-6 rounded-full bg-[#eef4fb] px-1.5 py-0.5 text-center text-[0.62rem] font-semibold tabular-nums text-[#315b91]">{a?.facts?.length ?? 0}</span>
+            <span className="min-w-6 rounded-full bg-[#eef4fb] px-1.5 py-0.5 text-center text-[0.62rem] font-semibold tabular-nums text-[#315b91] dark:bg-primary/15 dark:text-blue-300">{a?.facts?.length ?? 0}</span>
             <ChevronDown className="size-3 text-muted-foreground transition-transform group-open/facts:rotate-180" aria-hidden="true" />
           </span>
         </summary>
-        <div className="border-t border-[#edf1f6] p-1.5">
+        <div className="border-t border-[#edf1f6] p-1.5 dark:border-border">
           {a?.facts?.length ? (
             <div className="space-y-0.5">
               {a.facts.map((fact) => (
                 <div
                   key={fact.key}
-                  className="grid grid-cols-[0.85rem_minmax(0,1fr)] gap-2 rounded-lg px-1.5 py-1.5 transition-colors hover:bg-[#f8fafc]"
+                  className="grid grid-cols-[0.85rem_minmax(0,1fr)] gap-2 rounded-lg px-1.5 py-1.5 transition-colors hover:bg-[#f8fafc] dark:hover:bg-muted/60"
                   data-testid="context-fact-row"
                 >
-                  <span className={`mt-0.5 ${fact.flagged ? 'text-amber-600' : 'text-emerald-600'}`}>
+                  <span className={`mt-0.5 ${fact.flagged ? 'text-amber-600 dark:text-amber-300' : 'text-emerald-600 dark:text-emerald-300'}`}>
                     {fact.flagged ? <Flag className="size-2.5" aria-hidden="true" /> : <Check className="size-2.5" aria-hidden="true" />}
                   </span>
                   <div className="min-w-0">
@@ -580,8 +582,8 @@ function AssessmentContext({
         </div>
       </details>
 
-      <p className="flex gap-2 rounded-xl bg-[#eff4fa] px-3 py-2 text-[0.63rem] leading-4 text-[#607089]">
-        <LockKeyhole className="mt-0.5 size-3 shrink-0 text-[#356bb3]" aria-hidden="true" />
+      <p className="flex gap-2 rounded-xl bg-[#eff4fa] px-3 py-2 text-[0.63rem] leading-4 text-[#607089] dark:bg-muted/60 dark:text-muted-foreground">
+        <LockKeyhole className="mt-0.5 size-3 shrink-0 text-[#356bb3] dark:text-blue-300" aria-hidden="true" />
         <span>{t('governanceNote')}</span>
       </p>
     </div>
@@ -612,7 +614,7 @@ function PersonaChooser({
           variant={option.key === suggestedKey ? 'default' : 'outline'}
           disabled={busy}
           title={option.description}
-          className="min-h-14 w-full items-center justify-between rounded-xl border-[#d8e3f1] bg-white px-4 text-foreground shadow-[0_2px_8px_rgba(8,35,76,0.045)] transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-primary/35 hover:shadow-[0_7px_18px_rgba(8,45,101,0.09)] motion-reduce:hover:translate-y-0"
+          className="min-h-14 w-full items-center justify-between rounded-xl border-[#d8e3f1] bg-white px-4 text-foreground shadow-[0_2px_8px_rgba(8,35,76,0.045)] transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-primary/35 hover:shadow-[0_7px_18px_rgba(8,45,101,0.09)] motion-reduce:hover:translate-y-0 dark:border-border dark:bg-card"
           onClick={onChoose}
         >
           <span>
@@ -721,8 +723,8 @@ function InlineChoiceCard({
         </p>
       )}
       {personaLocked && (
-        <p className="flex items-start gap-2 border-t border-[#e2e9f2] bg-[#fbfcfe] px-3.5 py-2.5 text-[0.7rem] leading-5 text-muted-foreground sm:px-4">
-          <LockKeyhole className="mt-0.5 size-3 shrink-0 text-[#2868cf]" aria-hidden="true" />
+        <p className="flex items-start gap-2 border-t border-[#e2e9f2] bg-[#fbfcfe] px-3.5 py-2.5 text-[0.7rem] leading-5 text-muted-foreground dark:border-border dark:bg-muted/35 sm:px-4">
+          <LockKeyhole className="mt-0.5 size-3 shrink-0 text-[#2868cf] dark:text-blue-300" aria-hidden="true" />
           <span>
             {t('persona.locked')}{' '}
             <Link className="font-medium text-primary underline underline-offset-2" href="/chat">{t('persona.startNew')}</Link>{' '}
@@ -760,7 +762,7 @@ function AnswerBox({
 
   if (q.type === 'mcq') {
     return (
-      <div className="mx-auto flex min-h-14 items-center gap-2 rounded-[1.05rem] border border-[#d9e2ed] bg-[#f1f4f8] px-2.5 py-2 shadow-[0_3px_10px_rgba(8,35,76,0.025)]" data-testid="mcq-input-dock">
+      <div className="mx-auto flex min-h-14 items-center gap-2 rounded-[1.05rem] border border-[#d9e2ed] bg-[#f1f4f8] px-2.5 py-2 shadow-[0_3px_10px_rgba(8,35,76,0.025)] dark:border-border dark:bg-muted/55" data-testid="mcq-input-dock">
         <label className="sr-only" htmlFor={inputId}>{q.text ?? t('optionsLabel')}</label>
         <Input
           id={inputId}
@@ -823,7 +825,7 @@ function AnswerBox({
       <p className="sr-only">{t('responseLabel')}</p>
       <label className="sr-only" htmlFor={inputId}>{q.type === 'yes_no' ? t('explainLabel') : (q.text ?? t('textLabel'))}</label>
       {/* One composer surface: the field and its send share a frame and a focus ring. */}
-      <div className="rounded-[1.2rem] border border-[#cfdaea] bg-white shadow-[0_10px_28px_rgba(8,35,76,0.1),0_1px_2px_rgba(8,35,76,0.04)] transition-[border-color,box-shadow] focus-within:border-primary/45 focus-within:shadow-[0_13px_34px_rgba(24,83,170,0.14),0_0_0_4px_rgba(40,100,239,0.08)]">
+      <div className="rounded-[1.2rem] border border-[#cfdaea] bg-white shadow-[0_10px_28px_rgba(8,35,76,0.1),0_1px_2px_rgba(8,35,76,0.04)] transition-[border-color,box-shadow] focus-within:border-primary/45 focus-within:shadow-[0_13px_34px_rgba(24,83,170,0.14),0_0_0_4px_rgba(40,100,239,0.08)] dark:border-border dark:bg-card dark:shadow-[0_12px_30px_rgba(1,8,22,0.22)]">
         <Textarea
           id={inputId}
           rows={1}

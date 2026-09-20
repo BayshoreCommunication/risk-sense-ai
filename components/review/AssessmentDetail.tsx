@@ -89,12 +89,12 @@ export function AssessmentDetail({ id }: { id: string }) {
   return (
     <div className={`space-y-4 text-sm transition-opacity ${loading ? 'opacity-60' : ''}`} aria-busy={loading}>
       {a.masked && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-950">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
           <span className="flex items-start gap-2 leading-5">
-            <Eye aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-amber-700" />
+            <Eye aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-amber-700 dark:text-amber-300" />
             {t('masked', { plan: a.masked.toUpperCase() })}
           </span>
-          <Button type="button" size="sm" variant="outline" className="border-amber-300 bg-background/80" disabled={loading || unmask} onClick={() => setUnmask(true)}>
+          <Button type="button" size="sm" variant="outline" className="border-amber-300 bg-background/80 dark:border-amber-400/35" disabled={loading || unmask} onClick={() => setUnmask(true)}>
             {t('unmask')}
           </Button>
         </div>
@@ -214,20 +214,20 @@ export function AssessmentDetail({ id }: { id: string }) {
         </div>
       </section>
       {a.decision && (
-        <section className={`rounded-xl border p-4 ${a.status === 'escalated' ? 'border-amber-300 bg-amber-50/70' : 'border-emerald-200 bg-emerald-50/60'}`}>
+        <section className={`rounded-xl border p-4 ${a.status === 'escalated' ? 'border-amber-300 bg-amber-50/70 dark:border-amber-400/30 dark:bg-amber-400/10' : 'border-emerald-200 bg-emerald-50/60 dark:border-emerald-400/30 dark:bg-emerald-400/10'}`}>
           <div className="flex items-start gap-3">
             {a.status === 'escalated'
-              ? <AlertCircle aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-amber-700" />
-              : <CheckCircle2 aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-emerald-700" />}
+              ? <AlertCircle aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-amber-700 dark:text-amber-300" />
+              : <CheckCircle2 aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-emerald-700 dark:text-emerald-300" />}
             <div>
-              <div className={`font-medium ${a.status === 'escalated' ? 'text-amber-950' : 'text-emerald-950'}`}>
+              <div className={`font-medium ${a.status === 'escalated' ? 'text-amber-950 dark:text-amber-100' : 'text-emerald-950 dark:text-emerald-100'}`}>
                 {t('decision.label')}: {t.has(`decision.types.${a.decision.type}`) ? t(`decision.types.${a.decision.type}`) : a.decision.type}
                 {a.decision.overriddenTo ? ` → ${classification.has(a.decision.overriddenTo) ? classification(a.decision.overriddenTo) : formatIdentifierLabel(a.decision.overriddenTo)}` : ''}
                 {a.status === 'escalated' && a.escalatedTo ? ` → ${a.escalatedTo.name}` : ''}
               </div>
-              {a.status === 'escalated' && <div className="mt-1 text-sm font-medium text-amber-900">{resultCard('escalated.stillOpen')}</div>}
-              {a.decision.reason && <div className={`mt-1 leading-5 ${a.status === 'escalated' ? 'text-amber-900/80' : 'text-emerald-900/75'}`}>{a.decision.reason}</div>}
-              <div className={`mt-1 text-xs ${a.status === 'escalated' ? 'text-amber-900/70' : 'text-emerald-900/60'}`}>{new Date(a.decision.decidedAt).toLocaleString(locale)}</div>
+              {a.status === 'escalated' && <div className="mt-1 text-sm font-medium text-amber-900 dark:text-amber-200">{resultCard('escalated.stillOpen')}</div>}
+              {a.decision.reason && <div className={`mt-1 leading-5 ${a.status === 'escalated' ? 'text-amber-900/80 dark:text-amber-100/80' : 'text-emerald-900/75 dark:text-emerald-100/80'}`}>{a.decision.reason}</div>}
+              <div className={`mt-1 text-xs ${a.status === 'escalated' ? 'text-amber-900/70 dark:text-amber-100/65' : 'text-emerald-900/60 dark:text-emerald-100/65'}`}>{new Date(a.decision.decidedAt).toLocaleString(locale)}</div>
             </div>
           </div>
         </section>

@@ -34,16 +34,16 @@ type Editor = { mode: 'create'; user: null } | { mode: 'edit'; user: SystemUser 
 
 const ROLES: Role[] = ['requestor', 'administrator', 'system_administrator', 'audit'];
 const ROLE_BADGE_CLASS: Record<Role, string> = {
-  requestor: 'border-blue-200 bg-blue-50 text-blue-700',
-  administrator: 'border-violet-200 bg-violet-50 text-violet-700',
-  system_administrator: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  audit: 'border-amber-200 bg-amber-50 text-amber-700',
+  requestor: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-400/30 dark:bg-blue-400/10 dark:text-blue-300',
+  administrator: 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-400/30 dark:bg-violet-400/10 dark:text-violet-300',
+  system_administrator: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-300',
+  audit: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300',
 };
 const AVATAR_CLASS: Record<Role, string> = {
-  requestor: 'bg-blue-50 text-blue-700',
-  administrator: 'bg-violet-50 text-violet-700',
-  system_administrator: 'bg-emerald-50 text-emerald-700',
-  audit: 'bg-amber-50 text-amber-700',
+  requestor: 'bg-blue-50 text-blue-700 dark:bg-blue-400/10 dark:text-blue-300',
+  administrator: 'bg-violet-50 text-violet-700 dark:bg-violet-400/10 dark:text-violet-300',
+  system_administrator: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300',
+  audit: 'bg-amber-50 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300',
 };
 
 const EMPTY_USER: UserDraft = {
@@ -312,7 +312,7 @@ export default function UsersPage() {
                         : user.departmentIds.map((id) => departmentNames.get(id) ?? id).join(', ') || t('scope.ownOnly')}
                   </TableCell>
                   <TableCell><Badge variant={user.mfaEnrolled ? 'outline' : planState !== 'ready' ? 'secondary' : plan === 'paid' && user.role === 'requestor' ? 'secondary' : requiresRecordedMfa(user) ? 'destructive' : 'secondary'}>{user.mfaEnrolled ? t('mfa.enrolled') : planState !== 'ready' ? t('mfa.unavailable') : plan === 'paid' && user.role === 'requestor' ? t('mfa.signIn') : requiresRecordedMfa(user) ? t('mfa.pending') : t('mfa.notRequired')}</Badge></TableCell>
-                  <TableCell><Badge variant={user.status === 'active' ? 'outline' : 'destructive'} className={user.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : undefined}>{status.has(user.status) ? status(user.status) : formatIdentifierLabel(user.status)}</Badge></TableCell>
+                  <TableCell><Badge variant={user.status === 'active' ? 'outline' : 'destructive'} className={user.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-300' : undefined}>{status.has(user.status) ? status(user.status) : formatIdentifierLabel(user.status)}</Badge></TableCell>
                   <TableCell className="text-right"><Button size="icon-xs" variant="ghost" aria-label={t('edit')} title={t('edit')} onClick={() => openEdit(user)} disabled={controlsDisabled}><Ellipsis aria-hidden="true" /></Button></TableCell>
                 </TableRow>
               ))}
@@ -330,7 +330,7 @@ export default function UsersPage() {
                   <span className={`grid size-10 shrink-0 place-items-center rounded-xl text-sm font-semibold ${AVATAR_CLASS[user.role]}`} aria-hidden="true">{userInitials(user.name)}</span>
                   <div className="min-w-0"><h2 className="truncate font-semibold">{user.name}</h2><p className="truncate text-xs text-muted-foreground">{user.email}</p></div>
                 </div>
-                <Badge variant={user.status === 'active' ? 'outline' : 'destructive'} className={user.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : undefined}>{status.has(user.status) ? status(user.status) : formatIdentifierLabel(user.status)}</Badge>
+                <Badge variant={user.status === 'active' ? 'outline' : 'destructive'} className={user.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-300' : undefined}>{status.has(user.status) ? status(user.status) : formatIdentifierLabel(user.status)}</Badge>
               </div>
               <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                 <div><dt className="text-muted-foreground">{t('columns.role')}</dt><dd className="mt-1"><Badge variant="outline" className={ROLE_BADGE_CLASS[user.role]}>{roles.has(user.role) ? roles(user.role) : formatIdentifierLabel(user.role)}</Badge></dd></div>
@@ -344,8 +344,8 @@ export default function UsersPage() {
         </div>
 
         {/* The frame closes with one policy line; later client comments require every PAID account to complete MFA. */}
-        <div id="user-role-policy" className="m-4 flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-sm leading-6 text-blue-950/80 sm:m-6">
-          <BadgeCheck className="mt-0.5 size-4 shrink-0 text-blue-800" aria-hidden="true" />
+        <div id="user-role-policy" className="m-4 flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-sm leading-6 text-blue-950/80 dark:border-blue-400/25 dark:bg-blue-400/10 dark:text-blue-100/85 sm:m-6">
+          <BadgeCheck className="mt-0.5 size-4 shrink-0 text-blue-800 dark:text-blue-300" aria-hidden="true" />
           <p>
             {planState === 'loading' ? t('accessPolicy.loading') : planState === 'error' ? t('accessPolicy.error') : plan === 'free' ? t('accessPolicy.free') : t('accessPolicy.paid')}{' '}
             {planState === 'loading' ? t('accessPolicy.mfaLoading') : planState === 'error' ? t('accessPolicy.mfaError') : plan === 'paid' ? t('accessPolicy.paidMfa') : t('accessPolicy.freeMfa')}

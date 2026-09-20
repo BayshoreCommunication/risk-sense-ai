@@ -46,9 +46,9 @@ export default function AuditAssessmentsPage() {
 
       {data && (
         <div className="data-panel grid divide-y sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-          <div className="flex items-center gap-3 p-4"><span className="grid size-9 place-items-center rounded-lg bg-blue-500/10 text-blue-700"><Database className="size-4" aria-hidden="true" /></span><p className="text-sm font-medium">{t('count', { count: data.total })}</p></div>
-          <div className="flex items-center gap-3 p-4"><span className="grid size-9 place-items-center rounded-lg bg-amber-500/10 text-amber-700"><History className="size-4" aria-hidden="true" /></span><p className="text-sm font-medium"><span className="mr-1 text-xl tabular-nums">{data.counts.pending}</span>{t('summary.pending')}</p></div>
-          <div className="flex items-center gap-3 p-4"><span className="grid size-9 place-items-center rounded-lg bg-emerald-500/10 text-emerald-700"><ShieldCheck className="size-4" aria-hidden="true" /></span><p className="text-sm font-medium"><span className="mr-1 text-xl tabular-nums">{data.counts.closed}</span>{status('closed')}</p></div>
+          <div className="flex items-center gap-3 p-4"><span className="grid size-9 place-items-center rounded-lg bg-blue-500/10 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300"><Database className="size-4" aria-hidden="true" /></span><p className="text-sm font-medium">{t('count', { count: data.total })}</p></div>
+          <div className="flex items-center gap-3 p-4"><span className="grid size-9 place-items-center rounded-lg bg-amber-500/10 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300"><History className="size-4" aria-hidden="true" /></span><p className="text-sm font-medium"><span className="mr-1 text-xl tabular-nums">{data.counts.pending}</span>{t('summary.pending')}</p></div>
+          <div className="flex items-center gap-3 p-4"><span className="grid size-9 place-items-center rounded-lg bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300"><ShieldCheck className="size-4" aria-hidden="true" /></span><p className="text-sm font-medium"><span className="mr-1 text-xl tabular-nums">{data.counts.closed}</span>{status('closed')}</p></div>
         </div>
       )}
 

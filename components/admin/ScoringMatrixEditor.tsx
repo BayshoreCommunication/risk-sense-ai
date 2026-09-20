@@ -29,22 +29,22 @@ const FACTOR_ORDER = ['controlEffectiveness', 'impact', 'severity', 'likelihood'
 type FactorKey = (typeof FACTOR_ORDER)[number];
 
 const FACTOR_ICON: Record<FactorKey, { icon: LucideIcon; className: string }> = {
-  controlEffectiveness: { icon: Target, className: 'bg-blue-500/10 text-blue-700' },
-  impact: { icon: BarChart3, className: 'bg-emerald-500/10 text-emerald-700' },
-  severity: { icon: AlertTriangle, className: 'bg-amber-500/10 text-amber-700' },
-  likelihood: { icon: ShieldHalf, className: 'bg-violet-500/10 text-violet-700' },
-  duration: { icon: Clock, className: 'bg-slate-500/10 text-slate-700' },
-  regulatorySensitivity: { icon: Scale, className: 'bg-teal-500/10 text-teal-700' },
+  controlEffectiveness: { icon: Target, className: 'bg-blue-500/10 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300' },
+  impact: { icon: BarChart3, className: 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300' },
+  severity: { icon: AlertTriangle, className: 'bg-amber-500/10 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300' },
+  likelihood: { icon: ShieldHalf, className: 'bg-violet-500/10 text-violet-700 dark:bg-violet-400/15 dark:text-violet-300' },
+  duration: { icon: Clock, className: 'bg-slate-500/10 text-slate-700 dark:bg-slate-400/15 dark:text-slate-300' },
+  regulatorySensitivity: { icon: Scale, className: 'bg-teal-500/10 text-teal-700 dark:bg-teal-400/15 dark:text-teal-300' },
 };
 
 const CLASSIFICATION_ORDER = ['monitor_only', 'risk', 'elevated_risk', 'issue'] as const;
 type Classification = (typeof CLASSIFICATION_ORDER)[number];
 
 const CLASSIFICATION_STYLE: Record<Classification, { icon: LucideIcon; tile: string; value: string }> = {
-  monitor_only: { icon: Eye, tile: 'bg-blue-500/10 text-blue-600', value: 'text-blue-700' },
-  risk: { icon: AlertTriangle, tile: 'bg-amber-500/10 text-amber-600', value: 'text-amber-700' },
-  elevated_risk: { icon: ArrowUpCircle, tile: 'bg-orange-500/12 text-orange-600', value: 'text-orange-700' },
-  issue: { icon: Bell, tile: 'bg-red-500/10 text-red-600', value: 'text-red-700' },
+  monitor_only: { icon: Eye, tile: 'bg-blue-500/10 text-blue-600 dark:bg-blue-400/15 dark:text-blue-300', value: 'text-blue-700 dark:text-blue-300' },
+  risk: { icon: AlertTriangle, tile: 'bg-amber-500/10 text-amber-600 dark:bg-amber-400/15 dark:text-amber-300', value: 'text-amber-700 dark:text-amber-300' },
+  elevated_risk: { icon: ArrowUpCircle, tile: 'bg-orange-500/12 text-orange-600 dark:bg-orange-400/15 dark:text-orange-300', value: 'text-orange-700 dark:text-orange-300' },
+  issue: { icon: Bell, tile: 'bg-red-500/10 text-red-600 dark:bg-red-400/15 dark:text-red-300', value: 'text-red-700 dark:text-red-300' },
 };
 
 const CONFIDENCE_GATES = ['professionalConsultBelow', 'mandatoryReviewBelow'] as const;
@@ -253,15 +253,15 @@ export function ScoringMatrixEditor() {
       </div>
 
       {draft && (
-        <div className="mt-5 rounded-xl border border-amber-300/70 bg-amber-50/70 p-4" role="status">
+        <div className="mt-5 rounded-xl border border-amber-300/70 bg-amber-50/70 p-4 dark:border-amber-400/30 dark:bg-amber-400/10" role="status">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex min-w-0 items-start gap-3">
-              <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-amber-500/15 text-amber-700">
+              <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-amber-500/15 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300">
                 <AlertTriangle className="size-4" aria-hidden="true" />
               </span>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-amber-950">{t('lifecycle.title', { version: String(draft.version ?? '') })}</p>
-                <p className="mt-1 text-xs leading-5 text-amber-950/80">
+                <p className="text-sm font-semibold text-amber-950 dark:text-amber-100">{t('lifecycle.title', { version: String(draft.version ?? '') })}</p>
+                <p className="mt-1 text-xs leading-5 text-amber-950/80 dark:text-amber-100/80">
                   {approved
                     ? t('lifecycle.approvedDescription')
                     : t('lifecycle.draftDescription', { active: group.active ? String(group.active.version ?? '') : t('lifecycle.noActive') })}
@@ -320,7 +320,7 @@ export function ScoringMatrixEditor() {
             </div>
           );
         })}
-        <div className={`flex items-center gap-2 border-t px-4 py-3 text-sm font-semibold ${balanced ? 'text-emerald-700' : 'text-destructive'}`}>
+        <div className={`flex items-center gap-2 border-t px-4 py-3 text-sm font-semibold ${balanced ? 'text-emerald-700 dark:text-emerald-300' : 'text-destructive'}`}>
           {t('totalWeight', { total: String(Math.round(total * 100) / 100) })}
           {balanced ? (
             <span className="grid size-5 place-items-center rounded-full bg-emerald-600 text-white" aria-hidden="true">
@@ -377,7 +377,7 @@ export function ScoringMatrixEditor() {
         <Button onClick={() => void save()} disabled={!balanced || !gatesInRange || !dirty || saving}>
           {saving ? t('saving') : t('save')}
         </Button>
-        {saved && <p className="text-sm text-emerald-700">{saved}</p>}
+        {saved && <p className="text-sm text-emerald-700 dark:text-emerald-300">{saved}</p>}
         {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
       </div>
       <p className="mt-4 text-sm italic text-muted-foreground">{t('footnote')}</p>

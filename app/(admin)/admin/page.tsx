@@ -46,12 +46,12 @@ const LOADING_AVAILABILITY: Availability = {
 };
 
 const ADMIN_AREAS: Area[] = [
-  { href: '/admin/personas', key: 'personas', icon: BrainCircuit, tone: 'bg-violet-500/10 text-violet-700' },
-  { href: '/admin/scenarios', key: 'scenarios', icon: GitBranch, tone: 'bg-sky-500/10 text-sky-700' },
-  { href: '/admin/questions', key: 'questions', icon: ListChecks, tone: 'bg-cyan-500/10 text-cyan-700' },
-  { href: '/admin/rules', key: 'rules', icon: BookOpenCheck, tone: 'bg-rose-500/10 text-rose-700' },
-  { href: '/admin/scoring', key: 'scoring', icon: SlidersHorizontal, tone: 'bg-blue-500/10 text-blue-700' },
-  { href: '/admin/datasets', key: 'datasets', icon: Database, tone: 'bg-emerald-500/10 text-emerald-700' },
+  { href: '/admin/personas', key: 'personas', icon: BrainCircuit, tone: 'bg-violet-500/10 text-violet-700 dark:bg-violet-400/15 dark:text-violet-300' },
+  { href: '/admin/scenarios', key: 'scenarios', icon: GitBranch, tone: 'bg-sky-500/10 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300' },
+  { href: '/admin/questions', key: 'questions', icon: ListChecks, tone: 'bg-cyan-500/10 text-cyan-700 dark:bg-cyan-400/15 dark:text-cyan-300' },
+  { href: '/admin/rules', key: 'rules', icon: BookOpenCheck, tone: 'bg-rose-500/10 text-rose-700 dark:bg-rose-400/15 dark:text-rose-300' },
+  { href: '/admin/scoring', key: 'scoring', icon: SlidersHorizontal, tone: 'bg-blue-500/10 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300' },
+  { href: '/admin/datasets', key: 'datasets', icon: Database, tone: 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300' },
 ];
 
 function active(items: Item[]) {
@@ -154,8 +154,8 @@ export default function Page() {
       </section>
 
       {unavailableSources > 0 ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300/70 bg-amber-50/70 p-3.5" role="alert">
-          <p className="text-sm leading-5 text-amber-950">{t('partialError', { count: unavailableSources })}</p>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300/70 bg-amber-50/70 p-3.5 dark:border-amber-400/30 dark:bg-amber-400/10" role="alert">
+          <p className="text-sm leading-5 text-amber-950 dark:text-amber-100">{t('partialError', { count: unavailableSources })}</p>
           <Button size="sm" variant="outline" onClick={() => void loadSnapshot()}>{t('retry')}</Button>
         </div>
       ) : null}

@@ -15,10 +15,10 @@ import { assessments, type AssessmentListItem, type AssessmentListResult } from 
 
 const LIMIT = 25;
 const CLASSIFICATION_CLASS: Record<string, string> = {
-  monitor_only: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  risk: 'border-amber-200 bg-amber-50 text-amber-700',
-  elevated_risk: 'border-orange-200 bg-orange-50 text-orange-700',
-  issue: 'border-rose-200 bg-rose-50 text-rose-700',
+  monitor_only: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-300',
+  risk: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300',
+  elevated_risk: 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-400/30 dark:bg-orange-400/10 dark:text-orange-300',
+  issue: 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-400/30 dark:bg-rose-400/10 dark:text-rose-300',
 };
 
 /**

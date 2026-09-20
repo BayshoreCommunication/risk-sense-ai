@@ -143,19 +143,19 @@ export function ResultCard({
   };
 
   return (
-    <section aria-labelledby={headingId} data-testid="assessment-result" className="overflow-hidden rounded-2xl border border-[#d7e1ed] bg-white shadow-[0_14px_38px_rgba(8,32,68,0.08)] ring-1 ring-[#082044]/[0.025]">
+    <section aria-labelledby={headingId} data-testid="assessment-result" className="overflow-hidden rounded-2xl border border-[#d7e1ed] bg-white shadow-[0_14px_38px_rgba(8,32,68,0.08)] ring-1 ring-[#082044]/[0.025] dark:border-border dark:bg-card dark:shadow-[0_16px_44px_rgba(0,0,0,0.28)] dark:ring-white/[0.035]">
       <div className={`border-l-[3px] ${ACCENT[result.classification] ?? 'border-l-primary'}`}>
-        <div className="grid gap-4 bg-[linear-gradient(135deg,#ffffff_0%,#f8fbff_100%)] px-4 py-4 sm:grid-cols-[7.25rem_minmax(0,1fr)] sm:px-5">
-          <div className="flex flex-col items-center justify-center rounded-xl border border-[#dfe7f1] bg-white/90 px-3 py-3 shadow-[0_4px_14px_rgba(8,38,82,0.045)]">
+        <div className="grid gap-4 bg-[linear-gradient(135deg,#ffffff_0%,#f8fbff_100%)] px-4 py-4 dark:bg-[linear-gradient(135deg,color-mix(in_srgb,var(--card)_94%,var(--primary)_6%)_0%,var(--card)_100%)] sm:grid-cols-[7.25rem_minmax(0,1fr)] sm:px-5">
+          <div className="flex flex-col items-center justify-center rounded-xl border border-[#dfe7f1] bg-white/90 px-3 py-3 shadow-[0_4px_14px_rgba(8,38,82,0.045)] dark:border-border dark:bg-background/65 dark:shadow-[0_6px_18px_rgba(0,0,0,0.18)]">
             <div
-              className="grid size-[4.75rem] place-items-center rounded-full p-[0.32rem]"
-              style={{ background: `conic-gradient(${scoreAccent} ${score * 3.6}deg, #e5ebf3 0deg)` }}
+              className="grid size-[4.75rem] place-items-center rounded-full p-[0.32rem] [--score-track:#e5ebf3] dark:[--score-track:color-mix(in_srgb,var(--border)_78%,var(--background)_22%)]"
+              style={{ background: `conic-gradient(${scoreAccent} ${score * 3.6}deg, var(--score-track) 0deg)` }}
               role="img"
               aria-label={`${result.score} ${t('scoreOutOf')}`}
             >
-              <div className="grid size-full place-items-center rounded-full bg-white text-center shadow-[inset_0_0_0_1px_rgba(148,163,184,0.2)]">
+              <div className="grid size-full place-items-center rounded-full bg-white text-center shadow-[inset_0_0_0_1px_rgba(148,163,184,0.2)] dark:bg-card dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
                 <span>
-                  <span className="block font-heading text-[1.65rem] font-semibold leading-none tracking-tight tabular-nums text-[#10233f]">{result.score}</span>
+                  <span className="block font-heading text-[1.65rem] font-semibold leading-none tracking-tight tabular-nums text-[#10233f] dark:text-foreground">{result.score}</span>
                   <span className="mt-0.5 block text-[0.58rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase">/100</span>
                 </span>
               </div>
@@ -187,8 +187,8 @@ export function ResultCard({
               )}
             </div>
 
-            <div className="mt-3 rounded-xl border border-[#e5ebf3] bg-white/75 px-3 py-2.5">
-              <p className="flex items-center gap-1.5 text-[0.62rem] font-semibold tracking-[0.1em] text-[#49627f] uppercase">
+            <div className="mt-3 rounded-xl border border-[#e5ebf3] bg-white/75 px-3 py-2.5 dark:border-border dark:bg-background/50">
+              <p className="flex items-center gap-1.5 text-[0.62rem] font-semibold tracking-[0.1em] text-[#49627f] uppercase dark:text-muted-foreground">
                 <Sparkles className="size-3 text-primary" aria-hidden="true" />
                 {t('summaryLabel')}
               </p>
@@ -207,9 +207,9 @@ export function ResultCard({
         </div>
       </div>
 
-      <div className="divide-y divide-[#e7edf4]">
-        <section className="flex items-start gap-3 bg-[#f5f8fc] px-4 py-3 sm:px-5">
-          <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#e8f1ff] text-primary">
+      <div className="divide-y divide-[#e7edf4] dark:divide-border">
+        <section className="flex items-start gap-3 bg-[#f5f8fc] px-4 py-3 dark:bg-muted/35 sm:px-5">
+          <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#e8f1ff] text-primary dark:bg-primary/15 dark:text-blue-300">
             <CheckCircle2 aria-hidden="true" className="size-3.5" />
           </span>
           <div className="min-w-0">
@@ -230,12 +230,12 @@ export function ResultCard({
                   {result.keyDrivers.map((driver) => {
                     const display = driverDisplay(driver);
                     return (
-                      <li key={driver} className="grid grid-cols-[0.4rem_minmax(0,1fr)] gap-2 rounded-lg bg-[#f7f9fc] px-2.5 py-2">
+                      <li key={driver} className="grid grid-cols-[0.4rem_minmax(0,1fr)] gap-2 rounded-lg bg-[#f7f9fc] px-2.5 py-2 dark:bg-muted/35">
                         <span className="mt-[0.4rem] size-1.5 rounded-full bg-primary" aria-hidden="true" />
                         <span className="flex min-w-0 items-center justify-between gap-2 text-[0.72rem] leading-[1.125rem]">
                           <span className="min-w-0 truncate text-foreground/75">{display.label}</span>
                           {display.value && (
-                            <span className="shrink-0 rounded-full border border-[#dbe5f1] bg-white px-2 py-0.5 text-[0.62rem] font-medium text-[#365675]">
+                            <span className="shrink-0 rounded-full border border-[#dbe5f1] bg-white px-2 py-0.5 text-[0.62rem] font-medium text-[#365675] dark:border-border dark:bg-background/70 dark:text-blue-200">
                               {display.value}
                             </span>
                           )}
@@ -268,13 +268,13 @@ export function ResultCard({
 
         {factorEntries.length > 0 && (
           <details className="group">
-            <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-[0.75rem] font-semibold outline-none transition hover:bg-[#f8fafc] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 sm:px-5 [&::-webkit-details-marker]:hidden">
+            <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-[0.75rem] font-semibold outline-none transition hover:bg-[#f8fafc] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 dark:hover:bg-muted/45 sm:px-5 [&::-webkit-details-marker]:hidden">
               <Scale aria-hidden="true" className="size-3.5 text-primary" />
               <span className="flex-1">{t('factors.title')}</span>
-              <span className="rounded-full bg-[#eef4fb] px-2 py-0.5 text-[0.6rem] font-semibold tabular-nums text-[#315b91]">{factorEntries.length}</span>
+              <span className="rounded-full bg-[#eef4fb] px-2 py-0.5 text-[0.6rem] font-semibold tabular-nums text-[#315b91] dark:bg-primary/15 dark:text-blue-200">{factorEntries.length}</span>
               <ChevronDown aria-hidden="true" className="size-3.5 text-muted-foreground transition-transform group-open:rotate-180" />
             </summary>
-            <div className="border-t border-[#e7edf4] px-4 py-3 sm:px-5">
+            <div className="border-t border-[#e7edf4] px-4 py-3 dark:border-border sm:px-5">
               <div className="hidden grid-cols-[minmax(9rem,1fr)_5rem_6rem_6rem] gap-4 px-2 pb-2 text-[0.58rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:grid">
                 <span>{t('factors.factorLabel')}</span>
                 <span>{t('factors.valueLabel')}</span>
@@ -287,11 +287,11 @@ export function ResultCard({
                     ? Math.max(0, Math.min(100, (Math.abs(factor.contribution) / factor.weight) * 100))
                     : 0;
                   return (
-                    <div key={key} className="grid gap-2 rounded-lg bg-[#f8fafc] px-2.5 py-2 text-[0.7rem] sm:grid-cols-[minmax(9rem,1fr)_5rem_6rem_6rem] sm:items-center sm:gap-4">
+                    <div key={key} className="grid gap-2 rounded-lg bg-[#f8fafc] px-2.5 py-2 text-[0.7rem] dark:bg-muted/35 sm:grid-cols-[minmax(9rem,1fr)_5rem_6rem_6rem] sm:items-center sm:gap-4">
                       <dt className="min-w-0 font-medium text-foreground">
                         <span className="block truncate">{formatIdentifierLabel(key)}</span>
                         <span
-                          className="mt-1 block h-1 overflow-hidden rounded-full bg-[#e7edf4]"
+                          className="mt-1 block h-1 overflow-hidden rounded-full bg-[#e7edf4] dark:bg-border"
                           aria-label={`${t('factors.contributionLabel')}: ${t('factors.points', { value: factor.contribution.toFixed(1) })}`}
                           title={`${t('factors.contributionLabel')}: ${t('factors.points', { value: factor.contribution.toFixed(1) })}`}
                         >
@@ -318,10 +318,10 @@ export function ResultCard({
           </details>
         )}
 
-        <section className="bg-[linear-gradient(180deg,#f8fafc_0%,#f3f7fc_100%)] px-4 py-3.5 sm:px-5" aria-labelledby={`${headingId}-decision`}>
+        <section className="bg-[linear-gradient(180deg,#f8fafc_0%,#f3f7fc_100%)] px-4 py-3.5 dark:bg-[linear-gradient(180deg,var(--card)_0%,color-mix(in_srgb,var(--card)_84%,var(--background)_16%)_100%)] sm:px-5" aria-labelledby={`${headingId}-decision`}>
           {decided ? (
             <div className="grid grid-cols-[2rem_minmax(0,1fr)] gap-3">
-              <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+              <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300">
                 <CheckCircle2 aria-hidden="true" className="size-4" />
               </span>
               <div className="min-w-0">
@@ -340,8 +340,8 @@ export function ResultCard({
           ) : (
             <div>
               {a.status === 'escalated' && a.decision && (
-                <div className="mb-4 flex items-start gap-2.5 border-l-2 border-amber-500 bg-amber-50/70 px-3 py-2.5 text-xs leading-5 text-amber-950">
-                  <Route aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-amber-700" />
+                <div className="mb-4 flex items-start gap-2.5 border-l-2 border-amber-500 bg-amber-50/70 px-3 py-2.5 text-xs leading-5 text-amber-950 dark:bg-amber-400/10 dark:text-amber-100">
+                  <Route aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-amber-700 dark:text-amber-300" />
                   <p>
                     {a.escalatedTo ? t('escalated.toReviewer', { name: a.escalatedTo.name }) : t('escalated.label')}
                     {a.decision.reason ? ` — ${a.decision.reason}` : ''} · {new Date(a.decision.decidedAt).toLocaleString(locale)}. {t('escalated.stillOpen')}
@@ -351,7 +351,7 @@ export function ResultCard({
 
               <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
                 <div className="flex max-w-2xl items-start gap-2.5">
-                  <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg border border-[#dce6f2] bg-white text-primary">
+                  <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg border border-[#dce6f2] bg-white text-primary dark:border-border dark:bg-background/70 dark:text-blue-300">
                     <CheckCircle2 className="size-3.5" aria-hidden="true" />
                   </span>
                   <div>

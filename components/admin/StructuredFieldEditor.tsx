@@ -560,7 +560,7 @@ function FactorsEditor({ value, onChange }: { value: string; onChange: (value: s
 
   return (
     <div className="space-y-3" data-testid="structured-factors">
-      <p className={`rounded-xl border px-3 py-2.5 text-sm font-medium ${totalWeight === 100 ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-destructive/30 bg-destructive/5 text-destructive'}`} role="status">
+      <p className={`rounded-xl border px-3 py-2.5 text-sm font-medium ${totalWeight === 100 ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-300' : 'border-destructive/30 bg-destructive/5 text-destructive'}`} role="status">
         {t('totalWeight', { total: totalWeight })} {totalWeight === 100 ? t('valid') : t('invalidTotal')}
       </p>
       {FACTOR_KEYS.map((key) => {

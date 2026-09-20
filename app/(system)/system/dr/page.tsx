@@ -233,17 +233,17 @@ export default function DisasterRecoveryPage() {
         }
       />
 
-      <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
+      <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm dark:bg-amber-400/10">
         <span className="font-medium">{t('operatorNotice.title')}:</span> {t('operatorNotice.description')}
       </div>
 
       {/* The first two cards are policy targets; the final two are operator-recorded recovery evidence. */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {([
-          { key: 'rto', icon: TimerReset, tile: 'bg-blue-500/10 text-blue-700', value: t('targets.hours', { value: status.targets.rtoHours }), label: t('targets.rto') },
-          { key: 'rpo', icon: RotateCcw, tile: 'bg-emerald-500/10 text-emerald-700', value: t('targets.hours', { value: status.targets.rpoHours }), label: t('targets.rpo') },
-          { key: 'backup', icon: DatabaseBackup, tile: 'bg-violet-500/10 text-violet-700', value: formatDate(status.lastBackupAt, locale, t('notRecorded')), label: t('form.latestBackup') },
-          { key: 'drill', icon: FileCheck2, tile: 'bg-amber-500/10 text-amber-700', value: formatDate(status.lastRestoreDrillAt, locale, t('notRecorded')), label: t('form.latestDrill') },
+          { key: 'rto', icon: TimerReset, tile: 'bg-blue-500/10 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300', value: t('targets.hours', { value: status.targets.rtoHours }), label: t('targets.rto') },
+          { key: 'rpo', icon: RotateCcw, tile: 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300', value: t('targets.hours', { value: status.targets.rpoHours }), label: t('targets.rpo') },
+          { key: 'backup', icon: DatabaseBackup, tile: 'bg-violet-500/10 text-violet-700 dark:bg-violet-400/15 dark:text-violet-300', value: formatDate(status.lastBackupAt, locale, t('notRecorded')), label: t('form.latestBackup') },
+          { key: 'drill', icon: FileCheck2, tile: 'bg-amber-500/10 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300', value: formatDate(status.lastRestoreDrillAt, locale, t('notRecorded')), label: t('form.latestDrill') },
         ] as const).map((target) => {
           const Icon = target.icon;
           return (
@@ -379,7 +379,7 @@ export default function DisasterRecoveryPage() {
         </div>
 
         {evidenceDirty && (
-          <label className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
+          <label className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-3 text-sm dark:bg-amber-400/10">
             <input className="mt-0.5" type="checkbox" checked={attested} onChange={(event) => setAttested(event.target.checked)} />
             {t('form.attestation')}
           </label>

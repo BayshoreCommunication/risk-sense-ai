@@ -32,8 +32,7 @@ export function ChartStyles() {
     <style>{`
       .viz { --viz-surface:transparent; --viz-ink:#172033; --viz-ink2:#536078; --viz-muted:#7b8496; --viz-grid:#e6eaf0; --viz-axis:#cbd2dc;
         ${SERIES_LIGHT.map((c, i) => `--s${i + 1}:${c};`).join('')} }
-      /* The app renders light only today; the dark steps are wired to a future .dark root class, not to the OS setting. */
-      .dark .viz { --viz-surface:#1a1a19; --viz-ink:#ffffff; --viz-ink2:#c3c2b7; --viz-muted:#898781; --viz-grid:#2c2c2a; --viz-axis:#383835;
+      .dark .viz { --viz-surface:transparent; --viz-ink:var(--foreground); --viz-ink2:color-mix(in srgb,var(--foreground) 78%,transparent); --viz-muted:var(--muted-foreground); --viz-grid:color-mix(in srgb,var(--border) 78%,transparent); --viz-axis:var(--border);
         ${SERIES_DARK.map((c, i) => `--s${i + 1}:${c};`).join('')} }
       .viz text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
     `}</style>
@@ -144,7 +143,7 @@ export function BarChart({ data, format = (v) => String(v), title }: { data: { l
     {selected !== null && data[selected] && (
       <div className="mt-2 flex items-center justify-between gap-3 border-t pt-3 text-sm" role="status">
         <span className="font-medium">{data[selected].label}</span>
-        <span className="rounded-md bg-blue-50 px-2 py-1 font-semibold tabular-nums text-blue-700">{format(data[selected].value)}</span>
+        <span className="rounded-md bg-blue-50 px-2 py-1 font-semibold tabular-nums text-blue-700 dark:bg-blue-400/15 dark:text-blue-300">{format(data[selected].value)}</span>
       </div>
     )}
     </div>
@@ -426,7 +425,7 @@ export function StackedClassificationChart({
                       aria-label={`${month.label}: ${total === null ? '—' : total.toLocaleString(locale)}`}
                     >
                       <div
-                        className={`flex w-full flex-col-reverse overflow-hidden rounded-t-xl shadow-[0_2px_10px_rgba(15,35,65,0.10)] ring-1 transition-shadow ${isSelectedMonth ? 'ring-primary/45' : 'ring-black/5'}`}
+                        className={`flex w-full flex-col-reverse overflow-hidden rounded-t-xl shadow-[0_2px_10px_rgba(15,35,65,0.10)] ring-1 transition-shadow dark:shadow-[0_2px_14px_rgba(0,0,0,0.24)] ${isSelectedMonth ? 'ring-primary/45' : 'ring-black/5 dark:ring-white/10'}`}
                         style={{ height: `${stackHeight}%` }}
                       >
                         {month.segments.map((segment, index) => {
@@ -513,10 +512,10 @@ export function StatTile({
   tone?: 'blue' | 'green' | 'amber' | 'violet';
 }) {
   const tones = {
-    blue: 'bg-blue-500/10 text-blue-700',
-    green: 'bg-emerald-500/10 text-emerald-700',
-    amber: 'bg-amber-500/10 text-amber-700',
-    violet: 'bg-violet-500/10 text-violet-700',
+    blue: 'bg-blue-500/10 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300',
+    green: 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300',
+    amber: 'bg-amber-500/10 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300',
+    violet: 'bg-violet-500/10 text-violet-700 dark:bg-violet-400/15 dark:text-violet-300',
   } as const;
 
   return (

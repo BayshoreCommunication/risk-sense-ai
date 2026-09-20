@@ -9,10 +9,10 @@ import { questionsApi, type Item } from '@/lib/admin/content';
 import { useWorkspace } from '@/components/shell/workspace-context';
 
 const SUMMARY_TONE = [
-  { icon: FileQuestion, tile: 'bg-blue-500/10 text-blue-700' },
-  { icon: CircleCheck, tile: 'bg-emerald-500/10 text-emerald-700' },
-  { icon: Clock, tile: 'bg-amber-500/10 text-amber-700' },
-  { icon: BookmarkCheck, tile: 'bg-violet-500/10 text-violet-700' },
+  { icon: FileQuestion, tile: 'bg-blue-500/10 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300' },
+  { icon: CircleCheck, tile: 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300' },
+  { icon: Clock, tile: 'bg-amber-500/10 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300' },
+  { icon: BookmarkCheck, tile: 'bg-violet-500/10 text-violet-700 dark:bg-violet-400/15 dark:text-violet-300' },
 ] as const;
 
 function tagsOf(item: Item) {

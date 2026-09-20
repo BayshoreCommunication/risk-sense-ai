@@ -103,7 +103,7 @@ export default function RetentionPage() {
           key: 'assessments',
           field: 'assessmentDays' as const,
           icon: FileText,
-          tile: 'bg-blue-500/10 text-blue-700',
+          tile: 'bg-blue-500/10 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300',
           record: t('policyTable.records.assessments'),
           days: displayedPolicy.assessmentDays,
           expiry: settings.plan === 'paid' ? t('policyTable.actions.archiveReduce') : t('policyTable.actions.reduce'),
@@ -114,7 +114,7 @@ export default function RetentionPage() {
           key: 'evidence',
           field: 'evidenceDays' as const,
           icon: FolderOpen,
-          tile: 'bg-indigo-500/10 text-indigo-700',
+          tile: 'bg-indigo-500/10 text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-300',
           record: t('policyTable.records.evidence'),
           days: displayedPolicy.evidenceDays,
           expiry: t('policyTable.actions.followAssessment'),
@@ -125,7 +125,7 @@ export default function RetentionPage() {
           key: 'audit',
           field: 'auditDays' as const,
           icon: ChartNoAxesColumn,
-          tile: 'bg-emerald-500/10 text-emerald-700',
+          tile: 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300',
           record: t('policyTable.records.audit'),
           days: displayedPolicy.auditDays,
           expiry: t('policyTable.actions.preserve'),
@@ -136,7 +136,7 @@ export default function RetentionPage() {
           key: 'datasets',
           field: 'datasetHistoryDays' as const,
           icon: Database,
-          tile: 'bg-violet-500/10 text-violet-700',
+          tile: 'bg-violet-500/10 text-violet-700 dark:bg-violet-400/15 dark:text-violet-300',
           record: t('policyTable.records.datasets'),
           days: displayedPolicy.datasetHistoryDays,
           expiry: t('policyTable.actions.retainHistory'),
@@ -251,7 +251,7 @@ export default function RetentionPage() {
 
             <div className="space-y-4 border-t p-4 sm:p-5">
               <div className="flex items-start gap-3 rounded-xl border bg-muted/20 p-4">
-                <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${settings.plan === 'paid' ? 'bg-violet-500/10 text-violet-700' : 'bg-blue-500/10 text-blue-700'}`}>{settings.plan === 'paid' ? <Archive className="size-4" aria-hidden="true" /> : <ShieldCheck className="size-4" aria-hidden="true" />}</span>
+                <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${settings.plan === 'paid' ? 'bg-violet-500/10 text-violet-700 dark:bg-violet-400/15 dark:text-violet-300' : 'bg-blue-500/10 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300'}`}>{settings.plan === 'paid' ? <Archive className="size-4" aria-hidden="true" /> : <ShieldCheck className="size-4" aria-hidden="true" />}</span>
                 <div><p className="font-medium">{settings.plan === 'paid' ? t('policy.paidTitle') : t('policy.freeTitle')}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{settings.plan === 'paid' ? tenantT('policy.retentionConfigurable') : tenantT('policy.retentionFixed')}</p></div>
               </div>
               {policySaved && <p className="text-sm text-muted-foreground" role="status">{policySaved}</p>}

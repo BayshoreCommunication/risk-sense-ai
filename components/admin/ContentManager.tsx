@@ -142,11 +142,11 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'dest
 };
 
 const STATUS_CLASS: Record<string, string> = {
-  active: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  approved: 'border-sky-200 bg-sky-50 text-sky-700',
-  draft: 'border-amber-200 bg-amber-50 text-amber-700',
-  deactivated: 'border-slate-200 bg-slate-50 text-slate-600',
-  retired: 'border-slate-200 bg-slate-50 text-slate-600',
+  active: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-300',
+  approved: 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-400/30 dark:bg-sky-400/10 dark:text-sky-300',
+  draft: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300',
+  deactivated: 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-400/25 dark:bg-slate-400/10 dark:text-slate-300',
+  retired: 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-400/25 dark:bg-slate-400/10 dark:text-slate-300',
 };
 
 type LifecycleAction = 'approve' | 'activate' | 'deactivate' | 'retire';
@@ -472,7 +472,7 @@ export function ContentManager(props: ContentManagerProps) {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="grid max-h-[92vh] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 sm:max-w-[min(72rem,calc(100vw-3rem))]">
-          <DialogHeader className="border-b bg-[linear-gradient(120deg,#ffffff,#f6f9ff)] px-5 py-5 pr-12 sm:px-6 sm:py-6 sm:pr-14">
+          <DialogHeader className="border-b bg-[linear-gradient(120deg,#ffffff,#f6f9ff)] px-5 py-5 pr-12 dark:bg-[linear-gradient(120deg,var(--card),color-mix(in_srgb,var(--card)_90%,var(--primary)_10%))] sm:px-6 sm:py-6 sm:pr-14">
             <DialogTitle className="text-xl">
               {editing
                 ? t('form.editTitle', { entity: props.entity, version: String(editing.version ?? 1), status: formatIdentifierLabel(editing.status) })

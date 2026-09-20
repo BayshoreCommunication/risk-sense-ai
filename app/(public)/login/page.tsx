@@ -443,8 +443,8 @@ function LoginForm() {
 export default function LoginPage() {
   const t = useTranslations('login');
   return (
-    <main className="flex min-h-screen items-center justify-center overflow-hidden bg-[#f5f8ff] p-0 lg:p-8">
-      <div className="grid min-h-screen w-full overflow-hidden bg-card lg:min-h-[min(900px,calc(100vh-4rem))] lg:max-w-[1320px] lg:grid-cols-[minmax(36rem,1.16fr)_minmax(29rem,0.84fr)] lg:rounded-[2rem] lg:border lg:shadow-[0_35px_100px_rgba(26,56,110,0.15)]">
+    <main className="flex min-h-screen items-center justify-center overflow-hidden bg-[#f5f8ff] p-0 dark:bg-background lg:p-8">
+      <div className="grid min-h-screen w-full overflow-hidden bg-card lg:min-h-[min(900px,calc(100vh-4rem))] lg:max-w-[1320px] lg:grid-cols-[minmax(36rem,1.16fr)_minmax(29rem,0.84fr)] lg:rounded-[2rem] lg:border lg:shadow-[0_35px_100px_rgba(26,56,110,0.15)] dark:lg:shadow-[0_35px_100px_rgba(0,0,0,0.35)]">
         <section className="relative flex min-h-screen items-center justify-center px-5 py-10 sm:px-10 lg:min-h-0 lg:px-16 xl:px-20">
           <div aria-hidden="true" className="subtle-grid absolute inset-0 opacity-20" />
           <div className="relative w-full">

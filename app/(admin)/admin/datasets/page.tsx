@@ -30,11 +30,11 @@ const STATUS_VARIANT: Record<Dataset['status'], 'default' | 'secondary' | 'outli
 };
 
 const STATUS_CLASS: Record<Dataset['status'], string> = {
-  active: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  approved: 'border-sky-200 bg-sky-50 text-sky-700',
-  validated: 'border-amber-200 bg-amber-50 text-amber-700',
-  rejected: 'border-red-200 bg-red-50 text-red-700',
-  failed: 'border-red-200 bg-red-50 text-red-700',
+  active: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-300',
+  approved: 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-400/30 dark:bg-sky-400/10 dark:text-sky-300',
+  validated: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300',
+  rejected: 'border-red-200 bg-red-50 text-red-700 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-300',
+  failed: 'border-red-200 bg-red-50 text-red-700 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-300',
 };
 
 const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
@@ -187,11 +187,11 @@ export default function DatasetsPage() {
       {/* Counter strip with an icon per state, as docs/design/figma-frames/16-admin-training-datasets.png. */}
       <section className="grid gap-px overflow-hidden rounded-xl border bg-border shadow-[0_4px_16px_rgba(15,35,65,0.04)] sm:grid-cols-2 xl:grid-cols-5" aria-label={t('summary.label')}>
         {([
-          { key: 'total', value: items.length, icon: Database, tile: 'bg-blue-500/10 text-blue-700' },
-          { key: 'active', value: activeCount, icon: CircleCheck, tile: 'bg-emerald-500/10 text-emerald-700' },
-          { key: 'review', value: reviewCount, icon: Clock, tile: 'bg-amber-500/10 text-amber-700' },
-          { key: 'activation', value: activationCount, icon: Power, tile: 'bg-indigo-500/10 text-indigo-700' },
-          { key: 'unavailable', value: unavailableCount, icon: ShieldX, tile: 'bg-slate-500/10 text-slate-600' },
+          { key: 'total', value: items.length, icon: Database, tile: 'bg-blue-500/10 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300' },
+          { key: 'active', value: activeCount, icon: CircleCheck, tile: 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300' },
+          { key: 'review', value: reviewCount, icon: Clock, tile: 'bg-amber-500/10 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300' },
+          { key: 'activation', value: activationCount, icon: Power, tile: 'bg-indigo-500/10 text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-300' },
+          { key: 'unavailable', value: unavailableCount, icon: ShieldX, tile: 'bg-slate-500/10 text-slate-600 dark:bg-slate-400/15 dark:text-slate-300' },
         ] as const).map((counter) => {
           const Icon = counter.icon;
           return (
@@ -264,7 +264,7 @@ export default function DatasetsPage() {
               <TableRow key={d._id}>
                 <TableCell>
                   <div className="flex items-center gap-2 font-medium">
-                    <FileSpreadsheet className="size-4 text-emerald-600" aria-hidden="true" />
+                    <FileSpreadsheet className="size-4 text-emerald-600 dark:text-emerald-300" aria-hidden="true" />
                     <span className="text-xs font-semibold text-primary tabular-nums">#{d.seq}</span>
                     <span className="max-w-60 truncate" title={d.fileName}>{d.fileName}</span>
                   </div>
@@ -304,7 +304,7 @@ export default function DatasetsPage() {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <FileSpreadsheet className="size-4 shrink-0 text-emerald-600" aria-hidden="true" />
+                  <FileSpreadsheet className="size-4 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden="true" />
                   <h2 className="truncate font-semibold" title={d.fileName}>{d.fileName}</h2>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -388,7 +388,7 @@ export default function DatasetsPage() {
           </CardContent>
         </Card>
       ) : null}
-      <p className="rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-xs leading-5 text-blue-950/75">{t('note')}</p>
+      <p className="rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-xs leading-5 text-blue-950/75 dark:border-blue-400/25 dark:bg-blue-400/10 dark:text-blue-100/85">{t('note')}</p>
     </div>
   );
 }

@@ -145,17 +145,17 @@ export default function AuditLogsPage() {
       />
       <div
         className={`flex flex-col gap-3 rounded-xl border p-4 text-sm sm:flex-row sm:items-center sm:justify-between ${
-          unmask ? 'border-amber-300 bg-amber-50/80 text-amber-950' : 'border-blue-200 bg-blue-50/65 text-blue-950'
+          unmask ? 'border-amber-300 bg-amber-50/80 text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100' : 'border-blue-200 bg-blue-50/65 text-blue-950 dark:border-blue-400/25 dark:bg-blue-400/10 dark:text-blue-100'
         }`}
         role="status"
       >
         <div className="flex items-start gap-3">
           {unmask
-            ? <ShieldAlert className="mt-0.5 size-5 shrink-0 text-amber-700" aria-hidden="true" />
-            : <ShieldCheck className="mt-0.5 size-5 shrink-0 text-blue-700" aria-hidden="true" />}
+            ? <ShieldAlert className="mt-0.5 size-5 shrink-0 text-amber-700 dark:text-amber-300" aria-hidden="true" />
+            : <ShieldCheck className="mt-0.5 size-5 shrink-0 text-blue-700 dark:text-blue-300" aria-hidden="true" />}
           <div>
             <p className="font-semibold">{unmask ? t('unmask.visibleTitle') : t('unmask.maskedTitle')}</p>
-            <p className={`mt-1 text-xs leading-5 ${unmask ? 'text-amber-900/80' : 'text-blue-900/75'}`}>
+            <p className={`mt-1 text-xs leading-5 ${unmask ? 'text-amber-900/80 dark:text-amber-100/80' : 'text-blue-900/75 dark:text-blue-100/75'}`}>
               {unmask ? t('unmask.visibleDescription') : t('unmask.maskedDescription')}
             </p>
           </div>
@@ -307,7 +307,7 @@ export default function AuditLogsPage() {
           </Button>
         </div>
       </div>
-      <p className="rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-xs leading-5 text-blue-950/75">{t('note')}</p>
+      <p className="rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-xs leading-5 text-blue-950/75 dark:border-blue-400/25 dark:bg-blue-400/10 dark:text-blue-100/85">{t('note')}</p>
 
       <Dialog open={confirmUnmask} onOpenChange={setConfirmUnmask}>
         <DialogContent>
@@ -315,7 +315,7 @@ export default function AuditLogsPage() {
             <DialogTitle>{t('unmask.confirmTitle')}</DialogTitle>
             <DialogDescription>{t('unmask.confirmDescription')}</DialogDescription>
           </DialogHeader>
-          <div className="rounded-xl border border-amber-300 bg-amber-50/75 p-3 text-xs leading-5 text-amber-950">
+          <div className="rounded-xl border border-amber-300 bg-amber-50/75 p-3 text-xs leading-5 text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
             {t('unmask.auditNotice')}
           </div>
           <DialogFooter>

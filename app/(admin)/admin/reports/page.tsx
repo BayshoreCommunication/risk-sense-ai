@@ -47,7 +47,7 @@ export default function StandardReportsPage() {
       <PageHeader title={t('title')} description={t('description')} requirements={['FR-26', 'FR-28']} />
       <ReportsWorkspace />
 
-      <div className="rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-xs leading-5 text-blue-950/75">{t('note')}</div>
+      <div className="rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-xs leading-5 text-blue-950/75 dark:border-blue-400/25 dark:bg-blue-400/10 dark:text-blue-100/85">{t('note')}</div>
     </div>
   );
 }

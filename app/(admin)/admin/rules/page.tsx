@@ -10,10 +10,10 @@ import { useWorkspace } from '@/components/shell/workspace-context';
 
 /** Icon and colour per forced classification, following docs/design/figma-frames/14-admin-rule-engine.png. */
 const CLASSIFICATION_TONE: Record<string, { icon: LucideIcon; tile: string; text: string }> = {
-  monitor_only: { icon: ShieldCheck, tile: 'bg-emerald-500/10 text-emerald-700', text: 'text-emerald-700' },
-  risk: { icon: AlertTriangle, tile: 'bg-amber-500/10 text-amber-700', text: 'text-amber-700' },
-  elevated_risk: { icon: ArrowUpCircle, tile: 'bg-orange-500/12 text-orange-700', text: 'text-orange-700' },
-  issue: { icon: Siren, tile: 'bg-red-500/10 text-red-700', text: 'text-red-700' },
+  monitor_only: { icon: ShieldCheck, tile: 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300', text: 'text-emerald-700 dark:text-emerald-300' },
+  risk: { icon: AlertTriangle, tile: 'bg-amber-500/10 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300', text: 'text-amber-700 dark:text-amber-300' },
+  elevated_risk: { icon: ArrowUpCircle, tile: 'bg-orange-500/12 text-orange-700 dark:bg-orange-400/15 dark:text-orange-300', text: 'text-orange-700 dark:text-orange-300' },
+  issue: { icon: Siren, tile: 'bg-red-500/10 text-red-700 dark:bg-red-400/15 dark:text-red-300', text: 'text-red-700 dark:text-red-300' },
 };
 
 function ruleFields(t: ReturnType<typeof useTranslations>, sectors: string[]): FieldSpec[] {
@@ -85,17 +85,17 @@ export default function RulesPage() {
           };
         }}
         footer={(
-          <aside className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50/55 px-4 py-3 text-blue-950" aria-label={t('lockoutExample.title')}>
-            <Info className="mt-0.5 size-4 shrink-0 text-blue-600" aria-hidden="true" />
+          <aside className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50/55 px-4 py-3 text-blue-950 dark:border-blue-400/25 dark:bg-blue-400/10 dark:text-blue-100" aria-label={t('lockoutExample.title')}>
+            <Info className="mt-0.5 size-4 shrink-0 text-blue-600 dark:text-blue-300" aria-hidden="true" />
             <div className="min-w-0 text-xs leading-5">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-semibold">{t('lockoutExample.title')}</span>
-                <Badge variant="outline" className="border-blue-300 bg-white/70 text-[0.62rem] text-blue-900">{t('lockoutExample.notActive')}</Badge>
-                <code className="rounded bg-white/75 px-1.5 py-0.5">{t('lockoutExample.condition')}</code>
+                <Badge variant="outline" className="border-blue-300 bg-white/70 text-[0.62rem] text-blue-900 dark:border-blue-400/30 dark:bg-background/65 dark:text-blue-200">{t('lockoutExample.notActive')}</Badge>
+                <code className="rounded bg-white/75 px-1.5 py-0.5 dark:bg-background/65">{t('lockoutExample.condition')}</code>
                 <span aria-hidden="true">→</span>
-                <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800" variant="outline">{classification('monitor_only')}</Badge>
+                <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-300" variant="outline">{classification('monitor_only')}</Badge>
               </div>
-              <p className="mt-0.5 text-blue-950/70">{t('lockoutExample.description')}</p>
+              <p className="mt-0.5 text-blue-950/70 dark:text-blue-100/75">{t('lockoutExample.description')}</p>
             </div>
           </aside>
         )}

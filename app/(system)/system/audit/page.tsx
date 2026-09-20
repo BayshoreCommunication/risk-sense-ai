@@ -185,7 +185,7 @@ export default function SystemAuditArchivePage() {
           <Card className="rounded-none border-0 shadow-none">
             <CardHeader>
               <CardDescription>{t('metrics.integrity')}</CardDescription>
-              <CardTitle className="flex items-center gap-2 text-base"><ShieldCheck className="size-5 text-emerald-600" aria-hidden="true" />{t('metrics.immutable')}</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-base"><ShieldCheck className="size-5 text-emerald-600 dark:text-emerald-300" aria-hidden="true" />{t('metrics.immutable')}</CardTitle>
             </CardHeader>
           </Card>
         </div>
@@ -223,11 +223,11 @@ export default function SystemAuditArchivePage() {
                 <Input id="audit-export-limit" type="number" min={1} max={10000} value={maxRecords} onChange={(event) => { setMaxRecords(Number(event.target.value)); setConfirm(false); }} />
               </div>
             </div>
-            <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-muted-foreground">
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-muted-foreground dark:bg-amber-400/10">
               <span className="font-medium text-foreground">{t('form.noticeTitle')}</span> {t('form.notice')}
             </div>
             {saved && (
-              <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm text-emerald-800" role="status">
+              <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm text-emerald-800 dark:bg-emerald-400/10 dark:text-emerald-300" role="status">
                 <FileCheck2 className="size-4" aria-hidden="true" />
                 {t('form.created', { count: saved.recordCount })}
               </div>

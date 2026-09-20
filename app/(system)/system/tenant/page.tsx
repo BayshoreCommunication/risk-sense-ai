@@ -85,9 +85,9 @@ export default function TenantSettingsPage() {
                 <Input id="domain" placeholder="acme.com" value={merged.sso.domain ?? ''} onChange={(e) => setDraft((d) => ({ ...d, sso: { providerId: (d.sso?.providerId ?? merged.sso.providerId) || null, domain: e.target.value || null } }))} />
               </div>
             </div>
-            <div className={`rounded-xl border p-3 text-sm ${merged.plan === 'paid' ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-blue-500/30 bg-blue-500/5'}`}>
+            <div className={`rounded-xl border p-3 text-sm ${merged.plan === 'paid' ? 'border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-400/10' : 'border-blue-500/30 bg-blue-500/5 dark:bg-blue-400/10'}`}>
               <div className="flex items-start gap-2">
-                <BadgeCheck className={`mt-0.5 size-4 shrink-0 ${merged.plan === 'paid' ? 'text-emerald-700' : 'text-blue-700'}`} aria-hidden="true" />
+                <BadgeCheck className={`mt-0.5 size-4 shrink-0 ${merged.plan === 'paid' ? 'text-emerald-700 dark:text-emerald-300' : 'text-blue-700 dark:text-blue-300'}`} aria-hidden="true" />
                 <div><p className="font-medium">{merged.plan === 'paid' ? t('mfaPolicy.paidTitle') : t('mfaPolicy.freeTitle')}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{merged.plan === 'paid' ? t('mfaPolicy.paidDescription') : t('mfaPolicy.freeDescription')}</p></div>
               </div>
             </div>
