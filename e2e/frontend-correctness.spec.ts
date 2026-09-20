@@ -351,7 +351,7 @@ test('mandatory review queue remains scroll-contained and its table region is na
       status: 'awaiting_decision',
       phase: 'result',
       personaKey: 'finance_officer',
-      scenarioKey: 'wire_transfer',
+      scenarioKey: 'fin_unauthorized_transaction',
       requestorId: `requestor-${index}`,
       requestor: { name: `Requestor ${index}`, email: `requestor-${index}@example.test` },
       department: { id: 'department-1', name: 'Finance' },
@@ -380,9 +380,10 @@ test('mandatory review queue remains scroll-contained and its table region is na
   await expect(page.getByRole('region', { name: 'Mandatory review queue' })).toBeVisible();
   const firstReviewRow = page.getByRole('row').filter({ hasText: 'Requestor 0' });
   await expect(firstReviewRow).toContainText('Finance Officer');
-  await expect(firstReviewRow).toContainText('Wire Transfer');
+  await expect(firstReviewRow).toContainText('Financial Unauthorized Transaction');
   await expect(firstReviewRow).not.toContainText('finance_officer');
-  await expect(firstReviewRow).not.toContainText('wire_transfer');
+  await expect(firstReviewRow).not.toContainText('fin_unauthorized_transaction');
+  await expect(firstReviewRow).not.toContainText('Fin Unauthorized Transaction');
 });
 
 test('named escalatee keeps requestor and department context without broad review scope [FR-21, FR-22, DASH-01]', async ({ page }) => {
@@ -665,6 +666,7 @@ test('system navigation exposes every implemented operational workspace [DASH-04
 
 test('assessment rows retain the scoped recommendation, explanation and recorded decision [DASH-01, FR-21]', async ({ page }) => {
   await authenticate(page, 'requestor');
+  let requestedScenarioKey: string | null = null;
   await mockApi(page, () => currentUser('requestor'), async ({ route, path, method }) => {
     if (path === '/personas' && method === 'GET') {
       await ok(route, [{ key: 'finance_officer', name: 'Finance Officer' }]);
@@ -675,13 +677,14 @@ test('assessment rows retain the scoped recommendation, explanation and recorded
       return true;
     }
     if (path === '/assessments' && method === 'GET') {
+      requestedScenarioKey = new URL(route.request().url()).searchParams.get('scenarioKey');
       await ok(route, {
         items: [{
           _id: '64b000000000000000000099',
           status: 'closed',
           phase: 'done',
           personaKey: 'finance_officer',
-          scenarioKey: 'unauthorized_wire',
+          scenarioKey: 'fin_unauthorized_transaction',
           requestorId: 'user-1',
           createdAt: '2026-09-15T08:00:00.000Z',
           timing: { startedAt: '2026-09-15T08:00:00.000Z', closedAt: '2026-09-15T08:10:00.000Z' },
@@ -710,11 +713,16 @@ test('assessment rows retain the scoped recommendation, explanation and recorded
     return false;
   });
 
-  await page.goto('/review');
-  const row = page.getByRole('row').filter({ hasText: 'unauthorized wire' });
+  await page.goto('/review?scenarioKey=fin_unauthorized_transaction');
+  await expect(page.getByLabel('Scenario', { exact: true })).toHaveValue('Financial Unauthorized Transaction');
+  await expect(page.locator('#review-scenario-options option')).toHaveAttribute('value', 'Financial Unauthorized Transaction');
+  expect(requestedScenarioKey).toBe('fin_unauthorized_transaction');
+  const row = page.getByRole('row').filter({ hasText: 'Financial Unauthorized Transaction' });
   await expect(row).toContainText('Manage the payment risk');
   await expect(row).toContainText('The approval evidence is incomplete and requires owner follow-up.');
   await expect(row).toContainText('accept');
+  await expect(row).not.toContainText('Fin Unauthorized Transaction');
+  await expect(row).not.toContainText('fin_unauthorized_transaction');
 });
 
 test('audit payloads require confirmed unmask and reset immediately to the masked default [SEC-05, SEC-07]', async ({ page }) => {
@@ -892,6 +900,9 @@ test('mobile audit cards retain hash and human-decision evidence [FR-22, FR-26, 
   await page.goto('/audit/assessments');
   await expect(page.getByText('Decision', { exact: true }).first()).toBeVisible();
   await expect(page.getByText('accept', { exact: true }).first()).toBeVisible();
+  await expect(page.locator('article').filter({ hasText: 'Finance reviewer' })).toContainText('Financial Suspected Fraud');
+  await expect(page.getByText('Fin Suspected Fraud', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('fin_suspected_fraud', { exact: true })).toHaveCount(0);
 });
 
 test('desktop sidebar collapse persists while mobile navigation stays labelled and focus-contained [DASH-04, NFR-07, NFR-08]', async ({ page }) => {
@@ -991,6 +1002,20 @@ test('a long chat transcript stays viewport-contained with one transcript scroll
     createdAt: '2026-09-14T00:00:00.000Z',
   }));
   longMessages.push({
+    _id: 'message-seeded-scenario',
+    role: 'assistant',
+    kind: 'info',
+    content: 'Scenario: fin unauthorized transaction',
+    createdAt: '2026-09-14T00:00:00.000Z',
+  } as (typeof longMessages)[number]);
+  longMessages.push({
+    _id: 'message-evidence-file',
+    role: 'assistant',
+    kind: 'info',
+    content: 'Evidence file: invoice_2024.pdf',
+    createdAt: '2026-09-14T00:00:00.000Z',
+  } as (typeof longMessages)[number]);
+  longMessages.push({
     _id: 'message-long-token',
     role: 'user',
     kind: 'answer',
@@ -1031,7 +1056,10 @@ test('a long chat transcript stays viewport-contained with one transcript scroll
   await page.goto('/chat/assessment-1');
   const composer = page.getByTestId('composer');
   await expect(composer).toBeVisible();
-  await expect(page.getByText('Fin Unauthorized Transaction', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Financial Unauthorized Transaction', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Scenario: Financial Unauthorized Transaction', { exact: true })).toHaveCount(1);
+  await expect(page.getByText('Evidence file: invoice_2024.pdf', { exact: true })).toHaveCount(1);
+  await expect(page.getByText('Fin Unauthorized Transaction', { exact: true })).toHaveCount(0);
   await expect(page.getByText(scenarioKey, { exact: true })).toHaveCount(0);
   const metrics = await page.evaluate(() => {
     const main = document.querySelector<HTMLElement>('#main-content');

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { assessments, type Assessment, type Message } from '@/lib/assessments';
 import { toApiError } from '@/lib/api/client';
+import { formatIdentifierLabel, formatIdentifierTokensInText, formatSystemDisplayText } from '@/lib/format-identifier-label';
 
 
 /**
@@ -79,7 +80,7 @@ export function AssessmentDetail({ id }: { id: string }) {
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline" className="bg-background">{status.has(a.status) ? status(a.status) : a.status}</Badge>
           <span className="text-muted-foreground">
-            {a.personaKey?.replace(/_/g, ' ') ?? '—'} · {a.scenarioKey?.replace(/_/g, ' ') ?? '—'}
+            {a.personaKey ? formatIdentifierLabel(a.personaKey) : '—'} · {a.scenarioKey ? formatIdentifierLabel(a.scenarioKey) : '—'}
           </span>
         </div>
         <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
@@ -122,7 +123,7 @@ export function AssessmentDetail({ id }: { id: string }) {
                 <div className="flex flex-wrap gap-1.5">
                   {r.keyDrivers.map((driver) => (
                     <Badge key={driver} variant="outline" className="h-auto whitespace-normal py-1 text-left font-normal">
-                      {driver}
+                      {formatIdentifierTokensInText(driver)}
                     </Badge>
                   ))}
                 </div>
@@ -153,7 +154,7 @@ export function AssessmentDetail({ id }: { id: string }) {
                   <div className="mt-3 space-y-2">
                     {Object.entries(r.factors).map(([key, factor]) => (
                       <div key={key} className="grid grid-cols-[1fr_auto] gap-3 rounded-lg bg-muted/30 px-3 py-2 text-xs">
-                        <span className="capitalize">{key.replace(/_/g, ' ')}</span>
+                        <span>{formatIdentifierLabel(key)}</span>
                         <span className="tabular-nums text-muted-foreground">{resultCard('factors.points', { value: factor.contribution })}</span>
                       </div>
                     ))}
@@ -179,7 +180,7 @@ export function AssessmentDetail({ id }: { id: string }) {
           <tbody>
             {a.facts.map((f) => (
               <tr key={f.key} className="border-b last:border-0">
-                <td className="py-3 pr-3 font-mono text-[11px] text-muted-foreground">{f.key}</td>
+                <td className="py-3 pr-3 text-xs font-medium text-muted-foreground">{formatIdentifierLabel(f.key)}</td>
                 <td className="max-w-sm whitespace-normal py-3 pr-3 font-medium">{String(f.value)}</td>
                 <td className="py-3 pr-3 capitalize text-muted-foreground">{f.source}</td>
                 <td className="py-3 text-right tabular-nums text-muted-foreground">{f.flagged ? <Badge variant="destructive">{Math.round(f.confidence * 100)}%</Badge> : `${Math.round(f.confidence * 100)}%`}</td>
@@ -217,7 +218,7 @@ export function AssessmentDetail({ id }: { id: string }) {
           {messages.map((m) => (
             <li key={m._id} className="grid gap-1 border-b py-3 last:border-0 sm:grid-cols-[8rem_1fr]">
               <span className="font-medium capitalize text-foreground">{m.role} · {m.kind}</span>
-              <span className="whitespace-pre-wrap leading-5">{m.content}</span>
+              <span className="whitespace-pre-wrap leading-5">{m.role === 'assistant' ? formatSystemDisplayText(m.content) : m.content}</span>
             </li>
           ))}
         </ol>

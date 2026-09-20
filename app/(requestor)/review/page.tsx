@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { api, toApiError } from '@/lib/api/client';
 import { assessments, type AssessmentCounts, type AssessmentListItem, type AssessmentListQuery, type Department } from '@/lib/assessments';
+import { formatIdentifierLabel } from '@/lib/format-identifier-label';
 
 const PENDING = new Set(['awaiting_decision', 'escalated', 'error_review']);
 const TAB_KEYS: (keyof AssessmentCounts)[] = ['all', 'pending', 'awaiting_decision', 'escalated', 'error_review', 'in_progress', 'closed'];
@@ -144,7 +145,7 @@ function ReviewDashboard() {
   const [personas, setPersonas] = useState<{ key: string; name: string }[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [reviewAccess, setReviewAccess] = useState<{ viewerId: string; broad: boolean } | null>(null);
-  const [scenarioDraft, setScenarioDraft] = useState(filters.scenarioKey);
+  const [scenarioDraft, setScenarioDraft] = useState(() => filters.scenarioKey ? formatIdentifierLabel(filters.scenarioKey) : '');
   const [requestVersion, setRequestVersion] = useState(0);
   const [dashboardOpenedAt] = useState(() => Date.now());
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -184,7 +185,7 @@ function ReviewDashboard() {
     };
   }, [filters, requestVersion]);
 
-  useEffect(() => setScenarioDraft(filters.scenarioKey), [filters.scenarioKey]);
+  useEffect(() => setScenarioDraft(filters.scenarioKey ? formatIdentifierLabel(filters.scenarioKey) : ''), [filters.scenarioKey]);
 
   /** Writes the next filter state to the URL; any change other than the page itself resets to page 1. */
   const update = useCallback(
@@ -218,7 +219,15 @@ function ReviewDashboard() {
     { value: 'true', label: t('filters.reviewRequired') },
     { value: 'false', label: t('filters.reviewNotRequired') },
   ];
-  const scenarioSuggestions = useMemo(() => Array.from(new Set(items.map((item) => item.scenarioKey).filter((key): key is string => Boolean(key)))).sort(), [items]);
+  const scenarioSuggestions = useMemo(
+    () => Array.from(new Set([
+      filters.scenarioKey,
+      ...items.map((item) => item.scenarioKey),
+    ].filter((key): key is string => Boolean(key))))
+      .sort()
+      .map((key) => ({ key, label: formatIdentifierLabel(key) })),
+    [filters.scenarioKey, items],
+  );
   // A named escalatee can review a foreign assessment without department or cross-department scope.
   // Preserve requestor/department context whenever the backend-authorized page includes such a row.
   const reviewer = Boolean(
@@ -226,7 +235,7 @@ function ReviewDashboard() {
       (reviewAccess && items.some((item) => Boolean(item.requestorId) && item.requestorId !== reviewAccess.viewerId)),
   );
   const hasFilters = Boolean(filters.classification || filters.personaKey || filters.scenarioKey || filters.departmentId || filters.mandatoryReview || filters.from || filters.to);
-  const personaName = (key?: string) => personas.find((p) => p.key === key)?.name ?? key?.replace(/_/g, ' ') ?? '—';
+  const personaName = (key?: string) => personas.find((p) => p.key === key)?.name ?? (key ? formatIdentifierLabel(key) : '—');
   const first = total === 0 ? 0 : (filters.page - 1) * filters.limit + 1;
   const last = Math.min(total, filters.page * filters.limit);
   const columnCount = reviewer ? 9 : 7;
@@ -246,8 +255,12 @@ function ReviewDashboard() {
   ];
 
   const commitScenario = () => {
-    const scenarioKey = normalizeScenarioKey(scenarioDraft);
-    setScenarioDraft(scenarioKey);
+    const normalizedDraft = normalizeScenarioKey(scenarioDraft);
+    const matchedSuggestion = scenarioSuggestions.find(({ key, label }) =>
+      key === normalizedDraft || normalizeScenarioKey(label) === normalizedDraft,
+    );
+    const scenarioKey = matchedSuggestion?.key ?? normalizedDraft.replace(/^financial(?=_|$)/, 'fin');
+    setScenarioDraft(scenarioKey ? formatIdentifierLabel(scenarioKey) : '');
     if (scenarioKey !== filters.scenarioKey) update({ scenarioKey });
   };
 
@@ -370,7 +383,7 @@ function ReviewDashboard() {
                 />
                 <datalist id="review-scenario-options">
                   {scenarioSuggestions.map((scenario) => (
-                    <option key={scenario} value={scenario} />
+                    <option key={scenario.key} value={scenario.label} />
                   ))}
                 </datalist>
               </div>
@@ -562,7 +575,7 @@ function ReviewDashboard() {
                 )}
                 {reviewer && <TableCell className="whitespace-nowrap">{a.department?.name ?? '—'}</TableCell>}
                 <TableCell className="whitespace-normal">
-                  <div className="font-medium capitalize">{a.scenarioKey?.replace(/_/g, ' ') ?? '—'}</div>
+                  <div className="font-medium">{a.scenarioKey ? formatIdentifierLabel(a.scenarioKey) : '—'}</div>
                   <div className="mt-0.5 max-w-52 truncate text-xs text-muted-foreground">
                     {personaName(a.personaKey)} · {new Date(a.createdAt).toLocaleDateString(locale)} · {a._id.slice(-6).toUpperCase()}
                   </div>

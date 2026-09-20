@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { auditApi, type Reconstruction } from '@/lib/audit';
 import { toApiError } from '@/lib/api/client';
+import { formatIdentifierLabel, formatIdentifierTokensInText } from '@/lib/format-identifier-label';
 
 /**
  * FR-26: what the audit log alone says happened to an assessment — timeline, rebuilt state, per-entry hash
@@ -126,7 +127,7 @@ export function ReconstructionView({ id }: { id: string }) {
         <div className="grid gap-px bg-border sm:grid-cols-2">
           <div className="bg-card p-4">
             <div className="text-xs text-muted-foreground">{t('state.personaScenario')}</div>
-            <div className="mt-1 font-medium capitalize">{s.personaKey?.replace(/_/g, ' ') ?? '—'} / {s.scenarioKey?.replace(/_/g, ' ') ?? '—'}</div>
+            <div className="mt-1 font-medium">{s.personaKey ? formatIdentifierLabel(s.personaKey) : '—'} / {s.scenarioKey ? formatIdentifierLabel(s.scenarioKey) : '—'}</div>
           </div>
           <div className="bg-card p-4">
             <div className="text-xs text-muted-foreground">{t('state.status')}</div>
@@ -166,7 +167,7 @@ export function ReconstructionView({ id }: { id: string }) {
               <tbody>
                 {Object.entries(s.facts).map(([key, value]) => (
                   <tr key={key} className="border-b last:border-0">
-                    <td className="py-3 pr-4 font-mono text-[11px] text-muted-foreground">{key}</td>
+                    <td className="py-3 pr-4 text-xs font-medium text-muted-foreground">{formatIdentifierLabel(key)}</td>
                     <td className="max-w-xl whitespace-normal py-3 font-medium">{String(value)}</td>
                   </tr>
                 ))}
@@ -187,7 +188,7 @@ export function ReconstructionView({ id }: { id: string }) {
               {index < r.timeline.length - 1 && <span aria-hidden="true" className="absolute bottom-0 left-[10px] top-6 w-px bg-border" />}
               <span className="font-mono text-muted-foreground">#{entry.seq} · {entry.at ? new Date(entry.at).toLocaleString(locale) : '—'}</span>
               <span className="capitalize text-muted-foreground">{entry.actor.role ?? 'system'}</span>
-              <span className="leading-5 text-foreground">{entry.summary}</span>
+              <span className="leading-5 text-foreground">{formatIdentifierTokensInText(entry.summary)}</span>
             </li>
           ))}
         </ol>

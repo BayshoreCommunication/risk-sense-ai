@@ -33,6 +33,8 @@ The shared shell, role navigation, page hierarchy, controls, cards, tables, char
 - Preserved requestor and department context for named escalatees even when broad review-dashboard access is disabled.
 - Reused the standard page shell for the administrator review queue and supplied accessible names for every focusable table region.
 - Replaced hardcoded administrator sector choices with the authenticated tenant vocabulary, retaining the starter list only as a backend default.
+- Added a shared full-form identifier presentation rule so `fin_*` records display as `Financial …` across Requestor, Administrator, Audit, report and reconstruction views while their stored keys remain unchanged.
+- Refined the assessment workspace with one restrained navy/blue surface, shadow and composer hierarchy while retaining AI Elements semantics, viewport containment and the governed JSON assessment flow.
 
 ## Automated evidence
 

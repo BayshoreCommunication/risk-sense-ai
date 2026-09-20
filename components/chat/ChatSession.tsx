@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { assessments, pendingQuestion, type Assessment, type Message, type QuestionSnapshot, type Turn } from '@/lib/assessments';
 import { toApiError } from '@/lib/api/client';
+import { formatIdentifierLabel, formatSystemDisplayText } from '@/lib/format-identifier-label';
 import { ResultCard } from './ResultCard';
 
 type PersonaOption = { key: string; name: string; description?: string };
@@ -24,13 +25,6 @@ type RunOutcome =
   | { status: 'failure' };
 
 const WORKFLOW_STAGES: StageKey[] = ['persona', 'describe', 'questions', 'review', 'decision'];
-
-function humanizeKey(key: string) {
-  return key
-    .split('_')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
-}
 
 function activeStage(a: Assessment | null) {
   if (!a) return -1;
@@ -176,7 +170,7 @@ export function ChatSession({ id }: { id: string }) {
             _id: `local-persona-${createdAt}`,
             role: 'user',
             kind: 'answer',
-            content: humanizeKey(personaKey),
+            content: formatIdentifierLabel(personaKey),
             createdAt,
           },
           {
@@ -196,7 +190,7 @@ export function ChatSession({ id }: { id: string }) {
   const candidateOptions: PersonaOption[] =
     question?.key === '__persona' && question.options?.length
       ? question.options.map((option) => ({ key: option.id, name: option.label }))
-      : (a?.personaCandidates ?? []).map((key) => ({ key, name: humanizeKey(key) }));
+      : (a?.personaCandidates ?? []).map((key) => ({ key, name: formatIdentifierLabel(key) }));
   const currentStageIndex = activeStage(a);
   const currentStageKey = currentStageIndex >= 0 ? WORKFLOW_STAGES[currentStageIndex] : undefined;
   const showComposer = Boolean(error || a?.status === 'in_progress' || a?.status === 'intake_complete' || a?.status === 'closed');
@@ -224,10 +218,10 @@ export function ChatSession({ id }: { id: string }) {
         </div>
       </div>
 
-      <section aria-label={t('workspaceLabel')} className="fills overflow-hidden rounded-[1.35rem] border bg-card shadow-[0_16px_48px_rgba(15,35,65,0.08)]">
-        <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b bg-[#fbfcff] px-4 py-3 sm:px-5">
+      <section aria-label={t('workspaceLabel')} className="fills overflow-hidden rounded-[1.35rem] border border-[#dbe3ef] bg-card shadow-[0_20px_60px_rgba(8,32,68,0.11)] ring-1 ring-[#082044]/[0.035]">
+        <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#dfe7f2] bg-[linear-gradient(135deg,#ffffff_0%,#f8fbff_62%,#edf4ff_100%)] px-4 py-3 sm:px-5">
           <div className="flex items-center gap-3">
-            <span className="relative flex size-9 items-center justify-center rounded-xl bg-primary text-white shadow-[0_6px_16px_rgba(40,100,239,0.22)]">
+            <span className="relative flex size-10 items-center justify-center rounded-[0.9rem] bg-[linear-gradient(145deg,#082451_0%,#216ce7_100%)] text-white shadow-[0_8px_22px_rgba(18,71,150,0.3)] ring-1 ring-white/70">
               <Bot className="size-4" aria-hidden="true" />
               <Sparkles className="absolute -right-1 -top-1 size-3 rounded-full bg-white p-0.5 text-primary shadow-sm" aria-hidden="true" />
             </span>
@@ -238,10 +232,13 @@ export function ChatSession({ id }: { id: string }) {
           </div>
           <div className="flex min-w-0 items-center gap-2">
             {a?.scenarioKey && (
-              <div className="hidden max-w-72 min-w-0 items-center gap-2 rounded-xl border border-primary/15 bg-primary/[0.04] px-3 py-2 sm:flex">
-                <span className="min-w-0">
-                  <span className="block text-[0.6rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">{t('selectedScenario')}</span>
-                  <span className="mt-0.5 block truncate text-xs font-semibold">{humanizeKey(a.scenarioKey)}</span>
+              <div className="hidden w-[23rem] max-w-full shrink-0 items-center gap-2.5 rounded-xl border border-[#cfe0f6] bg-white/85 px-2.5 py-2 shadow-[0_4px_14px_rgba(22,66,126,0.07)] sm:flex">
+                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#eaf2ff] text-[#155bd7]">
+                  <FileCheck2 className="size-3.5" aria-hidden="true" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[0.67rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">{t('selectedScenario')}</span>
+                  <span className="mt-0.5 block text-xs font-semibold leading-4">{formatIdentifierLabel(a.scenarioKey)}</span>
                 </span>
                 <Badge variant="outline" className="h-5 shrink-0 px-1.5 text-[0.6rem]">
                   {a.scenarioSource === 'ai' ? t('scenarioSources.ai') : t('scenarioSources.default')}
@@ -263,7 +260,7 @@ export function ChatSession({ id }: { id: string }) {
 
         <div className="grid min-h-0 flex-1 min-[1360px]:grid-cols-[minmax(0,1fr)_18rem]">
           <div className="flex min-h-0 min-w-0 flex-col">
-            <Conversation className="min-h-0 flex-1 bg-background" data-testid="conversation-log">
+            <Conversation className="min-h-0 flex-1 bg-[radial-gradient(circle_at_50%_0%,rgba(42,105,225,0.055),transparent_19rem),linear-gradient(180deg,#ffffff_0%,#fbfcff_100%)]" data-testid="conversation-log">
               <ConversationContent className="mx-auto w-full max-w-[52rem] gap-4 px-4 py-4 sm:px-6 sm:py-5">
                 {!a && messages.length === 0 && (
                   <div className="flex min-h-72 flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground" role="status">
@@ -285,29 +282,30 @@ export function ChatSession({ id }: { id: string }) {
 
                   const assistant = message.role === 'assistant';
                   const clarification = message.kind === 'clarification';
+                  const displayContent = assistant ? formatSystemDisplayText(message.content) : message.content;
                   return (
                     <AIMessage key={message._id} from={message.role} className={assistant ? 'mx-auto max-w-[48rem]' : 'max-w-[82%] sm:max-w-[70%]'}>
                       {assistant ? (
                         <div className="grid grid-cols-[1.75rem_minmax(0,1fr)] items-start gap-2.5">
                           <span
-                            className={`flex size-7 items-center justify-center rounded-lg border ${
-                              clarification ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-primary/15 bg-primary/[0.06] text-primary'
+                            className={`flex size-7 items-center justify-center rounded-lg border shadow-[0_3px_10px_rgba(8,43,94,0.08)] ${
+                              clarification ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-[#bcd2f3] bg-[linear-gradient(145deg,#f7fbff,#e8f1ff)] text-[#155bd7]'
                             }`}
                           >
                             {clarification ? <Flag className="size-3" aria-hidden="true" /> : <Bot className="size-3" aria-hidden="true" />}
                           </span>
                           <div className="min-w-0">
-                            <span className={`mb-1 block text-[0.62rem] font-semibold tracking-[0.12em] uppercase ${clarification ? 'text-amber-700' : 'text-muted-foreground'}`}>
+                            <span className={`mb-1 block text-[0.68rem] font-semibold tracking-[0.12em] uppercase ${clarification ? 'text-amber-700' : 'text-muted-foreground'}`}>
                               {clarification ? t('messageKinds.clarification') : t('assistantName')}
                             </span>
                             <MessageContent className={`w-full py-0.5 ${clarification ? 'rounded-r-xl border-l-2 border-amber-300 bg-amber-50/50 py-2 pl-3 pr-2' : ''}`}>
-                              <MessageResponse className="text-sm leading-[1.55]">{message.content}</MessageResponse>
+                              <MessageResponse className="text-sm leading-[1.6]">{displayContent}</MessageResponse>
                             </MessageContent>
                           </div>
                         </div>
                       ) : (
                         <MessageContent className="[overflow-wrap:anywhere]">
-                          <p className="whitespace-pre-wrap break-words leading-[1.5]">{message.content}</p>
+                          <p className="whitespace-pre-wrap break-words leading-[1.5]">{displayContent}</p>
                         </MessageContent>
                       )}
                     </AIMessage>
@@ -325,11 +323,11 @@ export function ChatSession({ id }: { id: string }) {
                 {busy && busyAction !== 'decision' && (
                   <AIMessage from="assistant" className="mx-auto max-w-[48rem]" data-testid="assistant-processing">
                     <div className="grid grid-cols-[1.75rem_minmax(0,1fr)] items-start gap-2.5">
-                      <span className="flex size-7 items-center justify-center rounded-lg border border-primary/15 bg-primary/[0.06] text-primary">
+                      <span className="flex size-7 items-center justify-center rounded-lg border border-[#bcd2f3] bg-[linear-gradient(145deg,#f7fbff,#e8f1ff)] text-[#155bd7] shadow-[0_3px_10px_rgba(8,43,94,0.08)]">
                         <LoaderCircle className="size-3 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                       </span>
                       <div className="min-w-0 pt-0.5">
-                        <span className="block text-[0.62rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('assistantName')}</span>
+                        <span className="block text-[0.68rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('assistantName')}</span>
                         <p className="mt-1 text-sm text-muted-foreground">{busyMessage}</p>
                       </div>
                     </div>
@@ -350,7 +348,7 @@ export function ChatSession({ id }: { id: string }) {
 
             {showComposer && (
               <div
-                className="scrollbar-subtle max-h-[min(40dvh,22rem)] shrink-0 overflow-y-auto border-t bg-[#fbfcff] px-3 py-3 sm:px-5"
+                className="scrollbar-subtle max-h-[min(40dvh,22rem)] shrink-0 overflow-y-auto border-t border-[#dfe7f2] bg-[linear-gradient(180deg,#f5f8fd_0%,#fbfcff_55%)] px-3 py-3 shadow-[0_-10px_30px_rgba(8,32,68,0.045)] sm:px-5"
                 data-testid="composer"
                 aria-busy={busy}
                 data-busy={busy ? 'true' : 'false'}
@@ -375,7 +373,7 @@ export function ChatSession({ id }: { id: string }) {
               {a?.status === 'in_progress' && a.phase === 'describe' && a.personaKey && (
                 <div className="mx-auto mb-3 flex max-w-[52rem] flex-wrap items-center justify-between gap-3 border-b pb-3">
                   <div>
-                    <p className="text-sm font-semibold">{t('persona.current', { role: humanizeKey(a.personaKey) })}</p>
+                    <p className="text-sm font-semibold">{t('persona.current', { role: formatIdentifierLabel(a.personaKey) })}</p>
                     <p className="text-xs text-muted-foreground">{t('persona.changeHint')}</p>
                   </div>
                   <Button type="button" size="sm" variant="outline" disabled={busy || personasLoading} onClick={() => void openPersonaPicker()}>
@@ -425,7 +423,7 @@ export function ChatSession({ id }: { id: string }) {
             )}
           </div>
 
-          <aside className="scrollbar-subtle hidden min-h-0 overflow-y-auto border-l bg-[#f7f9fd] min-[1360px]:block" aria-label={t('contextPanel')}>
+          <aside className="scrollbar-subtle hidden min-h-0 overflow-y-auto border-l border-[#dfe7f2] bg-[linear-gradient(180deg,#f5f8fd_0%,#f9fbfe_100%)] min-[1360px]:block" aria-label={t('contextPanel')}>
             <AssessmentContext a={a} currentStageIndex={currentStageIndex} />
           </aside>
         </div>
@@ -473,14 +471,14 @@ function AssessmentContext({ a, currentStageIndex }: { a: Assessment | null; cur
             {a.personaKey && (
               <div>
                 <dt className="text-[0.68rem] text-muted-foreground">{t('role')}</dt>
-                <dd className="mt-0.5 font-medium">{humanizeKey(a.personaKey)}</dd>
+                <dd className="mt-0.5 font-medium">{formatIdentifierLabel(a.personaKey)}</dd>
                 {a.personaSource === 'ai' && <dd className="mt-0.5 text-[0.68rem] text-primary">{t('aiSuggestedRole')}</dd>}
               </div>
             )}
             {a.scenarioKey && (
               <div>
                 <dt className="text-[0.68rem] text-muted-foreground">{t('scenario')}</dt>
-                <dd className="mt-0.5 font-medium">{humanizeKey(a.scenarioKey)}</dd>
+                <dd className="mt-0.5 font-medium">{formatIdentifierLabel(a.scenarioKey)}</dd>
               </div>
             )}
           </dl>
@@ -504,7 +502,7 @@ function AssessmentContext({ a, currentStageIndex }: { a: Assessment | null; cur
                     {fact.flagged ? <Flag className="size-3" aria-hidden="true" /> : <Check className="size-3" aria-hidden="true" />}
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate text-xs font-medium">{humanizeKey(fact.key)}</p>
+                    <p className="truncate text-xs font-medium">{formatIdentifierLabel(fact.key)}</p>
                     <p className="mt-0.5 line-clamp-2 break-words text-[0.7rem] leading-4 text-muted-foreground">{factValue(fact.value)}</p>
                     <p className="mt-0.5 text-[0.62rem] tabular-nums text-muted-foreground">{Math.round(fact.confidence * 100)}% {t('factConfidence')}</p>
                   </div>
@@ -549,7 +547,7 @@ function PersonaChooser({
           variant={option.key === suggestedKey ? 'default' : 'outline'}
           disabled={busy}
           title={option.description}
-          className="min-h-14 w-full items-center justify-between rounded-xl px-4"
+          className="min-h-14 w-full items-center justify-between rounded-xl border-[#d8e3f1] bg-white px-4 shadow-[0_2px_8px_rgba(8,35,76,0.045)] transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-primary/35 hover:shadow-[0_7px_18px_rgba(8,45,101,0.09)] motion-reduce:hover:translate-y-0"
           onClick={onChoose}
         >
           <span>
@@ -603,7 +601,7 @@ function AnswerBox({
               suggestion={option.id}
               variant="outline"
               disabled={busy}
-              className="group/choice min-h-10 w-full items-center gap-2.5 rounded-xl border bg-background px-3 py-2 text-left hover:border-primary/35 hover:bg-primary/[0.04]"
+              className="group/choice min-h-10 w-full items-center gap-2.5 rounded-xl border border-[#d8e3f1] bg-white px-3 py-2 text-left shadow-[0_2px_8px_rgba(8,35,76,0.04)] transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-primary/35 hover:bg-primary/[0.035] hover:shadow-[0_7px_16px_rgba(8,45,101,0.08)] motion-reduce:hover:translate-y-0"
               onClick={() => void onAnswer({ value: option.id }, option.label)}
             >
               <span aria-hidden="true" className="grid size-6 shrink-0 place-items-center rounded-md border border-primary/15 bg-primary/[0.055] text-[0.65rem] font-bold text-primary transition group-hover/choice:border-primary/30 group-hover/choice:bg-primary group-hover/choice:text-white">
@@ -704,7 +702,7 @@ function AnswerBox({
       <p className="sr-only">{t('responseLabel')}</p>
       <label className="sr-only" htmlFor={inputId}>{q.text ?? t('textLabel')}</label>
       {/* One composer surface: the field and its send share a frame and a focus ring. */}
-      <div className="rounded-2xl border bg-card shadow-[0_4px_16px_rgba(15,35,65,0.06)] transition focus-within:border-primary/40 focus-within:ring-4 focus-within:ring-primary/8">
+      <div className="rounded-[1.2rem] border border-[#cfdaea] bg-white shadow-[0_10px_28px_rgba(8,35,76,0.1),0_1px_2px_rgba(8,35,76,0.04)] transition-[border-color,box-shadow] focus-within:border-primary/45 focus-within:shadow-[0_13px_34px_rgba(24,83,170,0.14),0_0_0_4px_rgba(40,100,239,0.08)]">
         <Textarea
           id={inputId}
           rows={2}
@@ -712,7 +710,7 @@ function AnswerBox({
           placeholder={t('textPlaceholder')}
           value={text}
           onChange={(event) => setText(event.target.value)}
-          className="min-h-12 max-h-24 resize-none border-0 bg-transparent px-4 py-2.5 text-sm leading-5 shadow-none focus-visible:ring-0"
+          className="min-h-12 max-h-28 resize-none border-0 bg-transparent px-4 py-3 text-sm leading-5 shadow-none focus-visible:ring-0"
           onKeyDown={(event) => {
             if (event.key === 'Enter' && !event.shiftKey && !busy && !event.nativeEvent.isComposing) {
               event.preventDefault();
@@ -720,11 +718,11 @@ function AnswerBox({
             }
           }}
         />
-        <div className="flex items-center justify-between gap-3 px-3 pb-2 pt-1">
+        <div className="flex items-center justify-between gap-3 px-3 pb-2.5 pt-1">
           <span className="text-[0.7rem] text-muted-foreground">{t('enterHint')}</span>
-          <Button size="sm" disabled={busy || !text.trim()} onClick={submitText}>
+          <Button size="icon" className="size-9 rounded-full bg-[linear-gradient(145deg,#0a2c5d,#216ce7)] shadow-[0_6px_16px_rgba(24,83,170,0.24)] transition-transform hover:scale-[1.03] motion-reduce:hover:scale-100" disabled={busy || !text.trim()} onClick={submitText} aria-label={t('send')}>
             <Send className="size-4" aria-hidden="true" />
-            {t('send')}
+            <span className="sr-only">{t('send')}</span>
           </Button>
         </div>
       </div>

@@ -21,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toApiError } from '@/lib/api/client';
 import { assessments, type Department } from '@/lib/assessments';
+import { formatIdentifierLabel } from '@/lib/format-identifier-label';
 import { fmtCell, reports, saveBlob, type ReportQuery, type ReportResult, type ReportType } from '@/lib/reports';
 
 const ANY = '__any';
@@ -87,7 +88,7 @@ function ReportFilter({
   );
 }
 
-function ResultTable({ result, title, positiveCountsOnly = false }: { result: ReportResult; title: string; positiveCountsOnly?: boolean }) {
+function ResultTable({ result, title, positiveCountsOnly = false, formatGroupIdentifiers = false }: { result: ReportResult; title: string; positiveCountsOnly?: boolean; formatGroupIdentifiers?: boolean }) {
   const rows = positiveCountsOnly ? result.rows.filter((row) => Number(row.count) > 0) : result.rows;
   return (
     <div className="overflow-hidden rounded-xl border">
@@ -99,7 +100,10 @@ function ResultTable({ result, title, positiveCountsOnly = false }: { result: Re
         <TableBody>
           {rows.map((row, index) => (
             <TableRow key={index}>
-              {result.columns.map((column) => <TableCell key={column.key}>{fmtCell(row[column.key], column.kind)}</TableCell>)}
+              {result.columns.map((column) => {
+                const value = fmtCell(row[column.key], column.kind);
+                return <TableCell key={column.key}>{formatGroupIdentifiers && column.key === 'group' && value !== '—' ? formatIdentifierLabel(value) : value}</TableCell>;
+              })}
             </TableRow>
           ))}
         </TableBody>
@@ -339,14 +343,14 @@ export function ReportsWorkspace() {
     return {
       periods,
       series: names.map((name) => ({
-        name,
+        name: by === 'persona' || by === 'scenario' ? formatIdentifierLabel(name) : name,
         values: periods.map((period) => {
           const row = trendState.data.rows.find((candidate) => candidate.period === period && candidate.group === name);
           return row ? Number(row.count) : 0;
         }),
       })),
     };
-  }, [trendState]);
+  }, [by, trendState]);
 
   const rangeOptions = RANGES.map((option) => ({ value: option.value, label: t(`ranges.${option.key}`) }));
   const byOptions = BY.map((option) => ({ value: option.value, label: t(`groups.${option.key}`) }));
@@ -474,7 +478,7 @@ export function ReportsWorkspace() {
               <p className="grid h-52 place-items-center text-sm text-muted-foreground" role="status">{t('trends.empty')}</p>
             ) : trendView === 'chart' ? (
               <LineChart title={t('trends.chartTitle', { group: t(`groups.${by}`).toLocaleLowerCase() })} periods={trendSeries.periods} series={trendSeries.series} />
-            ) : <ResultTable result={trendState.data!} title={t('trends.title', { group: t(`groups.${by}`) })} positiveCountsOnly />}
+            ) : <ResultTable result={trendState.data!} title={t('trends.title', { group: t(`groups.${by}`) })} positiveCountsOnly formatGroupIdentifiers={by === 'persona' || by === 'scenario'} />}
           </div>
         ) : null}
       </section>

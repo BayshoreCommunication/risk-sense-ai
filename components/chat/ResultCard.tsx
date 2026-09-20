@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { assessments, type Assessment, type DecisionInput, type EscalationTarget } from '@/lib/assessments';
+import { formatIdentifierLabel, formatIdentifierTokensInText } from '@/lib/format-identifier-label';
 
 const VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
   monitor_only: 'secondary',
@@ -34,15 +35,8 @@ const ACCENT: Record<string, string> = {
 };
 const NOBODY = '__nobody';
 
-function humanizeKey(key: string) {
-  return key
-    .split('_')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
-}
-
 function humanizeDriver(driver: string) {
-  return driver.replace(/\b[a-z][a-z0-9]*_[a-z0-9_]+\b/gi, (token) => humanizeKey(token));
+  return formatIdentifierTokensInText(driver);
 }
 
 /** The deterministic result and the human decision required before an assessment can close. */
@@ -109,14 +103,14 @@ export function ResultCard({
   };
 
   return (
-    <section aria-labelledby={headingId} data-testid="assessment-result" className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_10px_30px_rgba(15,35,65,0.055)]">
+    <section aria-labelledby={headingId} data-testid="assessment-result" className="overflow-hidden rounded-2xl border border-[#d7e1ed] bg-card shadow-[0_14px_38px_rgba(8,32,68,0.09)] ring-1 ring-[#082044]/[0.025]">
       <div className={`grid border-l-[3px] sm:grid-cols-[6rem_minmax(0,1fr)] ${ACCENT[result.classification] ?? 'border-l-primary'}`}>
-        <div className="flex items-center gap-2.5 bg-slate-950 px-3.5 py-3 text-white sm:flex-col sm:justify-center sm:gap-0 sm:border-r sm:px-2.5 sm:py-4 sm:text-center">
+        <div className="flex items-center gap-2.5 bg-[linear-gradient(145deg,#061d43_0%,#0d3b78_100%)] px-3.5 py-3 text-white shadow-[inset_-1px_0_rgba(255,255,255,0.08)] sm:flex-col sm:justify-center sm:gap-0 sm:px-2.5 sm:py-4 sm:text-center">
           <span className="font-heading text-2xl font-semibold tracking-tight tabular-nums sm:text-3xl">{result.score}</span>
           <span className="text-xs font-medium text-white/60">{t('scoreOutOf')}</span>
         </div>
 
-        <div className="min-w-0 px-4 py-3.5 sm:px-5">
+        <div className="min-w-0 bg-[linear-gradient(135deg,#ffffff_0%,#f8fbff_100%)] px-4 py-3.5 sm:px-5">
           <div className="flex flex-wrap items-center gap-2">
             <h3 id={headingId} className="mr-1 text-base font-semibold tracking-tight">{t('title')}</h3>
             <Badge variant={VARIANT[result.classification] ?? 'default'}>
@@ -156,7 +150,7 @@ export function ResultCard({
       </div>
 
       <div className="divide-y">
-        <section className="grid gap-1.5 px-4 py-3 sm:grid-cols-[9.5rem_minmax(0,1fr)] sm:px-5">
+        <section className="grid gap-1.5 bg-primary/[0.025] px-4 py-3 sm:grid-cols-[9.5rem_minmax(0,1fr)] sm:px-5">
           <h4 className="flex items-center gap-2 text-sm font-semibold">
             <CheckCircle2 aria-hidden="true" className="size-4 text-primary" />
             {t('recommendedAction')}
@@ -212,7 +206,7 @@ export function ResultCard({
             <dl className="divide-y border-t px-4 sm:px-5">
               {factorEntries.map(([key, factor]) => (
                 <div key={key} className="grid gap-1 py-3 text-xs sm:grid-cols-[minmax(8rem,1fr)_auto_auto_auto] sm:items-center sm:gap-5">
-                  <dt className="font-medium text-foreground">{humanizeKey(key)}</dt>
+                  <dt className="font-medium text-foreground">{formatIdentifierLabel(key)}</dt>
                   <dd className="text-muted-foreground">{t('factors.value', { value: factor.value })}</dd>
                   <dd className="tabular-nums text-muted-foreground">{factor.weight}%</dd>
                   <dd className="font-medium tabular-nums sm:text-right">{t('factors.points', { value: factor.contribution.toFixed(1) })}</dd>
@@ -222,7 +216,7 @@ export function ResultCard({
           </details>
         )}
 
-        <section className="bg-slate-50/70 px-4 py-3.5 sm:px-5" aria-labelledby={`${headingId}-decision`}>
+        <section className="bg-[linear-gradient(180deg,#f8fafc_0%,#f3f7fc_100%)] px-4 py-3.5 sm:px-5" aria-labelledby={`${headingId}-decision`}>
           {decided ? (
             <div className="grid grid-cols-[2rem_minmax(0,1fr)] gap-3">
               <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">

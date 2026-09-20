@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toApiError } from '@/lib/api/client';
 import { assessments, type AssessmentListItem, type AssessmentListResult } from '@/lib/assessments';
+import { formatIdentifierLabel } from '@/lib/format-identifier-label';
 
 const LIMIT = 25;
 
@@ -66,7 +67,7 @@ export default function AuditAssessmentsPage() {
             </div>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
               <div><dt className="text-muted-foreground">{t('columns.department')}</dt><dd className="mt-0.5 font-medium">{a.department?.name ?? '—'}</dd></div>
-              <div><dt className="text-muted-foreground">{t('columns.personaScenario')}</dt><dd className="mt-0.5 font-medium">{a.personaKey?.replace(/_/g, ' ') ?? '—'} · {a.scenarioKey?.replace(/_/g, ' ') ?? '—'}</dd></div>
+              <div><dt className="text-muted-foreground">{t('columns.personaScenario')}</dt><dd className="mt-0.5 font-medium">{a.personaKey ? formatIdentifierLabel(a.personaKey) : '—'} · {a.scenarioKey ? formatIdentifierLabel(a.scenarioKey) : '—'}</dd></div>
               <div><dt className="text-muted-foreground">{t('columns.classification')}</dt><dd className="mt-0.5 font-medium">{a.result ? classification.has(a.result.classification) ? classification(a.result.classification) : a.result.classification : '—'}</dd></div>
               <div><dt className="text-muted-foreground">{t('columns.confidence')}</dt><dd className="mt-0.5 font-medium tabular-nums">{a.result ? `${a.result.confidence}%` : '—'}</dd></div>
               <div className="col-span-2"><dt className="text-muted-foreground">{t('columns.decision')}</dt><dd className="mt-0.5 font-medium">{a.decision ? `${t.has(`decisionTypes.${a.decision.type}`) ? t(`decisionTypes.${a.decision.type}`) : a.decision.type}${a.decision.overriddenTo ? ` → ${classification.has(a.decision.overriddenTo) ? classification(a.decision.overriddenTo) : a.decision.overriddenTo}` : ''}` : '—'}</dd></div>
@@ -112,8 +113,8 @@ export default function AuditAssessmentsPage() {
                 <TableCell className="whitespace-nowrap">{a.requestor?.name ?? '—'}</TableCell>
                 <TableCell className="whitespace-nowrap">{a.department?.name ?? '—'}</TableCell>
                 <TableCell>
-                  <div>{a.personaKey?.replace(/_/g, ' ') ?? '—'}</div>
-                  <div className="text-xs text-muted-foreground">{a.scenarioKey?.replace(/_/g, ' ') ?? '—'}</div>
+                  <div>{a.personaKey ? formatIdentifierLabel(a.personaKey) : '—'}</div>
+                  <div className="text-xs text-muted-foreground">{a.scenarioKey ? formatIdentifierLabel(a.scenarioKey) : '—'}</div>
                 </TableCell>
                 <TableCell>
                   <Badge variant="secondary">{status.has(a.status) ? status(a.status) : a.status}</Badge>
