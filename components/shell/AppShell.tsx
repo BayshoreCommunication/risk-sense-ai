@@ -247,6 +247,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
   const navigation = NAV[trustedRole].filter((item) => !item.feature || me.tenant.features[item.feature]);
   const home = ROLE_HOME[trustedRole];
   const desktopNavigationCollapsed = sidebarCollapsed === true;
+  const isConversationWorkspace = /^\/chat\/[^/]+$/.test(pathname);
 
   const renderNavigation = (mobile = false) => {
     const compact = desktopNavigationCollapsed && !mobile;
@@ -432,7 +433,13 @@ export function AppShell({ role, children }: { role: Role; children: React.React
       )}
 
       <div className={`min-w-0 pt-[4.75rem] transition-[padding] duration-200 motion-reduce:transition-none ${desktopNavigationCollapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-64'}`} inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
-        <main id="main-content" tabIndex={-1} className="h-[calc(100dvh-4.75rem)] overflow-hidden px-4 py-5 outline-none sm:px-7 sm:py-7 lg:px-12 lg:py-10">
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className={`h-[calc(100dvh-4.75rem)] overflow-hidden outline-none ${
+            isConversationWorkspace ? 'px-3 py-3 sm:px-5 sm:py-4 lg:px-7 lg:py-5' : 'px-4 py-5 sm:px-7 sm:py-7 lg:px-12 lg:py-10'
+          }`}
+        >
           <WorkspaceProvider value={{ role: trustedRole, plan: me.tenant.plan, features: me.tenant.features, sectors: me.tenant.sectors ?? [] }}>{children}</WorkspaceProvider>
         </main>
       </div>

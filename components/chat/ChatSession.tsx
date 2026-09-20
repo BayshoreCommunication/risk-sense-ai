@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { AlertCircle, Bot, Check, CheckCircle2, ChevronRight, CircleDot, FileCheck2, Flag, LoaderCircle, LockKeyhole, Send, Sparkles } from 'lucide-react';
+import { AlertCircle, Bot, Check, CheckCircle2, ChevronDown, ChevronRight, CircleDot, FileCheck2, Flag, LoaderCircle, LockKeyhole, PanelRight, Send, Sparkles } from 'lucide-react';
 import { Conversation, ConversationContent, ConversationScrollButton } from '@/components/ai-elements/conversation';
 import { Message as AIMessage, MessageContent, MessageResponse } from '@/components/ai-elements/message';
 import { Suggestion, Suggestions } from '@/components/ai-elements/suggestion';
@@ -17,6 +17,11 @@ import { ResultCard } from './ResultCard';
 
 type PersonaOption = { key: string; name: string; description?: string };
 type StageKey = 'persona' | 'describe' | 'questions' | 'review' | 'decision';
+type BusyAction = 'answer' | 'persona' | 'submit' | 'decision';
+type AnswerOutcome = 'success' | 'failure' | 'ignored';
+type RunOutcome =
+  | { status: 'success' | 'committed'; result: Turn | Assessment }
+  | { status: 'failure' };
 
 const WORKFLOW_STAGES: StageKey[] = ['persona', 'describe', 'questions', 'review', 'decision'];
 
@@ -55,6 +60,8 @@ export function ChatSession({ id }: { id: string }) {
   const [personaPickerOpen, setPersonaPickerOpen] = useState(false);
   const [personaOptions, setPersonaOptions] = useState<PersonaOption[]>([]);
   const [personasLoading, setPersonasLoading] = useState(false);
+  const [busyAction, setBusyAction] = useState<BusyAction | null>(null);
+  const [optimisticAnswer, setOptimisticAnswer] = useState<string | null>(null);
   const busyRef = useRef(false);
 
   const reload = useCallback(async () => {
@@ -67,24 +74,77 @@ export function ChatSession({ id }: { id: string }) {
     reload().catch((nextError) => setError(toApiError(nextError).message));
   }, [reload]);
 
-  async function run(fn: () => Promise<Turn | Assessment>) {
-    if (busyRef.current) return;
+  async function run(
+    fn: () => Promise<Turn | Assessment>,
+    action: BusyAction,
+    onRefreshFailure?: (result: Turn | Assessment) => void,
+  ): Promise<RunOutcome> {
+    if (busyRef.current) return { status: 'failure' };
     busyRef.current = true;
     setBusy(true);
+    setBusyAction(action);
     setError(null);
     try {
-      await fn();
-      await reload();
-    } catch (nextError) {
-      setError(toApiError(nextError).message);
+      const result = await fn();
+      try {
+        await reload();
+        return { status: 'success', result };
+      } catch {
+        // The mutation already committed. Keep its returned state and never invite a duplicate retry
+        // just because transcript revalidation failed.
+        setA(result);
+        onRefreshFailure?.(result);
+        setError(t('refreshFailed'));
+        return { status: 'committed', result };
+      }
+    } catch (mutationError) {
+      setError(toApiError(mutationError).message);
+      return { status: 'failure' };
     } finally {
       busyRef.current = false;
       setBusy(false);
+      setBusyAction(null);
     }
   }
 
   const question = pendingQuestion(messages, a);
-  const answer = (body: { value?: string | number | boolean; text?: string }) => run(() => assessments.answer(id, body));
+  const answer = async (body: { value?: string | number | boolean; text?: string }, displayValue: string): Promise<AnswerOutcome> => {
+    if (busyRef.current) return 'ignored';
+    setOptimisticAnswer(displayValue);
+    const outcome = await run(
+      () => assessments.answer(id, body),
+      'answer',
+      (result) => {
+        const turn = result as Turn;
+        const createdAt = new Date().toISOString();
+        setMessages((current) => [
+          ...current,
+          {
+            _id: `local-answer-${createdAt}`,
+            role: 'user',
+            kind: 'answer',
+            content: displayValue,
+            createdAt,
+          },
+          ...(turn.nextQuestion?.text
+            ? [
+                {
+                  _id: `local-question-${createdAt}`,
+                  role: 'assistant' as const,
+                  kind: 'question' as const,
+                  content: turn.nextQuestion.text,
+                  questionKey: turn.nextQuestion.key,
+                  question: turn.nextQuestion,
+                  createdAt,
+                },
+              ]
+            : []),
+        ]);
+      },
+    );
+    setOptimisticAnswer(null);
+    return outcome.status === 'failure' ? 'failure' : 'success';
+  };
 
   async function openPersonaPicker() {
     setPersonaPickerOpen(true);
@@ -103,7 +163,34 @@ export function ChatSession({ id }: { id: string }) {
 
   function choosePersona(personaKey: string) {
     setPersonaPickerOpen(false);
-    void run(() => assessments.setPersona(id, personaKey));
+    void run(
+      () => assessments.setPersona(id, personaKey),
+      'persona',
+      (result) => {
+        const turn = result as Turn;
+        if (!turn.nextQuestion?.text) return;
+        const createdAt = new Date().toISOString();
+        setMessages((current) => [
+          ...current,
+          {
+            _id: `local-persona-${createdAt}`,
+            role: 'user',
+            kind: 'answer',
+            content: humanizeKey(personaKey),
+            createdAt,
+          },
+          {
+            _id: `local-question-${createdAt}`,
+            role: 'assistant',
+            kind: 'question',
+            content: turn.nextQuestion!.text!,
+            questionKey: turn.nextQuestion!.key,
+            question: turn.nextQuestion!,
+            createdAt,
+          },
+        ]);
+      },
+    );
   }
 
   const candidateOptions: PersonaOption[] =
@@ -112,15 +199,20 @@ export function ChatSession({ id }: { id: string }) {
       : (a?.personaCandidates ?? []).map((key) => ({ key, name: humanizeKey(key) }));
   const currentStageIndex = activeStage(a);
   const currentStageKey = currentStageIndex >= 0 ? WORKFLOW_STAGES[currentStageIndex] : undefined;
+  const showComposer = Boolean(error || a?.status === 'in_progress' || a?.status === 'intake_complete' || a?.status === 'closed');
+  const busyMessage =
+    busyAction === 'submit'
+      ? t('submission.assessing')
+      : busyAction === 'persona'
+        ? t('persona.processing')
+        : t('processing');
 
   return (
-    <div className="page-shell max-w-[1480px] gap-5">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="space-y-2">
-          <div>
-            <h1 className="page-heading">{t('title')}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{t('assessmentId', { id: id.slice(-8).toUpperCase() })}</p>
-          </div>
+    <div className="page-shell max-w-[1480px] gap-3 overflow-hidden" data-testid="assessment-conversation-page">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="font-heading text-xl font-bold tracking-[-0.03em] text-foreground sm:text-2xl">{t('title')}</h1>
+          <p className="mt-0.5 text-xs text-muted-foreground">{t('assessmentId', { id: id.slice(-8).toUpperCase() })}</p>
         </div>
         <div className="flex items-center gap-2">
           {currentStageKey && (
@@ -132,35 +224,47 @@ export function ChatSession({ id }: { id: string }) {
         </div>
       </div>
 
-      <section aria-label={t('workspaceLabel')} className="overflow-hidden rounded-[1.6rem] border bg-card shadow-[0_22px_70px_rgba(15,35,65,0.09)]">
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b bg-[linear-gradient(120deg,#ffffff_0%,#f6f9ff_100%)] px-4 py-4 sm:px-6">
+      <section aria-label={t('workspaceLabel')} className="fills overflow-hidden rounded-[1.35rem] border bg-card shadow-[0_16px_48px_rgba(15,35,65,0.08)]">
+        <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b bg-[#fbfcff] px-4 py-3 sm:px-5">
           <div className="flex items-center gap-3">
-            <span className="relative flex size-11 items-center justify-center rounded-xl bg-[linear-gradient(145deg,#2864ef,#1748c8)] text-white shadow-[0_8px_24px_rgba(40,100,239,0.28)]">
-              <Bot className="size-5" aria-hidden="true" />
-              <Sparkles className="absolute -right-1 -top-1 size-3.5 rounded-full bg-white p-0.5 text-primary shadow-sm" aria-hidden="true" />
+            <span className="relative flex size-9 items-center justify-center rounded-xl bg-primary text-white shadow-[0_6px_16px_rgba(40,100,239,0.22)]">
+              <Bot className="size-4" aria-hidden="true" />
+              <Sparkles className="absolute -right-1 -top-1 size-3 rounded-full bg-white p-0.5 text-primary shadow-sm" aria-hidden="true" />
             </span>
             <div>
-              <h2 className="text-[0.95rem] font-semibold tracking-[-0.01em]">{t('assistantName')}</h2>
+              <h2 className="text-sm font-semibold tracking-[-0.01em]">{t('assistantName')}</h2>
               <p className="mt-0.5 text-xs text-muted-foreground">{t('assistantDescription')}</p>
             </div>
           </div>
-          {a?.scenarioKey && (
-            <div className="min-w-52 rounded-xl border border-primary/15 bg-primary/[0.04] px-3 py-2">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-[0.65rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">{t('selectedScenario')}</span>
-                <Badge variant="outline" className="h-5 px-1.5 text-[0.62rem]">
+          <div className="flex min-w-0 items-center gap-2">
+            {a?.scenarioKey && (
+              <div className="hidden max-w-72 min-w-0 items-center gap-2 rounded-xl border border-primary/15 bg-primary/[0.04] px-3 py-2 sm:flex">
+                <span className="min-w-0">
+                  <span className="block text-[0.6rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">{t('selectedScenario')}</span>
+                  <span className="mt-0.5 block truncate text-xs font-semibold">{humanizeKey(a.scenarioKey)}</span>
+                </span>
+                <Badge variant="outline" className="h-5 shrink-0 px-1.5 text-[0.6rem]">
                   {a.scenarioSource === 'ai' ? t('scenarioSources.ai') : t('scenarioSources.default')}
                 </Badge>
               </div>
-              <span className="mt-1 block text-sm font-semibold">{humanizeKey(a.scenarioKey)}</span>
-            </div>
-          )}
+            )}
+            <details className="group/context relative min-[1360px]:hidden" data-testid="assessment-context-disclosure">
+              <summary className="flex min-h-9 cursor-pointer list-none items-center gap-2 rounded-lg border bg-card px-3 text-xs font-semibold outline-none transition hover:border-primary/30 hover:bg-primary/[0.03] focus-visible:ring-2 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+                <PanelRight className="size-3.5 text-primary" aria-hidden="true" />
+                <span>{t('contextPanel')}</span>
+                <ChevronDown className="size-3.5 text-muted-foreground transition-transform group-open/context:rotate-180" aria-hidden="true" />
+              </summary>
+              <div className="scrollbar-subtle absolute right-0 top-full z-30 mt-2 max-h-[min(70dvh,34rem)] w-[min(21rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border bg-card shadow-[0_20px_55px_rgba(15,35,65,0.18)]">
+                <AssessmentContext a={a} currentStageIndex={currentStageIndex} />
+              </div>
+            </details>
+          </div>
         </header>
 
-        <div className="grid min-h-0 xl:grid-cols-[minmax(0,1fr)_19rem]">
-          <div className="min-w-0">
-            <Conversation className="h-[min(58dvh,38rem)] min-h-[25rem] bg-[radial-gradient(circle_at_70%_0%,rgba(40,100,239,0.055),transparent_24rem),var(--background)] sm:min-h-[30rem] xl:h-[calc(100dvh-24rem)] xl:min-h-[26rem] xl:max-h-[49rem]">
-              <ConversationContent className="mx-auto w-full max-w-4xl gap-6 px-4 py-6 sm:px-7 sm:py-8">
+        <div className="grid min-h-0 flex-1 min-[1360px]:grid-cols-[minmax(0,1fr)_18rem]">
+          <div className="flex min-h-0 min-w-0 flex-col">
+            <Conversation className="min-h-0 flex-1 bg-background" data-testid="conversation-log">
+              <ConversationContent className="mx-auto w-full max-w-[52rem] gap-4 px-4 py-4 sm:px-6 sm:py-5">
                 {!a && messages.length === 0 && (
                   <div className="flex min-h-72 flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground" role="status">
                     <LoaderCircle className="size-5 animate-spin text-primary" aria-hidden="true" />
@@ -171,7 +275,7 @@ export function ChatSession({ id }: { id: string }) {
                 {messages.map((message) => {
                   if (message.role === 'system') {
                     return (
-                      <div key={message._id} className="flex items-center gap-3 text-xs text-muted-foreground" role="note">
+                      <div key={message._id} className="mx-auto flex w-full max-w-[46rem] items-center gap-3 py-1 text-[0.7rem] text-muted-foreground" role="note">
                         <span className="h-px flex-1 bg-border" aria-hidden="true" />
                         <span>{message.content}</span>
                         <span className="h-px flex-1 bg-border" aria-hidden="true" />
@@ -182,59 +286,77 @@ export function ChatSession({ id }: { id: string }) {
                   const assistant = message.role === 'assistant';
                   const clarification = message.kind === 'clarification';
                   return (
-                    <AIMessage key={message._id} from={message.role} className={assistant ? undefined : 'max-w-[88%] sm:max-w-[78%]'}>
+                    <AIMessage key={message._id} from={message.role} className={assistant ? 'mx-auto max-w-[48rem]' : 'max-w-[82%] sm:max-w-[70%]'}>
                       {assistant ? (
-                        <div className="grid grid-cols-[2rem_minmax(0,1fr)] items-start gap-3">
+                        <div className="grid grid-cols-[1.75rem_minmax(0,1fr)] items-start gap-2.5">
                           <span
-                            className={`flex size-8 items-center justify-center rounded-lg border ${
+                            className={`flex size-7 items-center justify-center rounded-lg border ${
                               clarification ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-primary/15 bg-primary/[0.06] text-primary'
                             }`}
                           >
-                            {clarification ? <Flag className="size-3.5" aria-hidden="true" /> : <Bot className="size-3.5" aria-hidden="true" />}
+                            {clarification ? <Flag className="size-3" aria-hidden="true" /> : <Bot className="size-3" aria-hidden="true" />}
                           </span>
                           <div className="min-w-0">
-                            <span className={`mb-1.5 block text-[0.66rem] font-semibold tracking-[0.12em] uppercase ${clarification ? 'text-amber-700' : 'text-muted-foreground'}`}>
+                            <span className={`mb-1 block text-[0.62rem] font-semibold tracking-[0.12em] uppercase ${clarification ? 'text-amber-700' : 'text-muted-foreground'}`}>
                               {clarification ? t('messageKinds.clarification') : t('assistantName')}
                             </span>
-                            <MessageContent className={`w-full rounded-r-xl border-l-2 py-2 pl-4 pr-3 ${clarification ? 'border-amber-300 bg-amber-50/50' : 'border-primary/25 bg-white/70'}`}>
-                              <MessageResponse className="leading-6">{message.content}</MessageResponse>
+                            <MessageContent className={`w-full py-0.5 ${clarification ? 'rounded-r-xl border-l-2 border-amber-300 bg-amber-50/50 py-2 pl-3 pr-2' : ''}`}>
+                              <MessageResponse className="text-sm leading-[1.55]">{message.content}</MessageResponse>
                             </MessageContent>
                           </div>
                         </div>
                       ) : (
-                        <MessageContent className="rounded-2xl rounded-br-sm bg-[#061d43] px-4 py-3 text-white shadow-[0_8px_20px_rgba(6,29,67,0.16)]">
-                          <p className="whitespace-pre-wrap leading-6">{message.content}</p>
+                        <MessageContent className="[overflow-wrap:anywhere]">
+                          <p className="whitespace-pre-wrap break-words leading-[1.5]">{message.content}</p>
                         </MessageContent>
                       )}
                     </AIMessage>
                   );
                 })}
 
-                {busy && (
-                  <AIMessage from="assistant" role="status">
-                    <div className="grid grid-cols-[2rem_minmax(0,1fr)] items-start gap-3">
-                      <span className="flex size-8 items-center justify-center rounded-lg border border-primary/15 bg-primary/[0.06] text-primary">
-                        <LoaderCircle className="size-3.5 animate-spin" aria-hidden="true" />
+                {optimisticAnswer && (
+                  <AIMessage from="user" className="max-w-[82%] sm:max-w-[70%]" data-testid="optimistic-answer">
+                    <MessageContent aria-label={t('answer.sending')} className="[overflow-wrap:anywhere]">
+                      <p className="whitespace-pre-wrap break-words leading-[1.5]">{optimisticAnswer}</p>
+                    </MessageContent>
+                  </AIMessage>
+                )}
+
+                {busy && busyAction !== 'decision' && (
+                  <AIMessage from="assistant" className="mx-auto max-w-[48rem]" data-testid="assistant-processing">
+                    <div className="grid grid-cols-[1.75rem_minmax(0,1fr)] items-start gap-2.5">
+                      <span className="flex size-7 items-center justify-center rounded-lg border border-primary/15 bg-primary/[0.06] text-primary">
+                        <LoaderCircle className="size-3 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                       </span>
-                      <MessageContent className="w-full border-l-2 border-primary/20 py-1 pl-4 text-muted-foreground">
-                        {a?.status === 'intake_complete' ? t('submission.assessing') : t('processing')}
-                      </MessageContent>
+                      <div className="min-w-0 pt-0.5">
+                        <span className="block text-[0.62rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('assistantName')}</span>
+                        <p className="mt-1 text-sm text-muted-foreground">{busyMessage}</p>
+                      </div>
                     </div>
                   </AIMessage>
                 )}
 
-                {a?.result && <ResultCard a={a} busy={busy} onDecide={(decision) => void run(() => assessments.decide(id, decision))} />}
+                {a?.result && (
+                  <ResultCard
+                    a={a}
+                    busy={busy}
+                    decisionBusy={busyAction === 'decision'}
+                    onDecide={(decision) => void run(() => assessments.decide(id, decision), 'decision')}
+                  />
+                )}
               </ConversationContent>
               <ConversationScrollButton aria-label={t('scrollLatest')} />
             </Conversation>
 
-            <div
-              className="max-h-[48dvh] overflow-y-auto border-t bg-[linear-gradient(180deg,#ffffff,#fbfcff)] p-4 sm:p-5"
-              data-testid="composer"
-              data-busy={busy ? 'true' : 'false'}
-              data-messages={messages.length}
-              data-status={a?.status ?? ''}
-            >
+            {showComposer && (
+              <div
+                className="scrollbar-subtle max-h-[min(40dvh,22rem)] shrink-0 overflow-y-auto border-t bg-[#fbfcff] px-3 py-3 sm:px-5"
+                data-testid="composer"
+                aria-busy={busy}
+                data-busy={busy ? 'true' : 'false'}
+                data-messages={messages.length}
+                data-status={a?.status ?? ''}
+              >
               {error && (
                 <p className="mb-4 flex items-start gap-2 border-l-2 border-destructive bg-destructive/5 px-3 py-2.5 text-sm text-destructive" role="alert">
                   <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
@@ -243,7 +365,7 @@ export function ChatSession({ id }: { id: string }) {
               )}
 
               {a?.status === 'in_progress' && a.phase === 'persona' && (
-                <fieldset className="space-y-3">
+                <fieldset className="mx-auto max-w-[52rem] space-y-2.5">
                   <legend className="text-sm font-semibold">{t('persona.confirmTitle')}</legend>
                   <p className="text-xs leading-5 text-muted-foreground">{t('persona.confirmDescription')}</p>
                   <PersonaChooser options={candidateOptions} busy={busy} suggestedKey={a.personaSource === 'ai' ? a.personaKey : undefined} onChoose={choosePersona} />
@@ -251,7 +373,7 @@ export function ChatSession({ id }: { id: string }) {
               )}
 
               {a?.status === 'in_progress' && a.phase === 'describe' && a.personaKey && (
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b pb-4">
+                <div className="mx-auto mb-3 flex max-w-[52rem] flex-wrap items-center justify-between gap-3 border-b pb-3">
                   <div>
                     <p className="text-sm font-semibold">{t('persona.current', { role: humanizeKey(a.personaKey) })}</p>
                     <p className="text-xs text-muted-foreground">{t('persona.changeHint')}</p>
@@ -264,7 +386,7 @@ export function ChatSession({ id }: { id: string }) {
               )}
 
               {a?.status === 'in_progress' && a.phase === 'questions' && a.personaSource === 'ai' && (
-                <p className="mb-4 flex items-start gap-2 text-xs leading-5 text-muted-foreground">
+                <p className="mx-auto mb-3 flex max-w-[52rem] items-start gap-2 text-xs leading-5 text-muted-foreground">
                   <LockKeyhole className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
                   <span>
                     {t('persona.locked')}{' '}
@@ -275,16 +397,18 @@ export function ChatSession({ id }: { id: string }) {
               )}
 
               {a?.status === 'in_progress' && a.phase !== 'persona' && question && (
-                <AnswerBox key={question.key + messages.length} q={question} busy={busy} text={text} setText={setText} onAnswer={answer} />
+                <div className="mx-auto max-w-[52rem]">
+                  <AnswerBox key={question.key + messages.length} q={question} busy={busy} text={text} setText={setText} onAnswer={answer} />
+                </div>
               )}
 
               {a?.status === 'intake_complete' && (
-                <div className="flex flex-col gap-3 border-l-2 border-emerald-500 bg-emerald-50/60 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="mx-auto flex max-w-[52rem] flex-col gap-3 rounded-r-xl border-l-2 border-emerald-500 bg-emerald-50/60 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between">
                   <span className="flex items-center gap-2 text-sm font-medium">
                     <FileCheck2 className="size-4 text-emerald-700" aria-hidden="true" />
                     {t('submission.ready')}
                   </span>
-                  <Button disabled={busy} onClick={() => void run(() => assessments.submit(id))}>
+                  <Button disabled={busy} onClick={() => void run(() => assessments.submit(id), 'submit')}>
                     {busy ? t('submission.assessing') : t('submission.submit')}
                     {!busy && <ChevronRight data-icon="inline-end" className="size-4" aria-hidden="true" />}
                   </Button>
@@ -292,95 +416,111 @@ export function ChatSession({ id }: { id: string }) {
               )}
 
               {a?.status === 'closed' && (
-                <p className="flex items-center justify-center gap-2 py-1 text-center text-sm text-muted-foreground">
+                <p className="mx-auto flex max-w-[52rem] items-center justify-center gap-2 py-1 text-center text-sm text-muted-foreground">
                   <CheckCircle2 className="size-4 text-emerald-600" aria-hidden="true" />
                   {t('closed')}
                 </p>
               )}
-            </div>
+              </div>
+            )}
           </div>
 
-          <aside className="border-t bg-[#f7f9fd] xl:border-t-0 xl:border-l" aria-label={t('contextPanel')}>
-            <section className="p-5">
-              <h3 className="text-[0.68rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('workflow')}</h3>
-              <ol className="mt-4 space-y-1" aria-label={t('workflow')}>
-                {WORKFLOW_STAGES.map((stage, index) => {
-                  const complete = index < currentStageIndex || (a?.status === 'closed' && index === currentStageIndex);
-                  const current = index === currentStageIndex && !complete;
-                  return (
-                    <li key={stage} className="relative flex gap-3 pb-4 last:pb-0" aria-current={current ? 'step' : undefined}>
-                      {index < WORKFLOW_STAGES.length - 1 && <span className="absolute top-6 bottom-0 left-3 w-px bg-border" aria-hidden="true" />}
-                      <span
-                        className={`relative z-[1] flex size-6 shrink-0 items-center justify-center rounded-md border text-[0.65rem] font-semibold ${
-                          complete
-                            ? 'border-emerald-600 bg-emerald-600 text-white'
-                            : current
-                              ? 'border-primary bg-primary text-primary-foreground'
-                              : 'border-border bg-card text-muted-foreground'
-                        }`}
-                      >
-                        {complete ? <Check className="size-3" aria-hidden="true" /> : current ? <CircleDot className="size-3" aria-hidden="true" /> : index + 1}
-                      </span>
-                      <span className={`pt-0.5 text-sm ${current ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>{t(`stages.${stage}`)}</span>
-                    </li>
-                  );
-                })}
-              </ol>
-            </section>
-
-            {(a?.personaKey || a?.scenarioKey) && (
-              <section className="border-t px-5 py-4">
-                <h3 className="text-[0.68rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('assessmentContext')}</h3>
-                <dl className="mt-3 space-y-3 text-sm">
-                  {a.personaKey && (
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{t('role')}</dt>
-                      <dd className="mt-0.5 font-medium">{humanizeKey(a.personaKey)}</dd>
-                      {a.personaSource === 'ai' && <dd className="mt-1 text-xs text-primary">{t('aiSuggestedRole')}</dd>}
-                    </div>
-                  )}
-                  {a.scenarioKey && (
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{t('scenario')}</dt>
-                      <dd className="mt-0.5 font-medium">{humanizeKey(a.scenarioKey)}</dd>
-                    </div>
-                  )}
-                </dl>
-              </section>
-            )}
-
-            <section className="border-t px-5 py-4">
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="text-[0.68rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('capturedFacts')}</h3>
-                <span className="text-xs font-semibold tabular-nums text-foreground">{a?.facts?.length ?? 0}</span>
-              </div>
-              {a?.facts?.length ? (
-                <div className="mt-3 divide-y">
-                  {a.facts.slice(-6).map((fact) => (
-                    <div key={fact.key} className="grid grid-cols-[1rem_minmax(0,1fr)] gap-2 py-3 first:pt-0 last:pb-0">
-                      <span className={`mt-0.5 ${fact.flagged ? 'text-amber-700' : 'text-emerald-700'}`}>
-                        {fact.flagged ? <Flag className="size-3.5" aria-hidden="true" /> : <Check className="size-3.5" aria-hidden="true" />}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-medium">{humanizeKey(fact.key)}</p>
-                        <p className="mt-0.5 line-clamp-2 break-words text-xs leading-4 text-muted-foreground">{factValue(fact.value)}</p>
-                        <p className="mt-1 text-[0.65rem] tabular-nums text-muted-foreground">{Math.round(fact.confidence * 100)}% {t('factConfidence')}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-3 text-xs leading-5 text-muted-foreground">{t('noFacts')}</p>
-              )}
-            </section>
-
-            <p className="border-t px-5 py-4 text-xs leading-5 text-muted-foreground">
-              <LockKeyhole className="mr-1.5 inline size-3.5 text-primary" aria-hidden="true" />
-              {t('governanceNote')}
-            </p>
+          <aside className="scrollbar-subtle hidden min-h-0 overflow-y-auto border-l bg-[#f7f9fd] min-[1360px]:block" aria-label={t('contextPanel')}>
+            <AssessmentContext a={a} currentStageIndex={currentStageIndex} />
           </aside>
         </div>
       </section>
+    </div>
+  );
+}
+
+function AssessmentContext({ a, currentStageIndex }: { a: Assessment | null; currentStageIndex: number }) {
+  const t = useTranslations('chatSession');
+
+  return (
+    <div>
+      <section className="p-4">
+        <h3 className="text-[0.65rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('workflow')}</h3>
+        <ol className="mt-3 space-y-0.5" aria-label={t('workflow')}>
+          {WORKFLOW_STAGES.map((stage, index) => {
+            const complete = index < currentStageIndex || (a?.status === 'closed' && index === currentStageIndex);
+            const current = index === currentStageIndex && !complete;
+            return (
+              <li key={stage} className="relative flex gap-2.5 pb-3.5 last:pb-0" aria-current={current ? 'step' : undefined}>
+                {index < WORKFLOW_STAGES.length - 1 && <span className="absolute top-5 bottom-0 left-2.5 w-px bg-border" aria-hidden="true" />}
+                <span
+                  className={`relative z-[1] flex size-5 shrink-0 items-center justify-center rounded-md border text-[0.6rem] font-semibold ${
+                    complete
+                      ? 'border-emerald-600 bg-emerald-600 text-white'
+                      : current
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border bg-card text-muted-foreground'
+                  }`}
+                >
+                  {complete ? <Check className="size-3" aria-hidden="true" /> : current ? <CircleDot className="size-3" aria-hidden="true" /> : index + 1}
+                </span>
+                <span className={`pt-px text-xs ${current ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>{t(`stages.${stage}`)}</span>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+
+      {(a?.personaKey || a?.scenarioKey) && (
+        <section className="border-t px-4 py-3.5">
+          <h3 className="text-[0.65rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('assessmentContext')}</h3>
+          <dl className="mt-2.5 grid gap-2.5 text-xs">
+            {a.personaKey && (
+              <div>
+                <dt className="text-[0.68rem] text-muted-foreground">{t('role')}</dt>
+                <dd className="mt-0.5 font-medium">{humanizeKey(a.personaKey)}</dd>
+                {a.personaSource === 'ai' && <dd className="mt-0.5 text-[0.68rem] text-primary">{t('aiSuggestedRole')}</dd>}
+              </div>
+            )}
+            {a.scenarioKey && (
+              <div>
+                <dt className="text-[0.68rem] text-muted-foreground">{t('scenario')}</dt>
+                <dd className="mt-0.5 font-medium">{humanizeKey(a.scenarioKey)}</dd>
+              </div>
+            )}
+          </dl>
+        </section>
+      )}
+
+      <details className="group/facts border-t">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 outline-none transition hover:bg-primary/[0.025] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+          <span className="text-[0.65rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('capturedFacts')}</span>
+          <span className="flex items-center gap-2">
+            <span className="text-xs font-semibold tabular-nums text-foreground">{a?.facts?.length ?? 0}</span>
+            <ChevronDown className="size-3.5 text-muted-foreground transition-transform group-open/facts:rotate-180" aria-hidden="true" />
+          </span>
+        </summary>
+        <div className="border-t px-4 py-3">
+          {a?.facts?.length ? (
+            <div className="divide-y">
+              {a.facts.slice(-6).map((fact) => (
+                <div key={fact.key} className="grid grid-cols-[0.9rem_minmax(0,1fr)] gap-2 py-2.5 first:pt-0 last:pb-0">
+                  <span className={`mt-0.5 ${fact.flagged ? 'text-amber-700' : 'text-emerald-700'}`}>
+                    {fact.flagged ? <Flag className="size-3" aria-hidden="true" /> : <Check className="size-3" aria-hidden="true" />}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-medium">{humanizeKey(fact.key)}</p>
+                    <p className="mt-0.5 line-clamp-2 break-words text-[0.7rem] leading-4 text-muted-foreground">{factValue(fact.value)}</p>
+                    <p className="mt-0.5 text-[0.62rem] tabular-nums text-muted-foreground">{Math.round(fact.confidence * 100)}% {t('factConfidence')}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs leading-5 text-muted-foreground">{t('noFacts')}</p>
+          )}
+        </div>
+      </details>
+
+      <p className="border-t px-4 py-3 text-[0.7rem] leading-5 text-muted-foreground">
+        <LockKeyhole className="mr-1.5 inline size-3 text-primary" aria-hidden="true" />
+        {t('governanceNote')}
+      </p>
     </div>
   );
 }
@@ -434,20 +574,28 @@ function AnswerBox({
   busy: boolean;
   text: string;
   setText: (value: string) => void;
-  onAnswer: (body: { value?: string | number | boolean; text?: string }) => Promise<void>;
+  onAnswer: (body: { value?: string | number | boolean; text?: string }, displayValue: string) => Promise<AnswerOutcome>;
 }) {
   const t = useTranslations('chatSession.answer');
   const inputId = useId();
   const submitText = () => {
     if (busy || !text.trim()) return;
-    void onAnswer({ text: text.trim() }).then(() => setText(''));
+    const submittedText = text.trim();
+    setText('');
+    void onAnswer({ text: submittedText }, submittedText).then((outcome) => {
+      if (outcome === 'failure') setText(submittedText);
+    });
   };
 
   if (q.type === 'mcq' && q.options?.length) {
     return (
       <fieldset>
-        <legend className="mb-3 text-sm font-semibold leading-6 text-foreground">{q.text ?? t('optionsLabel')}</legend>
-        <Suggestions className="grid grid-cols-1 sm:grid-cols-2">
+        <legend className="sr-only">{q.text ?? t('optionsLabel')}</legend>
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <span className="text-xs font-semibold text-foreground">{t('responseLabel')}</span>
+          <span className="text-[0.7rem] text-muted-foreground">{t('chooseOne')}</span>
+        </div>
+        <Suggestions className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {q.options.map((option, index) => (
             <Suggestion
               key={option.id}
@@ -455,14 +603,14 @@ function AnswerBox({
               suggestion={option.id}
               variant="outline"
               disabled={busy}
-              className="group/choice w-full items-center gap-3 border bg-background text-left hover:border-primary/35 hover:bg-primary/[0.04]"
-              onClick={() => void onAnswer({ value: option.id })}
+              className="group/choice min-h-10 w-full items-center gap-2.5 rounded-xl border bg-background px-3 py-2 text-left hover:border-primary/35 hover:bg-primary/[0.04]"
+              onClick={() => void onAnswer({ value: option.id }, option.label)}
             >
-              <span aria-hidden="true" className="grid size-7 shrink-0 place-items-center rounded-lg border border-primary/15 bg-primary/[0.055] text-[0.7rem] font-bold text-primary transition group-hover/choice:border-primary/30 group-hover/choice:bg-primary group-hover/choice:text-white">
+              <span aria-hidden="true" className="grid size-6 shrink-0 place-items-center rounded-md border border-primary/15 bg-primary/[0.055] text-[0.65rem] font-bold text-primary transition group-hover/choice:border-primary/30 group-hover/choice:bg-primary group-hover/choice:text-white">
                 {String.fromCharCode(65 + index)}
               </span>
-              <span className="min-w-0 flex-1">{option.label}</span>
-              <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-muted-foreground/50 transition group-hover/choice:translate-x-0.5 group-hover/choice:text-primary" />
+              <span className="min-w-0 flex-1 text-xs leading-5">{option.label}</span>
+              <ChevronRight aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground/50 transition group-hover/choice:translate-x-0.5 group-hover/choice:text-primary" />
             </Suggestion>
           ))}
         </Suggestions>
@@ -472,14 +620,18 @@ function AnswerBox({
 
   if (q.type === 'yes_no') {
     return (
-      <fieldset className="grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-end">
-        <legend className="mb-1 text-sm font-semibold leading-6 text-foreground sm:col-span-3">{q.text ?? t('yesNoLabel')}</legend>
+      <fieldset className="grid gap-2.5 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-end">
+        <legend className="sr-only">{q.text ?? t('yesNoLabel')}</legend>
+        <div className="flex items-center justify-between gap-3 sm:col-span-3">
+          <span className="text-xs font-semibold text-foreground">{t('responseLabel')}</span>
+          <span className="text-[0.7rem] text-muted-foreground">{t('optionalExplanation')}</span>
+        </div>
         <div className="grid grid-cols-2 gap-2">
-          <Button disabled={busy} onClick={() => void onAnswer({ value: true })}>
+          <Button size="sm" disabled={busy} onClick={() => void onAnswer({ value: true }, t('yes'))}>
             <Check className="size-4" aria-hidden="true" />
             {t('yes')}
           </Button>
-          <Button variant="outline" disabled={busy} onClick={() => void onAnswer({ value: false })}>{t('no')}</Button>
+          <Button size="sm" variant="outline" disabled={busy} onClick={() => void onAnswer({ value: false }, t('no'))}>{t('no')}</Button>
         </div>
         <div>
           <label className="sr-only" htmlFor={inputId}>{t('explainLabel')}</label>
@@ -497,7 +649,7 @@ function AnswerBox({
             }}
           />
         </div>
-        <Button variant="outline" disabled={busy || !text.trim()} onClick={submitText} aria-label={t('send')}>
+          <Button size="sm" variant="outline" disabled={busy || !text.trim()} onClick={submitText} aria-label={t('send')}>
           <Send className="size-4" aria-hidden="true" />
           <span className="sm:sr-only">{t('send')}</span>
         </Button>
@@ -508,13 +660,20 @@ function AnswerBox({
   if (q.type === 'number') {
     const submitNumber = () => {
       if (!text.trim()) return;
-      const value = Number(text);
+      const submittedText = text.trim();
+      const value = Number(submittedText);
       if (!Number.isFinite(value)) return;
-      void onAnswer({ value }).then(() => setText(''));
+      setText('');
+      void onAnswer({ value }, submittedText).then((outcome) => {
+        if (outcome === 'failure') setText(submittedText);
+      });
     };
     return (
       <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-        <p className="text-sm font-semibold leading-6 text-foreground sm:col-span-2">{q.text ?? t('numberLabel')}</p>
+        <div className="flex items-center justify-between gap-3 sm:col-span-2">
+          <p className="text-xs font-semibold text-foreground">{t('responseLabel')}</p>
+          <p className="text-[0.7rem] text-muted-foreground">{t('numberHint')}</p>
+        </div>
         <div>
           <label className="sr-only" htmlFor={inputId}>{q.text ?? t('numberLabel')}</label>
           <Input
@@ -532,7 +691,7 @@ function AnswerBox({
             }}
           />
         </div>
-        <Button disabled={busy || text.trim() === '' || !Number.isFinite(Number(text))} onClick={submitNumber}>
+        <Button size="sm" disabled={busy || text.trim() === '' || !Number.isFinite(Number(text))} onClick={submitNumber}>
           <Send className="size-4" aria-hidden="true" />
           {t('send')}
         </Button>
@@ -542,10 +701,10 @@ function AnswerBox({
 
   return (
     <div>
-      <p className="mb-3 text-sm font-semibold leading-6 text-foreground">{q.text ?? t('textLabel')}</p>
+      <p className="sr-only">{t('responseLabel')}</p>
       <label className="sr-only" htmlFor={inputId}>{q.text ?? t('textLabel')}</label>
       {/* One composer surface: the field and its send share a frame and a focus ring. */}
-      <div className="rounded-2xl border bg-card shadow-[0_1px_2px_rgba(15,35,65,0.05)] transition focus-within:border-primary/40 focus-within:ring-4 focus-within:ring-primary/8">
+      <div className="rounded-2xl border bg-card shadow-[0_4px_16px_rgba(15,35,65,0.06)] transition focus-within:border-primary/40 focus-within:ring-4 focus-within:ring-primary/8">
         <Textarea
           id={inputId}
           rows={2}
@@ -553,7 +712,7 @@ function AnswerBox({
           placeholder={t('textPlaceholder')}
           value={text}
           onChange={(event) => setText(event.target.value)}
-          className="min-h-24 resize-none border-0 bg-transparent px-4 pt-3.5 shadow-none focus-visible:ring-0"
+          className="min-h-12 max-h-24 resize-none border-0 bg-transparent px-4 py-2.5 text-sm leading-5 shadow-none focus-visible:ring-0"
           onKeyDown={(event) => {
             if (event.key === 'Enter' && !event.shiftKey && !busy && !event.nativeEvent.isComposing) {
               event.preventDefault();
@@ -561,7 +720,7 @@ function AnswerBox({
             }
           }}
         />
-        <div className="flex items-center justify-between gap-3 border-t px-3 py-2">
+        <div className="flex items-center justify-between gap-3 px-3 pb-2 pt-1">
           <span className="text-[0.7rem] text-muted-foreground">{t('enterHint')}</span>
           <Button size="sm" disabled={busy || !text.trim()} onClick={submitText}>
             <Send className="size-4" aria-hidden="true" />

@@ -16,7 +16,7 @@ The requirements in docs/requirements are Draft v1 and have not been signed off.
 - JSON assessment turns with persona/scenario selection, deterministic branching, structured fact extraction/clarification, required-fact gates, deterministic rules/scoring, and explanation.
 - Decision invariant, accept/override/escalate, review queues, dashboards, lifecycle reconstruction, append-only application audit/hash verification, exactly-once service-denial evidence, masking/audited unmasking, aggregate reports/exports, retention, and persistent conformance. Audited domain transitions commit state, derived records/messages, and evidence together.
 - Figma-informed Requestor, administrator/content, system-administrator, and auditor frontend workspaces, including the bounded System Audit archive interface.
-- Generated typed frontend API client, exact 1,376/1,376 English/Bengali message/ICU parity, and 56/56 mocked browser correctness cases.
+- Generated typed frontend API client, exact 1,384/1,384 English/Bengali message/ICU parity, and 56/56 mocked browser correctness cases.
 - Governed workspace controls include report-feature gating before analytics fetches, confirmed and audited unmasking that resets to masked state, stale unmask-response protection, named-escalatee context, labelled data-table regions, and tenant-driven sector choices.
 
 ## Task reconciliation
@@ -26,7 +26,7 @@ The requirements in docs/requirements are Draft v1 and have not been signed off.
 - T-037 is deferred and superseded by the JSON request/response design.
 - T-038 chat UI/resume exists; SSE/EventSource streaming was removed.
 - T-064 persistent conformance runs and flags are implemented.
-- T-090 English/Bengali repository coverage is repository-complete with exact 1,376/1,376 key and ICU-variable parity and green aggregate frontend validation. Human Bengali/accessibility/usability acceptance remains open.
+- T-090 English/Bengali repository coverage is repository-complete with exact 1,384/1,384 key and ICU-variable parity and green aggregate frontend validation. Human Bengali/accessibility/usability acceptance remains open.
 - T-100 repository browser coverage is complete at the mocked-API scope (56/56 current cases); production-like full-stack evidence and human UAT remain external gates.
 - T-101 frontend and backend dependency audits reported zero vulnerabilities on 2026-09-20. Deployed TLS and independent security acceptance remain external.
 - T-105/NFR-08 tenant sector vocabulary is configuration-driven across system settings, content, datasets and authoring UI. Client approval of the production vocabulary and human acceptance remain external gates.

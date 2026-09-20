@@ -40,7 +40,7 @@ The shared shell, role navigation, page hierarchy, controls, cards, tables, char
 - `npm run lint`: passed.
 - `npm run build`: passed, 29/29 application routes generated.
 - `npm run e2e:frontend`: passed, 56/56 mocked browser cases across four files.
-- English/Bengali catalogs: 1,376/1,376 keys, zero missing keys and zero ICU-variable mismatches.
+- English/Bengali catalogs: 1,384/1,384 keys, zero missing keys and zero ICU-variable mismatches.
 - Desktop browser review used the default 1920×1080 viewport; responsive review used 390×844, with no document-level horizontal overflow on the sampled role pages.
 
 ## Acceptance boundary

@@ -1056,7 +1056,8 @@
     "assistantName": "RiskSense assistant",
     "assistantDescription": "Guided, evidence-aware intake",
     "loadingConversation": "Loading your assessment…",
-    "processing": "Structuring your answer…",
+    "processing": "Understanding your answer and preparing the next question…",
+    "refreshFailed": "Your action was saved, but the latest conversation could not be refreshed. Reload this page to sync the full transcript.",
     "scrollLatest": "Scroll to latest message",
     "workspaceLabel": "Assessment conversation workspace",
     "contextPanel": "Assessment context",
@@ -1102,11 +1103,12 @@
       "startNew": "Start a new assessment",
       "ifIncorrect": "if it is incorrect.",
       "empty": "No available personas could be loaded.",
-      "suggestedSuffix": "(suggested)"
+      "suggestedSuffix": "(suggested)",
+      "processing": "Updating the assessment path…"
     },
     "submission": {
       "ready": "All required information is captured.",
-      "assessing": "Assessing…",
+      "assessing": "Calculating risk and preparing the explanation…",
       "submit": "Submit for assessment"
     },
     "closed": "This assessment is closed.",
@@ -1122,7 +1124,12 @@
       "numberPlaceholder": "Enter a number",
       "textPlaceholder": "Type your answer…",
       "send": "Send",
-      "enterHint": "Enter to send · Shift + Enter for a new line"
+      "enterHint": "Enter to send · Shift + Enter for a new line",
+      "responseLabel": "Your response",
+      "chooseOne": "Choose the best match",
+      "optionalExplanation": "Or add a short explanation",
+      "numberHint": "Enter the requested amount or value",
+      "sending": "Sending your answer"
     }
   },
   "resultCard": {
@@ -1143,6 +1150,7 @@
     "decision": {
       "label": "Decision",
       "title": "Record the human decision",
+      "recording": "Recording your decision…",
       "recorded": "Decision recorded",
       "types": {
         "accept": "accept",

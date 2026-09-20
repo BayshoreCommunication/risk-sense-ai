@@ -46,7 +46,17 @@ function humanizeDriver(driver: string) {
 }
 
 /** The deterministic result and the human decision required before an assessment can close. */
-export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (decision: DecisionInput) => void; busy: boolean }) {
+export function ResultCard({
+  a,
+  onDecide,
+  busy,
+  decisionBusy,
+}: {
+  a: Assessment;
+  onDecide: (decision: DecisionInput) => void;
+  busy: boolean;
+  decisionBusy: boolean;
+}) {
   const locale = useLocale();
   const t = useTranslations('resultCard');
   const detail = useTranslations('assessmentDetail');
@@ -62,6 +72,7 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (de
   const [overrideClassification, setOverrideClassification] = useState<string>('');
   const [targets, setTargets] = useState<EscalationTarget[] | null>(null);
   const [target, setTarget] = useState<string>(NOBODY);
+  const [pendingDecisionType, setPendingDecisionType] = useState<DecisionInput['type'] | null>(null);
   const decided = a.decision && a.status !== 'escalated';
   const isError = a.status === 'error_review';
   const factorEntries = Object.entries(result.factors ?? {});
@@ -71,6 +82,10 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (de
     setMode('none');
     setReason('');
   }, [a.status, decidedAt]);
+
+  useEffect(() => {
+    if (!decisionBusy) setPendingDecisionType(null);
+  }, [decisionBusy]);
 
   useEffect(() => {
     if (mode !== 'escalate' || targets !== null) return;
@@ -88,15 +103,20 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (de
     })),
   ];
 
+  const decide = (decision: DecisionInput) => {
+    setPendingDecisionType(decision.type);
+    onDecide(decision);
+  };
+
   return (
-    <section aria-labelledby={headingId} className="overflow-hidden rounded-[1.125rem] border border-border bg-card shadow-[0_14px_38px_rgba(15,35,65,0.07)]">
-      <div className={`grid border-l-4 sm:grid-cols-[7.25rem_minmax(0,1fr)] ${ACCENT[result.classification] ?? 'border-l-primary'}`}>
-        <div className="flex items-center gap-3 bg-slate-950 px-4 py-4 text-white sm:flex-col sm:justify-center sm:gap-0 sm:border-r sm:px-3 sm:py-6 sm:text-center">
-          <span className="font-heading text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">{result.score}</span>
+    <section aria-labelledby={headingId} data-testid="assessment-result" className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_10px_30px_rgba(15,35,65,0.055)]">
+      <div className={`grid border-l-[3px] sm:grid-cols-[6rem_minmax(0,1fr)] ${ACCENT[result.classification] ?? 'border-l-primary'}`}>
+        <div className="flex items-center gap-2.5 bg-slate-950 px-3.5 py-3 text-white sm:flex-col sm:justify-center sm:gap-0 sm:border-r sm:px-2.5 sm:py-4 sm:text-center">
+          <span className="font-heading text-2xl font-semibold tracking-tight tabular-nums sm:text-3xl">{result.score}</span>
           <span className="text-xs font-medium text-white/60">{t('scoreOutOf')}</span>
         </div>
 
-        <div className="min-w-0 px-4 py-5 sm:px-6">
+        <div className="min-w-0 px-4 py-3.5 sm:px-5">
           <div className="flex flex-wrap items-center gap-2">
             <h3 id={headingId} className="mr-1 text-base font-semibold tracking-tight">{t('title')}</h3>
             <Badge variant={VARIANT[result.classification] ?? 'default'}>
@@ -105,7 +125,7 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (de
             <Badge variant="outline">{t('confidence', { value: result.confidence })}</Badge>
           </div>
 
-          <div className="mt-2.5 flex flex-wrap gap-2">
+          <div className="mt-2 flex flex-wrap gap-1.5">
             {result.mandatoryReview && (
               <Badge variant="destructive" className="gap-1.5">
                 <ShieldAlert aria-hidden="true" className="size-3.5" />
@@ -122,7 +142,7 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (de
             )}
           </div>
 
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-foreground/75">{result.explanation}</p>
+          <p className="mt-2.5 max-w-3xl text-sm leading-[1.5] text-foreground/75">{result.explanation}</p>
           {result.ruleDriven && result.computedClassification !== result.classification && (
             <p className="mt-2 text-xs leading-5 text-muted-foreground">
               {t('computedWithoutRule', {
@@ -136,25 +156,25 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (de
       </div>
 
       <div className="divide-y">
-        <section className="grid gap-2 px-4 py-4 sm:grid-cols-[10.5rem_minmax(0,1fr)] sm:px-6">
+        <section className="grid gap-1.5 px-4 py-3 sm:grid-cols-[9.5rem_minmax(0,1fr)] sm:px-5">
           <h4 className="flex items-center gap-2 text-sm font-semibold">
             <CheckCircle2 aria-hidden="true" className="size-4 text-primary" />
             {t('recommendedAction')}
           </h4>
-          <p className="text-sm leading-6 text-foreground/80">{result.recommendedAction}</p>
+          <p className="text-sm leading-5 text-foreground/80">{result.recommendedAction}</p>
         </section>
 
         {(result.keyDrivers?.length > 0 || result.nextSteps?.length > 0) && (
           <div className="grid lg:grid-cols-2 lg:divide-x">
             {result.keyDrivers?.length > 0 && (
-              <section className="px-4 py-5 sm:px-6">
+              <section className="px-4 py-3.5 sm:px-5">
                 <h4 className="flex items-center gap-2 text-sm font-semibold">
                   <Flag aria-hidden="true" className="size-4 text-primary" />
                   {detail('result.keyDrivers')}
                 </h4>
-                <ul className="mt-3 divide-y">
+                <ul className="mt-2 divide-y">
                   {result.keyDrivers.map((driver) => (
-                    <li key={driver} className="grid grid-cols-[0.45rem_minmax(0,1fr)] gap-2.5 py-2.5 first:pt-0 last:pb-0">
+                    <li key={driver} className="grid grid-cols-[0.45rem_minmax(0,1fr)] gap-2.5 py-1.5 first:pt-0 last:pb-0">
                       <span className="mt-2 size-1.5 rounded-full bg-primary" aria-hidden="true" />
                       <span className="text-sm leading-5 text-foreground/75">{humanizeDriver(driver)}</span>
                     </li>
@@ -164,15 +184,15 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (de
             )}
 
             {result.nextSteps?.length > 0 && (
-              <section className="border-t px-4 py-5 sm:px-6 lg:border-t-0">
+              <section className="border-t px-4 py-3.5 sm:px-5 lg:border-t-0">
                 <h4 className="flex items-center gap-2 text-sm font-semibold">
                   <ListChecks aria-hidden="true" className="size-4 text-primary" />
                   {t('nextSteps')}
                 </h4>
-                <ol className="mt-3 space-y-3">
+                <ol className="mt-2 space-y-2">
                   {result.nextSteps.map((step, index) => (
                     <li key={`${index}-${step}`} className="grid grid-cols-[1.5rem_minmax(0,1fr)] gap-2.5 text-sm text-muted-foreground">
-                      <span className="flex size-6 items-center justify-center rounded-md border bg-background text-[0.68rem] font-semibold tabular-nums text-foreground">{index + 1}</span>
+                      <span className="flex size-5 items-center justify-center rounded-md border bg-background text-[0.65rem] font-semibold tabular-nums text-foreground">{index + 1}</span>
                       <span className="pt-0.5 leading-5">{step}</span>
                     </li>
                   ))}
@@ -184,12 +204,12 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (de
 
         {factorEntries.length > 0 && (
           <details className="group">
-            <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-4 text-sm font-semibold outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 sm:px-6 [&::-webkit-details-marker]:hidden">
+            <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-sm font-semibold outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 sm:px-5 [&::-webkit-details-marker]:hidden">
               <Scale aria-hidden="true" className="size-4 text-primary" />
               <span className="flex-1">{t('factors.title')}</span>
               <ChevronDown aria-hidden="true" className="size-4 text-muted-foreground transition-transform group-open:rotate-180" />
             </summary>
-            <dl className="divide-y border-t px-4 sm:px-6">
+            <dl className="divide-y border-t px-4 sm:px-5">
               {factorEntries.map(([key, factor]) => (
                 <div key={key} className="grid gap-1 py-3 text-xs sm:grid-cols-[minmax(8rem,1fr)_auto_auto_auto] sm:items-center sm:gap-5">
                   <dt className="font-medium text-foreground">{humanizeKey(key)}</dt>
@@ -202,7 +222,7 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (de
           </details>
         )}
 
-        <section className="bg-slate-50/70 px-4 py-5 sm:px-6" aria-labelledby={`${headingId}-decision`}>
+        <section className="bg-slate-50/70 px-4 py-3.5 sm:px-5" aria-labelledby={`${headingId}-decision`}>
           {decided ? (
             <div className="grid grid-cols-[2rem_minmax(0,1fr)] gap-3">
               <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
@@ -233,15 +253,15 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (de
                 </div>
               )}
 
-              <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+              <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
                 <div className="max-w-2xl">
                   <h4 id={`${headingId}-decision`} className="text-sm font-semibold">{t('decision.title')}</h4>
                   <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('decision.notice')}</p>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
-                  <Button type="button" size="sm" disabled={busy || isError} onClick={() => onDecide({ type: 'accept' })}>
-                    <CheckCircle2 aria-hidden="true" />
-                    {t('actions.accept')}
+                  <Button type="button" size="sm" disabled={busy || isError} onClick={() => decide({ type: 'accept' })}>
+                    {decisionBusy && pendingDecisionType === 'accept' ? <LoaderCircle className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <CheckCircle2 aria-hidden="true" />}
+                    {decisionBusy && pendingDecisionType === 'accept' ? t('decision.recording') : t('actions.accept')}
                   </Button>
                   <Button type="button" size="sm" variant="outline" aria-expanded={mode === 'override'} disabled={busy} onClick={() => setMode(mode === 'override' ? 'none' : 'override')}>
                     <Scale aria-hidden="true" />
@@ -255,7 +275,7 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (de
               </div>
 
               {mode !== 'none' && (
-                <div className="mt-5 grid gap-4 border-t pt-5">
+                <div className="mt-4 grid gap-3.5 border-t pt-4">
                   {mode === 'override' && (
                     <div>
                       <label className="mb-1.5 block text-xs font-medium" htmlFor={classificationSelectId}>{t('override.classificationLabel')}</label>
@@ -322,14 +342,15 @@ export function ResultCard({ a, onDecide, busy }: { a: Assessment; onDecide: (de
                     className="w-fit"
                     disabled={busy || (mode === 'override' && (!overrideClassification || reason.trim().length < 25))}
                     onClick={() =>
-                      onDecide(
+                      decide(
                         mode === 'override'
                           ? { type: 'override', overriddenTo: overrideClassification as DecisionInput['overriddenTo'], reason }
                           : { type: 'escalate', reason: reason || undefined, ...(target !== NOBODY ? { escalateToUserId: target } : {}) },
                       )
                     }
                   >
-                    {mode === 'override' ? t('actions.recordOverride') : t('actions.escalateSubmit')}
+                    {decisionBusy && pendingDecisionType === mode && <LoaderCircle className="animate-spin motion-reduce:animate-none" aria-hidden="true" />}
+                    {decisionBusy && pendingDecisionType === mode ? t('decision.recording') : mode === 'override' ? t('actions.recordOverride') : t('actions.escalateSubmit')}
                   </Button>
                 </div>
               )}

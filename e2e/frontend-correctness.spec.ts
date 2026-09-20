@@ -975,11 +975,14 @@ test('desktop sidebar collapse persists while mobile navigation stays labelled a
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
-test('a long chat transcript scrolls internally, keeps the composer visible, and presents a readable scenario label [FR-05, FR-06, NFR-07]', async ({ page }) => {
+test('a long chat transcript stays viewport-contained with one transcript scroller and responsive context [FR-05, FR-06, NFR-07, NFR-08]', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await authenticate(page, 'requestor');
   const scenarioKey = 'fin_unauthorized_transaction';
-  const currentAssessment = assessment({ scenarioKey });
+  const longTransactionToken = `TXN-${'A'.repeat(96)}`;
+  let submittedDecision: unknown;
+  let releaseDecision: (() => void) | undefined;
+  let assessmentState = assessment({ scenarioKey });
   const longMessages = Array.from({ length: 50 }, (_, index) => ({
     _id: `message-${index}`,
     role: index % 2 === 0 ? 'assistant' : 'user',
@@ -987,6 +990,13 @@ test('a long chat transcript scrolls internally, keeps the composer visible, and
     content: `Transcript entry ${index + 1}. This intentionally exercises a long, auditable assessment history.`,
     createdAt: '2026-09-14T00:00:00.000Z',
   }));
+  longMessages.push({
+    _id: 'message-long-token',
+    role: 'user',
+    kind: 'answer',
+    content: longTransactionToken,
+    createdAt: '2026-09-14T00:00:00.000Z',
+  } as (typeof longMessages)[number]);
   longMessages.push({
     _id: 'message-question',
     role: 'assistant',
@@ -996,14 +1006,23 @@ test('a long chat transcript scrolls internally, keeps the composer visible, and
     question: { key: 'amount', text: 'How much?', type: 'number', factKey: 'amount', required: true },
     createdAt: '2026-09-14T00:00:00.000Z',
   } as (typeof longMessages)[number]);
+  let messageState = longMessages;
 
   await mockApi(page, () => currentUser('requestor'), async ({ route, path, method }) => {
     if (path === '/assessments/assessment-1' && method === 'GET') {
-      await ok(route, currentAssessment);
+      await ok(route, assessmentState);
       return true;
     }
     if (path === '/assessments/assessment-1/messages' && method === 'GET') {
-      await ok(route, longMessages);
+      await ok(route, messageState);
+      return true;
+    }
+    if (path === '/assessments/assessment-1/decision' && method === 'POST') {
+      submittedDecision = route.request().postDataJSON();
+      await new Promise<void>((resolve) => {
+        releaseDecision = resolve;
+      });
+      await ok(route, assessmentState);
       return true;
     }
     return false;
@@ -1015,6 +1034,8 @@ test('a long chat transcript scrolls internally, keeps the composer visible, and
   await expect(page.getByText('Fin Unauthorized Transaction', { exact: true }).first()).toBeVisible();
   await expect(page.getByText(scenarioKey, { exact: true })).toHaveCount(0);
   const metrics = await page.evaluate(() => {
+    const main = document.querySelector<HTMLElement>('#main-content');
+    const shell = document.querySelector<HTMLElement>('[data-testid="assessment-conversation-page"]');
     const log = document.querySelector<HTMLElement>('[role="log"]');
     const scrollArea = log?.firstElementChild as HTMLElement | null;
     const composerElement = document.querySelector<HTMLElement>('[data-testid="composer"]');
@@ -1022,17 +1043,110 @@ test('a long chat transcript scrolls internally, keeps the composer visible, and
       viewportHeight: window.innerHeight,
       bodyHeight: document.documentElement.scrollHeight,
       composerTop: composerElement?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY,
+      composerBottom: composerElement?.getBoundingClientRect().bottom ?? Number.POSITIVE_INFINITY,
+      shellClientHeight: shell?.clientHeight ?? 0,
+      shellScrollHeight: shell?.scrollHeight ?? 0,
       clientHeight: scrollArea?.clientHeight ?? 0,
       scrollHeight: scrollArea?.scrollHeight ?? 0,
+      mainScrollOwners: main
+        ? Array.from(main.querySelectorAll<HTMLElement>('*')).filter((element) => {
+            const overflowY = window.getComputedStyle(element).overflowY;
+            return (overflowY === 'auto' || overflowY === 'scroll') && element.scrollHeight > element.clientHeight + 1;
+          }).length
+        : 0,
     };
   });
 
   expect(metrics.composerTop).toBeLessThan(metrics.viewportHeight);
+  expect(metrics.composerBottom).toBeLessThanOrEqual(metrics.viewportHeight);
+  expect(metrics.shellScrollHeight).toBeLessThanOrEqual(metrics.shellClientHeight + 1);
   expect(metrics.scrollHeight).toBeGreaterThan(metrics.clientHeight);
-  expect(metrics.bodyHeight).toBeLessThan(metrics.viewportHeight * 1.5);
+  expect(metrics.mainScrollOwners).toBe(1);
+  expect(metrics.bodyHeight).toBeLessThanOrEqual(metrics.viewportHeight);
+
+  const contextDisclosure = page.getByTestId('assessment-context-disclosure');
+  await expect(contextDisclosure).toBeVisible();
+  await contextDisclosure.locator(':scope > summary').click();
+  await expect(contextDisclosure).toHaveAttribute('open', '');
+  await expect(contextDisclosure.getByRole('heading', { name: 'ASSESSMENT WORKFLOW' })).toBeVisible();
+  await contextDisclosure.locator(':scope > summary').click();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(composer).toBeVisible();
+  const longTokenBubble = page.getByText(longTransactionToken, { exact: true });
+  await expect(longTokenBubble).toBeVisible();
+  expect(await longTokenBubble.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+  assessmentState = assessment({
+    status: 'awaiting_decision',
+    phase: 'done',
+    currentQuestionKey: undefined,
+    facts: Array.from({ length: 16 }, (_, index) => ({
+      key: index === 0 ? 'controls_bypassed' : index === 1 ? 'amount_usd' : `captured_fact_${index + 1}`,
+      value: index === 0 ? true : index === 1 ? 125000 : `Evidence value ${index + 1}`,
+      source: 'mcq' as const,
+      questionKey: `question_${index + 1}`,
+      confidence: 1,
+      flagged: false,
+    })),
+    result: {
+      score: 78,
+      classification: 'elevated_risk',
+      computedClassification: 'elevated_risk',
+      ruleDriven: false,
+      confidence: 92,
+      professionalConsult: true,
+      mandatoryReview: false,
+      explanation: 'The amount, bypassed controls, and active incident status make prompt professional review appropriate.',
+      keyDrivers: ['Controls Bypassed = true', 'Amount Usd > 100000'],
+      recommendedAction: 'Further Professional Risk Guidance Needed',
+      nextSteps: ['Disclose/Report Issue'],
+      factors: {},
+      computedAt: '2026-09-14T00:00:00.000Z',
+    },
+  });
+  messageState = longMessages.filter((message) => message._id !== 'message-long-token').slice(-3);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Assessment result' })).toBeVisible();
+  await expect(page.getByText('Recommended action', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Accept recommendation' })).toBeVisible();
+  await expect(page.getByTestId('composer')).toHaveCount(0);
+  const resultMetrics = await page.evaluate(() => {
+    const shell = document.querySelector<HTMLElement>('[data-testid="assessment-conversation-page"]');
+    const result = document.querySelector<HTMLElement>('[data-testid="assessment-result"]');
+    const context = document.querySelector<HTMLElement>('aside[aria-label="Assessment context"]');
+    const main = document.querySelector<HTMLElement>('#main-content');
+    return {
+      shellClientHeight: shell?.clientHeight ?? 0,
+      shellScrollHeight: shell?.scrollHeight ?? 0,
+      resultBottom: result?.getBoundingClientRect().bottom ?? Number.POSITIVE_INFINITY,
+      viewportHeight: window.innerHeight,
+      contextClientHeight: context?.clientHeight ?? 0,
+      contextScrollHeight: context?.scrollHeight ?? 0,
+      scrollOwners: main
+        ? Array.from(main.querySelectorAll<HTMLElement>('*')).filter((element) => {
+            const overflowY = window.getComputedStyle(element).overflowY;
+            return (overflowY === 'auto' || overflowY === 'scroll') && element.scrollHeight > element.clientHeight + 1;
+          }).length
+        : 0,
+    };
+  });
+  expect(resultMetrics.shellScrollHeight).toBeLessThanOrEqual(resultMetrics.shellClientHeight + 1);
+  expect(resultMetrics.resultBottom).toBeLessThanOrEqual(resultMetrics.viewportHeight);
+  expect(resultMetrics.contextScrollHeight).toBeLessThanOrEqual(resultMetrics.contextClientHeight + 1);
+  expect(resultMetrics.scrollOwners).toBeLessThanOrEqual(1);
+
+  const acceptDecision = page.getByRole('button', { name: 'Accept recommendation' });
+  await acceptDecision.click();
+  await expect.poll(() => submittedDecision).toEqual({ type: 'accept' });
+  await expect(page.getByRole('button', { name: 'Recording your decision…' })).toBeVisible();
+  releaseDecision?.();
+  await expect(acceptDecision).toBeVisible();
 });
 
-test('pressing Enter on a number question sends a structured number [FR-06, NFR-01]', async ({ page }) => {
+test('pressing Enter on a number question sends a structured number [FR-06, NFR-07]', async ({ page }) => {
   let submitted: unknown;
   const numberQuestion = { key: 'amount', text: 'How much?', type: 'number', factKey: 'amount', required: true };
   const currentAssessment = assessment();
@@ -1073,9 +1187,12 @@ test('pressing Enter on a number question sends a structured number [FR-06, NFR-
   await expect.poll(() => submitted).toEqual({ value: 1250 });
 });
 
-test('the free-text composer sends each intended answer once and keeps newline or composition input local [FR-06, NFR-01]', async ({ page }) => {
+test('the free-text composer echoes one intended answer, reports processing, and restores failed drafts [FR-06, NFR-07]', async ({ page }) => {
   let postCount = 0;
+  let failNext = false;
+  let failNextTranscriptRefresh = false;
   const submitted: unknown[] = [];
+  const pendingResponses: Array<() => void> = [];
   const freeTextQuestion = { key: 'context', text: 'What happened?', type: 'free_text', factKey: 'context', required: true };
   const currentAssessment = assessment({ currentQuestionKey: 'context' });
   const currentMessages = [
@@ -1097,15 +1214,42 @@ test('the free-text composer sends each intended answer once and keeps newline o
       return true;
     }
     if (path === '/assessments/assessment-1/messages' && method === 'GET') {
+      if (failNextTranscriptRefresh) {
+        failNextTranscriptRefresh = false;
+        await route.fulfill({
+          status: 500,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: { code: 'TEMPORARY_REFRESH', message: 'Refresh failed.' } }),
+        });
+        return true;
+      }
       await ok(route, currentMessages);
       return true;
     }
     if (path === '/assessments/assessment-1/messages' && method === 'POST') {
       postCount += 1;
-      submitted.push(route.request().postDataJSON());
-      // Keep the request in flight long enough to exercise the synchronous busy-ref guard.
-      await new Promise<void>((resolve) => setTimeout(resolve, 200));
-      await ok(route, currentAssessment);
+      const submittedAnswer = route.request().postDataJSON();
+      submitted.push(submittedAnswer);
+      if (failNext) {
+        await route.fulfill({
+          status: 500,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: { code: 'TEMPORARY_FAILURE', message: 'Please try again.' } }),
+        });
+        return true;
+      }
+      // Hold the response so the optimistic bubble and meaningful assistant status can be asserted.
+      await new Promise<void>((resolve) => pendingResponses.push(resolve));
+      await ok(
+        route,
+        submittedAnswer?.text === 'Committed once'
+          ? {
+              ...currentAssessment,
+              currentQuestionKey: 'details',
+              nextQuestion: { key: 'details', text: 'What happened next?', type: 'free_text', factKey: 'details', required: true },
+            }
+          : currentAssessment,
+      );
       return true;
     }
     return false;
@@ -1137,7 +1281,12 @@ test('the free-text composer sends each intended answer once and keeps newline o
     enter();
   });
   await expect.poll(() => postCount).toBe(1);
+  await expect(page.getByTestId('optimistic-answer')).toContainText('Final answer');
+  await expect(page.getByTestId('assistant-processing')).toContainText('Understanding your answer and preparing the next question…');
+  await expect(input).toHaveValue('');
+  pendingResponses.shift()?.();
   await expect(composer).toHaveAttribute('data-busy', 'false');
+  await expect(page.getByTestId('optimistic-answer')).toHaveCount(0);
   expect(submitted).toEqual([{ text: 'Final answer' }]);
 
   await input.fill('Button answer');
@@ -1148,8 +1297,39 @@ test('the free-text composer sends each intended answer once and keeps newline o
     click();
   });
   await expect.poll(() => postCount).toBe(2);
+  await expect(page.getByTestId('optimistic-answer')).toContainText('Button answer');
+  pendingResponses.shift()?.();
   await expect(composer).toHaveAttribute('data-busy', 'false');
   expect(submitted).toEqual([{ text: 'Final answer' }, { text: 'Button answer' }]);
+
+  failNext = true;
+  await input.fill('Keep this draft');
+  await send.click();
+  await expect.poll(() => postCount).toBe(3);
+  await expect(composer).toHaveAttribute('data-busy', 'false');
+  await expect(input).toHaveValue('Keep this draft');
+  await expect(composer.getByRole('alert')).toContainText('Please try again.');
+
+  failNext = false;
+  failNextTranscriptRefresh = true;
+  await input.fill('Committed once');
+  await send.click();
+  await expect.poll(() => postCount).toBe(4);
+  await expect(page.getByTestId('optimistic-answer')).toContainText('Committed once');
+  pendingResponses.shift()?.();
+  await expect(composer).toHaveAttribute('data-busy', 'false');
+  await expect(input).toHaveValue('');
+  await expect(page.getByTestId('optimistic-answer')).toHaveCount(0);
+  await expect(page.getByText('Committed once', { exact: true })).toHaveCount(1);
+  await expect(page.getByTestId('conversation-log').getByText('What happened next?', { exact: true })).toBeVisible();
+  await expect(composer.getByRole('alert')).toContainText('Your action was saved, but the latest conversation could not be refreshed.');
+
+  await input.fill('A different follow-up');
+  await send.click();
+  await expect.poll(() => postCount).toBe(5);
+  expect(submitted.at(-1)).toEqual({ text: 'A different follow-up' });
+  pendingResponses.shift()?.();
+  await expect(composer).toHaveAttribute('data-busy', 'false');
 });
 
 test('a low-confidence persona choice uses the explicit persona endpoint [FR-04]', async ({ page }) => {

@@ -41,7 +41,7 @@ UI, auth-restoration, structured-editor, system-administration, error, and confi
 frontend.
 
 The current 2026-09-20 repository validation passes 56/56 mocked browser cases, exact
-1,376/1,376 EN/BN key and ICU-variable parity, lint, typecheck, a 29/29-route production build,
+1,384/1,384 EN/BN key and ICU-variable parity, lint, typecheck, a 29/29-route production build,
 and a zero-vulnerability production dependency audit. Human language, accessibility, usability and
 owner visual acceptance remain external gates.
 
