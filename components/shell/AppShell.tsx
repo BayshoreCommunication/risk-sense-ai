@@ -42,6 +42,7 @@ import type { components } from '@/lib/api/types';
 import { firebaseSignOut } from '@/lib/firebase/client';
 import { WorkspaceProvider } from '@/components/shell/workspace-context';
 import { LanguageSwitcher } from '@/components/shell/LanguageSwitcher';
+import { ThemeSwitcher } from '@/components/theme/ThemeSwitcher';
 import { clearSession, ROLE_HOME, storeRole, type Role } from '@/lib/session';
 
 type AuthUser = components['schemas']['AuthUser'];
@@ -378,7 +379,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
               <span className="hidden truncate sm:inline">{accountInitials(me.user.name)} · {t(`roles.${trustedRole}`)}</span>
               <ChevronDown aria-hidden="true" className="hidden size-4 text-white/70 transition group-open:rotate-180 sm:block" />
             </summary>
-            <div className="absolute right-0 mt-2 w-[min(18rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-[0_20px_55px_rgba(6,29,67,0.22)]">
+            <div className="absolute right-0 mt-2 max-h-[calc(100dvh-6rem)] w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-border bg-card text-card-foreground shadow-[0_20px_55px_rgba(6,29,67,0.22)]">
               <div className="border-b p-4">
                 <p className="truncate text-sm font-semibold">{me.user.name}</p>
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">{me.user.email}</p>
@@ -386,6 +387,9 @@ export function AppShell({ role, children }: { role: Role; children: React.React
               </div>
               <div className="border-b p-3">
                 <LanguageSwitcher className="justify-between" />
+              </div>
+              <div className="border-b p-3">
+                <ThemeSwitcher />
               </div>
               <button type="button" className="flex w-full items-center gap-2.5 px-4 py-3 text-sm font-medium transition hover:bg-muted" onClick={() => void logout()}>
                 <LogOut aria-hidden="true" className="size-4 text-muted-foreground" />

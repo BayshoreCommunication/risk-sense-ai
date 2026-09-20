@@ -8,7 +8,7 @@ const testEnvironment = `NEXT_PUBLIC_ENV=ci NEXT_PUBLIC_API_URL=${baseURL}/test-
 export default defineConfig({
   testDir: './e2e',
   metadata: { frontendMocks: true },
-  testMatch: ['frontend-correctness.spec.ts', 'content-manager.spec.ts', 'system-admin.spec.ts', 'auth-recovery.spec.ts'],
+  testMatch: ['frontend-correctness.spec.ts', 'content-manager.spec.ts', 'system-admin.spec.ts', 'auth-recovery.spec.ts', 'theme-mode.spec.ts'],
   timeout: 90_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,

@@ -66,6 +66,11 @@
     "en": "English",
     "bn": "বাংলা"
   },
+  "theme": {
+    "darkMode": "Dark mode",
+    "switchToDark": "Switch to dark mode",
+    "switchToLight": "Switch to light mode"
+  },
   "login": {
     "title": "RiskSense AI",
     "eyebrow": "Secure decision intelligence",
