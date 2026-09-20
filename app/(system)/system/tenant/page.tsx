@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { BadgeCheck, Building2, KeyRound, LockKeyhole, UsersRound } from 'lucide-react';
+import { BadgeCheck, Building2, KeyRound, LockKeyhole, Shapes, UsersRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -25,9 +25,14 @@ export default function TenantSettingsPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
+  const [sectorText, setSectorText] = useState('');
 
   useEffect(() => {
-    api.GET('/system/tenant').then((r) => (r.data ? setS(r.data.data) : setError(toApiError((r as { error?: unknown }).error).message)));
+    api.GET('/system/tenant').then((r) => {
+      if (!r.data) return setError(toApiError((r as { error?: unknown }).error).message);
+      setS(r.data.data);
+      setSectorText((r.data.data.sectors ?? []).join('; '));
+    });
   }, []);
 
   const merged = s ? { ...s, ...draft, features: { ...s.features, ...(draft.features ?? {}) }, sso: { ...s.sso, ...(draft.sso ?? {}) }, authPolicy: { ...s.authPolicy, ...(draft.authPolicy ?? {}) }, sessionPolicy: { ...s.sessionPolicy, ...(draft.sessionPolicy ?? {}) }, retentionPolicy: { ...s.retentionPolicy, ...(draft.retentionPolicy ?? {}) } } : null;
@@ -40,6 +45,7 @@ export default function TenantSettingsPage() {
     setBusy(false);
     if (!r.data) return setError(toApiError((r as { error?: unknown }).error).message);
     setS(r.data.data);
+    setSectorText(r.data.data.sectors.join('; '));
     setDraft({});
     setSaved(t('saved', { time: new Date().toLocaleTimeString(locale) }));
   }
@@ -107,6 +113,34 @@ export default function TenantSettingsPage() {
               </div>
             </div>
           </section>
+
+          <section className="space-y-5 p-4 sm:p-6" aria-labelledby="sector-vocabulary-title">
+            <div className="flex items-start gap-3">
+              <span className="card-icon"><Shapes className="size-5" aria-hidden="true" /></span>
+              <div>
+                <h2 id="sector-vocabulary-title" className="font-heading text-base font-bold tracking-[-0.01em]">{t('sectors.title')}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{t('sectors.description')}</p>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="sector-vocabulary">{t('sectors.label')}</Label>
+              <Input
+                id="sector-vocabulary"
+                value={sectorText}
+                placeholder="financial; healthcare; it"
+                aria-describedby="sector-vocabulary-help"
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setSectorText(value);
+                  setDraft((current) => ({
+                    ...current,
+                    sectors: value.split(';').map((sector) => sector.trim().toLowerCase()).filter(Boolean),
+                  }));
+                }}
+              />
+              <p id="sector-vocabulary-help" className="text-xs leading-5 text-muted-foreground">{t('sectors.help')}</p>
+            </div>
+          </section>
         </CardContent>
       </Card>
 
@@ -143,7 +177,7 @@ export default function TenantSettingsPage() {
         <Button disabled={!dirty || busy} onClick={() => void save()}>
           {busy ? t('saving') : t('save')}
         </Button>
-        <Button variant="outline" disabled={!dirty || busy} onClick={() => setDraft({})}>
+        <Button variant="outline" disabled={!dirty || busy} onClick={() => { setDraft({}); setSectorText(s?.sectors.join('; ') ?? ''); }}>
           {t('discard')}
         </Button>
       </div>

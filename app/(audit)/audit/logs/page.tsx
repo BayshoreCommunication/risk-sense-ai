@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { CheckCircle2, ChevronDown, ChevronUp, RefreshCw, Search, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, ChevronDown, ChevronUp, Eye, EyeOff, RefreshCw, Search, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { PageHeader } from '@/components/shell/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -38,30 +39,48 @@ export default function AuditLogsPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
+  const [unmask, setUnmask] = useState(false);
+  const [confirmUnmask, setConfirmUnmask] = useState(false);
+  // Sensitive and masked reads can overlap while filters, pagination, or the disclosure mode
+  // changes. Only the newest request may publish data; otherwise a late clear-text response could
+  // overwrite a newer masked view.
+  const listRequestGeneration = useRef(0);
   const categoryOptions = [{ value: ANY, label: t('allCategories') }, ...CATEGORIES.map((category) => ({ value: category, label: category }))];
   const searchEntityId = /^[a-f0-9]{24}$/i.test(search.trim()) ? search.trim() : '';
   const isLoadedPageFilter = Boolean(search.trim()) && !searchEntityId;
 
   const load = useCallback(
     (cursorSeq: number | null) => {
+      const generation = ++listRequestGeneration.current;
       setLoading(true);
       const q: AuditListQuery = { limit: 50 };
       if (category !== ANY) q.category = category as AuditListQuery['category'];
       if (searchEntityId) q.entityId = searchEntityId;
       if (cursorSeq) q.cursorSeq = cursorSeq;
+      if (unmask) q.unmask = 'true';
       auditApi
         .list(q)
         .then((r) => {
+          if (generation !== listRequestGeneration.current) return;
           setItems(r.items);
           setNext(r.nextCursorSeq);
           setError(null);
         })
-        .catch((e) => setError(toApiError(e).message))
-        .finally(() => setLoading(false));
+        .catch((e) => {
+          if (generation === listRequestGeneration.current) setError(toApiError(e).message);
+        })
+        .finally(() => {
+          if (generation === listRequestGeneration.current) setLoading(false);
+        });
     },
-    [category, searchEntityId],
+    [category, searchEntityId, unmask],
   );
-  useEffect(() => load(cursor), [load, cursor]);
+  useEffect(() => {
+    load(cursor);
+    return () => {
+      listRequestGeneration.current += 1;
+    };
+  }, [load, cursor]);
 
   const visibleItems = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -69,6 +88,29 @@ export default function AuditLogsPage() {
     return items.filter((entry) => [entry.actorRole, entry.actorUserId, entry.action, entry.category, entry.entity.type, entry.entity.id]
       .some((value) => value?.toLowerCase().includes(query)));
   }, [items, search]);
+
+  function showSensitivePayloads() {
+    listRequestGeneration.current += 1;
+    setConfirmUnmask(false);
+    setExpanded(null);
+    setItems([]);
+    setNext(null);
+    setCursor(null);
+    setError(null);
+    setUnmask(true);
+  }
+
+  function returnToMaskedView() {
+    listRequestGeneration.current += 1;
+    setConfirmUnmask(false);
+    setExpanded(null);
+    // Clear clear-text payloads synchronously; the next render refetches the same view masked.
+    setItems([]);
+    setNext(null);
+    setCursor(null);
+    setError(null);
+    setUnmask(false);
+  }
 
   return (
     <div className="page-shell">
@@ -100,6 +142,34 @@ export default function AuditLogsPage() {
           </div>
         }
       />
+      <div
+        className={`flex flex-col gap-3 rounded-xl border p-4 text-sm sm:flex-row sm:items-center sm:justify-between ${
+          unmask ? 'border-amber-300 bg-amber-50/80 text-amber-950' : 'border-blue-200 bg-blue-50/65 text-blue-950'
+        }`}
+        role="status"
+      >
+        <div className="flex items-start gap-3">
+          {unmask
+            ? <ShieldAlert className="mt-0.5 size-5 shrink-0 text-amber-700" aria-hidden="true" />
+            : <ShieldCheck className="mt-0.5 size-5 shrink-0 text-blue-700" aria-hidden="true" />}
+          <div>
+            <p className="font-semibold">{unmask ? t('unmask.visibleTitle') : t('unmask.maskedTitle')}</p>
+            <p className={`mt-1 text-xs leading-5 ${unmask ? 'text-amber-900/80' : 'text-blue-900/75'}`}>
+              {unmask ? t('unmask.visibleDescription') : t('unmask.maskedDescription')}
+            </p>
+          </div>
+        </div>
+        <Button
+          size="sm"
+          variant={unmask ? 'default' : 'outline'}
+          className="shrink-0 self-start sm:self-auto"
+          disabled={loading}
+          onClick={() => unmask ? returnToMaskedView() : setConfirmUnmask(true)}
+        >
+          {unmask ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+          {unmask ? t('unmask.returnMasked') : t('unmask.show')}
+        </Button>
+      </div>
       <div className="control-strip grid gap-3 sm:grid-cols-3">
         <div className="space-y-1">
           <Label className="text-xs font-medium">{t('filters.category')}</Label>
@@ -155,7 +225,7 @@ export default function AuditLogsPage() {
           </article>
         ))}
       </div>
-      <div className="data-panel fills hidden lg:flex">
+      <div className="data-panel hidden lg:flex">
         <Table containerLabel={t('title')}>
           <TableHeader>
             <TableRow>
@@ -237,6 +307,22 @@ export default function AuditLogsPage() {
         </div>
       </div>
       <p className="rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-xs leading-5 text-blue-950/75">{t('note')}</p>
+
+      <Dialog open={confirmUnmask} onOpenChange={setConfirmUnmask}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('unmask.confirmTitle')}</DialogTitle>
+            <DialogDescription>{t('unmask.confirmDescription')}</DialogDescription>
+          </DialogHeader>
+          <div className="rounded-xl border border-amber-300 bg-amber-50/75 p-3 text-xs leading-5 text-amber-950">
+            {t('unmask.auditNotice')}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmUnmask(false)}>{t('unmask.cancel')}</Button>
+            <Button onClick={showSensitivePayloads}><Eye aria-hidden="true" />{t('unmask.confirm')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

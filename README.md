@@ -40,10 +40,10 @@ UI, auth-restoration, structured-editor, system-administration, error, and confi
 `npm run e2e` is the separate full-stack Playwright suite and requires a running backend and
 frontend.
 
-The 2026-09-15 redesign validation passes 31/31 mocked browser cases, exact 1,114/1,114 EN/BN key
-and ICU-variable parity, lint, typecheck, a 27/27-route production build, and a zero-vulnerability
-production dependency audit. Human language, accessibility, usability and owner visual acceptance
-remain external gates.
+The current 2026-09-20 repository validation passes 56/56 mocked browser cases, exact
+1,376/1,376 EN/BN key and ICU-variable parity, lint, typecheck, a 29/29-route production build,
+and a zero-vulnerability production dependency audit. Human language, accessibility, usability and
+owner visual acceptance remain external gates.
 
 ## Implemented workspaces
 
@@ -54,8 +54,10 @@ remain external gates.
   recovery evidence, stored-record conformance, and bounded immutable audit export/manifests.
 - Audit: assessment reconstruction, masked/unmasked access, and audit-chain verification.
 
-English and Bangla message catalogs cover the current application UI. NFR-08 remains partially open
-at product level because supported sectors and sector vocabulary are still enumerated in code.
+English and Bangla message catalogs cover the current application UI. The authenticated tenant's
+sector vocabulary now drives administrator content controls, while the starter sector list remains
+only a default. This completes the repository-side NFR-08 configurability work; client approval of
+the production vocabulary and human Bengali/accessibility/usability acceptance remain external.
 
 ## Release boundary
 

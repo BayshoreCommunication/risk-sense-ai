@@ -14,7 +14,7 @@ function Table({ className, containerClassName, containerLabel, ...props }: Tabl
       data-slot="table-container"
       role={containerLabel ? "region" : undefined}
       aria-label={containerLabel}
-      tabIndex={0}
+      tabIndex={containerLabel ? 0 : undefined}
       className={cn(
         "scrollbar-subtle relative max-h-[max(16rem,calc(100dvh-26rem))] w-full overflow-auto outline-none focus-visible:ring-3 focus-visible:ring-ring/35",
         containerClassName

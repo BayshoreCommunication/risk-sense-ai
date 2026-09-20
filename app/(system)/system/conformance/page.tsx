@@ -147,7 +147,7 @@ export default function ConformancePage() {
           })}
         </div>
         <div className="hidden rounded-xl border md:block">
-          <Table>
+          <Table containerLabel={t('flags.title')}>
             <TableHeader>
               <TableRow>
                 <TableHead>{t('flags.columns.assessment')}</TableHead>
@@ -198,7 +198,7 @@ export default function ConformancePage() {
           ))}
         </div>
         <div className="hidden rounded-xl border md:block">
-          <Table>
+          <Table containerLabel={t('runs.title')}>
             <TableHeader><TableRow><TableHead>{t('runs.columns.when')}</TableHead><TableHead>{t('runs.columns.trigger')}</TableHead><TableHead className="text-right">{t('runs.columns.scanned')}</TableHead><TableHead className="text-right">{t('runs.columns.valid')}</TableHead><TableHead className="text-right">{t('runs.columns.flagged')}</TableHead><TableHead className="text-right">{t('runs.columns.resolved')}</TableHead><TableHead className="text-right">{t('runs.columns.duration')}</TableHead></TableRow></TableHeader>
             <TableBody>
               {!loading && runs.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">{t('runs.empty')}</TableCell></TableRow>}

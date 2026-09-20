@@ -91,7 +91,7 @@ function ResultTable({ result, title, positiveCountsOnly = false }: { result: Re
   const rows = positiveCountsOnly ? result.rows.filter((row) => Number(row.count) > 0) : result.rows;
   return (
     <div className="overflow-hidden rounded-xl border">
-      <Table>
+      <Table containerLabel={title}>
         <caption className="sr-only">{title}</caption>
         <TableHeader className="bg-muted/45">
           <TableRow>{result.columns.map((column) => <TableHead key={column.key}>{column.label}</TableHead>)}</TableRow>

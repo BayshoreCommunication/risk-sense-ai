@@ -48,7 +48,7 @@ export default function MandatoryReviewQueuePage() {
   const pages = data?.pages ?? 1;
 
   return (
-    <div className="space-y-6">
+    <div className="page-shell">
       <PageHeader title={t('title')} description={t('description')} requirements={['AI-03', 'FR-20']} />
       <div className="inline-flex rounded-xl border bg-muted/35 p-1 shadow-sm">
         <Button size="sm" variant={tab === 'pending' ? 'default' : 'ghost'} aria-pressed={tab === 'pending'} onClick={() => { setTab('pending'); setPage(1); }}>
@@ -60,7 +60,7 @@ export default function MandatoryReviewQueuePage() {
       </div>
       {error && <p className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</p>}
       <section className="overflow-hidden rounded-2xl border bg-card shadow-sm" aria-busy={!data && !error}>
-        <Table className="min-w-[980px]">
+        <Table className="min-w-[980px]" containerLabel={t('title')}>
           <TableHeader className="bg-muted/45">
             <TableRow>
               <TableHead>{t('columns.started')}</TableHead>

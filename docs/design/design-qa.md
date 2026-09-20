@@ -14,9 +14,9 @@ The shared shell, role navigation, page hierarchy, controls, cards, tables, char
 |---|---|---|---|
 | Login | Split navy/white sign-in layout, product assurance panel and plan-aware authentication | Single-column identity flow with translated status notices | Passed |
 | Requestor | Numbered persona/scenario intake, review filters/table, conversation and decision workflow | Drawer navigation, responsive intake cards, contained transcript and visible composer | Passed |
-| Administrator | Live overview, content libraries, governed rules/scoring/datasets, analytics and reports | Stacked metrics/cards, contained data tables and compact account control | Passed |
+| Administrator | Live overview, tenant-driven content libraries, governed rules/scoring/datasets, feature-gated analytics and reports | Stacked metrics/cards, named and contained data tables, and compact account control | Passed |
 | System Administrator | Users, tenant/session policy, retention and DR operational views | Responsive cards and contained controls, without document-level horizontal overflow | Passed |
-| Audit | Five-column log hierarchy, filters, size, evidence disclosure and chain verification | Evidence cards preserve full hash, decision and record data | Passed |
+| Audit | Five-column log hierarchy, filters, size, confirmed evidence disclosure, masked-state reset and chain verification | Evidence cards preserve full hash, decision and record data | Passed |
 | Analytics comment flow | Chart, Pie and Table modes plus selectable month/classification values and row drill-down | View selector and horizontally contained table remain keyboard/pointer usable | Passed |
 | Localization | English catalog and interaction pass | Bengali catalog and interactive language switch, including login notices | Passed |
 
@@ -28,14 +28,19 @@ The shared shell, role navigation, page hierarchy, controls, cards, tables, char
 - Made translated login notices derive from semantic notice state instead of storing translated strings.
 - Clarified that free-text Audit filtering applies to the loaded 50 entries while an exact 24-character record ID is server-filtered.
 - Kept dense tables inside labelled horizontal scroll regions instead of allowing document-level overflow.
+- Gated analytics data requests and navigation on the authoritative workspace feature before any report request is sent.
+- Required confirmation before audit evidence is unmasked, reset the view to masked after context changes, and ignored late unmasked responses that arrive after a newer masked request.
+- Preserved requestor and department context for named escalatees even when broad review-dashboard access is disabled.
+- Reused the standard page shell for the administrator review queue and supplied accessible names for every focusable table region.
+- Replaced hardcoded administrator sector choices with the authenticated tenant vocabulary, retaining the starter list only as a backend default.
 
 ## Automated evidence
 
 - `npm run typecheck`: passed.
 - `npm run lint`: passed.
 - `npm run build`: passed, 29/29 application routes generated.
-- `npm run e2e:frontend`: passed, 51/51 mocked browser cases.
-- English/Bengali catalogs: 1,357/1,357 keys, zero missing keys and zero ICU-variable mismatches.
+- `npm run e2e:frontend`: passed, 56/56 mocked browser cases across four files.
+- English/Bengali catalogs: 1,376/1,376 keys, zero missing keys and zero ICU-variable mismatches.
 - Desktop browser review used the default 1920×1080 viewport; responsive review used 390×844, with no document-level horizontal overflow on the sampled role pages.
 
 ## Acceptance boundary

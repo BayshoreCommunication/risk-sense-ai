@@ -5,6 +5,7 @@ import { AlertTriangle, ArrowUpCircle, Info, ShieldCheck, Siren, type LucideIcon
 import { ContentManager, type FieldSpec } from '@/components/admin/ContentManager';
 import { Badge } from '@/components/ui/badge';
 import { rulesApi } from '@/lib/admin/content';
+import { useWorkspace } from '@/components/shell/workspace-context';
 
 /** Icon and colour per forced classification, following docs/design/figma-frames/14-admin-rule-engine.png. */
 const CLASSIFICATION_TONE: Record<string, { icon: LucideIcon; tile: string; text: string }> = {
@@ -14,7 +15,7 @@ const CLASSIFICATION_TONE: Record<string, { icon: LucideIcon; tile: string; text
   issue: { icon: Siren, tile: 'bg-red-500/10 text-red-700', text: 'text-red-700' },
 };
 
-function ruleFields(t: ReturnType<typeof useTranslations>): FieldSpec[] {
+function ruleFields(t: ReturnType<typeof useTranslations>, sectors: string[]): FieldSpec[] {
   return [
   { name: 'key', label: t('fields.key'), kind: 'text', required: true, immutable: true, help: t('help.key') },
   { name: 'name', label: t('fields.name'), kind: 'text', required: true },
@@ -30,14 +31,15 @@ function ruleFields(t: ReturnType<typeof useTranslations>): FieldSpec[] {
   { name: 'forcedClassification', label: t('fields.forcedClassification'), kind: 'select', options: ['monitor_only', 'risk', 'elevated_risk', 'issue'], required: true },
   { name: 'forcedAction', label: t('fields.forcedAction'), kind: 'text', help: t('help.forcedAction') },
   { name: 'priority', label: t('fields.priority'), kind: 'number', help: t('help.priority') },
-  { name: 'sectors', label: t('fields.sectors'), kind: 'list', help: t('help.sectors') },
+  { name: 'sectors', label: t('fields.sectors'), kind: 'list', help: t('help.sectors', { sectors: sectors.join('; ') }) },
   ];
 }
 
 export default function RulesPage() {
   const t = useTranslations('admin.rules');
   const classification = useTranslations('classification');
-  const fields = ruleFields(t);
+  const workspace = useWorkspace();
+  const fields = ruleFields(t, workspace?.sectors ?? []);
 
   const formatCondition = (value: unknown): string => {
     if (!value || typeof value !== 'object') return '—';

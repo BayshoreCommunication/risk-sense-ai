@@ -377,7 +377,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
 
       <div className="min-w-0 pt-[4.75rem] lg:pl-[19.5rem]" inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
         <main id="main-content" tabIndex={-1} className="h-[calc(100dvh-4.75rem)] overflow-hidden px-4 py-5 outline-none sm:px-7 sm:py-7 lg:px-12 lg:py-10">
-          <WorkspaceProvider value={{ role: trustedRole, plan: me.tenant.plan, features: me.tenant.features }}>{children}</WorkspaceProvider>
+          <WorkspaceProvider value={{ role: trustedRole, plan: me.tenant.plan, features: me.tenant.features, sectors: me.tenant.sectors ?? [] }}>{children}</WorkspaceProvider>
         </main>
       </div>
     </div>

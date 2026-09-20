@@ -143,7 +143,7 @@ function ReviewDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [personas, setPersonas] = useState<{ key: string; name: string }[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [reviewer, setReviewer] = useState(false); // PAID reviewDashboard → show requestor/department columns
+  const [reviewAccess, setReviewAccess] = useState<{ viewerId: string; broad: boolean } | null>(null);
   const [scenarioDraft, setScenarioDraft] = useState(filters.scenarioKey);
   const [requestVersion, setRequestVersion] = useState(0);
   const [dashboardOpenedAt] = useState(() => Date.now());
@@ -153,8 +153,12 @@ function ReviewDashboard() {
     assessments.personas().then(setPersonas).catch(() => setPersonas([]));
     assessments.departments().then(setDepartments).catch(() => setDepartments([]));
     api.GET('/me').then((r) => {
-      const me = r.data?.data as { user: { departmentIds: string[]; crossDepartmentAccess: boolean }; tenant: { features: { reviewDashboard: boolean } } } | undefined;
-      setReviewer(Boolean(me?.tenant.features.reviewDashboard && (me.user.departmentIds.length || me.user.crossDepartmentAccess)));
+      const me = r.data?.data as { user: { id: string; departmentIds: string[]; crossDepartmentAccess: boolean }; tenant: { features: { reviewDashboard: boolean } } } | undefined;
+      if (!me) return;
+      setReviewAccess({
+        viewerId: me.user.id,
+        broad: Boolean(me.tenant.features.reviewDashboard && (me.user.departmentIds.length || me.user.crossDepartmentAccess)),
+      });
     });
   }, []);
 
@@ -215,6 +219,12 @@ function ReviewDashboard() {
     { value: 'false', label: t('filters.reviewNotRequired') },
   ];
   const scenarioSuggestions = useMemo(() => Array.from(new Set(items.map((item) => item.scenarioKey).filter((key): key is string => Boolean(key)))).sort(), [items]);
+  // A named escalatee can review a foreign assessment without department or cross-department scope.
+  // Preserve requestor/department context whenever the backend-authorized page includes such a row.
+  const reviewer = Boolean(
+    reviewAccess?.broad ||
+      (reviewAccess && items.some((item) => Boolean(item.requestorId) && item.requestorId !== reviewAccess.viewerId)),
+  );
   const hasFilters = Boolean(filters.classification || filters.personaKey || filters.scenarioKey || filters.departmentId || filters.mandatoryReview || filters.from || filters.to);
   const personaName = (key?: string) => personas.find((p) => p.key === key)?.name ?? key?.replace(/_/g, ' ') ?? '—';
   const first = total === 0 ? 0 : (filters.page - 1) * filters.limit + 1;

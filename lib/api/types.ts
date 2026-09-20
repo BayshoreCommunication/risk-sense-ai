@@ -161,6 +161,77 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/jobs/nightly": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Scheduled retention, audit-chain verification, and conformance summary (SEC-06, SEC-07, FR-30) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** Format: date-time */
+                                ranAt: string;
+                                durationMs: number;
+                                retention: {
+                                    tenant: string;
+                                    flagged: number;
+                                    reduced: number;
+                                    archived: number;
+                                }[];
+                                auditChains: {
+                                    tenantId: string;
+                                    slug: string;
+                                    ok: boolean;
+                                    firstBadSeq?: number;
+                                }[];
+                                conformance: {
+                                    tenant: string;
+                                    scanned: number;
+                                    flagged: number;
+                                }[];
+                                brokenChains: string[];
+                            };
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Missing or invalid scheduler credential */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/otp/request": {
         parameters: {
             query?: never;
@@ -179,7 +250,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Code emailed (devCode only outside production with the console mail provider) */
+                /** @description Code emailed (devCode is never returned in production; non-production console/demo flows may return it) */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -562,7 +633,7 @@ export interface paths {
             parameters: {
                 query?: {
                     status?: "draft" | "active" | "deactivated";
-                    sector?: "financial" | "healthcare" | "it" | "general";
+                    sector?: string;
                     key?: string;
                     view?: "current" | "all";
                 };
@@ -601,8 +672,7 @@ export interface paths {
                     "application/json": {
                         key: string;
                         name: string;
-                        /** @enum {string} */
-                        sector: "financial" | "healthcare" | "it" | "general";
+                        sector: string;
                         description: string;
                         /** @default [] */
                         responsibilities?: string[];
@@ -705,8 +775,7 @@ export interface paths {
                     "application/json": {
                         key?: string;
                         name?: string;
-                        /** @enum {string} */
-                        sector?: "financial" | "healthcare" | "it" | "general";
+                        sector?: string;
                         description?: string;
                         /** @default [] */
                         responsibilities?: string[];
@@ -1268,7 +1337,7 @@ export interface paths {
                 query?: {
                     personaKey?: string;
                     scenarioKey?: string;
-                    sector?: "financial" | "healthcare" | "it" | "general";
+                    sector?: string;
                     status?: "active" | "retired";
                     key?: string;
                 };
@@ -1322,7 +1391,7 @@ export interface paths {
                             personaKeys: string[];
                             /** @default [] */
                             scenarioKeys?: string[];
-                            sectors: ("financial" | "healthcare" | "it" | "general")[];
+                            sectors: string[];
                             category?: string;
                         };
                         branchTrigger?: {
@@ -1432,7 +1501,7 @@ export interface paths {
                             personaKeys: string[];
                             /** @default [] */
                             scenarioKeys?: string[];
-                            sectors: ("financial" | "healthcare" | "it" | "general")[];
+                            sectors: string[];
                             category?: string;
                         };
                         branchTrigger?: {
@@ -1772,7 +1841,7 @@ export interface paths {
             parameters: {
                 query?: {
                     status?: "draft" | "approved" | "active" | "retired";
-                    sector?: "financial" | "healthcare" | "it" | "general";
+                    sector?: string;
                 };
                 header?: never;
                 path?: never;
@@ -1913,7 +1982,7 @@ export interface paths {
                         /** @default 100 */
                         priority?: number;
                         /** @default [] */
-                        sectors?: ("financial" | "healthcare" | "it" | "general")[];
+                        sectors?: string[];
                     };
                 };
             };
@@ -2096,7 +2165,7 @@ export interface paths {
                         /** @default 100 */
                         priority?: number;
                         /** @default [] */
-                        sectors?: ("financial" | "healthcare" | "it" | "general")[];
+                        sectors?: string[];
                     };
                 };
             };
@@ -2359,8 +2428,7 @@ export interface paths {
                     "application/json": {
                         key: string;
                         name: string;
-                        /** @enum {string} */
-                        sector?: "financial" | "healthcare" | "it" | "general";
+                        sector?: string;
                         /**
                          * @default weighted_sum
                          * @enum {string}
@@ -3155,8 +3223,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         name?: string;
-                        /** @enum {string} */
-                        sector?: "financial" | "healthcare" | "it" | "general";
+                        sector?: string;
                         /**
                          * @default weighted_sum
                          * @enum {string}
@@ -4110,8 +4177,7 @@ export interface paths {
                             [key: string]: string | number | boolean | unknown | unknown;
                         };
                         matrixId?: string;
-                        /** @enum {string} */
-                        sector?: "financial" | "healthcare" | "it" | "general";
+                        sector?: string;
                         /** @default [] */
                         requiredFactKeys?: string[];
                         /** @default {} */
@@ -4887,6 +4953,7 @@ export interface paths {
                         name?: string;
                         /** @enum {string} */
                         plan?: "free" | "paid";
+                        sectors?: string[];
                         features?: {
                             sso?: boolean;
                             reviewDashboard?: boolean;
@@ -5565,6 +5632,7 @@ export interface components {
                 departmentMapping: boolean;
                 blockConcurrentLogin: boolean;
             };
+            sectors: string[];
             sessionPolicy: {
                 idleTimeoutMin: number;
                 maxConcurrentSessions: number;
@@ -5715,6 +5783,7 @@ export interface components {
                 departmentMapping: boolean;
                 blockConcurrentLogin: boolean;
             };
+            sectors: string[];
             sso: {
                 providerId: string | null;
                 domain: string | null;

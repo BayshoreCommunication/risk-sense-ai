@@ -259,7 +259,7 @@ export default function SystemAuditArchivePage() {
               ))}
             </div>
             <div className="hidden md:block">
-              <Table>
+              <Table containerLabel={t('history.title')}>
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t('history.columns.created')}</TableHead>

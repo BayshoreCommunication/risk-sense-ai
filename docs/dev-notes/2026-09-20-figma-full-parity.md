@@ -19,7 +19,7 @@ The production frontend now follows the complete RiskSense AI Figma role structu
 | Analytics and reports | `app/(admin)/admin/analytics/page.tsx`, `app/(admin)/admin/reports/page.tsx`, `components/analytics/Charts.tsx`, `components/analytics/ReportsWorkspace.tsx` | Added live KPI presentation, Chart/Pie/Table self-selection, selectable monthly classifications, tenant-scoped row drill-down and four lazy report summaries with independent error/retry states. |
 | System Administration | `app/(system)/system/users/page.tsx`, `tenant/page.tsx`, `retention/page.tsx`, `dr/page.tsx` | Presented one-account/one-role, paid MFA/SSO, supported session controls, explicit lifecycle semantics and FREE-fixed/PAID-configurable recovery targets without fabricating IdP or provider telemetry. |
 | Audit | `app/(audit)/audit/logs/page.tsx`, `components/ui/table.tsx` | Implemented the Figma five-column hierarchy, log-size approximation, progressive evidence detail, labelled scroll containment and an honest split between loaded-page text filtering and exact-ID server filtering. |
-| Localization | `messages/en.json`, `messages/bn.json` | Added matching copy for every new role surface and control; both catalogs contain 1,357 keys with matching ICU variables. |
+| Localization | `messages/en.json`, `messages/bn.json` | Added matching copy for every new role surface and control; both catalogs contain 1,376 keys with matching ICU variables. |
 | Regression coverage | `e2e/content-manager.spec.ts`, `e2e/frontend-correctness.spec.ts`, `e2e/roles.spec.ts`, `e2e/system-admin.spec.ts` | Covers lifecycle controls, analytics modes/drill-down, role navigation, system policy edits, mobile focus containment, short-height chat, Audit filter scope and locale-reactive login notices. |
 
 ## Design and data decisions
@@ -50,4 +50,4 @@ npm run build
 npm run e2e:frontend
 ```
 
-Expected: clean diff check; typecheck/lint/build pass; 29 generated routes; 51/51 browser cases pass. The final responsive browser pass covers 1920×1080 desktop and 390×844 mobile, and `docs/design/design-qa.md` records the result.
+Expected: clean diff check; typecheck/lint/build pass; 29 generated routes; 56/56 browser cases pass. The final responsive browser pass covers 1920×1080 desktop and 390×844 mobile, and `docs/design/design-qa.md` records the result.

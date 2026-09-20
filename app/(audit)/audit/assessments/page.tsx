@@ -79,7 +79,7 @@ export default function AuditAssessmentsPage() {
         ))}
       </div>
       <div className="data-panel fills hidden lg:flex">
-        <Table>
+        <Table containerLabel={t('title')}>
           <TableHeader>
             <TableRow>
               <TableHead>{t('columns.started')}</TableHead>

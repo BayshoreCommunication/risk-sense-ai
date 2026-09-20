@@ -19,6 +19,7 @@ function currentAdministrator() {
       id: 'tenant-1',
       slug: 'test',
       plan: 'paid',
+      sectors: ['financial', 'healthcare', 'it', 'energy'],
       features: {
         sso: false,
         reviewDashboard: true,
@@ -62,6 +63,23 @@ async function mockApi(page: Page, handler: Handler) {
     });
   });
 }
+
+test('persona sector choices come only from the authenticated tenant vocabulary [NFR-04, NFR-08]', async ({ page }) => {
+  await authenticate(page);
+  await mockApi(page, async (route, path, method) => {
+    if ((path === '/personas' || path === '/scenarios') && method === 'GET') {
+      await ok(route, []);
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/admin/personas');
+  await page.getByRole('button', { name: 'New' }).click();
+  await page.getByLabel('Sector *', { exact: true }).click();
+  await expect(page.getByRole('option', { name: 'Energy', exact: true })).toBeVisible();
+  await expect(page.getByRole('option', { name: 'General', exact: true })).toHaveCount(0);
+});
 
 test('scenario flow and recommendations are authored with structured controls [FR-07, FR-11, DASH-02]', async ({ page }) => {
   let submitted: Record<string, unknown> | undefined;

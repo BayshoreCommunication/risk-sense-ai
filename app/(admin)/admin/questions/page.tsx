@@ -5,6 +5,7 @@ import { BookmarkCheck, CircleCheck, Clock, FileQuestion } from 'lucide-react';
 import { ContentManager, type FieldSpec } from '@/components/admin/ContentManager';
 import { Badge } from '@/components/ui/badge';
 import { questionsApi, type Item } from '@/lib/admin/content';
+import { useWorkspace } from '@/components/shell/workspace-context';
 
 const SUMMARY_TONE = [
   { icon: FileQuestion, tile: 'bg-blue-500/10 text-blue-700' },
@@ -17,7 +18,7 @@ function tagsOf(item: Item) {
   return (item.tags ?? {}) as { personaKeys?: string[]; scenarioKeys?: string[]; sectors?: string[] };
 }
 
-function questionFields(t: ReturnType<typeof useTranslations>): FieldSpec[] {
+function questionFields(t: ReturnType<typeof useTranslations>, sectors: string[]): FieldSpec[] {
   return [
   { name: 'key', label: t('fields.key'), kind: 'text', required: true, immutable: true, help: t('help.key') },
   { name: 'text', label: t('fields.questionText'), kind: 'textarea', required: true },
@@ -33,7 +34,7 @@ function questionFields(t: ReturnType<typeof useTranslations>): FieldSpec[] {
   { name: 'required', label: t('fields.required'), kind: 'boolean' },
   { name: 'tags.personaKeys', label: t('fields.personaKeys'), kind: 'list', required: true },
   { name: 'tags.scenarioKeys', label: t('fields.scenarioKeys'), kind: 'list', help: t('help.scenarioKeys') },
-  { name: 'tags.sectors', label: t('fields.sectors'), kind: 'list', required: true, help: 'financial; healthcare; it; general' },
+  { name: 'tags.sectors', label: t('fields.sectors'), kind: 'list', required: true, help: t('help.sectors', { sectors: sectors.join('; ') }) },
   { name: 'tags.category', label: t('fields.category'), kind: 'text', help: t('help.category') },
   {
     name: 'branchTrigger',
@@ -48,7 +49,8 @@ function questionFields(t: ReturnType<typeof useTranslations>): FieldSpec[] {
 export default function QuestionsPage() {
   const t = useTranslations('admin.questions');
   const locale = useLocale();
-  const fields = questionFields(t);
+  const workspace = useWorkspace();
+  const fields = questionFields(t, workspace?.sectors ?? []);
   return (
     <div className="page-shell">
       <ContentManager

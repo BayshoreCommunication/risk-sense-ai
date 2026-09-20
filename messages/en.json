@@ -326,6 +326,7 @@
         "options": "Multiple-choice questions need at least two structured choices; other types must not have choices.",
         "factKey": "The normalized fact this answer stores.",
         "scenarioKeys": "Optional semicolon-separated scenario restrictions.",
+        "sectors": "Use configured sector keys: {sectors}.",
         "category": "Optional reporting or content-management category.",
         "branchTrigger": "When this answer matches, append the specified follow-up question keys.",
         "scoringHint": "Optional authoring hint for scoring reviewers."
@@ -360,7 +361,7 @@
         "trigger": "Build a fact comparison or nested AND/OR condition group.",
         "forcedAction": "Optional action shown when the rule matches.",
         "priority": "Lower numbers are evaluated first.",
-        "sectors": "Optional semicolon-separated sector restrictions."
+        "sectors": "Optional semicolon-separated sector restrictions. Configured keys: {sectors}."
       },
       "display": {
         "and": "AND",
@@ -599,6 +600,11 @@
     "analytics": {
       "title": "Analytics dashboard",
       "description": "Assessment volume, classification, overrides and completion time.",
+      "featureGate": {
+        "deniedTitle": "Analytics are not available",
+        "deniedDescription": "Analytics require the Reports tenant feature. Ask a system administrator to review the tenant feature policy.",
+        "back": "Back to configuration"
+      },
       "refresh": "Refresh",
       "loading": "Loading…",
       "milliseconds": "ms",
@@ -1319,6 +1325,19 @@
         "intact": "Chain intact · {count} entries",
         "broken": "Broken at seq {sequence} ({count} ok before it)"
       },
+      "unmask": {
+        "show": "Unmask sensitive payloads",
+        "returnMasked": "Return to masked view",
+        "maskedTitle": "Sensitive payloads are masked",
+        "maskedDescription": "Registered personal, health and financial values stay hidden until an authorized viewer explicitly confirms access.",
+        "visibleTitle": "Sensitive payloads are visible",
+        "visibleDescription": "This browser view may contain registered personal, health or financial values. Return to the masked view before sharing your screen.",
+        "confirmTitle": "Show sensitive audit payloads?",
+        "confirmDescription": "Only unmask when the clear values are required for an authorized investigation.",
+        "auditNotice": "RiskSense records this access as an immutable access.unmasked audit event. Reloading the page or choosing Return to masked view restores the masked default.",
+        "cancel": "Keep masked",
+        "confirm": "Confirm and unmask"
+      },
       "filters": {
         "category": "Category",
         "search": "Filter loaded page or search exact record ID",
@@ -1656,6 +1675,12 @@
           "datasetHistoryDays": "Dataset history (days)"
         },
         "description": "FREE reduces expired records to essential metadata; PAID archives them first. Enforcement runs nightly and is audited."
+      },
+      "sectors": {
+        "title": "Sector vocabulary",
+        "description": "Control the sector keys available to personas, questions, rules, scoring matrices, and dataset validation.",
+        "label": "Sector vocabulary (semicolon-separated)",
+        "help": "Use unique lowercase snake_case keys. A key still referenced by content cannot be removed."
       },
       "saving": "Saving…",
       "save": "Save changes",

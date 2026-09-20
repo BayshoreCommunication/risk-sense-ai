@@ -4,9 +4,12 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { ContentManager, type FieldSpec } from '@/components/admin/ContentManager';
 import { personasApi, scenariosApi } from '@/lib/admin/content';
+import { useWorkspace } from '@/components/shell/workspace-context';
 
 export default function PersonasPage() {
   const t = useTranslations('admin.personas');
+  const workspace = useWorkspace();
+  const sectors = workspace?.sectors ?? [];
   const [scenarioCounts, setScenarioCounts] = useState<Record<string, number>>({});
   useEffect(() => {
     let cancelled = false;
@@ -26,7 +29,7 @@ export default function PersonasPage() {
   const fields: FieldSpec[] = [
     { name: 'key', label: t('fields.key'), kind: 'text', required: true, immutable: true, help: t('help.key') },
     { name: 'name', label: t('fields.name'), kind: 'text', required: true },
-    { name: 'sector', label: t('fields.sector'), kind: 'select', options: ['financial', 'healthcare', 'it', 'general'], required: true },
+    { name: 'sector', label: t('fields.sector'), kind: 'select', options: sectors, required: true },
     { name: 'description', label: t('fields.description'), kind: 'textarea', required: true },
     { name: 'responsibilities', label: t('fields.responsibilities'), kind: 'list', help: t('help.separator') },
     { name: 'activities', label: t('fields.activities'), kind: 'list' },

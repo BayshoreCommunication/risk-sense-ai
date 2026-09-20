@@ -201,7 +201,7 @@ export default function RetentionPage() {
               })}
             </div>
             <div className="hidden md:block">
-              <Table className="min-w-[760px] table-fixed">
+              <Table className="min-w-[760px] table-fixed" containerLabel={t('policyTable.title')}>
                 <TableHeader className="bg-muted/35">
                   <TableRow>
                     <TableHead className="w-[38%]">{t('policyTable.columns.record')}</TableHead>
@@ -324,7 +324,7 @@ export default function RetentionPage() {
         ))}
       </div>
       <div className="hidden md:block">
-        <Table>
+        <Table containerLabel={t('history.title')}>
           <TableHeader>
             <TableRow>
               <TableHead>{t('columns.when')}</TableHead>

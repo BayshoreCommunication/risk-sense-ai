@@ -38,6 +38,7 @@ function currentUser(role: Role, featureOverrides: Partial<Features> = {}) {
       id: 'tenant-1',
       slug: 'test',
       plan: role === 'requestor' && !featureOverrides.reports ? 'free' : 'paid',
+      sectors: ['financial', 'healthcare', 'it'],
       features: { ...defaultFeatures, ...featureOverrides },
       sessionPolicy: { idleTimeoutMin: 15, maxConcurrentSessions: 1 },
     },
@@ -309,22 +310,129 @@ test('administrator metrics keep successful live data distinct from unavailable 
   await expect(scenarioCard.locator('[data-slot="card-title"]')).toHaveText('0');
 });
 
-test('direct standard reports access follows the authoritative tenant feature [FR-26, FR-28]', async ({ page }) => {
+test('direct reports and analytics access follow the authoritative tenant feature [FR-26, FR-27, FR-28, DASH-03]', async ({ page }) => {
   let reports = false;
+  let reportDataRequests = 0;
   await authenticate(page, 'administrator');
-  await mockApi(page, () => currentUser('administrator', { reports }));
+  await mockApi(page, () => currentUser('administrator', { reports }), async ({ route, path }) => {
+    if (path.startsWith('/reports/') || path === '/analytics/trends') {
+      reportDataRequests += 1;
+      await apiError(route, 403, 'FEATURE_DISABLED', 'Reports are disabled');
+      return true;
+    }
+    return false;
+  });
 
   await page.goto('/admin/reports');
   await expect(page.getByRole('heading', { name: 'Reports are not available' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Standard reports' })).toHaveCount(0);
 
+  await page.goto('/admin/analytics');
+  await expect(page.getByRole('heading', { name: 'Analytics are not available' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Analytics dashboard' })).toHaveCount(0);
+  expect(reportDataRequests).toBe(0);
+
   reports = true;
-  await page.reload();
+  await page.goto('/admin/reports');
   await expect(page.getByRole('heading', { name: 'Standard reports' })).toBeVisible();
   // Each of the four FR-26 report panels exposes its own CSV and PDF export (FR-28).
   await expect(page.locator('#report-volume, #report-classification, #report-override, #report-time')).toHaveCount(4);
   await expect(page.getByRole('button', { name: 'CSV' })).toHaveCount(4);
   await expect(page.getByRole('button', { name: 'PDF' })).toHaveCount(4);
+});
+
+test('mandatory review queue remains scroll-contained and its table region is named [AI-03, FR-20, NFR-08]', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 520 });
+  await authenticate(page, 'administrator');
+  await mockApi(page, () => currentUser('administrator'), async ({ route, path }) => {
+    if (path !== '/assessments') return false;
+    const items = Array.from({ length: 30 }, (_, index) => ({
+      _id: `assessment-${index}`,
+      status: 'awaiting_decision',
+      phase: 'result',
+      personaKey: 'finance_officer',
+      scenarioKey: 'wire_transfer',
+      requestorId: `requestor-${index}`,
+      requestor: { name: `Requestor ${index}`, email: `requestor-${index}@example.test` },
+      department: { id: 'department-1', name: 'Finance' },
+      result: { classification: 'risk', confidence: 55, mandatoryReview: true },
+      decision: null,
+      timing: { startedAt: '2026-09-15T08:00:00.000Z' },
+      createdAt: '2026-09-15T08:00:00.000Z',
+    }));
+    await ok(route, {
+      items,
+      total: items.length,
+      page: 1,
+      limit: 25,
+      pages: 2,
+      counts: { in_progress: 0, intake_complete: 0, awaiting_decision: items.length, escalated: 0, closed: 0, error_review: 0, pending: items.length, all: items.length },
+      summary: { averageConfidence: 55 },
+    });
+    return true;
+  });
+
+  await page.goto('/admin/review');
+  const shell = page.locator('.page-shell');
+  await expect(shell).toBeVisible();
+  expect(await shell.evaluate((element) => getComputedStyle(element).overflowY)).toBe('auto');
+  expect(await shell.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+  await expect(page.getByRole('region', { name: 'Mandatory review queue' })).toBeVisible();
+});
+
+test('named escalatee keeps requestor and department context without broad review scope [FR-21, FR-22, DASH-01]', async ({ page }) => {
+  await authenticate(page, 'requestor');
+  // Explicit escalation remains readable even if broad department review is later disabled.
+  const me = currentUser('requestor', { reviewDashboard: false, reports: true });
+  await mockApi(page, () => me, async ({ route, path }) => {
+    if (path === '/personas' || path === '/departments') {
+      await ok(route, []);
+      return true;
+    }
+    if (path === '/assessments') {
+      await ok(route, {
+        items: [{
+          _id: 'assessment-escalated',
+          status: 'escalated',
+          phase: 'result',
+          personaKey: 'finance_officer',
+          scenarioKey: 'wire_transfer',
+          requestorId: 'original-owner',
+          requestor: { name: 'Original Owner', email: 'owner@example.test' },
+          department: { id: 'department-1', name: 'Finance' },
+          result: {
+            classification: 'risk',
+            score: 48,
+            confidence: 78,
+            ruleDriven: false,
+            professionalConsult: false,
+            mandatoryReview: false,
+            recommendedAction: 'Review the payment controls.',
+            explanation: 'A named reviewer must complete the decision.',
+          },
+          decision: { type: 'escalate', decidedAt: '2026-09-15T08:05:00.000Z', reason: 'Named reviewer requested.' },
+          escalatedTo: { id: me.user.id, name: me.user.name },
+          timing: { startedAt: '2026-09-15T08:00:00.000Z' },
+          createdAt: '2026-09-15T08:00:00.000Z',
+        }],
+        total: 1,
+        page: 1,
+        limit: 25,
+        pages: 1,
+        counts: { in_progress: 0, intake_complete: 0, awaiting_decision: 0, escalated: 1, closed: 0, error_review: 0, pending: 1, all: 1 },
+        summary: { averageConfidence: 78 },
+      });
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/review');
+  await expect(page.getByRole('columnheader', { name: 'Requestor' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Department' })).toBeVisible();
+  const row = page.getByRole('row').filter({ hasText: 'Original Owner' });
+  await expect(row).toContainText('Finance');
+  await expect(row).toContainText('Review the payment controls.');
 });
 
 test('analytics supports pie, table and persistent period drill-down views [DASH-03, FR-27, FR-28]', async ({ page }) => {
@@ -597,6 +705,122 @@ test('assessment rows retain the scoped recommendation, explanation and recorded
   await expect(row).toContainText('Manage the payment risk');
   await expect(row).toContainText('The approval evidence is incomplete and requires owner follow-up.');
   await expect(row).toContainText('accept');
+});
+
+test('audit payloads require confirmed unmask and reset immediately to the masked default [SEC-05, SEC-07]', async ({ page }) => {
+  let unmaskCalls = 0;
+  let maskedCalls = 0;
+  await authenticate(page, 'audit');
+  await mockApi(page, () => currentUser('audit', { fullAudit: true }), async ({ route, path }) => {
+    if (path !== '/audit-logs') return false;
+    const clear = new URL(route.request().url()).searchParams.get('unmask') === 'true';
+    if (clear) unmaskCalls += 1;
+    else maskedCalls += 1;
+    await ok(route, {
+      items: [{
+        _id: 'event-sensitive',
+        seq: 51,
+        category: 'assessment',
+        action: 'assessment.answer.recorded',
+        actorRole: 'requestor',
+        actorUserId: 'requestor-1',
+        entity: { type: 'assessment', id: 'assessment-sensitive' },
+        payload: { answer: clear ? 'account 1234' : '[MASKED:financial]' },
+        payloadMasked: !clear,
+        prevHash: '00'.repeat(32),
+        hash: 'ab'.repeat(32),
+        createdAt: '2026-09-15T08:00:00.000Z',
+      }],
+      nextCursorSeq: null,
+    });
+    return true;
+  });
+
+  await page.goto('/audit/logs');
+  const auditTable = page.getByRole('region', { name: 'Audit log viewer' });
+  const showPayload = () => page.getByRole('button', { name: 'Show payload for assessment.answer.recorded' });
+  await showPayload().click();
+  await expect(auditTable.locator('pre')).toContainText('[MASKED:financial]');
+  await expect(auditTable).toBeVisible();
+
+  await page.getByRole('button', { name: 'Unmask sensitive payloads' }).click();
+  await expect(page.getByRole('dialog', { name: 'Show sensitive audit payloads?' })).toBeVisible();
+  expect(unmaskCalls).toBe(0);
+  await page.getByRole('button', { name: 'Confirm and unmask' }).click();
+  await expect(page.getByText('Sensitive payloads are visible')).toBeVisible();
+  await expect.poll(() => unmaskCalls).toBe(1);
+  await showPayload().click();
+  await expect(auditTable.locator('pre')).toContainText('account 1234');
+
+  await page.getByRole('button', { name: 'Return to masked view' }).click();
+  await expect(page.getByText('Sensitive payloads are visible')).toHaveCount(0);
+  await expect.poll(() => maskedCalls).toBeGreaterThanOrEqual(2);
+  await showPayload().click();
+  await expect(auditTable.locator('pre')).toContainText('[MASKED:financial]');
+  await expect(auditTable.locator('pre')).not.toContainText('account 1234');
+
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Unmask sensitive payloads' })).toBeVisible();
+  await expect(page.getByText('Sensitive payloads are visible')).toHaveCount(0);
+});
+
+test('a late unmasked audit response cannot overwrite a newer masked view [SEC-05, SEC-07]', async ({ page }) => {
+  let unmaskCalls = 0;
+  let releaseFirstUnmask!: () => void;
+  let markFirstUnmaskStarted!: () => void;
+  const firstUnmaskRelease = new Promise<void>((resolve) => { releaseFirstUnmask = resolve; });
+  const firstUnmaskStarted = new Promise<void>((resolve) => { markFirstUnmaskStarted = resolve; });
+
+  await authenticate(page, 'audit');
+  await mockApi(page, () => currentUser('audit', { fullAudit: true }), async ({ route, path }) => {
+    if (path !== '/audit-logs') return false;
+    const clear = new URL(route.request().url()).searchParams.get('unmask') === 'true';
+    if (clear) {
+      unmaskCalls += 1;
+      if (unmaskCalls === 1) {
+        markFirstUnmaskStarted();
+        await firstUnmaskRelease;
+      }
+    }
+    await ok(route, {
+      items: [{
+        _id: 'event-race',
+        seq: 52,
+        category: 'assessment',
+        action: 'assessment.answer.recorded',
+        actorRole: 'requestor',
+        actorUserId: 'requestor-1',
+        entity: { type: 'assessment', id: 'assessment-race' },
+        payload: { answer: clear ? `clear account ${unmaskCalls}` : '[MASKED:financial]' },
+        payloadMasked: !clear,
+        prevHash: '00'.repeat(32),
+        hash: 'cd'.repeat(32),
+        createdAt: '2026-09-15T08:00:00.000Z',
+      }],
+      nextCursorSeq: null,
+    });
+    return true;
+  });
+
+  await page.goto('/audit/logs');
+  await page.getByRole('button', { name: 'Unmask sensitive payloads' }).click();
+  await page.getByRole('button', { name: 'Confirm and unmask' }).click();
+  await firstUnmaskStarted;
+
+  // A server-side entity-id filter starts a second clear request while the first is still pending.
+  await page.locator('#audit-search').fill('aaaaaaaaaaaaaaaaaaaaaaaa');
+  await expect.poll(() => unmaskCalls).toBe(2);
+  await page.getByRole('button', { name: 'Show payload for assessment.answer.recorded' }).click();
+  const auditTable = page.getByRole('region', { name: 'Audit log viewer' });
+  await expect(auditTable.locator('pre')).toContainText('clear account 2');
+
+  await page.getByRole('button', { name: 'Return to masked view' }).click();
+  await page.getByRole('button', { name: 'Show payload for assessment.answer.recorded' }).click();
+  await expect(auditTable.locator('pre')).toContainText('[MASKED:financial]');
+
+  releaseFirstUnmask();
+  await expect(auditTable.locator('pre')).toContainText('[MASKED:financial]');
+  await expect(auditTable.locator('pre')).not.toContainText('clear account');
 });
 
 test('mobile audit cards retain hash and human-decision evidence [FR-22, FR-26, SEC-07, NFR-08]', async ({ page }) => {

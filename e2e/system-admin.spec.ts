@@ -18,6 +18,7 @@ const me = {
     id: '64b000000000000000000010',
     slug: 'test',
     plan: 'paid',
+    sectors: ['financial', 'healthcare', 'it'],
     features: { sso: true, reviewDashboard: true, reports: true, fullAudit: true, departmentMapping: true, blockConcurrentLogin: false },
     sessionPolicy: { idleTimeoutMin: 15, maxConcurrentSessions: 1 },
   },
@@ -72,7 +73,7 @@ test('/system lands on user provisioning and the rail exposes every workspace [D
   }
 });
 
-test('SSO and session configuration mirrors the supported tenant contract only [FR-03, SEC-02]', async ({ page }) => {
+test('SSO, session, and sector configuration mirror the supported tenant contract [FR-03, SEC-02, NFR-04, NFR-08]', async ({ page }) => {
   const settings = {
     ...me.tenant,
     name: 'Test tenant',
@@ -107,6 +108,7 @@ test('SSO and session configuration mirrors the supported tenant contract only [
   await expect(page.getByRole('textbox', { name: 'Email domain', exact: true })).toHaveValue('current.example');
   await expect(page.getByLabel('Idle timeout (minutes, 5–30)')).toHaveValue('15');
   await expect(page.getByLabel('Max concurrent sessions (1–10)')).toHaveValue('1');
+  await expect(page.getByLabel('Sector vocabulary (semicolon-separated)')).toHaveValue('financial; healthcare; it');
 
   // The Figma-only fields have no backend contract and must not be fabricated.
   await expect(page.getByLabel('Protocol', { exact: true })).toHaveCount(0);
@@ -116,11 +118,13 @@ test('SSO and session configuration mirrors the supported tenant contract only [
   await page.getByLabel('Identity provider ID').fill('oidc.updated');
   await page.getByRole('textbox', { name: 'Email domain', exact: true }).fill('updated.example');
   await page.getByLabel('Idle timeout (minutes, 5–30)').fill('20');
+  await page.getByLabel('Sector vocabulary (semicolon-separated)').fill('financial; healthcare; it; energy');
   await page.getByRole('button', { name: 'Save changes' }).click();
 
   await expect.poll(() => patchBody).toEqual({
     sso: { providerId: 'oidc.updated', domain: 'updated.example' },
     sessionPolicy: { idleTimeoutMin: 20 },
+    sectors: ['financial', 'healthcare', 'it', 'energy'],
   });
   await expect(page.getByRole('status')).toContainText('recorded in the audit log');
 });

@@ -264,7 +264,7 @@ export default function UsersPage() {
         </div>
 
         <div className="hidden lg:block">
-          <Table className="min-w-[840px] table-fixed">
+          <Table className="min-w-[840px] table-fixed" containerLabel={t('list.title')}>
             <TableHeader className="bg-muted/35">
               <TableRow>
                 <TableHead className="w-[28%]">{t('columns.user')}</TableHead>

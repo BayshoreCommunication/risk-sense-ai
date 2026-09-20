@@ -12,7 +12,7 @@ export type TenantFeatures = components['schemas']['AuthTenant']['features'];
  * `/me` call: the shell withholds `children` until that call succeeds, so this is the same verified answer
  * one request earlier, and a page-level refetch only spends the caller's SEC-04 budget (DecisionLog 44).
  */
-export type Workspace = { role: Role; plan: string; features: TenantFeatures };
+export type Workspace = { role: Role; plan: string; features: TenantFeatures; sectors: string[] };
 
 const WorkspaceContext = createContext<Workspace | null>(null);
 

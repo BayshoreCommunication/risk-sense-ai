@@ -1,13 +1,16 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { CalendarDays, ChartNoAxesColumn, ChartPie, ClipboardList, Clock3, RefreshCw, Table2, TrendingUp, X } from 'lucide-react';
+import { ArrowLeft, CalendarDays, ChartNoAxesColumn, ChartPie, ClipboardList, Clock3, RefreshCw, ShieldX, Table2, TrendingUp, X } from 'lucide-react';
 import { ChartStyles, PieChart, STATUS, StackedClassificationChart, StatTile, type StackedClassificationMonth } from '@/components/analytics/Charts';
 import { PageHeader } from '@/components/shell/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useWorkspace } from '@/components/shell/workspace-context';
 import { toApiError } from '@/lib/api/client';
 import { assessments, type AssessmentListItem } from '@/lib/assessments';
 import { fmtSeconds, reports, type ReportQuery, type ReportResult, type ReportType } from '@/lib/reports';
@@ -56,7 +59,7 @@ function monthsFromTrends(keys: string[], result: ReportResult): MonthlyClassifi
  * headline metrics and the monthly classification distribution. The FR-26 report views, their FR-28
  * exports and the FR-27 trend breakdown live on /admin/reports.
  */
-export default function AnalyticsPage() {
+function AnalyticsDashboard() {
   const t = useTranslations('admin.analytics');
   const reviewT = useTranslations('reviewDashboard');
   const statusT = useTranslations('status');
@@ -329,7 +332,7 @@ export default function AnalyticsPage() {
                 </>
               ) : view === 'table' ? (
                 <div className="overflow-hidden rounded-xl border">
-                  <Table>
+                  <Table containerLabel={t('monthly.chartTitle')}>
                     <caption className="sr-only">{t('monthly.chartTitle')}</caption>
                     <TableHeader className="bg-muted/45">
                       <TableRow>
@@ -422,7 +425,13 @@ export default function AnalyticsPage() {
                   ) : drilldown.items.length === 0 ? (
                     <p className="grid min-h-28 place-items-center text-sm text-muted-foreground" role="status">{reviewT('empty.filtered')}</p>
                   ) : (
-                    <Table>
+                    <Table
+                      containerLabel={t('monthly.segmentDetail', {
+                        classification: selectedSegment.label,
+                        month: selectedMonthData.label,
+                        count: selectedSegment.value ?? 0,
+                      })}
+                    >
                       <caption className="sr-only">
                         {t('monthly.segmentDetail', {
                           classification: selectedSegment.label,
@@ -479,4 +488,34 @@ export default function AnalyticsPage() {
       </section>
     </div>
   );
+}
+
+/** Keep direct navigation consistent with the feature-filtered rail and Standard Reports route. */
+export default function AnalyticsPage() {
+  const t = useTranslations('admin.analytics');
+  const workspace = useWorkspace();
+
+  if (!workspace?.features.reports) {
+    return (
+      <div className="page-shell">
+        <Card className="mx-auto w-full max-w-2xl">
+          <CardHeader className="items-center text-center">
+            <span className="mb-2 grid size-11 place-items-center rounded-xl bg-primary/10 text-primary">
+              <ShieldX className="size-5" aria-hidden="true" />
+            </span>
+            <h1 className="font-heading text-xl font-semibold tracking-tight">{t('featureGate.deniedTitle')}</h1>
+            <CardDescription className="max-w-lg leading-6">{t('featureGate.deniedDescription')}</CardDescription>
+          </CardHeader>
+          <CardFooter className="justify-center">
+            <Button nativeButton={false} variant="outline" render={<Link href="/admin" />}>
+              <ArrowLeft data-icon="inline-start" aria-hidden="true" />
+              {t('featureGate.back')}
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
+  return <AnalyticsDashboard />;
 }

@@ -174,7 +174,7 @@ export default function DepartmentsPage() {
         ))}
       </div>
       <div className="data-panel fills hidden md:flex">
-        <Table>
+        <Table containerLabel={t('title')}>
           <TableHeader>
             <TableRow>
               <TableHead>{t('columns.name')}</TableHead>
