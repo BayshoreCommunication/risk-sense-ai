@@ -10,6 +10,8 @@ import {
   BookOpenCheck,
   Building2,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ClipboardCheck,
   Database,
   FileClock,
@@ -34,6 +36,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { api, toApiError } from '@/lib/api/client';
 import type { components } from '@/lib/api/types';
 import { firebaseSignOut } from '@/lib/firebase/client';
@@ -80,6 +83,7 @@ const NAV: Record<Role, NavItem[]> = {
   ],
 };
 
+const SIDEBAR_STORAGE_KEY = 'rs_sidebar_collapsed';
 const DRAWER_FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 
@@ -106,6 +110,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
   const [state, setState] = useState<'loading' | 'ready' | 'redirecting' | 'error'>('loading');
   const [loadError, setLoadError] = useState<string | null>(null);
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean | null>(null);
   const mobileNavigationRef = useRef<HTMLElement>(null);
   const mobileNavigationTriggerRef = useRef<HTMLButtonElement>(null);
 
@@ -138,6 +143,23 @@ export function AppShell({ role, children }: { role: Role; children: React.React
   useEffect(() => {
     void verifySession();
   }, [verifySession]);
+
+  useEffect(() => {
+    try {
+      setSidebarCollapsed(window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === 'true');
+    } catch {
+      setSidebarCollapsed(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (sidebarCollapsed === null) return;
+    try {
+      window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(sidebarCollapsed));
+    } catch {
+      /* Blocked storage does not prevent the sidebar from working for this page view. */
+    }
+  }, [sidebarCollapsed]);
 
   useEffect(() => {
     setMobileNavigationOpen(false);
@@ -224,9 +246,12 @@ export function AppShell({ role, children }: { role: Role; children: React.React
   const trustedRole = me.user.role;
   const navigation = NAV[trustedRole].filter((item) => !item.feature || me.tenant.features[item.feature]);
   const home = ROLE_HOME[trustedRole];
+  const desktopNavigationCollapsed = sidebarCollapsed === true;
 
   const renderNavigation = (mobile = false) => {
+    const compact = desktopNavigationCollapsed && !mobile;
     return (
+      <TooltipProvider>
       <div className="flex h-full min-h-0 flex-col">
         {mobile ? (
           <div className="flex h-[4.75rem] shrink-0 items-center gap-3 border-b border-sidebar-border px-4">
@@ -243,8 +268,8 @@ export function AppShell({ role, children }: { role: Role; children: React.React
           </div>
         ) : null}
 
-        <div className="scrollbar-subtle min-h-0 flex-1 overflow-y-auto px-4 pb-6 pt-7">
-          <p className="mb-4 px-3 text-[0.72rem] font-semibold tracking-[0.05em] text-sidebar-foreground/65 uppercase">
+        <div className={`scrollbar-subtle min-h-0 flex-1 overflow-y-auto pb-6 pt-7 ${compact ? 'px-2' : 'px-4'}`}>
+          <p className={`${compact ? 'sr-only' : 'mb-4 px-3'} text-[0.72rem] font-semibold tracking-[0.05em] text-sidebar-foreground/65 uppercase`}>
             {t(`roles.${trustedRole}`)}
           </p>
           <nav className="space-y-1" aria-label={t('app.navigation')}>
@@ -253,28 +278,38 @@ export function AppShell({ role, children }: { role: Role; children: React.React
               const Icon = item.icon;
               const label = t(`nav.${trustedRole}.${item.key}`);
               const startsAdvanced = item.section === 'advanced' && navigation[index - 1]?.section !== 'advanced';
+              const navigationLink = (
+                <Link
+                  href={item.href}
+                  aria-current={active ? 'page' : undefined}
+                  className={`group relative flex items-center rounded-lg py-3 text-[0.9rem] transition ${compact ? 'justify-center px-2' : 'gap-3 px-3'} ${
+                    active
+                      ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground'
+                      : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground'
+                  }`}
+                >
+                  {active && <span aria-hidden="true" className="absolute inset-y-2 -left-2 w-[3px] rounded-full bg-sidebar-primary" />}
+                  <span className={`flex size-6 shrink-0 items-center justify-center transition ${active ? 'text-sidebar-primary' : 'text-sidebar-foreground/60 group-hover:text-sidebar-foreground'}`}>
+                    <Icon className="size-[1.15rem]" />
+                  </span>
+                  <span className={compact ? 'sr-only' : 'min-w-0 flex-1 truncate'}>{label}</span>
+                </Link>
+              );
               return (
                 <div key={item.href}>
-                  {startsAdvanced ? (
+                  {startsAdvanced ? compact ? (
+                    <div className="my-4 border-t border-sidebar-border" aria-hidden="true" />
+                  ) : (
                     <div className="mb-2 mt-6 border-t border-sidebar-border px-3 pt-4 text-[0.61rem] font-semibold tracking-[0.14em] text-sidebar-foreground/45 uppercase">
                       {t('app.advancedOperations')}
                     </div>
                   ) : null}
-                  <Link
-                    href={item.href}
-                    aria-current={active ? 'page' : undefined}
-                    className={`group relative flex items-center gap-3 rounded-lg px-3 py-3 text-[0.9rem] transition ${
-                      active
-                        ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground'
-                        : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground'
-                    }`}
-                  >
-                    {active && <span aria-hidden="true" className="absolute inset-y-2 -left-2 w-[3px] rounded-full bg-sidebar-primary" />}
-                    <span className={`flex size-6 shrink-0 items-center justify-center transition ${active ? 'text-sidebar-primary' : 'text-sidebar-foreground/60 group-hover:text-sidebar-foreground'}`}>
-                      <Icon className="size-[1.15rem]" />
-                    </span>
-                    <span className="min-w-0 flex-1 truncate">{label}</span>
-                  </Link>
+                  {compact ? (
+                    <Tooltip>
+                      <TooltipTrigger render={navigationLink} />
+                      <TooltipContent role="tooltip" side="right">{label}</TooltipContent>
+                    </Tooltip>
+                  ) : navigationLink}
                 </div>
               );
             })}
@@ -297,6 +332,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
           </div>
         ) : null}
       </div>
+      </TooltipProvider>
     );
   };
 
@@ -307,7 +343,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
       </a>
       <div inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
         <header className="fixed inset-x-0 top-0 z-50 flex h-[4.75rem] items-center bg-[#061d43] text-white shadow-[0_1px_0_rgba(255,255,255,0.08)]">
-        <div className="flex h-full min-w-0 flex-1 items-center gap-3 px-4 sm:px-6 lg:w-[19.5rem] lg:flex-none lg:px-7">
+        <div className={`flex h-full min-w-0 flex-1 items-center gap-3 px-4 transition-[width,padding] duration-200 motion-reduce:transition-none sm:px-6 lg:flex-none ${desktopNavigationCollapsed ? 'lg:w-[4.5rem] lg:justify-center lg:px-0' : 'lg:w-64 lg:px-7'}`}>
           <button
             ref={mobileNavigationTriggerRef}
             type="button"
@@ -320,7 +356,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
             <Menu className="size-5" />
           </button>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#216cff] text-sm font-bold text-white shadow-[0_6px_18px_rgba(33,108,255,0.35)]">R</div>
-          <div className="min-w-0 truncate text-lg font-semibold tracking-[-0.02em]">{t('app.name')}</div>
+          <div className={`min-w-0 truncate text-lg font-semibold tracking-[-0.02em] ${desktopNavigationCollapsed ? 'lg:hidden' : ''}`}>{t('app.name')}</div>
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-2 pr-4 sm:px-7">
           <details className="group relative">
@@ -347,9 +383,29 @@ export function AppShell({ role, children }: { role: Role; children: React.React
         </div>
         </header>
 
-        <aside className="sidebar-surface fixed bottom-0 left-0 top-[4.75rem] z-40 hidden w-[19.5rem] border-r border-sidebar-border lg:block">
+        <aside
+          id="app-desktop-navigation"
+          aria-label={t('app.navigation')}
+          className={`sidebar-surface fixed bottom-0 left-0 top-[4.75rem] z-40 hidden border-r border-sidebar-border transition-[width] duration-200 motion-reduce:transition-none lg:block ${desktopNavigationCollapsed ? 'w-[4.5rem]' : 'w-64'}`}
+        >
           {renderNavigation()}
         </aside>
+
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger
+              type="button"
+              aria-label={desktopNavigationCollapsed ? t('app.expandNavigation') : t('app.collapseNavigation')}
+              aria-controls="app-desktop-navigation"
+              aria-expanded={!desktopNavigationCollapsed}
+              className={`fixed top-[4.75rem] z-50 hidden size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground/70 shadow-[0_2px_7px_rgba(15,35,65,0.18)] transition-[left,background-color,color,border-color] duration-200 motion-reduce:transition-none hover:border-sidebar-primary/40 hover:bg-sidebar-accent hover:text-sidebar-primary lg:grid ${desktopNavigationCollapsed ? 'left-[4.5rem]' : 'left-64'}`}
+              onClick={() => setSidebarCollapsed((current) => !(current ?? false))}
+            >
+              {desktopNavigationCollapsed ? <ChevronRight className="size-3.5" aria-hidden="true" /> : <ChevronLeft className="size-3.5" aria-hidden="true" />}
+            </TooltipTrigger>
+            <TooltipContent side="right">{desktopNavigationCollapsed ? t('app.expandNavigation') : t('app.collapseNavigation')}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {mobileNavigationOpen && (
@@ -375,7 +431,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
         </div>
       )}
 
-      <div className="min-w-0 pt-[4.75rem] lg:pl-[19.5rem]" inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
+      <div className={`min-w-0 pt-[4.75rem] transition-[padding] duration-200 motion-reduce:transition-none ${desktopNavigationCollapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-64'}`} inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
         <main id="main-content" tabIndex={-1} className="h-[calc(100dvh-4.75rem)] overflow-hidden px-4 py-5 outline-none sm:px-7 sm:py-7 lg:px-12 lg:py-10">
           <WorkspaceProvider value={{ role: trustedRole, plan: me.tenant.plan, features: me.tenant.features, sectors: me.tenant.sectors ?? [] }}>{children}</WorkspaceProvider>
         </main>

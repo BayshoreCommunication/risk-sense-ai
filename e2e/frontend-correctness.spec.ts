@@ -894,8 +894,8 @@ test('mobile audit cards retain hash and human-decision evidence [FR-22, FR-26, 
   await expect(page.getByText('accept', { exact: true }).first()).toBeVisible();
 });
 
-test('mobile workspace navigation traps focus and returns it to the trigger [NFR-07, NFR-08]', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+test('desktop sidebar collapse persists while mobile navigation stays labelled and focus-contained [DASH-04, NFR-07, NFR-08]', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
   await authenticate(page, 'requestor');
   await mockApi(page, () => currentUser('requestor'), async ({ route, path }) => {
     if (path === '/personas') {
@@ -906,11 +906,60 @@ test('mobile workspace navigation traps focus and returns it to the trigger [NFR
   });
 
   await page.goto('/chat');
+  const desktopNavigation = page.locator('#app-desktop-navigation');
+  const main = page.locator('#main-content');
+  const desktopRoleLabel = desktopNavigation.getByText('Requestor', { exact: true });
+  await expect(desktopRoleLabel).not.toHaveClass(/sr-only/);
+  await expect(desktopNavigation.getByText('New assessment', { exact: true })).toBeVisible();
+  const expandedNavigationBox = await desktopNavigation.boundingBox();
+  const expandedMainBox = await main.boundingBox();
+  expect(expandedNavigationBox).not.toBeNull();
+  expect(expandedMainBox).not.toBeNull();
+  expect(expandedNavigationBox!.width).toBe(256);
+
+  const collapseNavigation = page.getByRole('button', { name: 'Collapse navigation' });
+  await expect(collapseNavigation).toHaveAttribute('aria-expanded', 'true');
+  await expect(collapseNavigation).toHaveAttribute('aria-controls', 'app-desktop-navigation');
+  await collapseNavigation.click();
+
+  const expandNavigation = page.getByRole('button', { name: 'Expand navigation' });
+  await expect(expandNavigation).toBeVisible();
+  await expect(expandNavigation).toHaveAttribute('aria-expanded', 'false');
+  await expect.poll(() => page.evaluate(() => window.localStorage.getItem('rs_sidebar_collapsed'))).toBe('true');
+  await expect(desktopRoleLabel).toHaveClass(/sr-only/);
+  const compactChatLink = desktopNavigation.getByRole('link', { name: 'New assessment' });
+  await expect(compactChatLink).toBeVisible();
+  await expandNavigation.focus();
+  await page.keyboard.press('Shift+Tab');
+  await expect(compactChatLink).toBeFocused();
+  await expect(page.getByRole('tooltip')).toContainText('New assessment');
+  await expect.poll(async () => (await desktopNavigation.boundingBox())?.width ?? 0).toBeLessThan(expandedNavigationBox!.width);
+  const collapsedMainBox = await main.boundingBox();
+  expect(collapsedMainBox).not.toBeNull();
+  expect(collapsedMainBox!.x).toBeLessThan(expandedMainBox!.x);
+
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Expand navigation' })).toBeVisible();
+  await expect.poll(async () => (await desktopNavigation.boundingBox())?.width ?? 0).toBeLessThan(expandedNavigationBox!.width);
+  await page.getByRole('button', { name: 'Expand navigation' }).click();
+  await expect(page.getByRole('button', { name: 'Collapse navigation' })).toHaveAttribute('aria-expanded', 'true');
+  await expect.poll(() => page.evaluate(() => window.localStorage.getItem('rs_sidebar_collapsed'))).toBe('false');
+  await expect(desktopRoleLabel).not.toHaveClass(/sr-only/);
+  await expect(desktopNavigation.getByText('New assessment', { exact: true })).toBeVisible();
+  await expect.poll(async () => (await desktopNavigation.boundingBox())?.width ?? 0).toBe(expandedNavigationBox!.width);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => window.localStorage.setItem('rs_sidebar_collapsed', 'true'));
+  await page.reload();
   const navigationTrigger = page.getByRole('button', { name: 'Open navigation' });
   await navigationTrigger.click();
 
   const drawer = page.getByRole('dialog', { name: 'Workspace navigation' });
   await expect(drawer).toBeVisible();
+  await expect(drawer.getByText('Requestor', { exact: true })).toBeVisible();
+  await expect(drawer.getByText('New assessment', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Expand navigation' })).toBeHidden();
   await expect(drawer.getByRole('button', { name: 'Close navigation' })).toBeFocused();
   // The shell's top bar is the first <header> in the document; page headers render later, inside <main>.
   expect(await page.locator('header').first().evaluate((header) => Boolean(header.closest('[inert][aria-hidden="true"]')))).toBe(true);
