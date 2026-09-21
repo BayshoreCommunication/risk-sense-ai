@@ -136,6 +136,11 @@ export async function sendPasswordReset(email: string): Promise<void> {
 
 export async function firebaseSignOut(): Promise<void> {
   const auth = getFirebaseAuth();
-  if (auth) await signOut(auth);
-  setIdTokenProvider(null);
+  try {
+    if (auth) await signOut(auth);
+  } finally {
+    // Never leave a stale bearer provider attached to API requests, even if the SDK cannot finish
+    // clearing its own persisted state. Callers may still surface the sign-out failure.
+    setIdTokenProvider(null);
+  }
 }

@@ -22,7 +22,8 @@
     "collapseNavigation": "Collapse navigation",
     "loading": "Loading…",
     "openingWorkspace": "Opening your workspace…",
-    "sessionVerifyFailed": "Your session could not be verified. Please sign in again."
+    "sessionVerifyFailed": "Your session could not be verified. Please sign in again.",
+    "publicDemoBanner": "Shared read-only demo — changes are disabled and demo data is resettable."
   },
   "roles": {
     "requestor": "Requestor",
@@ -86,10 +87,14 @@
       "paidDescription": "Managed roles and organization SSO are available, and every paid account must satisfy current-login MFA."
     },
     "demo": {
-      "title": "Demo access",
-      "description": "Use the shared demo account to explore the requestor journey.",
-      "continue": "Continue as demo user",
-      "unavailable": "Demo access is not configured for this build."
+      "title": "Explore every role",
+      "description": "Choose a short-lived, server-scoped read-only workspace. No shared password is used.",
+      "roleList": "Shared read-only demo roles",
+      "readOnly": "Shared read-only demo",
+      "openRole": "Open {role} demo",
+      "roleMismatch": "That demo identity returned a different role. The session was closed; please try again.",
+      "tenantMismatch": "That demo identity returned an unexpected workspace. The session was closed; please try again.",
+      "accessModeMismatch": "Read-only demo protection was not confirmed. The session was closed; please try again later."
     },
     "recoveryNote": "MFA or SSO did not complete? Refresh your identity-provider access and try again, or contact your administrator.",
     "steps": {

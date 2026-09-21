@@ -720,7 +720,7 @@ test('assessment rows retain the scoped recommendation, explanation and recorded
   await page.goto('/review?scenarioKey=fin_unauthorized_transaction');
   await expect(page.getByLabel('Scenario', { exact: true })).toHaveValue('Financial Unauthorized Transaction');
   await expect(page.locator('#review-scenario-options option')).toHaveAttribute('value', 'Financial Unauthorized Transaction');
-  expect(requestedScenarioKey).toBe('fin_unauthorized_transaction');
+  await expect.poll(() => requestedScenarioKey).toBe('fin_unauthorized_transaction');
   const row = page.getByRole('row').filter({ hasText: 'Financial Unauthorized Transaction' });
   await expect(row).toContainText('Manage the payment risk');
   await expect(row).toContainText('The approval evidence is incomplete and requires owner follow-up.');

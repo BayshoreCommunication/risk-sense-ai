@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Suspense, useState } from 'react';
-import { ArrowRight, BarChart3, CheckCircle2, LockKeyhole, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, BarChart3, CheckCircle2, LoaderCircle, LockKeyhole, ShieldCheck, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,7 +22,8 @@ import {
   signInWithSso,
   signUpWithPassword,
 } from '@/lib/firebase/client';
-import { isRole, safeNextForRole, storeSession } from '@/lib/session';
+import { PUBLIC_DEMO_ACCESS_AVAILABLE, PUBLIC_DEMO_ACCOUNTS, type PublicDemoAccount } from '@/lib/public-demo';
+import { clearSession, isRole, safeNextForRole, storeSession, type Role } from '@/lib/session';
 
 const DEV_ACCOUNTS = [
   { email: 'requestor@dev.local', labelKey: 'devAccounts.requestorFree' },
@@ -32,10 +33,6 @@ const DEV_ACCOUNTS = [
   { email: 'requestor@paid.local', labelKey: 'devAccounts.requestorPaid' },
 ];
 
-const DEMO_EMAIL = 'requestor@dev.local';
-// This is intentionally browser-visible build-time configuration for one disposable demo identity.
-const DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_PASSWORD ?? '';
-
 type Step = 'credentials' | 'otp';
 type Mode = 'signin' | 'signup';
 type LoginNotice =
@@ -43,8 +40,16 @@ type LoginNotice =
   | { key: 'ssoRedirect'; tenant: string }
   | { key: 'verificationEmailSent' | 'verificationResent' | 'verificationAlreadyComplete' | 'resetSent'; email: string };
 
+type SessionPayload = {
+  sessionId: string;
+  accessMode: 'standard' | 'public_demo_read_only';
+  user: { role: string };
+  tenant: { slug: string };
+};
+
 function LoginForm() {
   const t = useTranslations('login');
+  const tRole = useTranslations('roles');
   const router = useRouter();
   const params = useSearchParams();
   const hasFirebase = firebaseConfigured();
@@ -60,6 +65,7 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<LoginNotice | null>(null);
   const [busy, setBusy] = useState(false);
+  const [activeDemoRole, setActiveDemoRole] = useState<Role | null>(null);
 
   const routeNotice = params.get('reason') === 'session_expired'
     ? t('sessionExpired')
@@ -89,14 +95,33 @@ function LoginForm() {
     }
   }
 
-  /** Final step for every method: `POST /auth/session` (with the OTP for Firebase logins) → cookies → role home (W1). */
+  async function completeSession(session: SessionPayload, expectedRole?: Role, devUser?: string) {
+    const { sessionId, user } = session;
+    if (!isRole(user.role)) throw new Error(t('unknownRole'));
+    const publicDemoError = expectedRole && user.role !== expectedRole
+      ? t('demo.roleMismatch')
+      : expectedRole && session.tenant.slug !== 'tac'
+        ? t('demo.tenantMismatch')
+      : expectedRole && session.accessMode !== 'public_demo_read_only'
+        ? t('demo.accessModeMismatch')
+        : null;
+    if (publicDemoError) {
+      // Terminate the unexpected server session before clearing local state. The selected public
+      // identity must never silently open a different or writable workspace.
+      storeSession({ sessionId, role: user.role });
+      await api.DELETE('/auth/session').catch(() => undefined);
+      clearSession();
+      throw new Error(publicDemoError);
+    }
+    storeSession({ sessionId, role: user.role, devUser });
+    router.replace(safeNextForRole(params.get('next'), user.role));
+  }
+
+  /** Final step for ordinary identity methods: Firebase/dev identity → app session → role home (W1). */
   async function exchangeForSession(body?: { otpCode: string }, headers?: Record<string, string>, devUser?: string) {
     const res = await api.POST('/auth/session', { ...(body ? { body } : {}), ...(headers ? { headers } : {}) });
     if (res.error || !res.data) throw res.error;
-    const { sessionId, user } = res.data.data;
-    if (!isRole(user.role)) throw new Error(t('unknownRole'));
-    storeSession({ sessionId, role: user.role, devUser });
-    router.replace(safeNextForRole(params.get('next'), user.role));
+    await completeSession(res.data.data, undefined, devUser);
   }
 
   /** After the first factor succeeded: ask the backend to email the code and move to the OTP step (FR-01). */
@@ -127,6 +152,28 @@ function LoginForm() {
     await fn();
     await exchangeOrRequestOtp();
   }, { signOutOnError: true });
+
+  const openPublicDemo = (account: PublicDemoAccount) => {
+    setActiveDemoRole(account.role);
+    void run(
+      async () => {
+        try {
+          // Public role previews use only a short-lived backend session. Clear any ordinary
+          // identity first so subsequent requests cannot accidentally carry a Firebase bearer.
+          clearSession();
+          await firebaseSignOut();
+          const res = await api.POST('/auth/public-demo/session', { body: { role: account.role } });
+          if (res.error || !res.data) throw res.error;
+          await completeSession(res.data.data, account.role);
+        } catch (demoError) {
+          setActiveDemoRole(null);
+          clearSession();
+          throw demoError;
+        }
+      },
+      { signOutOnError: false },
+    );
+  };
 
   /**
    * Company SSO (FR-03, PAID): look the email domain up, sign in through that Firebase provider, then try the
@@ -170,34 +217,47 @@ function LoginForm() {
               ? mode === 'signin'
                 ? t('signInPrompt')
                 : t('signUpPrompt')
-              : DEV_AUTH_ENABLED
-                ? t('noFirebase')
-                : t('authNotConfigured')}
+              : PUBLIC_DEMO_ACCESS_AVAILABLE
+                ? t('demo.description')
+                : DEV_AUTH_ENABLED
+                  ? t('noFirebase')
+                  : t('authNotConfigured')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 px-0 pb-0 pt-0">
+        {step === 'credentials' && mode === 'signin' && PUBLIC_DEMO_ACCESS_AVAILABLE ? (
+          <section aria-labelledby="demo-access-title" className="rounded-2xl border border-primary/20 bg-primary/[0.045] p-4">
+            <div className="mb-3">
+              <h2 id="demo-access-title" className="text-sm font-semibold text-foreground">{t('demo.title')}</h2>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('demo.description')}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2" aria-label={t('demo.roleList')}>
+              {PUBLIC_DEMO_ACCOUNTS.map((account) => {
+                const selected = busy && activeDemoRole === account.role;
+                return (
+                  <button
+                    key={account.role}
+                    type="button"
+                    aria-label={t('demo.openRole', { role: tRole(account.role) })}
+                    className="group min-w-0 rounded-xl border border-border bg-background/85 p-3 text-left shadow-sm transition hover:border-primary/45 hover:bg-background focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/35 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={busy}
+                    onClick={() => openPublicDemo(account)}
+                  >
+                    <span className="flex items-center justify-between gap-2">
+                      <span className="truncate text-xs font-semibold text-foreground">{tRole(account.role)}</span>
+                      {selected ? <LoaderCircle aria-hidden="true" className="size-3.5 shrink-0 animate-spin text-primary" /> : <ArrowRight aria-hidden="true" className="size-3.5 shrink-0 text-primary transition-transform group-hover:translate-x-0.5" />}
+                    </span>
+                    <span className="mt-1 block text-[0.68rem] font-medium text-primary">{t('demo.readOnly')}</span>
+                    <span className="mt-1 block truncate text-[0.63rem] text-muted-foreground">{account.email}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
+
         {hasFirebase && step === 'credentials' && (
           <div className="space-y-4">
-            {mode === 'signin' && (
-              <section aria-labelledby="demo-access-title" className="rounded-xl border border-primary/20 bg-primary/[0.045] p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <h2 id="demo-access-title" className="text-sm font-semibold text-foreground">{t('demo.title')}</h2>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('demo.description')}</p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="w-full shrink-0 sm:w-auto"
-                    disabled={busy || !DEMO_PASSWORD}
-                    onClick={() => void firstFactor(() => signInWithPassword(DEMO_EMAIL, DEMO_PASSWORD))}
-                  >
-                    {busy ? t('pleaseWait') : t('demo.continue')}
-                  </Button>
-                </div>
-                {!DEMO_PASSWORD && <p role="status" className="mt-2 text-xs text-destructive">{t('demo.unavailable')}</p>}
-              </section>
-            )}
             <form
               className="space-y-3"
               onSubmit={(e) => {
@@ -367,6 +427,9 @@ function LoginForm() {
                 onClick={() =>
                   void run(async () => {
                     await firebaseSignOut();
+                    setActiveDemoRole(null);
+                    setOtp('');
+                    setOtpInfo(null);
                     setStep('credentials');
                   })
                 }
@@ -413,7 +476,7 @@ function LoginForm() {
           </details>
         )}
 
-        {!DEV_AUTH_ENABLED && !hasFirebase && <p className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">{t('authNotConfigured')}</p>}
+        {!DEV_AUTH_ENABLED && !hasFirebase && !PUBLIC_DEMO_ACCESS_AVAILABLE && <p className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">{t('authNotConfigured')}</p>}
         {visibleNotice && (
           <p role="status" className="flex items-start gap-2 rounded-lg border border-primary/15 bg-primary/5 p-3 text-sm text-foreground">
             <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />

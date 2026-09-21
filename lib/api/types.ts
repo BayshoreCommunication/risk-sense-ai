@@ -286,6 +286,87 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/public-demo/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        role: "requestor" | "administrator" | "system_administrator" | "audit";
+                    };
+                };
+            };
+            responses: {
+                /** @description Short-lived read-only public demo session created for one fixed TAC role */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                sessionId: string;
+                                /** Format: date-time */
+                                expiresAt: string;
+                                accessMode: components["schemas"]["AccessMode"];
+                                user: components["schemas"]["AuthUser"];
+                                tenant: components["schemas"]["AuthTenant"];
+                            };
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Public demo disabled or provisioned state does not match the fixed allowlist */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description CONCURRENT_LOGIN_BLOCKED */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description RATE_LIMITED */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/session": {
         parameters: {
             query?: never;
@@ -321,6 +402,7 @@ export interface paths {
                                 sessionId: string;
                                 /** Format: date-time */
                                 expiresAt: string;
+                                accessMode: components["schemas"]["AccessMode"];
                                 user: components["schemas"]["AuthUser"];
                                 tenant: components["schemas"]["AuthTenant"];
                             };
@@ -409,6 +491,7 @@ export interface paths {
                                 user: components["schemas"]["AuthUser"];
                                 tenant: components["schemas"]["AuthTenant"];
                                 sessionId: string;
+                                accessMode: components["schemas"]["AccessMode"];
                             };
                             meta: {
                                 requestId: string;
@@ -5606,6 +5689,8 @@ export interface components {
                 requestId: string;
             };
         };
+        /** @enum {string} */
+        AccessMode: "standard" | "public_demo_read_only";
         AuthUser: {
             id: string;
             firebaseUid: string;

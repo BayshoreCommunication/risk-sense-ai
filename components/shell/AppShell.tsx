@@ -14,6 +14,7 @@ import {
   ChevronRight,
   ClipboardCheck,
   Database,
+  Eye,
   FileClock,
   FileSearch,
   FileText,
@@ -47,7 +48,12 @@ import { clearSession, ROLE_HOME, storeRole, type Role } from '@/lib/session';
 
 type AuthUser = components['schemas']['AuthUser'];
 type AuthTenant = components['schemas']['AuthTenant'];
-type Me = { user: AuthUser; tenant: AuthTenant; sessionId: string };
+type Me = {
+  user: AuthUser;
+  tenant: AuthTenant;
+  sessionId: string;
+  accessMode: components['schemas']['AccessMode'];
+};
 type Feature = keyof AuthTenant['features'];
 type NavItem = { href: string; key: string; icon: LucideIcon; feature?: Feature; section?: 'advanced' };
 
@@ -261,6 +267,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
   const home = ROLE_HOME[trustedRole];
   const desktopNavigationCollapsed = sidebarCollapsed === true;
   const isConversationWorkspace = /^\/chat\/[^/]+$/.test(pathname);
+  const isPublicDemo = me.accessMode === 'public_demo_read_only';
 
   const renderNavigation = (mobile = false) => {
     const compact = desktopNavigationCollapsed && !mobile;
@@ -400,10 +407,17 @@ export function AppShell({ role, children }: { role: Role; children: React.React
         </div>
         </header>
 
+        {isPublicDemo ? (
+          <div className="fixed inset-x-0 top-[4.75rem] z-40 flex h-8 items-center justify-center gap-2 border-b border-amber-300/70 bg-amber-50 px-4 text-center text-[0.72rem] font-semibold text-amber-950 dark:border-amber-700/70 dark:bg-amber-950 dark:text-amber-100" role="status">
+            <Eye aria-hidden="true" className="size-3.5 shrink-0" />
+            <span>{t('app.publicDemoBanner')}</span>
+          </div>
+        ) : null}
+
         <aside
           id="app-desktop-navigation"
           aria-label={t('app.navigation')}
-          className={`sidebar-surface fixed bottom-0 left-0 top-[4.75rem] z-40 hidden border-r border-sidebar-border transition-[width] duration-200 motion-reduce:transition-none lg:block ${desktopNavigationCollapsed ? 'w-[4.5rem]' : 'w-64'}`}
+          className={`sidebar-surface fixed bottom-0 left-0 z-40 hidden border-r border-sidebar-border transition-[width] duration-200 motion-reduce:transition-none lg:block ${isPublicDemo ? 'top-[6.75rem]' : 'top-[4.75rem]'} ${desktopNavigationCollapsed ? 'w-[4.5rem]' : 'w-64'}`}
         >
           {renderNavigation()}
         </aside>
@@ -415,7 +429,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
               aria-label={desktopNavigationCollapsed ? t('app.expandNavigation') : t('app.collapseNavigation')}
               aria-controls="app-desktop-navigation"
               aria-expanded={!desktopNavigationCollapsed}
-              className={`fixed top-[4.75rem] z-50 hidden size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-[#061d43] text-white/80 shadow-[0_2px_8px_rgba(6,29,67,0.28)] transition-[left,background-color,color,border-color] duration-200 motion-reduce:transition-none hover:border-white/35 hover:bg-[#0b2c5c] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8bb9ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#061d43] lg:grid ${desktopNavigationCollapsed ? 'left-[4.5rem]' : 'left-64'}`}
+              className={`fixed z-50 hidden size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-[#061d43] text-white/80 shadow-[0_2px_8px_rgba(6,29,67,0.28)] transition-[left,background-color,color,border-color] duration-200 motion-reduce:transition-none hover:border-white/35 hover:bg-[#0b2c5c] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8bb9ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#061d43] lg:grid ${isPublicDemo ? 'top-[6.75rem]' : 'top-[4.75rem]'} ${desktopNavigationCollapsed ? 'left-[4.5rem]' : 'left-64'}`}
               onClick={() => setSidebarCollapsed((current) => !(current ?? false))}
             >
               {desktopNavigationCollapsed ? <ChevronRight className="size-3.5" aria-hidden="true" /> : <ChevronLeft className="size-3.5" aria-hidden="true" />}
@@ -448,11 +462,11 @@ export function AppShell({ role, children }: { role: Role; children: React.React
         </div>
       )}
 
-      <div className={`min-w-0 pt-[4.75rem] transition-[padding] duration-200 motion-reduce:transition-none ${desktopNavigationCollapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-64'}`} inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
+      <div className={`min-w-0 motion-reduce:transition-none lg:transition-[padding] lg:duration-200 ${isPublicDemo ? 'pt-[6.75rem]' : 'pt-[4.75rem]'} ${desktopNavigationCollapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-64'}`} inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
         <main
           id="main-content"
           tabIndex={-1}
-          className={`h-[calc(100dvh-4.75rem)] overflow-hidden outline-none ${
+          className={`${isPublicDemo ? 'h-[calc(100dvh-6.75rem)]' : 'h-[calc(100dvh-4.75rem)]'} overflow-hidden outline-none ${
             isConversationWorkspace ? 'px-3 py-2 sm:px-5 sm:py-2.5 lg:px-7 lg:py-3' : 'px-4 py-5 sm:px-7 sm:py-7 lg:px-12 lg:py-10'
           }`}
         >

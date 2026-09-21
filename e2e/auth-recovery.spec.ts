@@ -1,6 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { applyAuthHeaders, AuthBridgeState } from '../lib/api/auth-state';
 import { runVerificationRecovery } from '../lib/firebase/verification-recovery';
+import { isPublicDemoAccessAvailable } from '../lib/public-demo';
+import type { Role } from '../lib/session';
 
 const nextTurn = () => new Promise<void>((resolve) => setTimeout(resolve, 10));
 
@@ -247,72 +249,185 @@ test('a verified FREE requestor receives a session without entering the PAID MFA
   expect(otpRequests).toBe(0);
 });
 
-test('shared demo access uses the same Firebase requestor identity without the development bypass [FR-01, FR-02, NFR-08]', async ({ page }, testInfo) => {
-  test.skip(testInfo.config.metadata.frontendMocks !== true, 'requires the isolated mocked-Firebase frontend build');
-  const email = 'requestor@dev.local';
-  const session = {
+test('public demo configuration fails closed unless the deployment flag is explicitly enabled [FR-01, SEC-03]', () => {
+  expect(isPublicDemoAccessAvailable(undefined)).toBe(false);
+  expect(isPublicDemoAccessAvailable('')).toBe(false);
+  expect(isPublicDemoAccessAvailable('false')).toBe(false);
+  expect(isPublicDemoAccessAvailable('TRUE')).toBe(false);
+  expect(isPublicDemoAccessAvailable('true')).toBe(true);
+});
+
+const publicDemoCases: Array<{ email: string; label: string; role: Role; home: string }> = [
+  { email: 'requestor@tac.local', label: 'Requestor', role: 'requestor', home: '/chat' },
+  { email: 'admin@dev.local', label: 'Administrator', role: 'administrator', home: '/admin' },
+  { email: 'sysadmin@dev.local', label: 'System Administrator', role: 'system_administrator', home: '/system/users' },
+  { email: 'audit@dev.local', label: 'Audit', role: 'audit', home: '/audit/logs' },
+];
+
+function publicDemoSession(account: (typeof publicDemoCases)[number], role = account.role) {
+  return {
     user: {
-      id: 'demo-requestor-1',
-      firebaseUid: 'firebase-demo-requestor-1',
-      email,
-      name: 'Demo Requestor',
-      role: 'requestor',
-      tenantId: 'public-tenant',
+      id: `demo-${role}`,
+      firebaseUid: `firebase-demo-${role}`,
+      email: account.email,
+      name: `${account.label} Demo`,
+      role,
+      tenantId: 'tac-tenant',
       departmentIds: [],
-      crossDepartmentAccess: false,
-      mfaEnrolled: false,
+      crossDepartmentAccess: true,
+      mfaEnrolled: true,
     },
     tenant: {
-      id: 'public-tenant',
-      slug: 'public',
-      plan: 'free',
-      features: { sso: false, reviewDashboard: false, reports: false, fullAudit: false, departmentMapping: false, blockConcurrentLogin: false },
+      id: 'tac-tenant',
+      slug: 'tac',
+      plan: 'paid',
+      features: { sso: true, reviewDashboard: true, reports: true, fullAudit: true, departmentMapping: true, blockConcurrentLogin: false },
       sessionPolicy: { idleTimeoutMin: 15, maxConcurrentSessions: 1 },
+      sectors: ['financial', 'healthcare', 'it', 'general'],
     },
-    sessionId: 'demo-session-1',
-    expiresAt: '2026-09-15T10:00:00.000Z',
+    sessionId: `demo-session-${role}`,
+    expiresAt: '2026-09-22T10:00:00.000Z',
+    accessMode: 'public_demo_read_only',
   };
-  let sessionCalls = 0;
-  let otpRequests = 0;
-  await mockVerifiedPasswordSignIn(page, email, 'firebase-demo-requestor-1', 'frontend-demo-password');
+}
+
+for (const account of publicDemoCases) {
+  test(`shared ${account.label} demo requests a server-scoped session and redirects by the backend role [FR-01, FR-02, SEC-03, DASH-04]`, async ({ page }, testInfo) => {
+    test.skip(testInfo.config.metadata.frontendMocks !== true, 'requires the isolated mocked-Firebase frontend build');
+    const session = publicDemoSession(account);
+    let demoSessionCalls = 0;
+    let ordinarySessionCalls = 0;
+    let otpRequests = 0;
+    await page.route('**/test-api/**', async (route) => {
+      const path = new URL(route.request().url()).pathname.replace(/^\/test-api/, '');
+      if (path === '/auth/public-demo/session' && route.request().method() === 'POST') {
+        demoSessionCalls += 1;
+        expect(route.request().postDataJSON()).toEqual({ role: account.role });
+        expect(route.request().headers().authorization).toBeUndefined();
+        expect(route.request().headers()['x-dev-user']).toBeUndefined();
+        await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ data: session, meta: { requestId: 'demo-login' } }) });
+        return;
+      }
+      if (path === '/auth/session' && route.request().method() === 'POST') {
+        ordinarySessionCalls += 1;
+        await route.fulfill({ status: 500, contentType: 'application/json', body: '{}' });
+        return;
+      }
+      if (path === '/auth/otp/request') {
+        otpRequests += 1;
+        await route.fulfill({ status: 500, contentType: 'application/json', body: '{}' });
+        return;
+      }
+      if (path === '/me') {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: session, meta: { requestId: 'demo-me' } }) });
+        return;
+      }
+      if (path === '/audit-logs') {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { items: [], nextCursorSeq: null }, meta: { requestId: 'demo-audit' } }) });
+        return;
+      }
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [], meta: { requestId: 'demo-data' } }) });
+    });
+
+    await page.goto('/login');
+    await expect(page.getByRole('heading', { name: 'Explore every role' })).toBeVisible();
+    await expect(page.getByText('Shared read-only demo', { exact: true })).toHaveCount(4);
+    await page.getByRole('button', { name: `Open ${account.label} demo` }).click();
+
+    await expect(page).toHaveURL(new RegExp(`${account.home.replace('/', '\\/')}$`));
+    await expect(page.getByText('Shared read-only demo — changes are disabled and demo data is resettable.')).toBeVisible();
+    expect(demoSessionCalls).toBe(1);
+    expect(ordinarySessionCalls).toBe(0);
+    expect(otpRequests).toBe(0);
+  });
+}
+
+test('public demo role mismatch terminates and clears the unexpected session [FR-02, SEC-02, SEC-03]', async ({ page }, testInfo) => {
+  test.skip(testInfo.config.metadata.frontendMocks !== true, 'requires the isolated mocked-Firebase frontend build');
+  const account = publicDemoCases[0]!;
+  const mismatched = publicDemoSession(account, 'administrator');
+  let logoutCalls = 0;
   await page.route('**/test-api/**', async (route) => {
     const path = new URL(route.request().url()).pathname.replace(/^\/test-api/, '');
-    if (path === '/auth/session') {
-      sessionCalls += 1;
-      expect(route.request().headers().authorization).toMatch(/^Bearer /);
-      expect(route.request().headers()['x-dev-user']).toBeUndefined();
-      await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ data: session, meta: { requestId: 'demo-login' } }) });
+    if (path === '/auth/public-demo/session' && route.request().method() === 'POST') {
+      await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ data: mismatched, meta: { requestId: 'demo-mismatch' } }) });
       return;
     }
-    if (path === '/auth/otp/request') {
-      otpRequests += 1;
-      await route.fulfill({ status: 500, contentType: 'application/json', body: '{}' });
-      return;
-    }
-    if (path === '/me') {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: session, meta: { requestId: 'demo-me' } }) });
-      return;
-    }
-    if (path === '/personas') {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [], meta: { requestId: 'demo-personas' } }) });
+    if (path === '/auth/session' && route.request().method() === 'DELETE') {
+      logoutCalls += 1;
+      expect(route.request().headers()['x-session-id']).toBe(mismatched.sessionId);
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { loggedOut: true }, meta: { requestId: 'demo-cleanup' } }) });
       return;
     }
     await route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
   });
 
   await page.goto('/login');
-  await expect(page.getByRole('heading', { name: 'Demo access' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Continue as demo user' })).toBeVisible();
+  await page.getByRole('button', { name: 'Open Requestor demo' }).click();
 
-  await page.context().addCookies([{ name: 'rs_locale', value: 'bn', url: 'http://127.0.0.1:3100' }]);
-  await page.reload();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await expect(page.getByRole('heading', { name: 'Demo access' })).toBeVisible();
-  await page.getByRole('button', { name: 'Continue as demo user' }).click();
+  await expect(page.locator('p[role="alert"]')).toContainText('That demo identity returned a different role.');
+  await expect(page.getByRole('button', { name: 'Open Requestor demo' })).toBeEnabled();
+  const cookies = await page.context().cookies();
+  expect(cookies.some((cookie) => cookie.name === 'rs_session' || cookie.name === 'rs_role')).toBe(false);
+  expect(logoutCalls).toBe(1);
+});
 
-  await expect(page).toHaveURL(/\/chat$/);
-  expect(sessionCalls).toBe(1);
-  expect(otpRequests).toBe(0);
+test('public demo tenant mismatch terminates and clears the unexpected session [FR-02, SEC-02, SEC-03]', async ({ page }, testInfo) => {
+  test.skip(testInfo.config.metadata.frontendMocks !== true, 'requires the isolated mocked-Firebase frontend build');
+  const account = publicDemoCases[0]!;
+  const mismatched = { ...publicDemoSession(account), tenant: { ...publicDemoSession(account).tenant, slug: 'customer' } };
+  let logoutCalls = 0;
+  await page.route('**/test-api/**', async (route) => {
+    const path = new URL(route.request().url()).pathname.replace(/^\/test-api/, '');
+    if (path === '/auth/public-demo/session' && route.request().method() === 'POST') {
+      await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ data: mismatched, meta: { requestId: 'demo-tenant-mismatch' } }) });
+      return;
+    }
+    if (path === '/auth/session' && route.request().method() === 'DELETE') {
+      logoutCalls += 1;
+      expect(route.request().headers()['x-session-id']).toBe(mismatched.sessionId);
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { loggedOut: true }, meta: { requestId: 'demo-cleanup' } }) });
+      return;
+    }
+    await route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
+  });
+
+  await page.goto('/login');
+  await page.getByRole('button', { name: 'Open Requestor demo' }).click();
+
+  await expect(page.locator('p[role="alert"]')).toContainText('That demo identity returned an unexpected workspace.');
+  const cookies = await page.context().cookies();
+  expect(cookies.some((cookie) => cookie.name === 'rs_session' || cookie.name === 'rs_role')).toBe(false);
+  expect(logoutCalls).toBe(1);
+});
+
+test('public demo access-mode mismatch terminates and clears a writable session [FR-02, SEC-02, SEC-03]', async ({ page }, testInfo) => {
+  test.skip(testInfo.config.metadata.frontendMocks !== true, 'requires the isolated mocked-Firebase frontend build');
+  const account = publicDemoCases[0]!;
+  const mismatched = { ...publicDemoSession(account), accessMode: 'standard' };
+  let logoutCalls = 0;
+  await page.route('**/test-api/**', async (route) => {
+    const path = new URL(route.request().url()).pathname.replace(/^\/test-api/, '');
+    if (path === '/auth/public-demo/session' && route.request().method() === 'POST') {
+      await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ data: mismatched, meta: { requestId: 'demo-mode-mismatch' } }) });
+      return;
+    }
+    if (path === '/auth/session' && route.request().method() === 'DELETE') {
+      logoutCalls += 1;
+      expect(route.request().headers()['x-session-id']).toBe(mismatched.sessionId);
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { loggedOut: true }, meta: { requestId: 'demo-cleanup' } }) });
+      return;
+    }
+    await route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
+  });
+
+  await page.goto('/login');
+  await page.getByRole('button', { name: 'Open Requestor demo' }).click();
+
+  await expect(page.locator('p[role="alert"]')).toContainText('Read-only demo protection was not confirmed.');
+  const cookies = await page.context().cookies();
+  expect(cookies.some((cookie) => cookie.name === 'rs_session' || cookie.name === 'rs_role')).toBe(false);
+  expect(logoutCalls).toBe(1);
 });
 
 test('a verified PAID account enters the current-login MFA flow when session exchange requires it [FR-01, SEC-03]', async ({ page }, testInfo) => {
