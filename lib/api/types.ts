@@ -28,11 +28,39 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: {
-                                status: string;
+                                /** @enum {string} */
+                                status: "ok" | "degraded";
                                 db: string;
                                 openai: string;
                                 auth: string;
                                 mail: string;
+                                /** @enum {string} */
+                                otpDelivery: "available" | "blocked_sandbox_sender";
+                                version: string;
+                                uptimeSec: number;
+                            };
+                            meta: {
+                                requestId: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Service is alive but a required dependency or production OTP delivery is degraded */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @enum {string} */
+                                status: "ok" | "degraded";
+                                db: string;
+                                openai: string;
+                                auth: string;
+                                mail: string;
+                                /** @enum {string} */
+                                otpDelivery: "available" | "blocked_sandbox_sender";
                                 version: string;
                                 uptimeSec: number;
                             };
