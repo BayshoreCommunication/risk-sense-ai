@@ -22,7 +22,7 @@ import {
   signInWithSso,
   signUpWithPassword,
 } from '@/lib/firebase/client';
-import { PUBLIC_DEMO_ACCESS_AVAILABLE, PUBLIC_DEMO_ACCOUNTS, type PublicDemoAccount } from '@/lib/public-demo';
+import { isPublicDemoAccessMode, PUBLIC_DEMO_ACCESS_AVAILABLE, PUBLIC_DEMO_ACCOUNTS, type PublicDemoAccount } from '@/lib/public-demo';
 import { clearSession, isRole, safeNextForRole, storeSession, type Role } from '@/lib/session';
 
 const DEV_ACCOUNTS = [
@@ -42,7 +42,7 @@ type LoginNotice =
 
 type SessionPayload = {
   sessionId: string;
-  accessMode: 'standard' | 'public_demo_read_only';
+  accessMode: 'standard' | 'public_demo_read_only' | 'public_demo_sandbox';
   user: { role: string };
   tenant: { slug: string };
 };
@@ -102,7 +102,7 @@ function LoginForm() {
       ? t('demo.roleMismatch')
       : expectedRole && session.tenant.slug !== 'tac'
         ? t('demo.tenantMismatch')
-      : expectedRole && session.accessMode !== 'public_demo_read_only'
+      : expectedRole && !isPublicDemoAccessMode(session.accessMode)
         ? t('demo.accessModeMismatch')
         : null;
     if (publicDemoError) {
@@ -247,12 +247,13 @@ function LoginForm() {
                       <span className="truncate text-xs font-semibold text-foreground">{tRole(account.role)}</span>
                       {selected ? <LoaderCircle aria-hidden="true" className="size-3.5 shrink-0 animate-spin text-primary" /> : <ArrowRight aria-hidden="true" className="size-3.5 shrink-0 text-primary transition-transform group-hover:translate-x-0.5" />}
                     </span>
-                    <span className="mt-1 block text-[0.68rem] font-medium text-primary">{t('demo.readOnly')}</span>
+                    <span className="mt-1 block text-[0.68rem] font-medium text-primary">{t('demo.sandbox')}</span>
                     <span className="mt-1 block truncate text-[0.63rem] text-muted-foreground">{account.email}</span>
                   </button>
                 );
               })}
             </div>
+            <p className="mt-3 text-[0.68rem] leading-4 text-muted-foreground">{t('demo.safety')}</p>
           </section>
         ) : null}
 

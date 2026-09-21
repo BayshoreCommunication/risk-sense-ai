@@ -22,8 +22,7 @@
     "collapseNavigation": "Collapse navigation",
     "loading": "Loading…",
     "openingWorkspace": "Opening your workspace…",
-    "sessionVerifyFailed": "Your session could not be verified. Please sign in again.",
-    "publicDemoBanner": "Shared read-only demo — changes are disabled and demo data is resettable."
+    "sessionVerifyFailed": "Your session could not be verified. Please sign in again."
   },
   "roles": {
     "requestor": "Requestor",
@@ -88,13 +87,14 @@
     },
     "demo": {
       "title": "Explore every role",
-      "description": "Choose a short-lived, server-scoped read-only workspace. No shared password is used.",
-      "roleList": "Shared read-only demo roles",
-      "readOnly": "Shared read-only demo",
+      "description": "Choose a short-lived, role-scoped sandbox to explore role-permitted workflows. Identity and sensitive-export controls remain protected. No shared password is used.",
+      "roleList": "Interactive demo roles",
+      "sandbox": "Interactive sandbox",
+      "safety": "Use sample data only; this shared sandbox may be reset.",
       "openRole": "Open {role} demo",
       "roleMismatch": "That demo identity returned a different role. The session was closed; please try again.",
       "tenantMismatch": "That demo identity returned an unexpected workspace. The session was closed; please try again.",
-      "accessModeMismatch": "Read-only demo protection was not confirmed. The session was closed; please try again later."
+      "accessModeMismatch": "Interactive demo access was not confirmed. The session was closed; please try again later."
     },
     "recoveryNote": "MFA or SSO did not complete? Refresh your identity-provider access and try again, or contact your administrator.",
     "steps": {
@@ -1369,6 +1369,7 @@
         "returnMasked": "Return to masked view",
         "maskedTitle": "Sensitive payloads are masked",
         "maskedDescription": "Registered personal, health and financial values stay hidden until an authorized viewer explicitly confirms access.",
+        "demoMaskedDescription": "Sensitive payloads remain masked in shared sandbox sessions.",
         "visibleTitle": "Sensitive payloads are visible",
         "visibleDescription": "This browser view may contain registered personal, health or financial values. Return to the masked view before sharing your screen.",
         "confirmTitle": "Show sensitive audit payloads?",
@@ -1417,6 +1418,7 @@
   "assessmentDetail": {
     "loading": "Loading…",
     "masked": "Free text is masked on the {plan} plan. Unmasking is recorded in the audit log with your identity.",
+    "demoMasked": "Free text is masked on the {plan} plan and remains masked in shared sandbox sessions.",
     "unmask": "Unmask (logged)",
     "started": "started {date}",
     "result": {
@@ -1459,6 +1461,7 @@
     },
     "missing": "Not logged on this plan: {fields}.",
     "masked": "User-entered text and payload details are masked on the {plan} plan.",
+    "demoMasked": "User-entered text and payload details remain masked in shared sandbox sessions.",
     "unmask": "Unmask (logged)",
     "difference": {
       "title": "Differences",
@@ -1494,6 +1497,10 @@
       "disabled": {
         "title": "Enable full audit to create archives",
         "description": "Audit archive exports and manifests are available only when the tenant's Full audit feature is enabled."
+      },
+      "sandbox": {
+        "title": "Sensitive exports stay protected",
+        "description": "Archive creation is unavailable in shared sandbox sessions because downloads contain clear-text audit records. Immutable manifest history remains visible below."
       },
       "form": {
         "title": "Create bounded export",
@@ -1583,6 +1590,7 @@
       "fields": {
         "name": "Name",
         "email": "Work email",
+        "demoEmailHint": "Demo users must use an unroutable address ending @demo.invalid.",
         "role": "Role",
         "status": "Account status"
       },
@@ -1594,6 +1602,7 @@
       "validation": {
         "name": "Name must contain at least 2 characters.",
         "email": "A valid work email is required.",
+        "demoEmail": "Use an address ending @demo.invalid for shared sandbox users.",
         "noChanges": "No changes to save."
       },
       "confirmation": {
@@ -1695,7 +1704,9 @@
         "title": "Single sign-on",
         "description": "Set up your identity provider details.",
         "providerId": "Identity provider ID",
-        "domain": "Email domain"
+        "domain": "Email domain",
+        "demoDomainHint": "Shared sandbox SSO domains must end in .invalid so they cannot claim real identities.",
+        "demoDomainError": "Use an inert domain ending in .invalid, such as example.invalid."
       },
       "policy": {
         "title": "Session policy",

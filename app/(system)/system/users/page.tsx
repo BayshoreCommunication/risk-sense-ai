@@ -11,9 +11,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PageHeader } from '@/components/shell/PageHeader';
+import { useWorkspace } from '@/components/shell/workspace-context';
 import { api, toApiError } from '@/lib/api/client';
 import type { components, paths } from '@/lib/api/types';
 import { formatIdentifierLabel } from '@/lib/format-identifier-label';
+import { isPublicDemoAccessMode, isReservedPublicDemoEmail } from '@/lib/public-demo';
 
 type SystemUser = components['schemas']['SystemUser'];
 type Department = components['schemas']['SystemDepartment'];
@@ -77,6 +79,8 @@ function userInitials(name: string) {
 export default function UsersPage() {
   const locale = useLocale();
   const t = useTranslations('system.users');
+  const workspace = useWorkspace();
+  const isPublicDemo = isPublicDemoAccessMode(workspace?.accessMode);
   const roles = useTranslations('roles');
   const status = useTranslations('status');
   const [users, setUsers] = useState<SystemUser[]>([]);
@@ -199,6 +203,10 @@ export default function UsersPage() {
     }
     if (editor.mode === 'create' && !draft.email.trim()) {
       setFormError(t('validation.email'));
+      return;
+    }
+    if (editor.mode === 'create' && isPublicDemo && !isReservedPublicDemoEmail(draft.email)) {
+      setFormError(t('validation.demoEmail'));
       return;
     }
 
@@ -377,7 +385,19 @@ export default function UsersPage() {
               </div>
               <div className="space-y-1">
                 <Label htmlFor="user-email">{t('fields.email')}</Label>
-                <Input id="user-email" type="email" value={draft.email} onChange={(event) => updateDraft({ email: event.target.value })} required disabled={editor?.mode === 'edit'} />
+                <Input
+                  id="user-email"
+                  type="email"
+                  value={draft.email}
+                  onChange={(event) => updateDraft({ email: event.target.value })}
+                  required
+                  disabled={editor?.mode === 'edit'}
+                  placeholder={isPublicDemo && editor?.mode === 'create' ? 'name@demo.invalid' : undefined}
+                  aria-describedby={isPublicDemo && editor?.mode === 'create' ? 'demo-user-email-help' : undefined}
+                />
+                {isPublicDemo && editor?.mode === 'create' ? (
+                  <p id="demo-user-email-help" className="text-xs leading-5 text-muted-foreground">{t('fields.demoEmailHint')}</p>
+                ) : null}
               </div>
               <div className="space-y-1">
                 <Label htmlFor="user-role">{t('fields.role')}</Label>

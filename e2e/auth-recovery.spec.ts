@@ -287,7 +287,7 @@ function publicDemoSession(account: (typeof publicDemoCases)[number], role = acc
     },
     sessionId: `demo-session-${role}`,
     expiresAt: '2026-09-22T10:00:00.000Z',
-    accessMode: 'public_demo_read_only',
+    accessMode: 'public_demo_sandbox',
   };
 }
 
@@ -331,16 +331,42 @@ for (const account of publicDemoCases) {
 
     await page.goto('/login');
     await expect(page.getByRole('heading', { name: 'Explore every role' })).toBeVisible();
-    await expect(page.getByText('Shared read-only demo', { exact: true })).toHaveCount(4);
+    await expect(page.getByText('Interactive sandbox', { exact: true })).toHaveCount(4);
+    await expect(page.getByText('Use sample data only; this shared sandbox may be reset.')).toBeVisible();
     await page.getByRole('button', { name: `Open ${account.label} demo` }).click();
 
     await expect(page).toHaveURL(new RegExp(`${account.home.replace('/', '\\/')}$`));
-    await expect(page.getByText('Shared read-only demo — changes are disabled and demo data is resettable.')).toBeVisible();
+    await expect(page.getByText('Shared read-only demo — changes are disabled and demo data is resettable.')).toHaveCount(0);
+    await expect(page.getByText('Use sample data only; this shared sandbox may be reset.')).toHaveCount(0);
     expect(demoSessionCalls).toBe(1);
     expect(ordinarySessionCalls).toBe(0);
     expect(otpRequests).toBe(0);
   });
 }
+
+test('public demo accepts the legacy mode during the sandbox alias cutover [FR-01, FR-02, SEC-03]', async ({ page }, testInfo) => {
+  test.skip(testInfo.config.metadata.frontendMocks !== true, 'requires the isolated mocked-Firebase frontend build');
+  const account = publicDemoCases[0]!;
+  const session = { ...publicDemoSession(account), accessMode: 'public_demo_read_only' };
+  await page.route('**/test-api/**', async (route) => {
+    const path = new URL(route.request().url()).pathname.replace(/^\/test-api/, '');
+    if (path === '/auth/public-demo/session' && route.request().method() === 'POST') {
+      await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ data: session, meta: { requestId: 'legacy-demo-login' } }) });
+      return;
+    }
+    if (path === '/me') {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: session, meta: { requestId: 'legacy-demo-me' } }) });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [], meta: { requestId: 'legacy-demo-data' } }) });
+  });
+
+  await page.goto('/login');
+  await page.getByRole('button', { name: 'Open Requestor demo' }).click();
+
+  await expect(page).toHaveURL(/\/chat$/);
+  await expect(page.getByText('Shared read-only demo — changes are disabled and demo data is resettable.')).toHaveCount(0);
+});
 
 test('public demo role mismatch terminates and clears the unexpected session [FR-02, SEC-02, SEC-03]', async ({ page }, testInfo) => {
   test.skip(testInfo.config.metadata.frontendMocks !== true, 'requires the isolated mocked-Firebase frontend build');
@@ -401,7 +427,7 @@ test('public demo tenant mismatch terminates and clears the unexpected session [
   expect(logoutCalls).toBe(1);
 });
 
-test('public demo access-mode mismatch terminates and clears a writable session [FR-02, SEC-02, SEC-03]', async ({ page }, testInfo) => {
+test('public demo access-mode mismatch terminates and clears an unexpected session [FR-02, SEC-02, SEC-03]', async ({ page }, testInfo) => {
   test.skip(testInfo.config.metadata.frontendMocks !== true, 'requires the isolated mocked-Firebase frontend build');
   const account = publicDemoCases[0]!;
   const mismatched = { ...publicDemoSession(account), accessMode: 'standard' };
@@ -424,7 +450,7 @@ test('public demo access-mode mismatch terminates and clears a writable session 
   await page.goto('/login');
   await page.getByRole('button', { name: 'Open Requestor demo' }).click();
 
-  await expect(page.locator('p[role="alert"]')).toContainText('Read-only demo protection was not confirmed.');
+  await expect(page.locator('p[role="alert"]')).toContainText('Interactive demo access was not confirmed.');
   const cookies = await page.context().cookies();
   expect(cookies.some((cookie) => cookie.name === 'rs_session' || cookie.name === 'rs_role')).toBe(false);
   expect(logoutCalls).toBe(1);

@@ -8,8 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/shell/PageHeader';
+import { useWorkspace } from '@/components/shell/workspace-context';
 import { api, toApiError } from '@/lib/api/client';
 import type { components } from '@/lib/api/types';
+import { isPublicDemoAccessMode, isReservedPublicDemoSsoDomain } from '@/lib/public-demo';
 
 type Settings = components['schemas']['TenantSettings'];
 type Patch = NonNullable<import('@/lib/api/types').paths['/system/tenant']['patch']['requestBody']>['content']['application/json'];
@@ -20,6 +22,8 @@ const FEATURES: (keyof Settings['features'])[] = ['sso', 'reviewDashboard', 'rep
 export default function TenantSettingsPage() {
   const locale = useLocale();
   const t = useTranslations('system.tenant');
+  const workspace = useWorkspace();
+  const isPublicDemo = isPublicDemoAccessMode(workspace?.accessMode);
   const [s, setS] = useState<Settings | null>(null);
   const [draft, setDraft] = useState<Patch>({});
   const [busy, setBusy] = useState(false);
@@ -36,8 +40,10 @@ export default function TenantSettingsPage() {
   }, []);
 
   const merged = s ? { ...s, ...draft, features: { ...s.features, ...(draft.features ?? {}) }, sso: { ...s.sso, ...(draft.sso ?? {}) }, authPolicy: { ...s.authPolicy, ...(draft.authPolicy ?? {}) }, sessionPolicy: { ...s.sessionPolicy, ...(draft.sessionPolicy ?? {}) }, retentionPolicy: { ...s.retentionPolicy, ...(draft.retentionPolicy ?? {}) } } : null;
+  const demoSsoDomainInvalid = isPublicDemo && typeof draft.sso?.domain === 'string' && !isReservedPublicDemoSsoDomain(draft.sso.domain);
 
   async function save() {
+    if (demoSsoDomainInvalid) return;
     setBusy(true);
     setError(null);
     setSaved(null);
@@ -82,7 +88,19 @@ export default function TenantSettingsPage() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="domain">{t('sso.domain')}</Label>
-                <Input id="domain" placeholder="acme.com" value={merged.sso.domain ?? ''} onChange={(e) => setDraft((d) => ({ ...d, sso: { providerId: (d.sso?.providerId ?? merged.sso.providerId) || null, domain: e.target.value || null } }))} />
+                <Input
+                  id="domain"
+                  placeholder={isPublicDemo ? 'example.invalid' : 'acme.com'}
+                  value={merged.sso.domain ?? ''}
+                  aria-invalid={demoSsoDomainInvalid}
+                  aria-describedby={isPublicDemo ? 'demo-sso-domain-help' : undefined}
+                  onChange={(e) => setDraft((d) => ({ ...d, sso: { providerId: (d.sso?.providerId ?? merged.sso.providerId) || null, domain: e.target.value || null } }))}
+                />
+                {isPublicDemo ? (
+                  <p id="demo-sso-domain-help" className={`text-xs leading-5 ${demoSsoDomainInvalid ? 'text-destructive' : 'text-muted-foreground'}`} role={demoSsoDomainInvalid ? 'alert' : undefined}>
+                    {demoSsoDomainInvalid ? t('sso.demoDomainError') : t('sso.demoDomainHint')}
+                  </p>
+                ) : null}
               </div>
             </div>
             <div className={`rounded-xl border p-3 text-sm ${merged.plan === 'paid' ? 'border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-400/10' : 'border-blue-500/30 bg-blue-500/5 dark:bg-blue-400/10'}`}>
@@ -174,7 +192,7 @@ export default function TenantSettingsPage() {
       {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
       {saved && <p className="text-sm text-muted-foreground" role="status">{saved}</p>}
       <div className="sticky bottom-0 z-10 flex justify-end gap-2 rounded-xl border bg-card p-2 shadow-[0_-6px_20px_rgba(15,35,65,0.08)]">
-        <Button disabled={!dirty || busy} onClick={() => void save()}>
+        <Button disabled={!dirty || busy || demoSsoDomainInvalid} onClick={() => void save()}>
           {busy ? t('saving') : t('save')}
         </Button>
         <Button variant="outline" disabled={!dirty || busy} onClick={() => { setDraft({}); setSectorText(s?.sectors.join('; ') ?? ''); }}>

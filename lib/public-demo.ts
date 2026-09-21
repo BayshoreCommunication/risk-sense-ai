@@ -5,10 +5,27 @@ export type PublicDemoAccount = {
   role: Role;
 };
 
+export type PublicDemoAccessMode = 'public_demo_read_only' | 'public_demo_sandbox';
+
+/** The legacy value remains accepted only while the production aliases complete their cutover. */
+export function isPublicDemoAccessMode(accessMode: unknown): accessMode is PublicDemoAccessMode {
+  return accessMode === 'public_demo_sandbox' || accessMode === 'public_demo_read_only';
+}
+
+/** Sandbox-created identities are deliberately unroutable and cannot become real login principals. */
+export function isReservedPublicDemoEmail(email: string) {
+  return /^[^@\s]+@demo\.invalid$/i.test(email.trim());
+}
+
+/** RFC 2606's `.invalid` namespace keeps demo SSO configuration inert outside the sandbox. */
+export function isReservedPublicDemoSsoDomain(domain: string) {
+  return /^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+invalid$/i.test(domain.trim());
+}
+
 /**
- * Fixed, non-customer identities provisioned by the deployment operator for the public read-only
- * showcase. The backend issues a scoped session directly and remains authoritative for the
- * returned identity, tenant, role, and read-only access mode; no shared browser credential exists.
+ * Fixed, non-customer identities provisioned by the deployment operator for the public interactive
+ * sandbox. The backend issues a scoped session directly and remains authoritative for the returned
+ * identity, tenant, role, and sandbox access mode; no shared browser credential exists.
  */
 export const PUBLIC_DEMO_ACCOUNTS = [
   { email: 'requestor@tac.local', role: 'requestor' },

@@ -22,7 +22,11 @@ const defaultFeatures: Features = {
   blockConcurrentLogin: false,
 };
 
-function currentUser(role: Role, featureOverrides: Partial<Features> = {}) {
+function currentUser(
+  role: Role,
+  featureOverrides: Partial<Features> = {},
+  accessMode: 'standard' | 'public_demo_sandbox' = 'standard',
+) {
   return {
     user: {
       id: 'user-1',
@@ -44,6 +48,7 @@ function currentUser(role: Role, featureOverrides: Partial<Features> = {}) {
       sessionPolicy: { idleTimeoutMin: 15, maxConcurrentSessions: 1 },
     },
     sessionId: 'session-1',
+    accessMode,
   };
 }
 
@@ -784,6 +789,104 @@ test('audit payloads require confirmed unmask and reset immediately to the maske
   await page.reload();
   await expect(page.getByRole('button', { name: 'Unmask sensitive payloads' })).toBeVisible();
   await expect(page.getByText('Sensitive payloads are visible')).toHaveCount(0);
+});
+
+test('shared sandbox audit views stay masked and expose no unmask action [SEC-03, SEC-05, SEC-07]', async ({ page }) => {
+  const unmaskRequests: string[] = [];
+  await authenticate(page, 'audit');
+  await mockApi(page, () => currentUser('audit', { fullAudit: true }, 'public_demo_sandbox'), async ({ route, path, method }) => {
+    const url = new URL(route.request().url());
+    if (url.searchParams.get('unmask') === 'true') unmaskRequests.push(`${method} ${path}`);
+    if (path === '/audit-logs' && method === 'GET') {
+      await ok(route, { items: [], nextCursorSeq: null });
+      return true;
+    }
+    if (path === '/assessments' && method === 'GET') {
+      await ok(route, {
+        items: [{
+          _id: 'assessment-1',
+          status: 'closed',
+          phase: 'done',
+          personaKey: 'finance_officer',
+          scenarioKey: 'fin_unauthorized_transaction',
+          requestorId: 'requestor-1',
+          requestor: { name: 'Demo Requestor', email: 'requestor@demo.invalid' },
+          result: null,
+          decision: { type: 'accept', decidedAt: '2026-09-15T08:05:00.000Z' },
+          timing: { startedAt: '2026-09-15T08:00:00.000Z', closedAt: '2026-09-15T08:05:00.000Z' },
+          createdAt: '2026-09-15T08:00:00.000Z',
+        }],
+        total: 1,
+        page: 1,
+        limit: 25,
+        pages: 1,
+        counts: { in_progress: 0, intake_complete: 0, awaiting_decision: 0, escalated: 0, closed: 1, error_review: 0, pending: 0, all: 1 },
+        summary: { averageConfidence: null },
+      });
+      return true;
+    }
+    if (path === '/assessments/assessment-1' && method === 'GET') {
+      await ok(route, assessment({
+        status: 'closed',
+        phase: 'done',
+        currentQuestionKey: undefined,
+        masked: 'financial',
+        decision: { type: 'accept', decidedAt: '2026-09-15T08:05:00.000Z' },
+      }));
+      return true;
+    }
+    if (path === '/assessments/assessment-1/messages' && method === 'GET') {
+      await ok(route, []);
+      return true;
+    }
+    if (path === '/assessments/assessment-1/reconstruct' && method === 'GET') {
+      await ok(route, {
+        assessmentId: 'assessment-1',
+        plan: 'paid',
+        fullAudit: true,
+        entries: 1,
+        integrity: { ok: true, checked: 1, badSeqs: [] },
+        completeness: 'full',
+        missing: [],
+        masked: 'financial',
+        timeline: [],
+        state: {
+          personaKey: 'finance_officer',
+          scenarioKey: 'fin_unauthorized_transaction',
+          versions: null,
+          answers: [],
+          facts: {},
+          rules: null,
+          score: null,
+          computedClassification: null,
+          classification: null,
+          ruleDriven: null,
+          confidence: null,
+          recommendedAction: null,
+          explanation: null,
+          decisions: [],
+          status: 'closed',
+        },
+        conformance: { matches: true, differences: [] },
+      });
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/audit/logs');
+  await expect(page.getByText('Sensitive payloads remain masked in shared sandbox sessions.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Unmask sensitive payloads' })).toHaveCount(0);
+
+  await page.goto('/audit/assessments');
+  await page.getByRole('button', { name: 'Stored' }).click();
+  await expect(page.getByText('Free text is masked on the FINANCIAL plan and remains masked in shared sandbox sessions.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Unmask (logged)' })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Reconstruct' }).click();
+  await expect(page.getByText('User-entered text and payload details remain masked in shared sandbox sessions.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Unmask (logged)' })).toHaveCount(0);
+  expect(unmaskRequests).toEqual([]);
 });
 
 test('a late unmasked audit response cannot overwrite a newer masked view [SEC-05, SEC-07]', async ({ page }) => {

@@ -5,9 +5,11 @@ import { useLocale, useTranslations } from 'next-intl';
 import { AlertCircle, CheckCircle2, Eye, FileClock, GitCompareArrows, History, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useWorkspace } from '@/components/shell/workspace-context';
 import { auditApi, type Reconstruction } from '@/lib/audit';
 import { toApiError } from '@/lib/api/client';
 import { formatDisplayValue, formatIdentifierLabel, formatIdentifierTokensInText } from '@/lib/format-identifier-label';
+import { isPublicDemoAccessMode } from '@/lib/public-demo';
 
 /**
  * FR-26: what the audit log alone says happened to an assessment — timeline, rebuilt state, per-entry hash
@@ -19,24 +21,27 @@ export function ReconstructionView({ id }: { id: string }) {
   const resultCard = useTranslations('resultCard');
   const classification = useTranslations('classification');
   const status = useTranslations('status');
+  const workspace = useWorkspace();
+  const canUnmask = !isPublicDemoAccessMode(workspace?.accessMode);
   const [r, setR] = useState<Reconstruction | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [unmask, setUnmask] = useState(false); // SEC-05
+  const effectiveUnmask = canUnmask && unmask;
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
     auditApi
-      .reconstruct(id, unmask)
+      .reconstruct(id, effectiveUnmask)
       .then((x) => !cancelled && setR(x))
       .catch((e) => !cancelled && setError(toApiError(e).message))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, [id, unmask]);
+  }, [effectiveUnmask, id]);
 
   if (error) {
     return (
@@ -88,11 +93,13 @@ export function ReconstructionView({ id }: { id: string }) {
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
           <span className="flex items-start gap-2 leading-5">
             <Eye aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-amber-700 dark:text-amber-300" />
-            {t('masked', { plan: r.masked.toUpperCase() })}
+            {canUnmask ? t('masked', { plan: r.masked.toUpperCase() }) : t('demoMasked', { plan: r.masked.toUpperCase() })}
           </span>
-          <Button type="button" size="sm" variant="outline" className="border-amber-300 bg-background/80 dark:border-amber-400/35" disabled={loading || unmask} onClick={() => setUnmask(true)}>
-            {t('unmask')}
-          </Button>
+          {canUnmask ? (
+            <Button type="button" size="sm" variant="outline" className="border-amber-300 bg-background/80 dark:border-amber-400/35" disabled={loading || unmask} onClick={() => setUnmask(true)}>
+              {t('unmask')}
+            </Button>
+          ) : null}
         </div>
       )}
       {!r.conformance.matches && (
