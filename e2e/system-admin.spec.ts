@@ -43,13 +43,13 @@ async function apiError(route: Route, status: number, code: string, message: str
 type ApiRequest = { route: Route; path: string; method: string; url: URL };
 type ApiHandler = (request: ApiRequest) => boolean | Promise<boolean>;
 
-async function mockApi(page: Page, handler?: ApiHandler) {
+async function mockApi(page: Page, handler?: ApiHandler, accessMode: 'standard' | 'public_demo_sandbox' = 'standard') {
   await page.route('**/test-api/**', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
     const path = url.pathname.replace(/^\/test-api/, '');
     if (path === '/me') {
-      await ok(route, me);
+      await ok(route, { ...me, accessMode });
       return;
     }
     if (handler && (await handler({ route, path, method: request.method(), url }))) return;
@@ -186,6 +186,96 @@ test('a system administrator provisions a requestor with department scope [FR-02
   });
   await expect(page.getByText('Finance Reviewer').first()).toBeVisible();
   await expect(page.getByText('All departments').first()).toBeVisible();
+});
+
+test('sandbox user provisioning requires an unroutable demo identity before submit [FR-02, SEC-02, SEC-03]', async ({ page }) => {
+  let posted: unknown;
+  let postCalls = 0;
+  await mockApi(page, async ({ route, path, method }) => {
+    if (path === '/system/users' && method === 'GET') {
+      await ok(route, []);
+      return true;
+    }
+    if (path === '/system/departments' && method === 'GET') {
+      await ok(route, []);
+      return true;
+    }
+    if (path === '/system/tenant' && method === 'GET') {
+      await ok(route, { ...me.tenant, name: 'Demo tenant', retentionPolicy: {}, authPolicy: { otpRequired: true }, sso: { providerId: null, domain: null } });
+      return true;
+    }
+    if (path === '/system/users' && method === 'POST') {
+      postCalls += 1;
+      posted = route.request().postDataJSON();
+      await ok(route, {
+        _id: '64b000000000000000000099',
+        ...(posted as Record<string, unknown>),
+        mfaEnrolled: false,
+        status: 'active',
+        lastLoginAt: null,
+      }, 201);
+      return true;
+    }
+    return false;
+  }, 'public_demo_sandbox');
+
+  await page.goto('/system/users');
+  await page.getByRole('button', { name: 'Provision user' }).first().click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByText('Demo users must use an unroutable address ending @demo.invalid.')).toBeVisible();
+  await dialog.getByLabel('Name').fill('Sandbox Reviewer');
+  await dialog.getByLabel('Work email').fill('reviewer@example.com');
+  await dialog.getByRole('button', { name: 'Provision user' }).click();
+
+  await expect(dialog.getByRole('alert')).toContainText('Use an address ending @demo.invalid');
+  expect(postCalls).toBe(0);
+
+  await dialog.getByLabel('Work email').fill('reviewer@demo.invalid');
+  await dialog.getByRole('button', { name: 'Provision user' }).click();
+  await expect.poll(() => postCalls).toBe(1);
+  expect(posted).toMatchObject({ email: 'reviewer@demo.invalid', name: 'Sandbox Reviewer', role: 'requestor' });
+});
+
+test('sandbox SSO accepts only inert .invalid domains without sending rejected patches [FR-03, SEC-02, SEC-03]', async ({ page }) => {
+  const settings = {
+    ...me.tenant,
+    name: 'Demo tenant',
+    retentionPolicy: { assessmentDays: 2555, evidenceDays: 2555, auditDays: 3650, datasetHistoryDays: 3650 },
+    authPolicy: { otpRequired: true },
+    sso: { providerId: null, domain: null },
+  };
+  let patchBody: unknown;
+  let patchCalls = 0;
+  await mockApi(page, async ({ route, path, method }) => {
+    if (path === '/system/tenant' && method === 'GET') {
+      await ok(route, settings);
+      return true;
+    }
+    if (path === '/system/tenant' && method === 'PATCH') {
+      patchCalls += 1;
+      patchBody = route.request().postDataJSON();
+      const patch = patchBody as { sso?: typeof settings.sso };
+      await ok(route, { ...settings, ...patch, sso: { ...settings.sso, ...(patch.sso ?? {}) } });
+      return true;
+    }
+    return false;
+  }, 'public_demo_sandbox');
+
+  await page.goto('/system/tenant');
+  await expect(page.getByText('Shared sandbox SSO domains must end in .invalid so they cannot claim real identities.')).toBeVisible();
+  await page.getByLabel('Identity provider ID').fill('oidc.demo');
+  const domain = page.getByRole('textbox', { name: 'Email domain', exact: true });
+  await domain.fill('customer.example');
+
+  await expect(page.locator('#demo-sso-domain-help')).toContainText('Use an inert domain ending in .invalid');
+  await expect(page.getByRole('button', { name: 'Save changes' })).toBeDisabled();
+  expect(patchCalls).toBe(0);
+
+  await domain.fill('risk-sense.invalid');
+  await expect(page.getByRole('button', { name: 'Save changes' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect.poll(() => patchCalls).toBe(1);
+  expect(patchBody).toEqual({ sso: { providerId: 'oidc.demo', domain: 'risk-sense.invalid' } });
 });
 
 test('user role controls stay disabled when the tenant plan cannot be verified [FR-02, SEC-02]', async ({ page }) => {
@@ -612,6 +702,44 @@ test('audit archive exposes immutable manifests and requires explicit export con
   expect(download.suggestedFilename()).toBe('audit-export-101-150.json');
   await expect.poll(() => posts).toBe(1);
   await expect(page.getByRole('status')).toContainText('Export created and downloaded · 50 records');
+});
+
+test('shared sandbox keeps audit archive history visible while protecting clear-text exports [SEC-03, SEC-07]', async ({ page }) => {
+  const manifest = {
+    _id: 'manifest-demo',
+    from: '2026-08-01T00:00:00.000Z',
+    to: '2026-09-01T00:00:00.000Z',
+    firstSeq: 201,
+    lastSeq: 225,
+    recordCount: 25,
+    exportHash: 'b'.repeat(64),
+    actorUserId: me.user.id,
+    createdAt: '2026-09-01T00:05:00.000Z',
+  };
+  let posts = 0;
+  await mockApi(page, async ({ route, path, method }) => {
+    if (path === '/system/tenant' && method === 'GET') {
+      await ok(route, { ...me.tenant, name: 'Demo tenant', retentionPolicy: {}, authPolicy: { otpRequired: true }, sso: { providerId: null, domain: null } });
+      return true;
+    }
+    if (path === '/audit-logs/archive-manifests' && method === 'GET') {
+      await ok(route, [manifest]);
+      return true;
+    }
+    if (path === '/audit-logs/archive' && method === 'POST') {
+      posts += 1;
+      await ok(route, { manifest, records: [] }, 201);
+      return true;
+    }
+    return false;
+  }, 'public_demo_sandbox');
+
+  await page.goto('/system/audit');
+  await expect(page.getByText('Sensitive exports stay protected', { exact: true })).toBeVisible();
+  await expect(page.getByText('Archive creation is unavailable in shared sandbox sessions because downloads contain clear-text audit records.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Create export' })).toHaveCount(0);
+  await expect(page.getByRole('cell', { name: '201–225' })).toBeVisible();
+  expect(posts).toBe(0);
 });
 
 test('PAID recovery targets can be tightened without claiming new provider evidence [NFR-06, FR-25]', async ({ page }) => {

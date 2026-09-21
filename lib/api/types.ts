@@ -339,7 +339,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Short-lived read-only public demo session created for one fixed TAC role */
+                /** @description Short-lived sandbox session for one fixed TAC role; ordinary RBAC and tenant scope apply, with documented demo identity/privacy/abuse guards */
                 201: {
                     headers: {
                         [name: string]: unknown;
@@ -562,7 +562,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Audit entries (newest first) */
+                /** @description Audit entries (newest first); session entities use deterministic non-secret references and historical bearer ids are fingerprinted before response */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -662,7 +662,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Bounded clear-text audit export plus immutable manifest/hash (system_administrator, fullAudit) */
+                /** @description Bounded clear-text audit-payload export plus immutable manifest/hash; session entity ids are always non-secret fingerprints (standard system_administrator with fullAudit) */
                 201: {
                     headers: {
                         [name: string]: unknown;
@@ -681,6 +681,15 @@ export interface paths {
                                 requestId: string;
                             };
                         };
+                    };
+                };
+                /** @description Forbidden for public_demo_sandbox because the export contains raw audit payloads */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -4355,7 +4364,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Review dashboard (DASH-01): scoped, filtered, paginated; counts and average confidence within the non-status filters */
+                /** @description Review dashboard (DASH-01): scoped, filtered, paginated; public-demo Requestors see only the current session and sandbox operator roles see only untagged seeded history */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -4396,7 +4405,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Started; a user-selected persona continues, while an AI proposal pauses for explicit confirmation or override before scenario questions */
+                /** @description Started; public-demo visitor assessments are isolated to the creating session */
                 201: {
                     headers: {
                         [name: string]: unknown;
@@ -4408,6 +4417,15 @@ export interface paths {
                                 requestId: string;
                             };
                         };
+                    };
+                };
+                /** @description Shared public-demo Requestor AI/start budget exhausted (240 operations per tenant/user per 10 minutes) */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
                     };
                 };
             };
@@ -4478,7 +4496,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Assessment */
+                /** @description Assessment; unmask=true is forbidden for public_demo_sandbox */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -4522,7 +4540,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Transcript */
+                /** @description Transcript; unmask=true is forbidden for public_demo_sandbox */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -4574,6 +4592,15 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Per-session answer limit or shared public-demo Requestor AI/start budget exhausted */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -4622,6 +4649,15 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Shared public-demo Requestor AI/start budget exhausted */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -4666,6 +4702,15 @@ export interface paths {
                 };
                 /** @description MISSING_REQUIRED_FACTS */
                 422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+                /** @description Shared public-demo Requestor AI/start budget exhausted */
+                429: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -4847,7 +4892,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Standard report (FR-26): volume | classification | override-rate | assessment-time; cached 1 h; PAID reports feature */
+                /** @description Standard report (FR-26); public-demo assessment data and cache entries are isolated to the visitor session or untagged seeded history */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -4899,7 +4944,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description CSV or PDF of the same rows (FR-28) */
+                /** @description CSV or PDF aggregate table rows (FR-28); override-reason free text is never exported */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -4945,7 +4990,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Trend rows per period × department | persona | scenario (FR-27, DASH-03) */
+                /** @description Trend rows per period × department | persona | scenario, with public-demo visitor/seeded isolation (FR-27, DASH-03) */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -4987,7 +5032,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description SSO provider for the email domain (FR-03); providerId null when none */
+                /** @description SSO provider for the email domain (FR-03); the public-demo tenant is never eligible for lookup/JIT */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -5094,7 +5139,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Updated settings; audited as config/tenant.updated */
+                /** @description Updated settings; the public-demo tenant stays PAID and may configure only reserved .invalid SSO domains */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -5168,7 +5213,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Pre-provisioned tenant user with exactly one role */
+                /** @description Pre-provisioned tenant user with exactly one role; sandbox-created users require @demo.invalid and can never become standard login identities */
                 201: {
                     headers: {
                         [name: string]: unknown;
@@ -5718,7 +5763,7 @@ export interface components {
             };
         };
         /** @enum {string} */
-        AccessMode: "standard" | "public_demo_read_only";
+        AccessMode: "standard" | "public_demo_sandbox";
         AuthUser: {
             id: string;
             firebaseUid: string;

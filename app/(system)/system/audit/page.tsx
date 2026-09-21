@@ -10,7 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PageHeader } from '@/components/shell/PageHeader';
+import { useWorkspace } from '@/components/shell/workspace-context';
 import { api, toApiError } from '@/lib/api/client';
+import { isPublicDemoAccessMode } from '@/lib/public-demo';
 
 type Manifest = {
   _id: string;
@@ -62,6 +64,8 @@ function downloadExport(payload: unknown, manifest: Manifest) {
 export default function SystemAuditArchivePage() {
   const locale = useLocale();
   const t = useTranslations('system.auditArchive');
+  const workspace = useWorkspace();
+  const isPublicDemo = isPublicDemoAccessMode(workspace?.accessMode);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [maxRecords, setMaxRecords] = useState(5000);
@@ -114,6 +118,7 @@ export default function SystemAuditArchivePage() {
   }, []);
 
   async function createExport() {
+    if (isPublicDemo) return;
     if (!confirm) {
       setConfirm(true);
       return;
@@ -202,7 +207,7 @@ export default function SystemAuditArchivePage() {
         </Card>
       )}
 
-      {enabled && (
+      {enabled && !isPublicDemo && (
         <Card className="overflow-hidden shadow-none">
           <CardHeader className="border-b">
             <CardTitle className="flex items-center gap-2"><Download className="size-4 text-primary" aria-hidden="true" />{t('form.title')}</CardTitle>
@@ -241,6 +246,15 @@ export default function SystemAuditArchivePage() {
           </CardContent>
         </Card>
       )}
+
+      {enabled && isPublicDemo ? (
+        <Card className="border-blue-200 bg-blue-50/55 shadow-none dark:border-blue-400/25 dark:bg-blue-400/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><ShieldCheck className="size-4 text-blue-700 dark:text-blue-300" aria-hidden="true" />{t('sandbox.title')}</CardTitle>
+            <CardDescription>{t('sandbox.description')}</CardDescription>
+          </CardHeader>
+        </Card>
+      ) : null}
 
       {enabled && (
         <Card>

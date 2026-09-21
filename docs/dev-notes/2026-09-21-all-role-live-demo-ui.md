@@ -1,5 +1,8 @@
 # 2026-09-21 — All-role live demo selector
 
+> Superseded for current behavior by `2026-09-21-interactive-demo-sandbox-ui.md`: the demo is now
+> interactive within each role and the persistent read-only banner has been removed.
+
 Requirements: FR-01, FR-02, SEC-02, SEC-03, DASH-04, NFR-08.
 
 ## Outcome

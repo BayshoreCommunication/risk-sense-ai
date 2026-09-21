@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { CheckCircle2, ChevronDown, ChevronUp, Eye, EyeOff, RefreshCw, Search, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { PageHeader } from '@/components/shell/PageHeader';
+import { useWorkspace } from '@/components/shell/workspace-context';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -13,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toApiError } from '@/lib/api/client';
 import { auditApi, type AuditListQuery, type AuditLogEntry } from '@/lib/audit';
 import { formatIdentifierLabel } from '@/lib/format-identifier-label';
+import { isPublicDemoAccessMode } from '@/lib/public-demo';
 
 const ANY = '__any';
 const CATEGORIES = ['auth', 'session', 'config', 'dataset', 'assessment', 'decision', 'retention', 'access'];
@@ -30,6 +32,8 @@ function formatBytes(value: number, locale: string) {
 export default function AuditLogsPage() {
   const locale = useLocale();
   const t = useTranslations('audit.logs');
+  const workspace = useWorkspace();
+  const canUnmask = !isPublicDemoAccessMode(workspace?.accessMode);
   const [category, setCategory] = useState(ANY);
   const [search, setSearch] = useState('');
   const [items, setItems] = useState<AuditLogEntry[]>([]);
@@ -58,7 +62,7 @@ export default function AuditLogsPage() {
       if (category !== ANY) q.category = category as AuditListQuery['category'];
       if (searchEntityId) q.entityId = searchEntityId;
       if (cursorSeq) q.cursorSeq = cursorSeq;
-      if (unmask) q.unmask = 'true';
+      if (unmask && canUnmask) q.unmask = 'true';
       auditApi
         .list(q)
         .then((r) => {
@@ -74,7 +78,7 @@ export default function AuditLogsPage() {
           if (generation === listRequestGeneration.current) setLoading(false);
         });
     },
-    [category, searchEntityId, unmask],
+    [canUnmask, category, searchEntityId, unmask],
   );
   useEffect(() => {
     load(cursor);
@@ -91,6 +95,7 @@ export default function AuditLogsPage() {
   }, [items, search]);
 
   function showSensitivePayloads() {
+    if (!canUnmask) return;
     listRequestGeneration.current += 1;
     setConfirmUnmask(false);
     setExpanded(null);
@@ -156,20 +161,22 @@ export default function AuditLogsPage() {
           <div>
             <p className="font-semibold">{unmask ? t('unmask.visibleTitle') : t('unmask.maskedTitle')}</p>
             <p className={`mt-1 text-xs leading-5 ${unmask ? 'text-amber-900/80 dark:text-amber-100/80' : 'text-blue-900/75 dark:text-blue-100/75'}`}>
-              {unmask ? t('unmask.visibleDescription') : t('unmask.maskedDescription')}
+              {unmask ? t('unmask.visibleDescription') : canUnmask ? t('unmask.maskedDescription') : t('unmask.demoMaskedDescription')}
             </p>
           </div>
         </div>
-        <Button
-          size="sm"
-          variant={unmask ? 'default' : 'outline'}
-          className="shrink-0 self-start sm:self-auto"
-          disabled={loading}
-          onClick={() => unmask ? returnToMaskedView() : setConfirmUnmask(true)}
-        >
-          {unmask ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
-          {unmask ? t('unmask.returnMasked') : t('unmask.show')}
-        </Button>
+        {canUnmask ? (
+          <Button
+            size="sm"
+            variant={unmask ? 'default' : 'outline'}
+            className="shrink-0 self-start sm:self-auto"
+            disabled={loading}
+            onClick={() => unmask ? returnToMaskedView() : setConfirmUnmask(true)}
+          >
+            {unmask ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+            {unmask ? t('unmask.returnMasked') : t('unmask.show')}
+          </Button>
+        ) : null}
       </div>
       <div className="control-strip grid gap-3 sm:grid-cols-3">
         <div className="space-y-1">
@@ -309,7 +316,7 @@ export default function AuditLogsPage() {
       </div>
       <p className="rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-xs leading-5 text-blue-950/75 dark:border-blue-400/25 dark:bg-blue-400/10 dark:text-blue-100/85">{t('note')}</p>
 
-      <Dialog open={confirmUnmask} onOpenChange={setConfirmUnmask}>
+      <Dialog open={canUnmask && confirmUnmask} onOpenChange={setConfirmUnmask}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('unmask.confirmTitle')}</DialogTitle>
