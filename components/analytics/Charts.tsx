@@ -519,14 +519,14 @@ export function StatTile({
   } as const;
 
   return (
-    <div className="flex min-h-28 items-center gap-4 rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(15,35,65,0.05)]">
-      <span className={`grid size-12 shrink-0 place-items-center rounded-xl ${tones[tone]}`} aria-hidden="true">
+    <div className="flex min-h-24 items-center gap-3 rounded-xl border bg-card p-3 shadow-[0_1px_2px_rgba(15,35,65,0.05)] min-[96rem]:min-h-28 min-[96rem]:gap-4 min-[96rem]:p-4">
+      <span className={`grid size-10 shrink-0 place-items-center rounded-xl min-[96rem]:size-12 ${tones[tone]}`} aria-hidden="true">
         {icon}
       </span>
       <div className="min-w-0">
-        <div className="font-heading text-2xl font-semibold tracking-tight tabular-nums">{value}</div>
-        <div className="mt-0.5 text-sm font-medium text-foreground">{label}</div>
-        {hint ? <div className="mt-1 truncate text-xs leading-5 text-muted-foreground" title={hint}>{hint}</div> : null}
+        <div className="font-heading text-xl font-semibold tracking-tight tabular-nums min-[96rem]:text-2xl">{value}</div>
+        <div className="mt-0.5 text-[0.82rem] font-medium text-foreground min-[96rem]:text-sm">{label}</div>
+        {hint ? <div className="mt-1 line-clamp-2 text-xs leading-4 text-muted-foreground min-[96rem]:leading-5" title={hint}>{hint}</div> : null}
       </div>
     </div>
   );

@@ -332,7 +332,7 @@ export function ContentManager(props: ContentManagerProps) {
         const count = !loading && <Badge variant="secondary" aria-label={`${visible.length} ${title}`}>{visible.length}</Badge>;
         const controls = (
           <>
-            <div className="relative min-w-0 sm:w-56">
+            <div className="relative w-full min-w-0 sm:w-56">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
               <Input aria-label={t('filter')} placeholder={t('filterPlaceholder')} value={filter} onChange={(e) => setFilter(e.target.value)} className="w-full pl-8" />
             </div>
@@ -390,7 +390,7 @@ export function ContentManager(props: ContentManagerProps) {
           {visible.map((item) => {
             const rendered = card(item);
             return (
-              <article key={item._id} className="flex min-h-28 flex-wrap items-center gap-4 rounded-2xl border bg-card p-5 shadow-[0_4px_16px_rgba(15,35,65,0.045)] transition-shadow hover:shadow-[0_8px_24px_rgba(15,35,65,0.07)]">
+              <article key={item._id} className="flex min-h-24 flex-wrap items-center gap-3 rounded-2xl border bg-card p-4 shadow-[0_4px_16px_rgba(15,35,65,0.045)] transition-shadow hover:shadow-[0_8px_24px_rgba(15,35,65,0.07)] min-[96rem]:min-h-28 min-[96rem]:gap-4 min-[96rem]:p-5">
                 {rendered.icon}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">

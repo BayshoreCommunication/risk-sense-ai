@@ -104,14 +104,14 @@ export default function ConformancePage() {
       />
 
       {error && (
-        <div className="flex items-center justify-between gap-3 rounded-md border border-destructive/40 bg-destructive/5 p-3" role="alert">
-          <p className="text-sm text-destructive">{error}</p>
-          <Button size="sm" variant="outline" onClick={() => void load()} disabled={loading}>{t('retry')}</Button>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-destructive/40 bg-destructive/5 p-3" role="alert">
+          <p className="min-w-0 text-sm text-destructive [overflow-wrap:anywhere]">{error}</p>
+          <Button className="shrink-0" size="sm" variant="outline" onClick={() => void load()} disabled={loading}>{t('retry')}</Button>
         </div>
       )}
 
       {summary ? (
-        <div className="grid gap-3 sm:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 min-[75rem]:grid-cols-4">
           <Card size="sm"><CardHeader><CardTitle className="text-2xl tabular-nums">{summary.scanned}</CardTitle><CardDescription>{t('summary.scanned')}</CardDescription></CardHeader></Card>
           <Card size="sm"><CardHeader><div className="flex items-center justify-between"><CardTitle className="text-2xl tabular-nums">{summary.valid}</CardTitle><CheckCircle2 className="size-4 text-emerald-700 dark:text-emerald-300" aria-hidden="true" /></div><CardDescription>{t('summary.valid')}</CardDescription></CardHeader></Card>
           <Card size="sm"><CardHeader><div className="flex items-center justify-between"><CardTitle className={summary.flagged ? 'text-destructive text-2xl tabular-nums' : 'text-2xl tabular-nums'}>{summary.flagged}</CardTitle><FileWarning className="size-4 text-rose-700 dark:text-rose-300" aria-hidden="true" /></div><CardDescription>{t('summary.flagged')}</CardDescription></CardHeader></Card>
@@ -132,7 +132,7 @@ export default function ConformancePage() {
             {t('flags.includeResolved')}
           </label>
         </div>
-        <div className="divide-y rounded-lg border md:hidden">
+        <div className="divide-y rounded-lg border min-[75rem]:hidden">
           {loading && <p className="p-8 text-center text-sm text-muted-foreground">{t('flags.loading')}</p>}
           {!loading && !error && flags.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{includeResolved ? t('flags.emptyAll') : t('flags.emptyOpen')}</p>}
           {flags.map((flag) => {
@@ -140,14 +140,14 @@ export default function ConformancePage() {
             return (
               <article key={`mobile-${flag._id ?? assessmentId}`} className="space-y-3 p-4">
                 <div className="flex items-start justify-between gap-3"><code className="break-all text-xs">{assessmentId}</code><Badge variant={flag.resolvedAt ? 'outline' : 'destructive'}>{flag.resolvedAt ? t('flags.resolved') : t('flags.open')}</Badge></div>
-                <ul className="space-y-1 text-xs">{flag.issues.map((issue) => <li key={`${issue.path}:${issue.message}`}><code>{issue.path}</code>: {issue.message}</li>)}</ul>
-                <p className="text-xs text-muted-foreground">{new Date(flag.firstDetectedAt).toLocaleString(locale)} – {new Date(flag.lastDetectedAt).toLocaleString(locale)}</p>
+                <ul className="space-y-1 text-xs [overflow-wrap:anywhere]">{flag.issues.map((issue) => <li key={`${issue.path}:${issue.message}`}><code>{issue.path}</code>: {issue.message}</li>)}</ul>
+                <p className="break-words text-xs text-muted-foreground">{new Date(flag.firstDetectedAt).toLocaleString(locale)} – {new Date(flag.lastDetectedAt).toLocaleString(locale)}</p>
               </article>
             );
           })}
         </div>
-        <div className="hidden rounded-xl border md:block">
-          <Table containerLabel={t('flags.title')}>
+        <div className="hidden rounded-xl border min-[75rem]:block">
+          <Table className="min-w-[980px]" containerLabel={t('flags.title')}>
             <TableHeader>
               <TableRow>
                 <TableHead>{t('flags.columns.assessment')}</TableHead>
@@ -188,17 +188,17 @@ export default function ConformancePage() {
           <h2 className="flex items-center gap-2 font-medium"><History className="size-4 text-primary" aria-hidden="true" />{t('runs.title')}</h2>
           <p className="text-xs text-muted-foreground">{t('runs.description')}</p>
         </div>
-        <div className="divide-y rounded-lg border md:hidden">
+        <div className="divide-y rounded-lg border min-[75rem]:hidden">
           {!loading && runs.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('runs.empty')}</p>}
           {runs.map((run) => (
             <article key={`mobile-${run.ranAt}:${run.trigger}`} className="space-y-3 p-4">
-              <div className="flex items-start justify-between gap-3"><div><p className="text-sm font-semibold">{run.trigger}</p><p className="mt-1 text-xs text-muted-foreground">{new Date(run.ranAt).toLocaleString(locale)}</p></div><Badge variant="outline">{t('runs.duration', { value: run.durationMs })}</Badge></div>
+              <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="break-words text-sm font-semibold">{run.trigger}</p><p className="mt-1 break-words text-xs text-muted-foreground">{new Date(run.ranAt).toLocaleString(locale)}</p></div><Badge className="shrink-0" variant="outline">{t('runs.duration', { value: run.durationMs })}</Badge></div>
               <dl className="grid grid-cols-2 gap-3 text-xs"><div><dt className="text-muted-foreground">{t('runs.columns.scanned')}</dt><dd className="font-semibold tabular-nums">{run.scanned}</dd></div><div><dt className="text-muted-foreground">{t('runs.columns.valid')}</dt><dd className="font-semibold tabular-nums">{run.valid}</dd></div><div><dt className="text-muted-foreground">{t('runs.columns.flagged')}</dt><dd className="font-semibold tabular-nums">{run.flagged}</dd></div><div><dt className="text-muted-foreground">{t('runs.columns.resolved')}</dt><dd className="font-semibold tabular-nums">{run.resolved}</dd></div></dl>
             </article>
           ))}
         </div>
-        <div className="hidden rounded-xl border md:block">
-          <Table containerLabel={t('runs.title')}>
+        <div className="hidden rounded-xl border min-[75rem]:block">
+          <Table className="min-w-[860px]" containerLabel={t('runs.title')}>
             <TableHeader><TableRow><TableHead>{t('runs.columns.when')}</TableHead><TableHead>{t('runs.columns.trigger')}</TableHead><TableHead className="text-right">{t('runs.columns.scanned')}</TableHead><TableHead className="text-right">{t('runs.columns.valid')}</TableHead><TableHead className="text-right">{t('runs.columns.flagged')}</TableHead><TableHead className="text-right">{t('runs.columns.resolved')}</TableHead><TableHead className="text-right">{t('runs.columns.duration')}</TableHead></TableRow></TableHeader>
             <TableBody>
               {!loading && runs.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">{t('runs.empty')}</TableCell></TableRow>}

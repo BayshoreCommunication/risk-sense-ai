@@ -72,7 +72,7 @@ export default function NewAssessmentPage() {
   }
 
   return (
-    <div className="page-shell max-w-none gap-8">
+    <div className="page-shell max-w-none gap-5 sm:gap-6 min-[90rem]:gap-8">
       <PageHeader title={t('title')} requirements={['FR-04', 'FR-05']} />
 
       <Card className="overflow-visible py-0 shadow-[0_6px_22px_rgba(15,35,65,0.07)]">
@@ -101,7 +101,7 @@ export default function NewAssessmentPage() {
             </div>
             <p className="ml-10 mt-1.5 text-xs leading-5 text-muted-foreground sm:text-sm">{t('personaHint')}</p>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3" role="group" aria-label={t('personaGroupLabel')}>
+            <div className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(min(100%,17.5rem),1fr))] gap-4" role="group" aria-label={t('personaGroupLabel')}>
               {personas.map((persona, index) => {
                 const selected = personaKey === persona.key;
                 const Icon = personaIcon(persona);
@@ -151,7 +151,7 @@ export default function NewAssessmentPage() {
               })}
 
               {!error && personas.length === 0 ? (
-                <div className="col-span-full grid gap-4 md:grid-cols-2 xl:grid-cols-3" role="status" aria-label={t('loadingPersonas')}>
+                <div className="col-span-full grid grid-cols-[repeat(auto-fit,minmax(min(100%,17.5rem),1fr))] gap-4" role="status" aria-label={t('loadingPersonas')}>
                   {[0, 1, 2].map((item) => (
                     <div key={item} className="flex min-h-36 animate-pulse items-center gap-5 rounded-xl border p-5">
                       <span className="size-16 shrink-0 rounded-xl bg-muted" />

@@ -257,9 +257,9 @@ export default function UsersPage() {
       />
 
       {pageError && (
-        <div className="flex items-center justify-between gap-3 rounded-md border border-destructive/40 bg-destructive/5 p-3" role="alert">
-          <p className="text-sm text-destructive">{pageError}</p>
-          <Button size="sm" variant="outline" onClick={() => void load()}>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-destructive/40 bg-destructive/5 p-3" role="alert">
+          <p className="min-w-0 text-sm text-destructive [overflow-wrap:anywhere]">{pageError}</p>
+          <Button className="shrink-0" size="sm" variant="outline" onClick={() => void load()}>
             {t('retry')}
           </Button>
         </div>
@@ -267,19 +267,19 @@ export default function UsersPage() {
 
       <section className="overflow-hidden rounded-xl border bg-card shadow-[0_10px_30px_rgba(15,35,65,0.06)]" aria-busy={loading}>
         <div className="flex flex-wrap items-center justify-between gap-4 border-b px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <span className="card-icon"><UsersRound className="size-5" aria-hidden="true" /></span>
-            <div>
+            <div className="min-w-0">
               <h2 className="font-heading text-base font-bold tracking-[-0.01em]">{t('list.title')}</h2>
-              <p className="mt-0.5 text-sm text-muted-foreground">{t('list.description')}</p>
+              <p className="mt-0.5 text-sm text-muted-foreground [overflow-wrap:anywhere]">{t('list.description')}</p>
             </div>
           </div>
-          <Button variant="outline" onClick={openCreate} disabled={controlsDisabled}><UserPlus aria-hidden="true" />{t('provision')}</Button>
+          <Button className="shrink-0" variant="outline" onClick={openCreate} disabled={controlsDisabled}><UserPlus aria-hidden="true" />{t('provision')}</Button>
         </div>
 
-        <div className="hidden lg:block">
+        <div className="hidden min-[75rem]:block">
           <Table className="min-w-[840px] table-fixed" containerLabel={t('list.title')}>
-            <TableHeader className="bg-muted/35">
+            <TableHeader className="bg-muted">
               <TableRow>
                 <TableHead className="w-[28%]">{t('columns.user')}</TableHead>
                 <TableHead className="w-[18%]">{t('columns.role')}</TableHead>
@@ -328,7 +328,7 @@ export default function UsersPage() {
           </Table>
         </div>
 
-        <div className="divide-y lg:hidden">
+        <div className="divide-y min-[75rem]:hidden">
           {loading && <p className="p-8 text-center text-sm text-muted-foreground">{t('loading')}</p>}
           {!loading && !pageError && users.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('empty')}</p>}
           {users.map((user) => (
@@ -340,11 +340,11 @@ export default function UsersPage() {
                 </div>
                 <Badge variant={user.status === 'active' ? 'outline' : 'destructive'} className={user.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-300' : undefined}>{status.has(user.status) ? status(user.status) : formatIdentifierLabel(user.status)}</Badge>
               </div>
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+              <dl className="grid grid-cols-1 gap-x-4 gap-y-2 text-xs min-[30rem]:grid-cols-2">
                 <div><dt className="text-muted-foreground">{t('columns.role')}</dt><dd className="mt-1"><Badge variant="outline" className={ROLE_BADGE_CLASS[user.role]}>{roles.has(user.role) ? roles(user.role) : formatIdentifierLabel(user.role)}</Badge></dd></div>
                 <div><dt className="text-muted-foreground">{t('columns.mfa')}</dt><dd className="mt-0.5 font-medium">{user.mfaEnrolled ? t('mfa.enrolled') : planState !== 'ready' ? t('mfa.unavailable') : plan === 'paid' && user.role === 'requestor' ? t('mfa.signIn') : requiresRecordedMfa(user) ? t('mfa.pending') : t('mfa.notRequired')}</dd></div>
-                <div className="col-span-2"><dt className="text-muted-foreground">{t('columns.departments')}</dt><dd className="mt-0.5 font-medium">{user.role !== 'requestor' ? t('scope.notApplicable') : user.crossDepartmentAccess ? t('scope.allDepartments') : user.departmentIds.map((id) => departmentNames.get(id) ?? id).join(', ') || t('scope.ownOnly')}</dd></div>
-                <div className="col-span-2"><dt className="text-muted-foreground">{t('columns.lastLogin')}</dt><dd className="mt-0.5 font-medium">{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString(locale) : t('never')}</dd></div>
+                <div className="min-w-0 min-[30rem]:col-span-2"><dt className="text-muted-foreground">{t('columns.departments')}</dt><dd className="mt-0.5 break-words font-medium">{user.role !== 'requestor' ? t('scope.notApplicable') : user.crossDepartmentAccess ? t('scope.allDepartments') : user.departmentIds.map((id) => departmentNames.get(id) ?? id).join(', ') || t('scope.ownOnly')}</dd></div>
+                <div className="min-w-0 min-[30rem]:col-span-2"><dt className="text-muted-foreground">{t('columns.lastLogin')}</dt><dd className="mt-0.5 break-words font-medium">{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString(locale) : t('never')}</dd></div>
               </dl>
               <Button className="w-full" size="sm" variant="outline" onClick={() => openEdit(user)} disabled={controlsDisabled}>{t('edit')}</Button>
             </article>

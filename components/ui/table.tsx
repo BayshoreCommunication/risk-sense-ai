@@ -16,7 +16,7 @@ function Table({ className, containerClassName, containerLabel, ...props }: Tabl
       aria-label={containerLabel}
       tabIndex={containerLabel ? 0 : undefined}
       className={cn(
-        "scrollbar-subtle relative max-h-[max(16rem,calc(100dvh-26rem))] w-full overflow-auto outline-none focus-visible:ring-3 focus-visible:ring-ring/35",
+        "scrollbar-subtle relative w-full overflow-auto overscroll-contain outline-none focus-visible:ring-3 focus-visible:ring-ring/35",
         containerClassName
       )}
     >
@@ -80,7 +80,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "h-11 px-3 text-left align-middle text-[0.7rem] font-semibold tracking-[0.075em] whitespace-nowrap uppercase [&:has([role=checkbox])]:pr-0",
+        "h-10 px-2.5 text-left align-middle text-[0.68rem] font-semibold tracking-[0.075em] whitespace-nowrap uppercase min-[96rem]:h-11 min-[96rem]:px-3 min-[96rem]:text-[0.7rem] [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}
@@ -93,7 +93,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "px-3 py-3 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0",
+        "px-2.5 py-2.5 align-middle whitespace-nowrap min-[96rem]:px-3 min-[96rem]:py-3 [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}

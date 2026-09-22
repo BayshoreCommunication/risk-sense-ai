@@ -168,9 +168,68 @@
 }
 
 @layer components {
+  /* One responsive shell scale is shared by Requestor, Administrator, System Administrator and
+     Audit. The tiers are based on usable CSS width, so a high-DPI 13-inch laptop receives the
+     compact desktop shell instead of the spacious large-monitor treatment. */
+  .app-shell {
+    --shell-header-height: 4rem;
+    --shell-sidebar-width: 13rem;
+    --shell-sidebar-compact-width: 4rem;
+    --workspace-pad-x: 1rem;
+    --workspace-pad-y: 1.25rem;
+  }
+  .workspace-topbar {
+    height: var(--shell-header-height);
+  }
+  .workspace-brand-panel {
+    padding-inline: 1rem;
+  }
+  .workspace-brand-mark {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+  .workspace-brand-name {
+    font-size: 1rem;
+  }
+  .workspace-account-panel {
+    padding-inline: 1rem;
+  }
+  .workspace-sidebar {
+    top: var(--shell-header-height);
+    width: var(--shell-sidebar-width);
+  }
+  .app-shell[data-sidebar-collapsed='true'] .workspace-sidebar {
+    width: var(--shell-sidebar-compact-width);
+  }
+  .workspace-sidebar-toggle {
+    top: var(--shell-header-height);
+    left: var(--shell-sidebar-width);
+  }
+  .app-shell[data-sidebar-collapsed='true'] .workspace-sidebar-toggle {
+    left: var(--shell-sidebar-compact-width);
+  }
+  .workspace-content {
+    padding-top: var(--shell-header-height);
+  }
+  .workspace-main {
+    height: calc(100dvh - var(--shell-header-height));
+    padding: var(--workspace-pad-y) var(--workspace-pad-x);
+  }
+  .workspace-main--conversation {
+    --workspace-pad-x: 0.75rem;
+    --workspace-pad-y: 0.5rem;
+  }
+  .workspace-nav-scroll {
+    padding-block: 1.25rem;
+  }
+  .workspace-nav-link {
+    padding-block: 0.625rem;
+  }
+
   /* Fills the shell exactly; a page taller than the viewport scrolls inside it, never the window. */
   .page-shell {
-    @apply mx-auto flex h-full w-full max-w-[1480px] flex-col gap-7 overflow-y-auto;
+    @apply mx-auto flex h-full w-full max-w-[1480px] flex-col overflow-y-auto;
+    gap: 1.25rem;
     scrollbar-color: color-mix(in oklch, var(--muted-foreground), transparent 60%) transparent;
     scrollbar-width: thin;
   }
@@ -187,10 +246,12 @@
     @apply flex min-h-0 flex-1 flex-col;
   }
   .page-heading {
-    @apply font-heading text-[1.75rem] font-bold tracking-[-0.035em] text-foreground sm:text-[2rem];
+    @apply font-heading font-bold tracking-[-0.035em] text-foreground;
+    font-size: 1.625rem;
+    line-height: 1.14;
   }
   .page-description {
-    @apply max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base;
+    @apply max-w-3xl text-sm leading-6 text-muted-foreground;
   }
   .eyebrow {
     @apply text-[0.68rem] font-semibold tracking-[0.15em] text-primary uppercase;
@@ -231,6 +292,123 @@
   }
 }
 
+@layer components {
+@media (min-width: 40rem) {
+  .app-shell {
+    --workspace-pad-x: 1.75rem;
+    --workspace-pad-y: 1.75rem;
+  }
+  .workspace-main--conversation {
+    --workspace-pad-x: 1.25rem;
+    --workspace-pad-y: 0.625rem;
+  }
+}
+
+@media (min-width: 62rem) {
+  .app-shell {
+    --workspace-pad-x: 1.5rem;
+    --workspace-pad-y: 1.25rem;
+  }
+  .workspace-brand-panel {
+    width: var(--shell-sidebar-width);
+    padding-inline: 1rem;
+  }
+  .app-shell[data-sidebar-collapsed='true'] .workspace-brand-panel {
+    width: var(--shell-sidebar-compact-width);
+    padding-inline: 0;
+  }
+  .workspace-content {
+    padding-left: var(--shell-sidebar-width);
+  }
+  .app-shell[data-sidebar-collapsed='true'] .workspace-content {
+    padding-left: var(--shell-sidebar-compact-width);
+  }
+  .workspace-main--conversation {
+    --workspace-pad-x: 1.5rem;
+    --workspace-pad-y: 0.75rem;
+  }
+}
+
+@media (min-width: 75rem) {
+  .app-shell {
+    --shell-header-height: 4.25rem;
+    --shell-sidebar-width: 14rem;
+  }
+  .workspace-brand-panel,
+  .workspace-account-panel {
+    padding-inline: 1.25rem;
+  }
+  .app-shell[data-sidebar-collapsed='true'] .workspace-brand-panel {
+    padding-inline: 0;
+  }
+  .page-heading {
+    font-size: 1.75rem;
+  }
+}
+
+@media (min-width: 90rem) {
+  .app-shell {
+    --shell-header-height: 4.5rem;
+    --shell-sidebar-width: 15rem;
+    --shell-sidebar-compact-width: 4.25rem;
+    --workspace-pad-x: 2rem;
+    --workspace-pad-y: 1.75rem;
+  }
+  .workspace-brand-panel,
+  .workspace-account-panel {
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 96rem) {
+  .app-shell {
+    --shell-header-height: 4.75rem;
+    --shell-sidebar-width: 16rem;
+    --shell-sidebar-compact-width: 4.5rem;
+    --workspace-pad-x: 3rem;
+    --workspace-pad-y: 2.5rem;
+  }
+  .workspace-brand-panel,
+  .workspace-account-panel {
+    padding-inline: 1.75rem;
+  }
+  .workspace-brand-mark {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  .workspace-brand-name {
+    font-size: 1.125rem;
+  }
+  .workspace-main--conversation {
+    --workspace-pad-x: 1.75rem;
+  }
+  .workspace-nav-scroll {
+    padding-block: 1.75rem;
+  }
+  .workspace-nav-link {
+    padding-block: 0.75rem;
+  }
+  .page-shell {
+    gap: 1.75rem;
+  }
+  .page-heading {
+    font-size: 2rem;
+  }
+  .page-description {
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 62rem) and (max-height: 45rem) {
+  .workspace-nav-scroll {
+    padding-block: 0.875rem;
+  }
+  .workspace-nav-link {
+    padding-block: 0.5rem;
+  }
+}
+}
+
 @layer utilities {
   /* Figma page header: plain title block on the page background, no card or rule. */
   .workspace-header {
@@ -243,6 +421,7 @@
   /* A filled panel already owns its height, so the scroller inside it stops guessing from the
      viewport. Declared here, in the utilities layer, to outrank the table's own `max-h-*`. */
   .fills [data-slot='table-container'] {
+    @apply min-h-0 flex-1;
     max-height: 100%;
   }
   .control-strip {

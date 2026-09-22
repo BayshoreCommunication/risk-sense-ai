@@ -66,8 +66,8 @@ export default function RulesPage() {
           const Icon = tone.icon;
           return {
             icon: (
-              <span className={`grid size-14 shrink-0 place-items-center rounded-2xl ${tone.tile}`}>
-                <Icon className="size-7" strokeWidth={1.8} aria-hidden="true" />
+              <span className={`grid size-12 shrink-0 place-items-center rounded-xl min-[96rem]:size-14 min-[96rem]:rounded-2xl ${tone.tile}`}>
+                <Icon className="size-6 min-[96rem]:size-7" strokeWidth={1.8} aria-hidden="true" />
               </span>
             ),
             title: String(item.name ?? item.key ?? ''),

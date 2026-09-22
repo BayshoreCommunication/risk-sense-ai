@@ -117,9 +117,11 @@ export function AppShell({ role, children }: { role: Role; children: React.React
   const [loadError, setLoadError] = useState<string | null>(null);
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
   const mobileNavigationRef = useRef<HTMLElement>(null);
   const mobileNavigationTriggerRef = useRef<HTMLButtonElement>(null);
   const accountMenuRef = useRef<HTMLDetailsElement>(null);
+  const logoutStartedRef = useRef(false);
 
   const verifySession = useCallback(async () => {
     setState('loading');
@@ -171,6 +173,17 @@ export function AppShell({ role, children }: { role: Role; children: React.React
   useEffect(() => {
     setMobileNavigationOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const desktopShell = window.matchMedia('(min-width: 62rem)');
+    const closeDrawerOnDesktop = (event: MediaQueryListEvent | MediaQueryList) => {
+      if (event.matches) setMobileNavigationOpen(false);
+    };
+
+    closeDrawerOnDesktop(desktopShell);
+    desktopShell.addEventListener('change', closeDrawerOnDesktop);
+    return () => desktopShell.removeEventListener('change', closeDrawerOnDesktop);
+  }, []);
 
   useEffect(() => {
     const closeAccountMenuOutside = (event: PointerEvent) => {
@@ -231,10 +244,17 @@ export function AppShell({ role, children }: { role: Role; children: React.React
   }, [mobileNavigationOpen]);
 
   async function logout() {
-    await api.DELETE('/auth/session').catch(() => undefined);
-    await firebaseSignOut().catch(() => undefined);
-    clearSession();
-    router.replace('/login');
+    if (logoutStartedRef.current) return;
+    logoutStartedRef.current = true;
+    setSigningOut(true);
+
+    try {
+      await api.DELETE('/auth/session').catch(() => undefined);
+      await firebaseSignOut().catch(() => undefined);
+    } finally {
+      clearSession();
+      router.replace('/login');
+    }
   }
 
   if (state !== 'ready' || !me) {
@@ -273,7 +293,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
       <TooltipProvider>
       <div className="flex h-full min-h-0 flex-col">
         {mobile ? (
-          <div className="flex h-[4.75rem] shrink-0 items-center gap-3 border-b border-sidebar-border px-4">
+          <div className="flex h-[var(--shell-header-height)] shrink-0 items-center gap-3 border-b border-sidebar-border px-4">
             <div className="flex size-9 items-center justify-center rounded-lg bg-sidebar-primary text-xs font-bold text-sidebar-primary-foreground">R</div>
             <div className="min-w-0 flex-1 truncate text-base font-semibold tracking-[-0.01em] text-sidebar-foreground">{t('app.name')}</div>
             <button
@@ -287,7 +307,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
           </div>
         ) : null}
 
-        <div className={`scrollbar-subtle min-h-0 flex-1 overflow-y-auto pb-6 pt-7 ${compact ? 'px-2' : 'px-4'}`}>
+        <div className={`workspace-nav-scroll scrollbar-subtle min-h-0 flex-1 overflow-y-auto ${compact ? 'px-2' : 'px-3 min-[75rem]:px-4'}`}>
           <p className={`${compact ? 'sr-only' : 'mb-4 px-3'} text-[0.72rem] font-semibold tracking-[0.05em] text-sidebar-foreground/65 uppercase`}>
             {t(`roles.${trustedRole}`)}
           </p>
@@ -301,7 +321,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
                 <Link
                   href={item.href}
                   aria-current={active ? 'page' : undefined}
-                  className={`group relative flex items-center rounded-lg py-3 text-[0.9rem] transition ${compact ? 'justify-center px-2' : 'gap-3 px-3'} ${
+                  className={`workspace-nav-link group relative flex items-center rounded-lg text-[0.84rem] transition min-[96rem]:text-[0.9rem] ${compact ? 'justify-center px-2' : 'gap-2.5 px-3 min-[96rem]:gap-3'} ${
                     active
                       ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground'
                       : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground'
@@ -342,11 +362,13 @@ export function AppShell({ role, children }: { role: Role; children: React.React
             </div>
             <button
               type="button"
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 transition hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+              className="flex w-full items-center gap-3 rounded-lg bg-destructive/[0.06] px-3 py-2.5 text-sm font-medium text-destructive transition hover:bg-destructive/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/40 disabled:cursor-wait disabled:opacity-80"
+              disabled={signingOut}
+              aria-busy={signingOut}
               onClick={() => void logout()}
             >
-              <LogOut aria-hidden="true" className="size-4" />
-              {t('app.signOut')}
+              {signingOut ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin motion-reduce:animate-none" /> : <LogOut aria-hidden="true" className="size-4" />}
+              {signingOut ? t('app.signingOut') : t('app.signOut')}
             </button>
           </div>
         ) : null}
@@ -356,35 +378,38 @@ export function AppShell({ role, children }: { role: Role; children: React.React
   };
 
   return (
-    <div className="min-h-screen bg-transparent">
+    <div className="app-shell h-dvh overflow-hidden bg-transparent" data-sidebar-collapsed={desktopNavigationCollapsed ? 'true' : 'false'}>
       <a href="#main-content" className="sr-only z-[100] rounded-md bg-white px-4 py-2 text-sm font-semibold text-primary focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
         {t('app.skipToContent')}
       </a>
+      <span className="sr-only" aria-live="polite" aria-atomic="true">
+        {signingOut ? t('app.signingOut') : ''}
+      </span>
       <div inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
-        <header className="fixed inset-x-0 top-0 z-50 flex h-[4.75rem] items-center bg-[#061d43] text-white shadow-[0_1px_0_rgba(255,255,255,0.08)]">
-        <div className={`flex h-full min-w-0 flex-1 items-center gap-3 px-4 transition-[width,padding] duration-200 motion-reduce:transition-none sm:px-6 lg:flex-none ${desktopNavigationCollapsed ? 'lg:w-[4.5rem] lg:justify-center lg:px-0' : 'lg:w-64 lg:px-7'}`}>
+        <header className="workspace-topbar fixed inset-x-0 top-0 z-50 flex items-center bg-[#061d43] text-white shadow-[0_1px_0_rgba(255,255,255,0.08)]">
+        <div className={`workspace-brand-panel flex h-full min-w-0 flex-1 items-center gap-3 transition-[width,padding] duration-200 motion-reduce:transition-none min-[62rem]:flex-none ${desktopNavigationCollapsed ? 'min-[62rem]:justify-center' : ''}`}>
           <button
             ref={mobileNavigationTriggerRef}
             type="button"
             aria-label={t('app.openNavigation')}
             aria-expanded={mobileNavigationOpen}
             aria-controls="app-mobile-navigation"
-            className="rounded-lg p-2 text-white/75 transition hover:bg-white/10 hover:text-white lg:hidden"
+            className="rounded-lg p-2 text-white/75 transition hover:bg-white/10 hover:text-white min-[62rem]:hidden"
             onClick={() => setMobileNavigationOpen(true)}
           >
             <Menu className="size-5" />
           </button>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#216cff] text-sm font-bold text-white shadow-[0_6px_18px_rgba(33,108,255,0.35)]">R</div>
-          <div className={`min-w-0 truncate text-lg font-semibold tracking-[-0.02em] ${desktopNavigationCollapsed ? 'lg:hidden' : ''}`}>{t('app.name')}</div>
+          <div className="workspace-brand-mark flex shrink-0 items-center justify-center rounded-lg bg-[#216cff] text-sm font-bold text-white shadow-[0_6px_18px_rgba(33,108,255,0.35)]">R</div>
+          <div className={`workspace-brand-name min-w-0 truncate font-semibold tracking-[-0.02em] ${desktopNavigationCollapsed ? 'min-[62rem]:hidden' : ''}`}>{t('app.name')}</div>
         </div>
-        <div className="ml-auto flex shrink-0 items-center gap-2 pr-4 sm:px-7">
+        <div className="workspace-account-panel ml-auto flex shrink-0 items-center gap-2">
           <details ref={accountMenuRef} className="group relative" data-testid="account-menu">
             <summary className="flex cursor-pointer list-none items-center gap-2 rounded-full border border-white/25 bg-white/[0.04] px-3 py-2 text-[0.82rem] font-semibold text-white outline-none transition hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/70 sm:px-4 [&::-webkit-details-marker]:hidden">
               <span className="sm:hidden">{accountInitials(me.user.name)}</span>
               <span className="hidden truncate sm:inline">{accountInitials(me.user.name)} · {t(`roles.${trustedRole}`)}</span>
               <ChevronDown aria-hidden="true" className="hidden size-4 text-white/70 transition group-open:rotate-180 sm:block" />
             </summary>
-            <div className="absolute right-0 mt-2 max-h-[calc(100dvh-6rem)] w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-border bg-card text-card-foreground shadow-[0_20px_55px_rgba(6,29,67,0.22)]">
+            <div className="absolute right-0 mt-2 max-h-[calc(100dvh-var(--shell-header-height)-1rem)] w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-border bg-card text-card-foreground shadow-[0_20px_55px_rgba(6,29,67,0.22)]">
               <div className="border-b p-4">
                 <p className="truncate text-sm font-semibold">{me.user.name}</p>
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">{me.user.email}</p>
@@ -396,9 +421,15 @@ export function AppShell({ role, children }: { role: Role; children: React.React
               <div className="border-b p-3">
                 <ThemeSwitcher />
               </div>
-              <button type="button" className="flex w-full items-center gap-2.5 px-4 py-3 text-sm font-medium transition hover:bg-muted" onClick={() => void logout()}>
-                <LogOut aria-hidden="true" className="size-4 text-muted-foreground" />
-                {t('app.signOut')}
+              <button
+                type="button"
+                className="flex w-full items-center gap-2.5 bg-destructive/[0.045] px-4 py-3 text-sm font-medium text-destructive transition hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-destructive/35 disabled:cursor-wait disabled:opacity-80"
+                disabled={signingOut}
+                aria-busy={signingOut}
+                onClick={() => void logout()}
+              >
+                {signingOut ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin motion-reduce:animate-none" /> : <LogOut aria-hidden="true" className="size-4" />}
+                {signingOut ? t('app.signingOut') : t('app.signOut')}
               </button>
             </div>
           </details>
@@ -408,7 +439,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
         <aside
           id="app-desktop-navigation"
           aria-label={t('app.navigation')}
-          className={`sidebar-surface fixed bottom-0 left-0 top-[4.75rem] z-40 hidden border-r border-sidebar-border transition-[width] duration-200 motion-reduce:transition-none lg:block ${desktopNavigationCollapsed ? 'w-[4.5rem]' : 'w-64'}`}
+          className="workspace-sidebar sidebar-surface fixed bottom-0 left-0 z-40 hidden border-r border-sidebar-border transition-[width] duration-200 motion-reduce:transition-none min-[62rem]:block"
         >
           {renderNavigation()}
         </aside>
@@ -420,7 +451,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
               aria-label={desktopNavigationCollapsed ? t('app.expandNavigation') : t('app.collapseNavigation')}
               aria-controls="app-desktop-navigation"
               aria-expanded={!desktopNavigationCollapsed}
-              className={`fixed top-[4.75rem] z-50 hidden size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-[#061d43] text-white/80 shadow-[0_2px_8px_rgba(6,29,67,0.28)] transition-[left,background-color,color,border-color] duration-200 motion-reduce:transition-none hover:border-white/35 hover:bg-[#0b2c5c] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8bb9ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#061d43] lg:grid ${desktopNavigationCollapsed ? 'left-[4.5rem]' : 'left-64'}`}
+              className="workspace-sidebar-toggle fixed z-50 hidden size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-[#061d43] text-white/80 shadow-[0_2px_8px_rgba(6,29,67,0.28)] transition-[left,background-color,color,border-color] duration-200 motion-reduce:transition-none hover:border-white/35 hover:bg-[#0b2c5c] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8bb9ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#061d43] min-[62rem]:grid"
               onClick={() => setSidebarCollapsed((current) => !(current ?? false))}
             >
               {desktopNavigationCollapsed ? <ChevronRight className="size-3.5" aria-hidden="true" /> : <ChevronLeft className="size-3.5" aria-hidden="true" />}
@@ -431,7 +462,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
       </div>
 
       {mobileNavigationOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-50 min-[62rem]:hidden">
           <button
             type="button"
             aria-hidden="true"
@@ -453,13 +484,11 @@ export function AppShell({ role, children }: { role: Role; children: React.React
         </div>
       )}
 
-      <div className={`min-w-0 pt-[4.75rem] motion-reduce:transition-none lg:transition-[padding] lg:duration-200 ${desktopNavigationCollapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-64'}`} inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
+      <div className="workspace-content min-w-0 motion-reduce:transition-none min-[62rem]:transition-[padding] min-[62rem]:duration-200" inert={mobileNavigationOpen ? true : undefined} aria-hidden={mobileNavigationOpen ? true : undefined}>
         <main
           id="main-content"
           tabIndex={-1}
-          className={`h-[calc(100dvh-4.75rem)] overflow-hidden outline-none ${
-            isConversationWorkspace ? 'px-3 py-2 sm:px-5 sm:py-2.5 lg:px-7 lg:py-3' : 'px-4 py-5 sm:px-7 sm:py-7 lg:px-12 lg:py-10'
-          }`}
+          className={`workspace-main overflow-hidden outline-none ${isConversationWorkspace ? 'workspace-main--conversation' : ''}`}
         >
           <WorkspaceProvider value={{ role: trustedRole, plan: me.tenant.plan, features: me.tenant.features, sectors: me.tenant.sectors ?? [], accessMode: me.accessMode }}>{children}</WorkspaceProvider>
         </main>

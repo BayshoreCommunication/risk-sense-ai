@@ -25,15 +25,15 @@ export function PageHeader({ title, description, requirements, titleAdornment, a
   const workspace = useWorkspace();
 
   return (
-    <header className="workspace-header flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div className="max-w-3xl">
+    <header className="workspace-header flex flex-col gap-3 min-[75rem]:flex-row min-[75rem]:items-start min-[75rem]:justify-between min-[96rem]:gap-4">
+      <div className="min-w-0 max-w-3xl">
         <div className="flex flex-wrap items-center gap-2.5">
           <h1 className="page-heading">{title}</h1>
           {titleAdornment}
         </div>
         {description ? <p className="page-description mt-2">{description}</p> : null}
       </div>
-      <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+      <div className="flex w-full min-w-0 flex-wrap items-center gap-2 min-[75rem]:w-auto min-[75rem]:shrink-0 min-[75rem]:justify-end">
         {workspace ? <span className="role-pill">{t(`roles.${workspace.role}`)}</span> : null}
         {requirements?.map((id) => (
           <span key={id} className="req-chip">

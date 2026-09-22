@@ -214,7 +214,7 @@ export default function SystemAuditArchivePage() {
             <CardDescription>{t('form.description')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pt-1">
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 min-[75rem]:grid-cols-3">
               <div className="space-y-1.5">
                 <Label htmlFor="audit-export-from">{t('form.from')}</Label>
                 <Input id="audit-export-from" type="datetime-local" value={from} onChange={(event) => { setFrom(event.target.value); setConfirm(false); }} />
@@ -263,17 +263,17 @@ export default function SystemAuditArchivePage() {
             <CardDescription>{t('history.description')}</CardDescription>
           </CardHeader>
           <CardContent className="px-0">
-            <div className="divide-y md:hidden">
+            <div className="divide-y min-[75rem]:hidden">
               {!loading && manifests.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('history.empty')}</p>}
               {manifests.map((manifest) => (
                 <article key={manifest._id} className="space-y-3 p-4">
-                  <div className="flex items-start justify-between gap-3"><div><p className="text-sm font-semibold">{new Date(manifest.createdAt).toLocaleString(locale)}</p><p className="mt-1 text-xs text-muted-foreground">{new Date(manifest.from).toLocaleDateString(locale)} – {new Date(manifest.to).toLocaleDateString(locale)}</p></div><Badge variant="outline">{manifest.recordCount}</Badge></div>
-                  <dl className="grid grid-cols-2 gap-3 text-xs"><div><dt className="text-muted-foreground">{t('history.columns.sequence')}</dt><dd className="mt-1 font-mono">{manifest.firstSeq}–{manifest.lastSeq}</dd></div><div><dt className="text-muted-foreground">{t('history.columns.hash')}</dt><dd className="mt-1 truncate font-mono" title={manifest.exportHash}>{manifest.exportHash.slice(0, 14)}…</dd></div></dl>
+                  <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="break-words text-sm font-semibold">{new Date(manifest.createdAt).toLocaleString(locale)}</p><p className="mt-1 break-words text-xs text-muted-foreground">{new Date(manifest.from).toLocaleDateString(locale)} – {new Date(manifest.to).toLocaleDateString(locale)}</p></div><Badge className="shrink-0" variant="outline">{manifest.recordCount}</Badge></div>
+                  <dl className="grid grid-cols-1 gap-3 text-xs min-[30rem]:grid-cols-2"><div className="min-w-0"><dt className="text-muted-foreground">{t('history.columns.sequence')}</dt><dd className="mt-1 break-all font-mono">{manifest.firstSeq}–{manifest.lastSeq}</dd></div><div className="min-w-0"><dt className="text-muted-foreground">{t('history.columns.hash')}</dt><dd className="mt-1 truncate font-mono" title={manifest.exportHash}>{manifest.exportHash.slice(0, 14)}…</dd></div></dl>
                 </article>
               ))}
             </div>
-            <div className="hidden md:block">
-              <Table containerLabel={t('history.title')}>
+            <div className="hidden min-[75rem]:block">
+              <Table className="min-w-[960px]" containerLabel={t('history.title')}>
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t('history.columns.created')}</TableHead>

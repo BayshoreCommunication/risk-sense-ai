@@ -53,7 +53,7 @@ export default function AuditAssessmentsPage() {
       )}
 
       {error && <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</div>}
-      <div className="data-panel divide-y lg:hidden">
+      <div className="data-panel divide-y min-[75rem]:hidden">
         {loading && <p className="p-8 text-center text-sm text-muted-foreground">{t('loading')}</p>}
         {!loading && data && items.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('empty')}</p>}
         {!loading && items.map((a) => (
@@ -65,22 +65,22 @@ export default function AuditAssessmentsPage() {
               </div>
               <Badge variant="secondary">{status.has(a.status) ? status(a.status) : formatIdentifierLabel(a.status)}</Badge>
             </div>
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-              <div><dt className="text-muted-foreground">{t('columns.department')}</dt><dd className="mt-0.5 font-medium">{a.department?.name ?? '—'}</dd></div>
-              <div><dt className="text-muted-foreground">{t('columns.personaScenario')}</dt><dd className="mt-0.5 font-medium">{a.personaKey ? formatIdentifierLabel(a.personaKey) : '—'} · {a.scenarioKey ? formatIdentifierLabel(a.scenarioKey) : '—'}</dd></div>
-              <div><dt className="text-muted-foreground">{t('columns.classification')}</dt><dd className="mt-0.5 font-medium">{a.result ? classification.has(a.result.classification) ? classification(a.result.classification) : formatIdentifierLabel(a.result.classification) : '—'}</dd></div>
-              <div><dt className="text-muted-foreground">{t('columns.confidence')}</dt><dd className="mt-0.5 font-medium tabular-nums">{a.result ? `${a.result.confidence}%` : '—'}</dd></div>
-              <div className="col-span-2"><dt className="text-muted-foreground">{t('columns.decision')}</dt><dd className="mt-0.5 font-medium">{a.decision ? `${t.has(`decisionTypes.${a.decision.type}`) ? t(`decisionTypes.${a.decision.type}`) : formatIdentifierLabel(a.decision.type)}${a.decision.overriddenTo ? ` → ${classification.has(a.decision.overriddenTo) ? classification(a.decision.overriddenTo) : formatIdentifierLabel(a.decision.overriddenTo)}` : ''}` : '—'}</dd></div>
+            <dl className="grid gap-x-4 gap-y-2 text-xs sm:grid-cols-2">
+              <div className="min-w-0"><dt className="text-muted-foreground">{t('columns.department')}</dt><dd className="mt-0.5 break-words font-medium">{a.department?.name ?? '—'}</dd></div>
+              <div className="min-w-0"><dt className="text-muted-foreground">{t('columns.personaScenario')}</dt><dd className="mt-0.5 break-words font-medium">{a.personaKey ? formatIdentifierLabel(a.personaKey) : '—'} · {a.scenarioKey ? formatIdentifierLabel(a.scenarioKey) : '—'}</dd></div>
+              <div className="min-w-0"><dt className="text-muted-foreground">{t('columns.classification')}</dt><dd className="mt-0.5 break-words font-medium">{a.result ? classification.has(a.result.classification) ? classification(a.result.classification) : formatIdentifierLabel(a.result.classification) : '—'}</dd></div>
+              <div className="min-w-0"><dt className="text-muted-foreground">{t('columns.confidence')}</dt><dd className="mt-0.5 font-medium tabular-nums">{a.result ? `${a.result.confidence}%` : '—'}</dd></div>
+              <div className="min-w-0 sm:col-span-2"><dt className="text-muted-foreground">{t('columns.decision')}</dt><dd className="mt-0.5 break-words font-medium">{a.decision ? `${t.has(`decisionTypes.${a.decision.type}`) ? t(`decisionTypes.${a.decision.type}`) : formatIdentifierLabel(a.decision.type)}${a.decision.overriddenTo ? ` → ${classification.has(a.decision.overriddenTo) ? classification(a.decision.overriddenTo) : formatIdentifierLabel(a.decision.overriddenTo)}` : ''}` : '—'}</dd></div>
             </dl>
-            <div className="grid grid-cols-2 gap-2">
-              <Button size="sm" variant="outline" onClick={() => setOpen({ item: a, mode: 'stored' })}><Database aria-hidden="true" />{t('actions.stored')}</Button>
-              <Button size="sm" variant="outline" onClick={() => setOpen({ item: a, mode: 'reconstruct' })}><History aria-hidden="true" />{t('actions.reconstruct')}</Button>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button size="sm" variant="outline" className="w-full" onClick={() => setOpen({ item: a, mode: 'stored' })}><Database aria-hidden="true" />{t('actions.stored')}</Button>
+              <Button size="sm" variant="outline" className="w-full" onClick={() => setOpen({ item: a, mode: 'reconstruct' })}><History aria-hidden="true" />{t('actions.reconstruct')}</Button>
             </div>
           </article>
         ))}
       </div>
-      <div className="data-panel fills hidden lg:flex">
-        <Table containerLabel={t('title')}>
+      <div className="data-panel fills hidden min-w-0 overflow-hidden min-[75rem]:flex">
+        <Table className="min-w-[72rem]" containerLabel={t('title')}>
           <TableHeader>
             <TableRow>
               <TableHead>{t('columns.started')}</TableHead>
@@ -137,7 +137,7 @@ export default function AuditAssessmentsPage() {
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
         <span>{data ? t('count', { count: data.total }) : t('loading')}</span>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(page - 1)}>
             {t('pagination.previous')}
           </Button>

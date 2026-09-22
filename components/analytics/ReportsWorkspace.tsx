@@ -94,7 +94,7 @@ function ResultTable({ result, title, positiveCountsOnly = false, formatGroupIde
     <div className="overflow-hidden rounded-xl border">
       <Table containerLabel={title}>
         <caption className="sr-only">{title}</caption>
-        <TableHeader className="bg-muted/45">
+        <TableHeader className="bg-muted">
           <TableRow>{result.columns.map((column) => <TableHead key={column.key}>{column.label}</TableHead>)}</TableRow>
         </TableHeader>
         <TableBody>

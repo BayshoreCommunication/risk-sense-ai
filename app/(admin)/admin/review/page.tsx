@@ -60,18 +60,18 @@ export default function MandatoryReviewQueuePage() {
         </Button>
       </div>
       {error && <p className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</p>}
-      <section className="overflow-hidden rounded-2xl border bg-card shadow-sm" aria-busy={!data && !error}>
-        <Table className="min-w-[980px]" containerLabel={t('title')}>
-          <TableHeader className="bg-muted/45">
+      <section className="data-panel fills" aria-busy={!data && !error}>
+        <Table className="min-w-[880px] table-fixed min-[96rem]:min-w-[980px]" containerLabel={t('title')}>
+          <TableHeader className="bg-muted">
             <TableRow>
-              <TableHead>{t('columns.started')}</TableHead>
-              <TableHead>{t('columns.requestor')}</TableHead>
-              <TableHead>{t('columns.department')}</TableHead>
-              <TableHead>{t('columns.personaScenario')}</TableHead>
-              <TableHead>{t('columns.status')}</TableHead>
-              <TableHead>{t('columns.classification')}</TableHead>
-              <TableHead>{t('columns.confidence')}</TableHead>
-              <TableHead />
+              <TableHead className="w-32">{t('columns.started')}</TableHead>
+              <TableHead className="w-24">{t('columns.requestor')}</TableHead>
+              <TableHead className="w-24">{t('columns.department')}</TableHead>
+              <TableHead className="w-40">{t('columns.personaScenario')}</TableHead>
+              <TableHead className="w-32">{t('columns.status')}</TableHead>
+              <TableHead className="w-28">{t('columns.classification')}</TableHead>
+              <TableHead className="w-28">{t('columns.confidence')}</TableHead>
+              <TableHead className="w-24" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -91,9 +91,9 @@ export default function MandatoryReviewQueuePage() {
             )}
             {items.map((a) => (
               <TableRow key={a._id}>
-                <TableCell className="whitespace-nowrap text-muted-foreground">{new Date(a.createdAt).toLocaleString(locale)}</TableCell>
-                <TableCell className="whitespace-nowrap font-medium">{a.requestor?.name ?? '—'}</TableCell>
-                <TableCell className="whitespace-nowrap">{a.department?.name ?? '—'}</TableCell>
+                <TableCell className="whitespace-normal text-xs leading-5 text-muted-foreground">{new Date(a.createdAt).toLocaleString(locale)}</TableCell>
+                <TableCell className="whitespace-normal font-medium">{a.requestor?.name ?? '—'}</TableCell>
+                <TableCell className="max-w-40 whitespace-normal">{a.department?.name ?? '—'}</TableCell>
                 <TableCell>
                   <div>{a.personaKey ? formatIdentifierLabel(a.personaKey) : '—'}</div>
                   <div className="text-xs text-muted-foreground">{a.scenarioKey ? formatIdentifierLabel(a.scenarioKey) : '—'}</div>

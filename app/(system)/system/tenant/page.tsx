@@ -65,7 +65,7 @@ export default function TenantSettingsPage() {
         description={
           <>
             {t('description')}
-            <span className="mt-1 block">{merged.name} · <code>{merged.slug}</code></span>
+            <span className="mt-1 block break-words [overflow-wrap:anywhere]">{merged.name} · <code>{merged.slug}</code></span>
           </>
         }
         requirements={['FR-03', 'SEC-02']}
@@ -76,9 +76,9 @@ export default function TenantSettingsPage() {
           <section className="space-y-5 p-4 sm:p-6" aria-labelledby="identity-provider-title">
             <div className="flex items-start gap-3">
               <span className="card-icon"><KeyRound className="size-5" aria-hidden="true" /></span>
-              <div>
+              <div className="min-w-0">
                 <h2 id="identity-provider-title" className="font-heading text-base font-bold tracking-[-0.01em]">{t('sso.title')}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">{t('sso.description')}</p>
+                <p className="mt-1 break-words text-sm text-muted-foreground">{t('sso.description')}</p>
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -114,9 +114,9 @@ export default function TenantSettingsPage() {
           <section className="space-y-5 p-4 sm:p-6" aria-labelledby="session-policy-title">
             <div className="flex items-start gap-3">
               <span className="card-icon"><LockKeyhole className="size-5" aria-hidden="true" /></span>
-              <div>
+              <div className="min-w-0">
                 <h2 id="session-policy-title" className="font-heading text-base font-bold tracking-[-0.01em]">{t('policy.title')}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">{t('policy.accountSemantics')}</p>
+                <p className="mt-1 break-words text-sm text-muted-foreground">{t('policy.accountSemantics')}</p>
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -135,9 +135,9 @@ export default function TenantSettingsPage() {
           <section className="space-y-5 p-4 sm:p-6" aria-labelledby="sector-vocabulary-title">
             <div className="flex items-start gap-3">
               <span className="card-icon"><Shapes className="size-5" aria-hidden="true" /></span>
-              <div>
+              <div className="min-w-0">
                 <h2 id="sector-vocabulary-title" className="font-heading text-base font-bold tracking-[-0.01em]">{t('sectors.title')}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">{t('sectors.description')}</p>
+                <p className="mt-1 break-words text-sm text-muted-foreground">{t('sectors.description')}</p>
               </div>
             </div>
             <div className="space-y-1.5">
@@ -191,7 +191,7 @@ export default function TenantSettingsPage() {
 
       {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
       {saved && <p className="text-sm text-muted-foreground" role="status">{saved}</p>}
-      <div className="sticky bottom-0 z-10 flex justify-end gap-2 rounded-xl border bg-card p-2 shadow-[0_-6px_20px_rgba(15,35,65,0.08)]">
+      <div className="sticky bottom-0 z-10 flex flex-wrap justify-end gap-2 rounded-xl border bg-card p-2 shadow-[0_-6px_20px_rgba(15,35,65,0.08)]">
         <Button disabled={!dirty || busy || demoSsoDomainInvalid} onClick={() => void save()}>
           {busy ? t('saving') : t('save')}
         </Button>

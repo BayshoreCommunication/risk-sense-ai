@@ -148,39 +148,39 @@ export default function DepartmentsPage() {
       </div>
 
       {pageError && (
-        <div className="flex items-center justify-between gap-3 rounded-md border border-destructive/40 bg-destructive/5 p-3" role="alert">
-          <p className="text-sm text-destructive">{pageError}</p>
-          <Button size="sm" variant="outline" onClick={() => void load()}>{t('retry')}</Button>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-destructive/40 bg-destructive/5 p-3" role="alert">
+          <p className="min-w-0 text-sm text-destructive [overflow-wrap:anywhere]">{pageError}</p>
+          <Button className="shrink-0" size="sm" variant="outline" onClick={() => void load()}>{t('retry')}</Button>
         </div>
       )}
       {saved && <p className="rounded-md border bg-muted/20 p-3 text-sm" role="status">{saved}</p>}
 
-      <div className="data-panel divide-y md:hidden">
+      <div className="data-panel divide-y min-[75rem]:hidden">
         {loading && <p className="p-8 text-center text-sm text-muted-foreground">{t('loading')}</p>}
         {!loading && !pageError && departments.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('empty')}</p>}
         {departments.map((department) => (
           <article key={department._id} className="space-y-3 p-4">
-            <div className="flex items-start justify-between gap-3"><h2 className="text-sm font-semibold">{department.name}</h2><Button size="sm" variant="outline" onClick={() => openEdit(department)}>{t('editMapping')}</Button></div>
+            <div className="flex flex-wrap items-start justify-between gap-3"><h2 className="min-w-0 break-words text-sm font-semibold">{department.name}</h2><Button className="shrink-0" size="sm" variant="outline" onClick={() => openEdit(department)}>{t('editMapping')}</Button></div>
             {department.personaIds.length === 0 ? (
               <p className="text-xs text-muted-foreground">{t('noRestriction')}</p>
             ) : (
               <div className="flex flex-wrap gap-1">
                 {department.personaIds.map((personaId) => {
                   const persona = personasById.get(personaId);
-                  return <Badge key={personaId} variant="outline">{persona?.name ?? t('unavailablePersona', { id: personaId.slice(-6) })}</Badge>;
+                  return <Badge key={personaId} className="max-w-full whitespace-normal text-left" variant="outline">{persona?.name ?? t('unavailablePersona', { id: personaId.slice(-6) })}</Badge>;
                 })}
               </div>
             )}
           </article>
         ))}
       </div>
-      <div className="data-panel fills hidden md:flex">
-        <Table containerLabel={t('title')}>
+      <div className="data-panel fills hidden min-[75rem]:flex">
+        <Table className="min-w-[760px] table-fixed" containerLabel={t('title')}>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('columns.name')}</TableHead>
-              <TableHead>{t('columns.personas')}</TableHead>
-              <TableHead className="text-right">{t('columns.action')}</TableHead>
+              <TableHead className="w-[24%]">{t('columns.name')}</TableHead>
+              <TableHead className="w-[60%]">{t('columns.personas')}</TableHead>
+              <TableHead className="w-[16%] text-right">{t('columns.action')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

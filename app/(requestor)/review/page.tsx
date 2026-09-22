@@ -295,7 +295,7 @@ function ReviewDashboard() {
         </Button>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label={t('summaryLabel')}>
+      <section className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,10.5rem),1fr))] gap-3" aria-label={t('summaryLabel')}>
         <button
           type="button"
           aria-pressed={filters.tab === 'all'}
@@ -343,7 +343,7 @@ function ReviewDashboard() {
 
       <Card className="gap-0 py-0 shadow-none">
         <CardContent className="space-y-4 p-4">
-          <div className={`grid gap-3 sm:grid-cols-2 ${departments.length > 0 ? 'xl:grid-cols-4' : 'xl:grid-cols-3'}`}>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,13rem),1fr))] gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs">{t('filters.persona')}</Label>
               <Select items={personaOptions} value={filters.personaKey || ANY} onValueChange={(v) => update({ personaKey: v && v !== ANY ? v : '' })}>
@@ -451,7 +451,7 @@ function ReviewDashboard() {
                   );
                 })}
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,11rem),1fr))] gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs">{t('filters.classification')}</Label>
                   <Select items={classOptions} value={filters.classification || ANY} onValueChange={(v) => update({ classification: v && v !== ANY ? v : '' })}>
@@ -521,9 +521,143 @@ function ReviewDashboard() {
         </div>
       )}
 
-      <Card className="gap-0 py-0 shadow-sm">
-        <Table containerLabel={t('myAssessments')} aria-busy={loading} className={reviewer ? 'min-w-[1120px]' : 'min-w-[940px]'}>
-          <TableHeader className="bg-muted/35">
+      <Card className="@container gap-0 py-0 shadow-sm">
+        <div
+          className={`grid gap-3 p-3 sm:p-4 ${reviewer ? '@min-[70rem]:hidden' : '@min-[59rem]:hidden'}`}
+          role="region"
+          aria-label={t('myAssessments')}
+          aria-busy={loading}
+          data-testid="assessment-card-list"
+        >
+          {loading && items.length === 0 && (
+            <div className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-xl border border-dashed text-center text-sm text-muted-foreground" role="status">
+              <span className="size-7 animate-spin rounded-full border-2 border-primary/20 border-t-primary" aria-hidden="true" />
+              {t('loading')}
+            </div>
+          )}
+          {!loading && !error && items.length === 0 && (
+            <div className="flex min-h-52 flex-col items-center justify-center rounded-xl border border-dashed px-4 text-center text-sm text-muted-foreground" role="status">
+              <ClipboardCheck aria-hidden="true" className="mb-3 size-8 text-primary/50" />
+              <p className="font-medium text-foreground">{hasFilters || filters.tab !== 'all' ? t('empty.filtered') : t('empty.default')}</p>
+              {hasFilters && (
+                <Button
+                  size="sm"
+                  variant="link"
+                  className="mt-1"
+                  onClick={() => update({ classification: '', personaKey: '', scenarioKey: '', departmentId: '', mandatoryReview: '', from: '', to: '' })}
+                >
+                  {t('filters.clear')}
+                </Button>
+              )}
+            </div>
+          )}
+          {items.map((a) => (
+            <article
+              key={a._id}
+              className={`rounded-xl border bg-card p-4 shadow-[0_8px_22px_rgba(15,35,65,0.045)] ${PENDING.has(a.status) ? 'border-l-2 border-l-primary bg-primary/[0.025]' : ''}`}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-foreground">{a.scenarioKey ? formatIdentifierLabel(a.scenarioKey) : '—'}</h3>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    {personaName(a.personaKey)} · {new Date(a.createdAt).toLocaleDateString(locale)} · {a._id.slice(-6).toUpperCase()}
+                  </p>
+                </div>
+                <Badge variant={PENDING.has(a.status) ? 'default' : 'secondary'}>{status.has(a.status) ? status(a.status) : formatIdentifierLabel(a.status)}</Badge>
+              </div>
+
+              {reviewer && (
+                <div className="mt-3 grid gap-2 rounded-lg bg-muted/45 px-3 py-2.5 text-xs sm:grid-cols-2">
+                  <div className="min-w-0">
+                    <p className="font-medium text-foreground">{a.requestor?.name ?? '—'}</p>
+                    {a.requestor?.email && <p className="mt-0.5 truncate text-muted-foreground">{a.requestor.email}</p>}
+                  </div>
+                  <div className="sm:text-right">
+                    <p className="text-muted-foreground">{t('columns.department')}</p>
+                    <p className="mt-0.5 font-medium text-foreground">{a.department?.name ?? '—'}</p>
+                  </div>
+                </div>
+              )}
+
+              <dl className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                <div className="rounded-lg border border-border/70 px-3 py-2.5">
+                  <dt className="text-[0.65rem] font-semibold tracking-[0.06em] text-muted-foreground uppercase">{t('columns.classification')}</dt>
+                  <dd className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    {a.result ? (
+                      <>
+                        <Badge variant="outline" className={classificationTone(a.result.classification)}>
+                          {classification.has(a.result.classification) ? classification(a.result.classification) : formatIdentifierLabel(a.result.classification)}
+                        </Badge>
+                        <span className="text-xs tabular-nums text-muted-foreground">{a.result.score}/100</span>
+                      </>
+                    ) : '—'}
+                  </dd>
+                </div>
+                <div className="rounded-lg border border-border/70 px-3 py-2.5">
+                  <dt className="text-[0.65rem] font-semibold tracking-[0.06em] text-muted-foreground uppercase">{t('columns.confidence')}</dt>
+                  <dd className="mt-1.5">
+                    {a.result ? (
+                      <>
+                        <span className="text-sm font-semibold tabular-nums">{a.result.confidence}%</span>
+                        <div aria-hidden="true" className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
+                          <div className="h-full rounded-full bg-primary" style={{ width: `${Math.max(0, Math.min(100, a.result.confidence))}%` }} />
+                        </div>
+                      </>
+                    ) : '—'}
+                  </dd>
+                </div>
+                <div className="col-span-2 rounded-lg border border-border/70 px-3 py-2.5 sm:col-span-1">
+                  <dt className="text-[0.65rem] font-semibold tracking-[0.06em] text-muted-foreground uppercase">{t('columns.daysOpen')}</dt>
+                  <dd className="mt-1 text-lg font-semibold tabular-nums">{daysOpen(a, dashboardOpenedAt)}</dd>
+                </div>
+              </dl>
+
+              <div className="mt-3 border-t pt-3">
+                {a.result ? (
+                  <>
+                    <p className="text-sm font-medium leading-5">{a.result.recommendedAction}</p>
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground" title={a.result.explanation}>{a.result.explanation}</p>
+                  </>
+                ) : <p className="text-sm text-muted-foreground">—</p>}
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap gap-1.5">
+                      {a.result?.ruleDriven && <Badge variant="outline" title={t('ruleDrivenTitle')}>{t('ruleDriven')}</Badge>}
+                      {a.result?.professionalConsult && (
+                        <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300">
+                          <AlertCircle aria-hidden="true" className="size-3" />
+                          {t('professionalConsultTitle')}
+                        </Badge>
+                      )}
+                      {a.result?.mandatoryReview && <Badge variant="destructive">{detail('result.mandatoryReview')}</Badge>}
+                    </div>
+                    {a.decision && (
+                      <Badge variant="outline" className="mt-1.5 max-w-full">
+                        <span className="truncate">
+                          {detail.has(`decision.types.${a.decision.type}`) ? detail(`decision.types.${a.decision.type}`) : a.decision.type}
+                          {a.decision.overriddenTo ? ` → ${classification.has(a.decision.overriddenTo) ? classification(a.decision.overriddenTo) : formatIdentifierLabel(a.decision.overriddenTo)}` : ''}
+                        </span>
+                      </Badge>
+                    )}
+                    {a.status === 'escalated' && a.escalatedTo && <p className="mt-1.5 text-xs text-muted-foreground">{t('routedTo', { name: a.escalatedTo.name })}</p>}
+                  </div>
+                  <Button size="sm" variant={PENDING.has(a.status) ? 'default' : 'outline'} onClick={() => router.push(`/chat/${a._id}`)}>
+                    {PENDING.has(a.status) ? t('actions.review') : t('actions.open')}
+                    <ChevronRight aria-hidden="true" data-icon="inline-end" />
+                  </Button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <Table
+          containerLabel={t('myAssessments')}
+          containerClassName={reviewer ? 'hidden @min-[70rem]:block' : 'hidden @min-[59rem]:block'}
+          aria-busy={loading}
+          className={reviewer ? 'min-w-[1120px]' : 'min-w-[940px]'}
+        >
+          <TableHeader className="bg-muted">
             <TableRow className="hover:bg-transparent">
               {reviewer && <TableHead>{t('columns.requestor')}</TableHead>}
               {reviewer && <TableHead>{t('columns.department')}</TableHead>}

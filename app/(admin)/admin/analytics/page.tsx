@@ -214,7 +214,7 @@ function AnalyticsDashboard() {
         </p>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 min-[75rem]:grid-cols-4 min-[96rem]:gap-4">
         <StatTile
           label={t('reports.volume.title')}
           value={vol ? Number(vol.summary.started).toLocaleString() : '—'}
@@ -246,7 +246,7 @@ function AnalyticsDashboard() {
       </div>
 
       <section id="monthly-classification" className="data-panel scroll-mt-20">
-        <div className="flex flex-col gap-3 border-b px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-3 border-b px-4 py-4 min-[80rem]:flex-row min-[80rem]:items-start min-[80rem]:justify-between">
           <div className="max-w-2xl">
             <h2 className="font-heading font-semibold">{t('monthly.title')}</h2>
             <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('monthly.description')}</p>
@@ -335,7 +335,7 @@ function AnalyticsDashboard() {
                 <div className="overflow-hidden rounded-xl border">
                   <Table containerLabel={t('monthly.chartTitle')}>
                     <caption className="sr-only">{t('monthly.chartTitle')}</caption>
-                    <TableHeader className="bg-muted/45">
+                    <TableHeader className="bg-muted">
                       <TableRow>
                         <TableHead>{t('monthly.columns.month')}</TableHead>
                         {CLASSIFICATION_KEYS.map((classification) => (
@@ -440,7 +440,7 @@ function AnalyticsDashboard() {
                           count: selectedSegment.value ?? 0,
                         })}
                       </caption>
-                      <TableHeader className="bg-muted/35">
+                      <TableHeader className="bg-muted">
                         <TableRow>
                           <TableHead>{reviewT('columns.started')}</TableHead>
                           <TableHead>{reviewT('columns.requestor')}</TableHead>

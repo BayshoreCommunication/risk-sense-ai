@@ -185,7 +185,7 @@ export default function DatasetsPage() {
       />
 
       {/* Counter strip with an icon per state, as docs/design/figma-frames/16-admin-training-datasets.png. */}
-      <section className="grid gap-px overflow-hidden rounded-xl border bg-border shadow-[0_4px_16px_rgba(15,35,65,0.04)] sm:grid-cols-2 xl:grid-cols-5" aria-label={t('summary.label')}>
+      <section className="grid gap-px overflow-hidden rounded-xl border bg-border shadow-[0_4px_16px_rgba(15,35,65,0.04)] sm:grid-cols-2 min-[75rem]:grid-cols-3 min-[96rem]:grid-cols-5" aria-label={t('summary.label')}>
         {([
           { key: 'total', value: items.length, icon: Database, tile: 'bg-blue-500/10 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300' },
           { key: 'active', value: activeCount, icon: CircleCheck, tile: 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300' },
@@ -210,7 +210,7 @@ export default function DatasetsPage() {
       </section>
 
       <Card className="py-0 shadow-[0_4px_16px_rgba(15,35,65,0.04)]">
-        <CardContent className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[minmax(16rem,0.8fr)_minmax(22rem,1.2fr)_auto] lg:items-center">
+        <CardContent className="grid gap-4 p-4 sm:p-5 min-[75rem]:grid-cols-[minmax(16rem,0.8fr)_minmax(22rem,1.2fr)_auto] min-[75rem]:items-center">
           <div className="flex min-w-0 items-start gap-3">
             <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
               <UploadCloud className="size-5" aria-hidden="true" />
@@ -223,7 +223,7 @@ export default function DatasetsPage() {
           <div className="relative w-full rounded-xl border border-dashed border-primary/30 bg-primary/[0.025] p-1.5">
             <Input aria-label={t('upload.fileLabel')} type="file" accept=".xlsx" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="w-full border-0 bg-transparent shadow-none" />
           </div>
-          <Button onClick={() => void run(upload)} disabled={!file || busy} className="shrink-0 lg:justify-self-end">
+          <Button onClick={() => void run(upload)} disabled={!file || busy} className="shrink-0 min-[75rem]:justify-self-end">
             <FileSpreadsheet data-icon="inline-start" aria-hidden="true" />
             {busy ? t('upload.working') : t('upload.submit')}
           </Button>
@@ -232,7 +232,7 @@ export default function DatasetsPage() {
 
       {error && <p className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</p>}
 
-      <section className="data-panel fills hidden lg:flex" aria-busy={loading}>
+      <section className="data-panel fills hidden min-[75rem]:flex" aria-busy={loading}>
         <Table className="min-w-[900px]" containerLabel={t('title')}>
           <TableHeader>
             <TableRow>
@@ -296,7 +296,7 @@ export default function DatasetsPage() {
         </Table>
       </section>
 
-      <section className="data-panel divide-y lg:hidden" aria-busy={loading}>
+      <section className="data-panel divide-y min-[75rem]:hidden" aria-busy={loading}>
         {loading && <p className="px-4 py-12 text-center text-sm text-muted-foreground">{commonT('loading')}</p>}
         {!loading && items.length === 0 && <p className="px-4 py-12 text-center text-sm text-muted-foreground">{t('empty')}</p>}
         {items.map((d) => (

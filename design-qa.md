@@ -232,3 +232,39 @@ This QA is repository evidence, not human or owner acceptance. Any later Bengali
 Automated completion evidence: current typecheck and lint passed; the 29/29-route production build passed; the mocked browser suite passed 63/63; a stale Bengali cookie rendered `html[lang="en"]`; and a Bengali locale request returned HTTP 400. The full-stack role suite then passed all 11 enabled journeys with four intentionally skipped non-development authentication cases. English/Bengali catalogues remain at 1,404/1,404 leaves with identical keys and zero ICU-variable mismatches; Bengali is dormant runtime source material, not an active language claim.
 
 final result: passed
+
+## 2026-09-22 shared laptop-responsive shell and role pages
+
+### Source and rendered evidence
+
+| Evidence | Width / state | Use |
+|---|---:|---|
+| `/var/folders/_y/1bg_zrxs0bb1r1652v_trcbc0000gn/T/codex-clipboard-9cfb0b7e-230c-4b56-8c72-1b5547e2243d.png` | Breakpoint reference | Owner-approved breakpoint model: 992 px desktop and 1200 px large-screen tiers. |
+| `/var/folders/_y/1bg_zrxs0bb1r1652v_trcbc0000gn/T/codex-clipboard-c4d2588a-100b-48c7-a9c5-5919b144339d.png` | Owner laptop capture | Administrator rule page with oversized rail, title, padding, and controls. |
+| `/var/folders/_y/1bg_zrxs0bb1r1652v_trcbc0000gn/T/codex-clipboard-370e94b5-b45a-4318-bea0-6e462184d81a.png` | Owner laptop capture | Administrator analytics density and viewport-height reference. |
+| `/var/folders/_y/1bg_zrxs0bb1r1652v_trcbc0000gn/T/codex-clipboard-876733db-7669-463a-acd0-b971912320f3.png` | Owner laptop capture | Mandatory-review table overlap and nested-scroll reference. |
+| In-app browser implementation pass | 1000×700, 1280×600/720, 1536×900, 991×700, 390×844 CSS pixels | Live Requestor, Administrator, System Administrator, and Audit verification in dark theme with seeded data. |
+
+The supplied breakpoint reference determined the shared tier model. At 992 px the desktop rail remains available, matching the owner's request that a 13-inch-class laptop should retain desktop information architecture. At 1200 px headers and evidence tables use the full desktop arrangement. Header, rail, typography, page padding, metric density, and table cells increase progressively only when usable CSS width supports them; the 1536 px tier retains the spacious large-monitor presentation.
+
+### Full-view and interaction evidence
+
+The in-app browser verified Administrator rules, analytics, and mandatory review; Requestor persona selection and assessment review; System Administrator users; Audit logs and assessment evidence; the login split; account-menu dismissal; sidebar collapse; and sign-out. At 1280×600 the Administrator mandatory-review page measured a 68 px header, 224 px sidebar, 1006 px table viewport, and zero document overflow. At 1000×700 the shell retained a 208 px desktop sidebar while Requestor and operational pages selected two-column/card fallbacks. At 991 px the sidebar correctly changed to the labelled drawer. Audit and System tables returned at 1200 px, with any necessary horizontal overflow contained inside their labelled regions.
+
+Sign out uses a pale destructive surface and red label/icon, changes to “Signing out…” with a spinner, becomes disabled and `aria-busy`, ignores duplicate activation, clears local session hints, and routes to login. Opening the mobile drawer and resizing across 992 px now closes the hidden drawer and removes `inert`/`aria-hidden` from the workspace. The account menu still dismisses on outside pointer interaction.
+
+### Focused comparison
+
+| Surface | Final comparison |
+|---|---|
+| Header and navigation | The same navy product identity and role pill remain. Laptop geometry is deliberately compact (64/208 or 68/224 px), while large monitors retain 76/256 px. |
+| Typography | Geist and the existing type hierarchy remain. Laptop headings, navigation, tables, and metrics use bounded sizes rather than physical-screen-dependent scaling. |
+| Layout rhythm | Large side gutters and vertical dead space are removed at laptop widths. Page actions wrap or stack before they collide; actual content-pane width controls dense Requestor layouts. |
+| Tables and scrolling | Opaque sticky headers prevent row bleed. Pages have one intentional vertical scroll owner, and wide evidence tables own their horizontal overflow instead of widening the document. |
+| Responsive content | Requestor, System, and Audit card fallbacks preserve all decision, evidence, scope, hash, confidence, and action information rather than hiding columns. |
+| Color and meaning | Existing semantic light/dark tokens remain. The only new state treatment is the restrained destructive sign-out affordance and its pending feedback. |
+| Accessibility | Navigation remains labelled; mobile focus is trapped and restored; resize cannot leave the app inert; tables and card fallbacks expose named regions; pending sign-out is announced politely. |
+
+The first review caught three actionable regressions before handoff: a mobile drawer could leave the app inert after a desktop resize (P1), an unlayered large-screen rule could override the conversation's compact gap (P2), and some operational tables stayed in card mode until 1440 px instead of the declared 1200 px tier (P2). All three were corrected and covered by focused browser tests. No actionable P0, P1, or P2 finding remains in this scope.
+
+final result: passed

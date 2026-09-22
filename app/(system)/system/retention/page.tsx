@@ -166,7 +166,7 @@ export default function RetentionPage() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="divide-y md:hidden">
+            <div className="divide-y min-[75rem]:hidden">
               {policyRows.map((row) => {
                 const Icon = row.icon;
                 const windowDescription = row.field === 'datasetHistoryDays'
@@ -175,9 +175,9 @@ export default function RetentionPage() {
                 return (
                   <article key={row.key} className="space-y-4 p-4">
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
                         <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${row.tile}`}><Icon className="size-4" aria-hidden="true" /></span>
-                        <div><h2 className="text-sm font-semibold">{row.record}</h2><p className="mt-0.5 text-xs text-muted-foreground">{row.coverage}</p></div>
+                        <div className="min-w-0"><h2 className="break-words text-sm font-semibold">{row.record}</h2><p className="mt-0.5 break-words text-xs text-muted-foreground">{row.coverage}</p></div>
                       </div>
                     </div>
                     <div className="space-y-1.5">
@@ -200,9 +200,9 @@ export default function RetentionPage() {
                 );
               })}
             </div>
-            <div className="hidden md:block">
+            <div className="hidden min-[75rem]:block">
               <Table className="min-w-[760px] table-fixed" containerLabel={t('policyTable.title')}>
-                <TableHeader className="bg-muted/35">
+                <TableHeader className="bg-muted">
                   <TableRow>
                     <TableHead className="w-[38%]">{t('policyTable.columns.record')}</TableHead>
                     <TableHead className="w-[25%]">{t('policyTable.columns.window')}</TableHead>
@@ -308,22 +308,22 @@ export default function RetentionPage() {
       <Card className="overflow-hidden shadow-none">
         <CardHeader className="border-b"><CardTitle className="flex items-center gap-3"><span className="card-icon"><History className="size-5" aria-hidden="true" /></span>{t('history.title')}</CardTitle><CardDescription>{t('history.description')}</CardDescription></CardHeader>
         <CardContent className="px-0">
-      <div className="divide-y md:hidden">
+      <div className="divide-y min-[75rem]:hidden">
         {runs.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('empty')}</p>}
         {runs.map((r) => (
           <article key={r._id} className="space-y-3 p-4">
-            <div className="flex items-start justify-between gap-3"><div><p className="text-sm font-semibold">{r.dryRun ? t('modes.dry') : t('modes.enforced')}</p><p className="mt-1 text-xs text-muted-foreground">{new Date(r.ranAt).toLocaleString(locale)}</p></div><Badge variant="outline">{r.trigger}</Badge></div>
+            <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="break-words text-sm font-semibold">{r.dryRun ? t('modes.dry') : t('modes.enforced')}</p><p className="mt-1 break-words text-xs text-muted-foreground">{new Date(r.ranAt).toLocaleString(locale)}</p></div><Badge className="max-w-full shrink-0 whitespace-normal text-left" variant="outline">{r.trigger}</Badge></div>
             <dl className="grid grid-cols-2 gap-3 text-xs">
               <div><dt className="text-muted-foreground">{t('columns.flagged')}</dt><dd className="mt-1 font-semibold tabular-nums">{r.flagged}</dd></div>
               <div><dt className="text-muted-foreground">{t('columns.reduced')}</dt><dd className="mt-1 font-semibold tabular-nums">{r.reduced}</dd></div>
               <div><dt className="text-muted-foreground">{t('columns.archived')}</dt><dd className="mt-1 font-semibold tabular-nums">{r.archived}</dd></div>
               <div><dt className="text-muted-foreground">{t('columns.auditPastWindow')}</dt><dd className="mt-1 font-semibold tabular-nums">{r.auditPastRetention}</dd></div>
             </dl>
-            {r.error && <p className="text-xs text-destructive">{r.error}</p>}
+            {r.error && <p className="break-words text-xs text-destructive [overflow-wrap:anywhere]">{r.error}</p>}
           </article>
         ))}
       </div>
-      <div className="hidden md:block">
+      <div className="hidden min-[75rem]:block">
         <Table containerLabel={t('history.title')}>
           <TableHeader>
             <TableRow>

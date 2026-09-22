@@ -238,7 +238,7 @@ export default function DisasterRecoveryPage() {
       </div>
 
       {/* The first two cards are policy targets; the final two are operator-recorded recovery evidence. */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 min-[75rem]:grid-cols-4">
         {([
           { key: 'rto', icon: TimerReset, tile: 'bg-blue-500/10 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300', value: t('targets.hours', { value: status.targets.rtoHours }), label: t('targets.rto') },
           { key: 'rpo', icon: RotateCcw, tile: 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300', value: t('targets.hours', { value: status.targets.rpoHours }), label: t('targets.rpo') },
@@ -252,15 +252,15 @@ export default function DisasterRecoveryPage() {
                 <Icon className="size-5" aria-hidden="true" />
               </span>
               <div className="min-w-0">
-                <p className={`${target.key === 'backup' || target.key === 'drill' ? 'truncate text-base font-bold tracking-[-0.02em]' : 'metric-value'}`} title={target.value}>{target.value}</p>
-                <p className="text-sm text-muted-foreground">{target.label}</p>
+                <p className={`${target.key === 'backup' || target.key === 'drill' ? 'break-words text-sm font-bold leading-5 tracking-[-0.01em]' : 'metric-value'}`} title={target.value}>{target.value}</p>
+                <p className="break-words text-sm text-muted-foreground">{target.label}</p>
               </div>
             </div>
           );
         })}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 min-[75rem]:grid-cols-3">
         {checks.map((check) => (
           <Card key={check.label} size="sm">
             <CardHeader>
@@ -386,7 +386,7 @@ export default function DisasterRecoveryPage() {
         )}
         {error && <p className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm text-destructive" role="alert">{error}</p>}
         {saved && <p className="text-sm text-muted-foreground" role="status">{saved}</p>}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button type="submit" disabled={!dirty || (evidenceDirty && !attested) || saving}>{saving ? t('saving') : evidenceDirty ? t('save') : t('targets.save')}</Button>
           <Button type="button" variant="outline" disabled={!dirty || saving} onClick={() => { setForm(toForm(status)); setAttested(false); setError(null); }}>{t('discard')}</Button>
         </div>

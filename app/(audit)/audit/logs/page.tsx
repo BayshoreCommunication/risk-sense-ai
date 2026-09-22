@@ -206,7 +206,7 @@ export default function AuditLogsPage() {
         </div>
       </div>
       {error && <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</div>}
-      <div className="data-panel divide-y lg:hidden">
+      <div className="data-panel divide-y min-[75rem]:hidden">
         {loading && <p className="p-8 text-center text-sm text-muted-foreground">{t('loading')}</p>}
         {!loading && visibleItems.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{isLoadedPageFilter ? t('emptyPageFilter') : t('empty')}</p>}
         {!loading && visibleItems.map((entry) => (
@@ -218,12 +218,12 @@ export default function AuditLogsPage() {
               </div>
               <Badge variant="secondary">{formatIdentifierLabel(entry.category)}</Badge>
             </div>
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+            <dl className="grid gap-x-4 gap-y-2 text-xs sm:grid-cols-2">
               <div><dt className="text-muted-foreground">{t('columns.sequence')}</dt><dd className="mt-0.5 font-mono">{entry.seq}</dd></div>
               <div><dt className="text-muted-foreground">{t('columns.size')}</dt><dd className="mt-0.5 font-mono">{formatBytes(eventSize(entry), locale)}</dd></div>
               <div><dt className="text-muted-foreground">{t('columns.user')}</dt><dd className="mt-0.5">{entry.actorRole ? formatIdentifierLabel(entry.actorRole) : t('systemActor')}</dd></div>
               <div><dt className="text-muted-foreground">{t('columns.record')}</dt><dd className="mt-0.5 font-mono">{formatIdentifierLabel(entry.entity.type)} {entry.entity.id.slice(-6)}</dd></div>
-              <div className="col-span-2 min-w-0"><dt className="text-muted-foreground">{t('columns.hash')}</dt><dd className="mt-0.5 truncate font-mono" title={entry.hash}>{entry.hash}</dd></div>
+              <div className="min-w-0 sm:col-span-2"><dt className="text-muted-foreground">{t('columns.hash')}</dt><dd className="mt-0.5 truncate font-mono" title={entry.hash}>{entry.hash}</dd></div>
             </dl>
             <Button size="sm" variant="outline" className="w-full" aria-expanded={expanded === entry._id} onClick={() => setExpanded(expanded === entry._id ? null : entry._id)}>
               {expanded === entry._id ? <ChevronUp aria-hidden="true" /> : <ChevronDown aria-hidden="true" />}
@@ -233,8 +233,8 @@ export default function AuditLogsPage() {
           </article>
         ))}
       </div>
-      <div className="data-panel hidden lg:flex">
-        <Table containerLabel={t('title')}>
+      <div className="data-panel hidden min-w-0 overflow-hidden min-[75rem]:flex">
+        <Table className="min-w-[56rem]" containerLabel={t('title')}>
           <TableHeader>
             <TableRow>
               <TableHead>{t('columns.timestamp')}</TableHead>
@@ -303,7 +303,7 @@ export default function AuditLogsPage() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between gap-2 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
         <span className="text-xs text-muted-foreground">{t('visibleCount', { count: visibleItems.length })}</span>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" disabled={cursor === null} onClick={() => setCursor(null)}>

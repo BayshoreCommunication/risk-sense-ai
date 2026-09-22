@@ -224,7 +224,7 @@ export function ChatSession({ id }: { id: string }) {
         : t('processing');
 
   return (
-    <div className="page-shell max-w-none gap-2 overflow-hidden" data-testid="assessment-conversation-page">
+    <div className="page-shell @container max-w-none gap-2 overflow-hidden" data-testid="assessment-conversation-page">
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h1 className="font-heading text-[1.05rem] font-bold tracking-[-0.025em] text-foreground sm:text-lg">{t('title')}</h1>
@@ -232,7 +232,7 @@ export function ChatSession({ id }: { id: string }) {
         </div>
         <div className="flex items-center gap-2">
           {currentStageKey && (
-            <span className="text-xs font-medium text-muted-foreground min-[1360px]:hidden" data-testid="current-stage-label">
+            <span className="text-xs font-medium text-muted-foreground @min-[68rem]:hidden" data-testid="current-stage-label">
               {t('currentStage')}: <span className="text-foreground">{t(`stages.${currentStageKey}`)}</span>
             </span>
           )}
@@ -253,7 +253,7 @@ export function ChatSession({ id }: { id: string }) {
             </div>
           </div>
           <div className="flex min-w-0 items-center gap-2">
-            <details className="group/context relative min-[1360px]:hidden" data-testid="assessment-context-disclosure">
+            <details className="group/context relative @min-[68rem]:hidden" data-testid="assessment-context-disclosure">
               <summary className="flex min-h-9 cursor-pointer list-none items-center gap-2 rounded-lg border bg-card px-3 text-xs font-semibold outline-none transition hover:border-primary/30 hover:bg-primary/[0.03] focus-visible:ring-2 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
                 <PanelRight className="size-3.5 text-primary" aria-hidden="true" />
                 <span>{t('contextPanel')}</span>
@@ -266,7 +266,7 @@ export function ChatSession({ id }: { id: string }) {
           </div>
         </header>
 
-        <div className="grid min-h-0 flex-1 min-[1360px]:grid-cols-[minmax(0,1fr)_17.5rem]">
+        <div className="grid min-h-0 flex-1 @min-[68rem]:grid-cols-[minmax(0,1fr)_17.5rem]">
           <div className="flex min-h-0 min-w-0 flex-col">
             <Conversation className="min-h-0 flex-1 bg-[#fbfcff] dark:bg-background/55" data-testid="conversation-log">
               <ConversationContent className="mx-auto w-full max-w-[64rem] gap-3 px-4 py-3.5 sm:px-6 sm:py-4" data-testid="conversation-content">
@@ -456,7 +456,7 @@ export function ChatSession({ id }: { id: string }) {
             )}
           </div>
 
-          <aside className="scrollbar-subtle hidden min-h-0 overflow-y-auto overscroll-contain border-l border-[#e2e8f0] bg-[#f8fafc] dark:border-border dark:bg-muted/35 min-[1360px]:block" aria-label={t('contextPanel')}>
+          <aside className="scrollbar-subtle hidden min-h-0 overflow-y-auto overscroll-contain border-l border-[#e2e8f0] bg-[#f8fafc] dark:border-border dark:bg-muted/35 @min-[68rem]:block" aria-label={t('contextPanel')}>
             <AssessmentContext a={a} currentStageIndex={currentStageIndex} messages={messages} />
           </aside>
         </div>

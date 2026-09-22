@@ -350,7 +350,7 @@ test('direct reports and analytics access follow the authoritative tenant featur
   await expect(page.getByRole('button', { name: 'PDF' })).toHaveCount(4);
 });
 
-test('mandatory review queue remains scroll-contained and its table region is named [AI-03, FR-20, NFR-08]', async ({ page }) => {
+test('mandatory review queue uses one opaque table scroller at compact desktop size [AI-03, FR-20, NFR-08]', async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 520 });
   await authenticate(page, 'administrator');
   await mockApi(page, () => currentUser('administrator'), async ({ route, path }) => {
@@ -384,9 +384,21 @@ test('mandatory review queue remains scroll-contained and its table region is na
   await page.goto('/admin/review');
   const shell = page.locator('.page-shell');
   await expect(shell).toBeVisible();
-  expect(await shell.evaluate((element) => getComputedStyle(element).overflowY)).toBe('auto');
-  expect(await shell.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
-  await expect(page.getByRole('region', { name: 'Mandatory review queue' })).toBeVisible();
+  const tableRegion = page.getByRole('region', { name: 'Mandatory review queue' });
+  await expect(tableRegion).toBeVisible();
+  const scrollOwners = await page.evaluate(() => {
+    const pageShell = document.querySelector<HTMLElement>('.page-shell');
+    const tableContainer = document.querySelector<HTMLElement>('[data-slot="table-container"]');
+    return {
+      page: Boolean(pageShell && pageShell.scrollHeight > pageShell.clientHeight + 1),
+      table: Boolean(tableContainer && tableContainer.scrollHeight > tableContainer.clientHeight + 1),
+      documentOverflow: document.documentElement.scrollWidth > window.innerWidth,
+    };
+  });
+  expect(scrollOwners).toEqual({ page: false, table: true, documentOverflow: false });
+  const stickyHeaderBackground = await page.locator('[data-slot="table-header"]').evaluate((element) => getComputedStyle(element).backgroundColor);
+  expect(stickyHeaderBackground).not.toMatch(/rgba\([^)]*,\s*0(?:\.|\))/);
+  expect(stickyHeaderBackground).not.toMatch(/\/\s*0(?:\.|\))/);
   const firstReviewRow = page.getByRole('row').filter({ hasText: 'Requestor 0' });
   await expect(firstReviewRow).toContainText('Finance Officer');
   await expect(firstReviewRow).toContainText('Financial Unauthorized Transaction');
@@ -396,6 +408,7 @@ test('mandatory review queue remains scroll-contained and its table region is na
 });
 
 test('named escalatee keeps requestor and department context without broad review scope [FR-21, FR-22, DASH-01]', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
   await authenticate(page, 'requestor');
   // Explicit escalation remains readable even if broad department review is later disabled.
   const me = currentUser('requestor', { reviewDashboard: false, reports: true });
@@ -443,11 +456,15 @@ test('named escalatee keeps requestor and department context without broad revie
   });
 
   await page.goto('/review');
-  await expect(page.getByRole('columnheader', { name: 'Requestor' })).toBeVisible();
-  await expect(page.getByRole('columnheader', { name: 'Department' })).toBeVisible();
-  const row = page.getByRole('row').filter({ hasText: 'Original Owner' });
-  await expect(row).toContainText('Finance');
-  await expect(row).toContainText('Review the payment controls.');
+  const cardRegion = page.getByTestId('assessment-card-list');
+  await expect(cardRegion).toBeVisible();
+  await expect(cardRegion).toHaveRole('region');
+  await expect(cardRegion).toHaveAccessibleName('My assessments');
+  await expect(page.getByRole('columnheader', { name: 'Requestor' })).toBeHidden();
+  await expect(page.getByRole('columnheader', { name: 'Department' })).toBeHidden();
+  const card = cardRegion.locator('article').filter({ hasText: 'Original Owner' });
+  await expect(card).toContainText('Finance');
+  await expect(card).toContainText('Review the payment controls.');
 });
 
 test('analytics supports pie, table and persistent period drill-down views [DASH-03, FR-27, FR-28]', async ({ page }) => {
@@ -1033,7 +1050,7 @@ test('desktop sidebar collapse persists while mobile navigation stays labelled a
   const expandedMainBox = await main.boundingBox();
   expect(expandedNavigationBox).not.toBeNull();
   expect(expandedMainBox).not.toBeNull();
-  expect(expandedNavigationBox!.width).toBe(256);
+  expect(expandedNavigationBox!.width).toBe(224);
 
   const accountMenu = page.getByTestId('account-menu');
   const accountMenuTrigger = accountMenu.locator('summary');
@@ -1103,6 +1120,57 @@ test('desktop sidebar collapse persists while mobile navigation stays labelled a
   await expect(drawer).toBeHidden();
   await expect(navigationTrigger).toBeFocused();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+  await navigationTrigger.click();
+  await expect(drawer).toBeVisible();
+  await page.setViewportSize({ width: 992, height: 720 });
+  await expect(drawer).toBeHidden();
+  await expect(page.locator('.workspace-content')).not.toHaveAttribute('inert', '');
+  await expect(page.locator('.workspace-content')).not.toHaveAttribute('aria-hidden', 'true');
+  await expect(page.getByRole('button', { name: 'Expand navigation' })).toBeVisible();
+});
+
+test('sign out is clearly pending, subtly destructive, and duplicate-safe [SEC-01, NFR-08]', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await authenticate(page, 'requestor');
+  let logoutCalls = 0;
+  let releaseLogout: (() => void) | undefined;
+  const logoutGate = new Promise<void>((resolve) => {
+    releaseLogout = resolve;
+  });
+  await mockApi(page, () => currentUser('requestor'), async ({ route, path, method }) => {
+    if (path === '/personas') {
+      await ok(route, []);
+      return true;
+    }
+    if (path === '/auth/session' && method === 'DELETE') {
+      logoutCalls += 1;
+      await logoutGate;
+      await ok(route, {});
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/chat');
+  const accountMenu = page.getByTestId('account-menu');
+  await accountMenu.locator('summary').click();
+  const signOut = accountMenu.getByRole('button', { name: 'Sign out' });
+  await expect(signOut).toHaveClass(/text-destructive/);
+  await signOut.click();
+
+  const pendingSignOut = accountMenu.getByRole('button', { name: 'Signing out…' });
+  await expect(pendingSignOut).toBeDisabled();
+  await expect(pendingSignOut).toHaveAttribute('aria-busy', 'true');
+  await expect(pendingSignOut.locator('.animate-spin')).toHaveCount(1);
+  await expect(page.locator('[aria-live="polite"]')).toContainText('Signing out…');
+  expect(logoutCalls).toBe(1);
+
+  releaseLogout?.();
+  await expect(page).toHaveURL(/\/login$/);
+  expect(logoutCalls).toBe(1);
+  const cookies = await page.context().cookies();
+  expect(cookies.some((cookie) => ['rs_session', 'rs_role', 'rs_dev_user'].includes(cookie.name))).toBe(false);
 });
 
 test('a long chat transcript stays viewport-contained with one transcript scroller and responsive context [FR-05, FR-06, FR-20, NFR-07, NFR-08]', async ({ page }) => {
@@ -1221,6 +1289,9 @@ test('a long chat transcript stays viewport-contained with one transcript scroll
   await expect(contextDisclosure.getByRole('heading', { name: 'ASSESSMENT WORKFLOW' })).toBeVisible();
   await expect(contextDisclosure.getByText('Financial Unauthorized Transaction', { exact: true })).toBeVisible();
   await contextDisclosure.locator(':scope > summary').click();
+
+  await page.setViewportSize({ width: 1536, height: 900 });
+  await expect(page.getByTestId('assessment-conversation-page')).toHaveCSS('row-gap', '8px');
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(composer).toBeVisible();

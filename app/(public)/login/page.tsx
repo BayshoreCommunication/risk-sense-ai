@@ -231,7 +231,7 @@ function LoginForm() {
               <h2 id="demo-access-title" className="text-sm font-semibold text-foreground">{t('demo.title')}</h2>
               <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('demo.description')}</p>
             </div>
-            <div className="grid grid-cols-2 gap-2" aria-label={t('demo.roleList')}>
+            <div className="grid grid-cols-1 gap-2 min-[30rem]:grid-cols-2" aria-label={t('demo.roleList')}>
               {PUBLIC_DEMO_ACCOUNTS.map((account) => {
                 const selected = busy && activeDemoRole === account.role;
                 return (
@@ -507,9 +507,9 @@ function LoginForm() {
 export default function LoginPage() {
   const t = useTranslations('login');
   return (
-    <main className="flex min-h-screen items-center justify-center overflow-hidden bg-[#f5f8ff] p-0 dark:bg-background lg:p-8">
-      <div className="grid min-h-screen w-full overflow-hidden bg-card lg:min-h-[min(900px,calc(100vh-4rem))] lg:max-w-[1320px] lg:grid-cols-[minmax(36rem,1.16fr)_minmax(29rem,0.84fr)] lg:rounded-[2rem] lg:border lg:shadow-[0_35px_100px_rgba(26,56,110,0.15)] dark:lg:shadow-[0_35px_100px_rgba(0,0,0,0.35)]">
-        <section className="relative flex min-h-screen items-center justify-center px-5 py-10 sm:px-10 lg:min-h-0 lg:px-16 xl:px-20">
+    <main className="flex min-h-dvh items-start justify-center overflow-x-hidden bg-[#f5f8ff] dark:bg-background min-[75rem]:p-4 min-[90rem]:items-center min-[90rem]:p-8">
+      <div className="grid min-h-dvh w-full bg-card min-[75rem]:min-h-[min(900px,calc(100dvh-2rem))] min-[75rem]:max-w-[1320px] min-[75rem]:grid-cols-[minmax(36rem,1.16fr)_minmax(29rem,0.84fr)] min-[75rem]:overflow-hidden min-[75rem]:rounded-[2rem] min-[75rem]:border min-[75rem]:shadow-[0_35px_100px_rgba(26,56,110,0.15)] min-[90rem]:min-h-[min(900px,calc(100dvh-4rem))] dark:min-[75rem]:shadow-[0_35px_100px_rgba(0,0,0,0.35)]">
+        <section className="relative flex min-h-dvh items-center justify-center px-5 py-8 sm:px-10 sm:py-10 min-[75rem]:min-h-0 min-[75rem]:px-12 min-[82rem]:px-16 min-[90rem]:px-20">
           <div aria-hidden="true" className="subtle-grid absolute inset-0 opacity-20" />
           <div className="relative w-full">
             <Suspense>
@@ -518,7 +518,7 @@ export default function LoginPage() {
           </div>
         </section>
 
-        <section className="relative hidden overflow-hidden bg-[linear-gradient(145deg,#2864ef_0%,#1748c8_100%)] px-12 py-14 text-white lg:flex lg:flex-col lg:justify-between">
+        <section className="relative hidden overflow-hidden bg-[linear-gradient(145deg,#2864ef_0%,#1748c8_100%)] px-10 py-10 text-white min-[75rem]:flex min-[75rem]:flex-col min-[75rem]:justify-between min-[90rem]:px-12 min-[90rem]:py-14">
           <div aria-hidden="true" className="absolute -right-24 -top-16 size-80 rounded-full border border-white/10" />
           <div className="relative flex items-center gap-3">
             <div className="flex size-10 items-center justify-center rounded-lg bg-white/15 text-sm font-bold text-white ring-1 ring-white/20">R</div>
@@ -526,10 +526,10 @@ export default function LoginPage() {
           </div>
 
           <div className="relative flex flex-col items-center text-center">
-            <div className="grid size-52 place-items-center rounded-full border border-white/20 bg-white/[0.06] shadow-[0_0_80px_rgba(255,255,255,0.12)]">
-              <ShieldCheck aria-hidden="true" className="size-28 stroke-[1.25] text-white" />
+            <div className="grid size-40 place-items-center rounded-full border border-white/20 bg-white/[0.06] shadow-[0_0_80px_rgba(255,255,255,0.12)] min-[90rem]:size-52">
+              <ShieldCheck aria-hidden="true" className="size-20 stroke-[1.25] text-white min-[90rem]:size-28" />
             </div>
-            <h1 className="mt-10 text-[2rem] font-semibold tracking-[-0.04em]">{t('heroTitle')}</h1>
+            <h1 className="mt-7 text-[1.75rem] font-semibold tracking-[-0.04em] min-[90rem]:mt-10 min-[90rem]:text-[2rem]">{t('heroTitle')}</h1>
             <p className="mt-3 max-w-sm text-sm leading-7 text-white/78">{t('heroDescription')}</p>
           </div>
 
