@@ -470,6 +470,10 @@ test('named escalatee keeps requestor and department context without broad revie
 test('analytics supports pie, table and persistent period drill-down views [DASH-03, FR-27, FR-28]', async ({ page }) => {
   let failNextClassification = false;
   let drilldownUrl = '';
+  // The chart window is "the five complete months before today", so the months this test asserts on
+  // depend on when it runs. Pin the clock instead of hard-coding a window that silently drifts: without
+  // this the April fixtures below stop being the first complete month once the real date moves on.
+  await page.clock.setFixedTime(new Date('2026-09-22T12:00:00.000Z'));
   await authenticate(page, 'administrator');
   await mockApi(page, () => currentUser('administrator', { reports: true }), async ({ route, path, method }) => {
     if (method !== 'GET') return false;
