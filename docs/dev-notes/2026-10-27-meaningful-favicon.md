@@ -8,7 +8,7 @@ Requirement: NFR-08
 - Replaced the generic letter favicon with a compact RiskSense identity: a white protection shield and blue verified-decision check on the established navy surface.
 - Added 512 px application-icon and 180 px Apple-touch-icon variants.
 - Kept a 32 px `.ico` fallback for browsers that still request `/favicon.ico` directly.
-- Removed only the generated source's connected white outer corners so the icon sits cleanly on light and dark browser chrome.
+- Rebuilt every icon size directly from the owner-selected PNG, preserving its white outer corners and complete artwork.
 
 ## Where
 
@@ -28,13 +28,13 @@ The former single-letter mark named the product but did not communicate its purp
 
 - A detailed monogram was rejected because letterforms and small decorative details collapse at 16–32 px.
 - A shield outline was rejected because thin strokes lose clarity at favicon scale.
-- Leaving white canvas corners was rejected because they create a visible box on dark browser chrome.
+- A transparent-corner adaptation was rejected after review because the owner selected the complete attached artwork, including its white corner treatment.
 
 ## How to verify
 
 1. Run the frontend locally and open any page.
 2. Confirm the page head resolves `/favicon.ico`, `/icon.png`, and `/apple-icon.png`.
-3. Open `/icon.png` and confirm the navy tile, white shield, blue check, and transparent outer corners.
+3. Open `/icon.png` and confirm it matches the selected source: white outer corners, navy rounded tile, white shield and blue check.
 4. Run `npm run typecheck` and `npm run lint`.
 5. Run `npm run e2e:frontend -- --grep "protected-decision brand assets"`.
 
