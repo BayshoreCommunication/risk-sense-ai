@@ -268,3 +268,43 @@ Sign out uses a pale destructive surface and red label/icon, changes to “Signi
 The first review caught three actionable regressions before handoff: a mobile drawer could leave the app inert after a desktop resize (P1), an unlayered large-screen rule could override the conversation's compact gap (P2), and some operational tables stayed in card mode until 1440 px instead of the declared 1200 px tier (P2). All three were corrected and covered by focused browser tests. No actionable P0, P1, or P2 finding remains in this scope.
 
 final result: passed
+
+## 2026-10-27 meaningful favicon QA
+
+- **Source visual truth:** `/Users/bayshorecommunication/.codex/generated_images/01a09f86-278d-74c1-b996-6296596843c0/exec-03279288-6622-407b-a7b5-290f71d3b95c.png`
+- **Browser-rendered implementation:** `/Users/bayshorecommunication/Desktop/RiskSenseAi/risk-sense-ai/docs/dev-notes/assets/meaningful-favicon-browser.png`
+- **Combined comparison:** `/Users/bayshorecommunication/Desktop/RiskSenseAi/risk-sense-ai/docs/dev-notes/assets/meaningful-favicon-comparison.png`
+- **Viewport and density:** 1164 × 655 CSS px at device scale 1. The source was normalized from 1254 × 1254 px to 512 × 512 px. The served `app/icon.png` reported 512 × 512 natural and displayed dimensions before the focused browser capture.
+- **State:** English login route, light browser document, favicon asset opened directly from `http://localhost:3000/icon.png`.
+
+**Full-view comparison evidence**
+
+The combined comparison shows the same centered white shield and blue verification check on the navy RiskSense tile. The implementation intentionally removes only the source image's connected white outer-corner area, producing transparent corners instead of a visible square halo on dark browser chrome.
+
+**Focused region comparison evidence**
+
+The 32 × 32 favicon export was inspected independently. The shield silhouette and check remain distinct without text or fine decoration; no transparency halo was visible. A second crop was unnecessary because the favicon itself is the complete focused asset.
+
+**Findings**
+
+- No actionable P0, P1, or P2 mismatch.
+- Typography and copy are not applicable because the asset intentionally contains no text.
+- Spacing and layout rhythm remain centered and balanced after downscaling.
+- Navy, white, and blue stay aligned with the existing RiskSense visual tokens.
+- Image quality remains crisp at 32 px, and the transparent corner treatment is an intentional browser-chrome improvement.
+
+**Comparison history**
+
+- Initial source inspection found connected white canvas corners that would create a visible box on dark browser chrome.
+- The connected outer white area was made transparent without changing the white shield.
+- Post-fix browser evidence and the 32 px export showed no remaining P0/P1/P2 issue.
+
+**Implementation checklist**
+
+- [x] Serve the new multi-surface app icon metadata.
+- [x] Replace the legacy `favicon.ico` fallback.
+- [x] Verify browser favicon links and the rendered asset.
+- [x] Inspect the 32 px export.
+
+final result: passed
+

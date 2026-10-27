@@ -105,6 +105,29 @@ async function mockApi(page: Page, getMe: () => ReturnType<typeof currentUser>, 
   });
 }
 
+test('RiskSense browser icons use the protected-decision brand assets [NFR-08]', async ({ page }) => {
+  await page.goto('/login');
+
+  const iconLinks = await page.locator('link[rel*="icon"]').evaluateAll((links) =>
+    links.map((link) => ({ rel: link.getAttribute('rel'), href: link.getAttribute('href') })),
+  );
+  expect(iconLinks).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ rel: 'icon', href: expect.stringContaining('/favicon.ico') }),
+      expect.objectContaining({ rel: 'icon', href: expect.stringContaining('/icon.png') }),
+      expect.objectContaining({ rel: 'apple-touch-icon', href: expect.stringContaining('/apple-icon.png') }),
+    ]),
+  );
+
+  const appIcon = await page.request.get('/icon.png');
+  const fallbackIcon = await page.request.get('/favicon.ico');
+  expect(appIcon.ok()).toBe(true);
+  expect(appIcon.headers()['content-type']).toContain('image/png');
+  expect((await appIcon.body()).byteLength).toBeGreaterThan(1_000);
+  expect(fallbackIcon.ok()).toBe(true);
+  expect(fallbackIcon.headers()['content-type']).toContain('image/x-icon');
+});
+
 test('development authentication stays hidden unless explicitly enabled [SEC-01]', async ({ page }) => {
   await page.goto('/login');
   await expect(page.getByText('Development sign-in (seeded accounts, no OTP)')).toHaveCount(0);
