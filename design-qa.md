@@ -273,6 +273,7 @@ final result: passed
 
 - **Source visual truth:** Figma node `501:94` in `4mnjHpkJG7H43hKKctSbmP`, represented by the owner-attached capture at `/var/folders/_y/1bg_zrxs0bb1r1652v_trcbc0000gn/T/codex-clipboard-7c7c19fb-4e6e-45e1-a4f8-8428c67c871c.png`. The connector could not export the node because its authenticated account lacks editor access.
 - **Normalized favicon source:** `/Users/bayshorecommunication/Desktop/RiskSenseAi/risk-sense-ai/docs/dev-notes/assets/meaningful-favicon-source.png`
+- **Rounded visual target:** `/Users/bayshorecommunication/Desktop/RiskSenseAi/risk-sense-ai/docs/dev-notes/assets/meaningful-favicon-rounded-source.png`
 - **Browser-rendered implementation:** `/Users/bayshorecommunication/Desktop/RiskSenseAi/risk-sense-ai/docs/dev-notes/assets/meaningful-favicon-browser.png`
 - **Combined comparison:** `/Users/bayshorecommunication/Desktop/RiskSenseAi/risk-sense-ai/docs/dev-notes/assets/meaningful-favicon-comparison.png`
 - **Viewport and density:** 762 × 810 CSS px at device scale 1. The attached 365 × 300 px source was center-cropped to 300 × 300 px without distortion and normalized to 512 × 512 px. The served `app/icon.png` reported and displayed at 512 × 512 px before the focused browser crop.
@@ -280,11 +281,11 @@ final result: passed
 
 **Full-view comparison evidence**
 
-The combined comparison shows the same blue field, centered luminous shield/check, orbital lines and signal points. The square implementation uses a centered crop of the wider source so the shield is not stretched; only the excess side background is omitted.
+The combined comparison shows the same blue field, centered luminous shield/check, orbital lines and signal points inside a consistent rounded-square silhouette. The 88 px radius removes only the four outer corners; the square crop and every interior artwork pixel remain unchanged.
 
 **Focused region comparison evidence**
 
-The 32 × 32 favicon export was inspected independently. The outer orbital detail becomes subtle as expected, while the shield outline and white check remain recognizable. A second crop was unnecessary because the favicon itself is the complete focused asset.
+The 32 × 32 favicon export was inspected independently. The rounded silhouette remains visible, the outer orbital detail becomes subtle as expected, and the shield outline and white check remain recognizable. A second crop was unnecessary because the favicon itself is the complete focused asset.
 
 **Findings**
 
@@ -292,13 +293,14 @@ The 32 × 32 favicon export was inspected independently. The outer orbital detai
 - Typography and copy are not applicable because the asset intentionally contains no text.
 - Spacing and layout rhythm remain centered and balanced after downscaling.
 - Blue, white and cyan stay aligned with the Figma source and the existing RiskSense visual tokens.
-- Image quality remains recognizable at 32 px; the square crop preserves the shield proportion and visual center.
+- Image quality remains recognizable at 32 px; the square crop preserves the shield proportion and the rounded mask has clean antialiased edges.
 
 **Comparison history**
 
 - The earlier favicon used a different navy tile and solid white shield artwork.
 - The owner selected Figma node `501:94`, making the previous image a P2 source-selection mismatch.
-- All favicon surfaces were rebuilt from the attached node capture with one centered square crop; post-fix browser evidence and the 32 px export show no remaining P0/P1/P2 issue.
+- All favicon surfaces were rebuilt from the attached node capture with one centered square crop.
+- The owner then requested rounded corners; a deterministic alpha mask changed only the outer corners, and post-fix browser evidence plus the 32 px export show no remaining P0/P1/P2 issue.
 
 **Implementation checklist**
 
