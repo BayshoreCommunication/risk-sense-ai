@@ -1,7 +1,11 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { ACCOUNTS, devLogin } from './helpers';
 
 /** T-100: one journey per role, plus the role guard (DASH-04, SEC-01) and the AI-01 decision path. */
+
+async function expectNoInternalRequirementKeys(page: Page) {
+  await expect(page.locator('header.workspace-header')).not.toContainText(/\b(?:AI|DASH|FR|NFR|SEC)-\d/);
+}
 
 test.describe('requestor', () => {
   test('starts an assessment, answers structured questions, submits and records a decision [FR-03..08, FR-22, AI-01]', async ({ page }) => {
@@ -10,6 +14,7 @@ test.describe('requestor', () => {
     // requestor so a developer reviewing the demo in another browser cannot supersede this session.
     await devLogin(page, ACCOUNTS.paidRequestor);
     await expect(page).toHaveURL(/\/chat/);
+    await expectNoInternalRequirementKeys(page);
     await page.getByRole('button', { name: 'Finance Officer' }).click();
     await page.getByPlaceholder(/vendor wire/).fill('A vendor wire of $250,000 went out yesterday without the second approval and nobody can find the request.');
     await page.getByRole('button', { name: 'Start' }).click();
@@ -70,6 +75,7 @@ test.describe('administrator', () => {
     await expect(page.getByRole('heading', { name: 'Mandatory review queue' })).toBeVisible();
     await page.goto('/admin/analytics');
     await expect(page.getByRole('heading', { name: 'Analytics dashboard' })).toBeVisible();
+    await expectNoInternalRequirementKeys(page);
     await expect(page.getByText('Assessment volume', { exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Monthly classification distribution' })).toBeVisible();
     const monthlyViews = page.getByRole('group', { name: 'Monthly classification view' });
@@ -101,6 +107,7 @@ test.describe('system administrator', () => {
     await devLogin(page, ACCOUNTS.sysadmin);
     await expect(page).toHaveURL(/\/system\/users$/);
     await expect(page.getByRole('heading', { name: 'User and role provisioning' })).toBeVisible();
+    await expectNoInternalRequirementKeys(page);
     await page.goto('/system/tenant');
     await expect(page.getByRole('heading', { name: 'SSO and integration configuration' })).toBeVisible();
     const idle = page.getByLabel('Idle timeout (minutes, 5–30)');
@@ -125,6 +132,7 @@ test.describe('audit', () => {
     await devLogin(page, ACCOUNTS.paidAudit);
     await expect(page).toHaveURL(/\/audit\/logs$/);
     await expect(page.getByRole('heading', { name: 'Audit log viewer' })).toBeVisible();
+    await expectNoInternalRequirementKeys(page);
     await expect(page.getByRole('link', { name: 'Assessments', exact: true })).toBeVisible();
     await page.getByRole('link', { name: 'Assessments', exact: true }).click();
     await expect(page).toHaveURL(/\/audit\/assessments/);

@@ -233,6 +233,51 @@ Automated completion evidence: current typecheck and lint passed; the 29/29-rout
 
 final result: passed
 
+## 2026-10-27 internal requirement badge removal QA
+
+- **Source visual truth:** `/var/folders/_y/1bg_zrxs0bb1r1652v_trcbc0000gn/T/codex-clipboard-a2432a92-f889-47a6-9fd8-86abba5adcac.png` (169 × 71 px), supplied by the owner as the `DASH-03` / `FR-27` badge treatment to remove.
+- **Browser-rendered implementation:** `/Users/bayshorecommunication/Desktop/RiskSenseAi/risk-sense-ai/qa/requirement-badges-removed-admin-analytics.png` (1164 × 655 px).
+- **Combined focused comparison:** `/Users/bayshorecommunication/Desktop/RiskSenseAi/risk-sense-ai/qa/requirement-badges-before-after.png` (938 × 320 px; source above, updated header below).
+- **Viewport and density:** 1164 × 655 CSS px at device scale 1; no density normalization was required for the implementation. The small owner crop was scaled 2× only to make its badge copy legible in the comparison.
+- **State:** Local English Administrator Analytics workspace in dark mode, authenticated through the development-only seeded account. The live metrics loaded, the Refresh action remained usable, and browser console error inspection returned no errors.
+
+**Full-view comparison evidence**
+
+The complete Analytics screenshot shows the existing navy shell, sidebar, typography, metric cards, monthly classification content and scroll ownership unchanged. The page header retains the meaningful `Administrator` role pill and `Refresh` action while the internal `DASH-03` and `FR-27` pills are absent.
+
+**Focused region comparison evidence**
+
+The combined image directly contrasts the owner-supplied internal-key pills with the updated header. The keys are removed rather than restyled or hidden behind another interaction; the remaining role/action spacing closes naturally without leaving a gap.
+
+**Required fidelity surfaces**
+
+- **Fonts and typography:** Existing heading, role-pill and button typography is unchanged.
+- **Spacing and layout rhythm:** Removing the two chips reduces clutter and lets the role/action group use its normal shared gap; no header collision or empty reserved space remains.
+- **Colors and visual tokens:** Existing navy, foreground, role-pill and action tokens are unchanged; the removed pale-blue chips introduce no replacement color.
+- **Image quality and asset fidelity:** No product image or icon assets changed. The supplied screenshot is evidence of the element to remove, not an asset to reproduce.
+- **Copy and content:** Engineering identifiers are absent from customer-facing copy; meaningful role and action labels remain.
+
+**Findings**
+
+- No actionable P0, P1 or P2 issue remains.
+- No P3 follow-up is needed for this focused removal.
+
+**Comparison history**
+
+- Initial state exposed internal requirement identifiers in every shared workspace header.
+- The shared renderer and unused chip style were removed, and cross-role browser coverage was added.
+- Post-fix Analytics evidence shows the intended clean header with no layout regression.
+
+**Implementation checklist**
+
+- [x] Remove requirement-ID rendering at the shared header boundary.
+- [x] Preserve role and page-action controls.
+- [x] Add cross-role regression assertions.
+- [x] Pass lint, typecheck and the 77-test mocked browser suite.
+- [x] Inspect the rendered local page and browser console.
+
+final result: passed
+
 ## 2026-09-22 shared laptop-responsive shell and role pages
 
 ### Source and rendered evidence

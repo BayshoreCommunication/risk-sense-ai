@@ -7,20 +7,20 @@ import { useWorkspace } from '@/components/shell/workspace-context';
 type PageHeaderProps = {
   title: ReactNode;
   description?: ReactNode;
-  /** Requirement IDs for this screen, shown as chips exactly as the reference frames do. */
+  /** Internal traceability metadata. Requirement IDs are intentionally not rendered to users. */
   requirements?: string[];
   /** Rendered next to the title, for counts and other title-level state. */
   titleAdornment?: ReactNode;
-  /** Buttons and page-level controls, rendered after the role pill and chips. */
+  /** Buttons and page-level controls, rendered after the role pill. */
   actions?: ReactNode;
 };
 
 /**
  * The page header every workspace screen uses: a plain title block on the page background with the
- * verified role and this screen's requirement IDs at the top right. Matches the Figma reference
- * frames in `docs/design/figma-frames/`.
+ * verified role and any page actions at the top right. Requirement identifiers remain internal
+ * traceability metadata and are not part of the customer-facing information hierarchy.
  */
-export function PageHeader({ title, description, requirements, titleAdornment, actions }: PageHeaderProps) {
+export function PageHeader({ title, description, titleAdornment, actions }: PageHeaderProps) {
   const t = useTranslations();
   const workspace = useWorkspace();
 
@@ -35,11 +35,6 @@ export function PageHeader({ title, description, requirements, titleAdornment, a
       </div>
       <div className="flex w-full min-w-0 flex-wrap items-center gap-2 min-[75rem]:w-auto min-[75rem]:shrink-0 min-[75rem]:justify-end">
         {workspace ? <span className="role-pill">{t(`roles.${workspace.role}`)}</span> : null}
-        {requirements?.map((id) => (
-          <span key={id} className="req-chip">
-            {id}
-          </span>
-        ))}
         {actions}
       </div>
     </header>

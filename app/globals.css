@@ -256,12 +256,9 @@
   .eyebrow {
     @apply text-[0.68rem] font-semibold tracking-[0.15em] text-primary uppercase;
   }
-  /* Figma page-header chrome: a solid role pill followed by this screen's requirement IDs. */
+  /* Customer-facing page-header chrome: show the active role without internal traceability keys. */
   .role-pill {
     @apply inline-flex items-center rounded-full bg-[#061d43] px-4 py-1.5 text-xs font-semibold text-white;
-  }
-  .req-chip {
-    @apply inline-flex items-center rounded-full bg-[#edf3ff] px-3 py-1.5 text-xs font-semibold tracking-[0.02em] text-[#155bd7] dark:bg-primary/15 dark:text-blue-300;
   }
   /* Figma card headers lead with a tinted rounded icon tile before the title. */
   .card-icon {
