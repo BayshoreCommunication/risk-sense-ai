@@ -431,3 +431,38 @@ The reference exposed the native `fieldset` border around a visually hidden `leg
 
 final result: passed
 
+## 2026-10-28 composer send-action clarity
+
+### Comparison target
+
+- **Source disabled state:** `docs/design-qa/composer-send-disabled-before.png` (123 × 68 px owner-supplied dark-mode crop).
+- **Source ready state:** `docs/design-qa/composer-send-ready-before.png` (159 × 102 px owner-supplied dark-mode crop).
+- **Rendered disabled state:** `docs/design-qa/composer-send-disabled-after.jpg` (1133 × 810 px in-app Browser capture) and focused `composer-send-disabled-after-crop.jpg` (90 × 90 px).
+- **Rendered ready state:** `docs/design-qa/composer-send-ready-after.jpg` (1164 × 655 px in-app Browser capture) and focused `composer-send-ready-after-crop.jpg` (100 × 90 px).
+- **Combined focused comparison:** `docs/design-qa/composer-send-before-after.jpg` (440 × 260 px; owner crops above, corrected disabled/ready crops below).
+- **Viewport and state:** dark theme, authenticated Requestor. The disabled capture shows an active MCQ with the deterministic dock locked; the ready capture shows an active yes/no question with a non-empty optional explanation. Browser capture density is 1×. Focused crops are normalized into equal comparison cells without stretching.
+
+### Full-view comparison evidence
+
+The corrected button remains in the existing 32 px circular slot at the lower-right of the composer. Dock height, input width, card radius, conversation layout, scroll ownership and responsive shell remain unchanged in both captured states.
+
+### Focused comparison evidence
+
+The source used a dark paper-plane stroke on both the dim and blue circles, so state and action were difficult to read. The corrected disabled state uses a muted blue-gray surface and a lighter 5.07:1 dark-theme icon treatment without looking actionable. The ready state uses a saturated blue surface with a white 5.08:1 icon, visible blue edge and controlled elevation. The icon remains the existing library asset and gains a slightly firmer stroke. Sending replaces it with a spinner in the same slot.
+
+### Required fidelity surfaces
+
+- **Fonts and typography:** not applicable to the icon-only control; the accessible `Send` name remains unchanged.
+- **Spacing and layout rhythm:** unchanged. The 32 px circle, composer inset and corner relationship remain intact.
+- **Colors and visual tokens:** state-specific tokens now distinguish disabled, ready and loading. Ready uses white on blue; disabled uses muted blue-gray rather than global opacity.
+- **Image quality and asset fidelity:** the existing Lucide Send icon remains vector-sharp; no raster placeholder, handcrafted SVG or CSS-drawn substitute was introduced.
+- **Copy and content:** unchanged. The visual states add no duplicate label or instructional text.
+
+### Findings and comparison history
+
+- Pass 1 identified one P2 usability defect: the dark icon had insufficient visual separation from both button states and global 50% opacity blurred the disabled affordance.
+- Pass 2 introduced explicit border/background/icon/shadow tokens, removed blanket disabled opacity, added a loading spinner and exposed deterministic visual-state metadata for regression coverage.
+- Post-fix in-app Browser inspection measured `rgb(255, 255, 255)` on `rgb(23, 107, 216)` for ready and `rgb(127, 155, 187)` on `rgb(20, 42, 67)` for disabled. Targeted MCQ, yes/no and free-text interaction tests pass. No actionable P0, P1 or P2 difference remains in the scoped send-action treatment.
+
+final result: passed
+

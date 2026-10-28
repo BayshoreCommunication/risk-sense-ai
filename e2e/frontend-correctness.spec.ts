@@ -1700,7 +1700,10 @@ test('the active MCQ is an accessible inline assistant approval card in a fluid 
   await expect(inlineCard.getByTestId('inline-choice-surface')).toHaveCSS('border-top-width', '1px');
   await expect(composer).toBeVisible();
   await expect(composer.getByPlaceholder('Choose the best match')).toBeDisabled();
-  await expect(composer.getByRole('button', { name: 'Send' })).toBeDisabled();
+  const dockSend = composer.getByRole('button', { name: 'Send' });
+  await expect(dockSend).toBeDisabled();
+  await expect(dockSend).toHaveAttribute('data-visual-state', 'disabled');
+  await expect(dockSend).toHaveCSS('opacity', '1');
   await expect(composer.getByTestId('answer-option')).toHaveCount(0);
   await expect(page.getByTestId('answer-option')).toHaveCount(3);
   const activeAssistantBox = await activeAssistant.boundingBox();
@@ -1820,6 +1823,8 @@ test('the active yes/no question keeps inline binary choices above an optional e
   await expect(page.getByText('Or add a short explanation', { exact: true })).toHaveCount(0);
   await expect(explanation).toBeEnabled();
   await expect(explanation).toHaveAccessibleName('Explain your answer');
+  await expect(send).toHaveAttribute('data-visual-state', 'disabled');
+  await expect(send).toHaveCSS('opacity', '1');
   const [inlineCardBox, composerBox] = await Promise.all([inlineCard.boundingBox(), composer.boundingBox()]);
   expect(inlineCardBox).not.toBeNull();
   expect(composerBox).not.toBeNull();
@@ -1827,6 +1832,8 @@ test('the active yes/no question keeps inline binary choices above an optional e
 
   await explanation.fill('The approver was unavailable.');
   await expect(send).toBeEnabled();
+  await expect(send).toHaveAttribute('data-visual-state', 'ready');
+  await expect(send).toHaveCSS('color', 'rgb(255, 255, 255)');
   await send.click();
   await expect.poll(() => postCount).toBe(1);
   expect(submitted).toEqual([{ text: 'The approver was unavailable.' }]);
@@ -2017,6 +2024,8 @@ test('the free-text composer echoes one intended answer, reports processing, and
   });
   await expect.poll(() => postCount).toBe(2);
   await expect(page.getByTestId('optimistic-answer')).toContainText('Button answer');
+  await expect(send).toHaveAttribute('data-visual-state', 'loading');
+  await expect(send).toHaveAttribute('aria-busy', 'true');
   pendingResponses.shift()?.();
   await expect(composer).toHaveAttribute('data-busy', 'false');
   expect(submitted).toEqual([{ text: 'Final answer' }, { text: 'Button answer' }]);

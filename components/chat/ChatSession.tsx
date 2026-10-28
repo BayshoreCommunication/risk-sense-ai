@@ -846,6 +846,8 @@ function AnswerBox({
 }) {
   const t = useTranslations('chatSession.answer');
   const inputId = useId();
+  const sendVisualState = busy ? 'loading' : text.trim() ? 'ready' : 'disabled';
+  const sendButtonClass = "border border-[#1f66c7] bg-[#176bd8] text-white shadow-[0_6px_16px_rgba(24,101,211,0.3)] hover:border-[#2e7be2] hover:bg-[#226fda] focus-visible:border-[#8cbcff] focus-visible:ring-[#4f94ed]/35 disabled:border-[#ccd9e8] disabled:bg-[#e6edf5] disabled:text-[#7e94ad] disabled:shadow-none disabled:opacity-100 dark:border-[#4a8fe9] dark:bg-[#176bd8] dark:text-white dark:shadow-[0_7px_18px_rgba(0,0,0,0.28),0_0_0_1px_rgba(107,166,244,0.08)] dark:hover:border-[#78adf2] dark:hover:bg-[#2175e4] dark:disabled:border-[#2b4868] dark:disabled:bg-[#142a43] dark:disabled:text-[#7f9bbb] dark:disabled:shadow-none";
   const submitText = () => {
     if (busy || q.type === 'mcq' || !text.trim()) return;
     const submittedText = text.trim();
@@ -865,8 +867,15 @@ function AnswerBox({
           placeholder={t('chooseOne')}
           className="h-9 flex-1 cursor-not-allowed border-0 bg-transparent px-2 text-[0.78rem] text-muted-foreground shadow-none disabled:opacity-100"
         />
-        <Button size="icon" className="size-8 shrink-0 rounded-full" disabled aria-label={t('send')}>
-          <Send className="size-3.5" aria-hidden="true" />
+        <Button
+          size="icon"
+          className={`size-8 shrink-0 rounded-full ${sendButtonClass}`}
+          disabled
+          aria-label={t('send')}
+          data-testid="composer-send-button"
+          data-visual-state="disabled"
+        >
+          <Send className="size-3.5 stroke-[2.25]" aria-hidden="true" />
           <span className="sr-only">{t('send')}</span>
         </Button>
       </div>
@@ -938,8 +947,21 @@ function AnswerBox({
         />
         <div className="flex items-center justify-between gap-3 px-3 pb-2 pt-0.5">
           {q.type !== 'yes_no' && <span className="text-[0.65rem] text-muted-foreground">{t('enterHint')}</span>}
-          <Button size="icon" className="ml-auto size-8 rounded-full bg-[linear-gradient(145deg,#0a2c5d,#216ce7)] shadow-[0_5px_14px_rgba(24,83,170,0.22)] transition-transform hover:scale-[1.03] motion-reduce:hover:scale-100" disabled={busy || !text.trim()} onClick={submitText} aria-label={t('send')}>
-            <Send className="size-4" aria-hidden="true" />
+          <Button
+            size="icon"
+            className={`ml-auto size-8 rounded-full transition-transform hover:scale-[1.03] motion-reduce:hover:scale-100 ${sendButtonClass}`}
+            disabled={busy || !text.trim()}
+            onClick={submitText}
+            aria-label={t('send')}
+            aria-busy={busy}
+            data-testid="composer-send-button"
+            data-visual-state={sendVisualState}
+          >
+            {busy ? (
+              <LoaderCircle className="size-4 animate-spin stroke-[2.25] motion-reduce:animate-none" aria-hidden="true" />
+            ) : (
+              <Send className="size-4 stroke-[2.25]" aria-hidden="true" />
+            )}
             <span className="sr-only">{t('send')}</span>
           </Button>
         </div>
