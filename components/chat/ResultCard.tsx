@@ -67,7 +67,7 @@ export function ResultCard({
   const classificationSelectId = useId();
   const reviewerSelectId = useId();
   const reasonId = useId();
-  const [mode, setMode] = useState<'none' | 'override' | 'escalate'>('none');
+  const [mode, setMode] = useState<'none' | 'accept' | 'override' | 'escalate'>('none');
   const [reason, setReason] = useState('');
   const [overrideClassification, setOverrideClassification] = useState<string>('');
   const [targets, setTargets] = useState<EscalationTarget[] | null>(null);
@@ -360,7 +360,7 @@ export function ResultCard({
                   </div>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
-                  <Button type="button" size="sm" disabled={busy || isError} onClick={() => decide({ type: 'accept' })}>
+                  <Button type="button" size="sm" aria-expanded={mode === 'accept'} disabled={busy || isError} onClick={() => setMode(mode === 'accept' ? 'none' : 'accept')}>
                     {decisionBusy && pendingDecisionType === 'accept' ? <LoaderCircle className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <CheckCircle2 aria-hidden="true" />}
                     {decisionBusy && pendingDecisionType === 'accept' ? t('decision.recording') : t('actions.accept')}
                   </Button>
@@ -424,34 +424,47 @@ export function ResultCard({
 
                   <div>
                     <label className="mb-1.5 block text-xs font-medium" htmlFor={reasonId}>
-                      {mode === 'override' ? t('override.reasonLabel') : t('escalated.reasonLabel')}
+                      {mode === 'accept' ? t('accept.noteLabel') : mode === 'override' ? t('override.reasonLabel') : t('escalated.reasonLabel')}
                     </label>
                     <Textarea
                       id={reasonId}
                       rows={3}
                       value={reason}
                       onChange={(event) => setReason(event.target.value)}
-                      placeholder={mode === 'override' ? t('override.reasonPlaceholder') : t('escalated.reasonPlaceholder')}
+                      placeholder={mode === 'accept' ? t('accept.notePlaceholder') : mode === 'override' ? t('override.reasonPlaceholder') : t('escalated.reasonPlaceholder')}
                       className="bg-background"
                     />
                     {mode === 'override' && <p className="mt-1.5 text-xs text-muted-foreground">{t('override.reasonHint')}</p>}
+                    {mode === 'escalate' && <p className="mt-1.5 text-xs text-muted-foreground">{t('escalated.reasonHint')}</p>}
                   </div>
 
                   <Button
                     type="button"
                     size="sm"
                     className="w-fit"
-                    disabled={busy || (mode === 'override' && (!overrideClassification || reason.trim().length < 25))}
+                    disabled={
+                      busy ||
+                      (mode === 'override' && (!overrideClassification || reason.trim().length < 25)) ||
+                      (mode === 'escalate' && reason.trim().length < 10)
+                    }
                     onClick={() =>
                       decide(
-                        mode === 'override'
+                        mode === 'accept'
+                          ? { type: 'accept', ...(reason.trim() ? { reason: reason.trim() } : {}) }
+                          : mode === 'override'
                           ? { type: 'override', overriddenTo: overrideClassification as DecisionInput['overriddenTo'], reason }
-                          : { type: 'escalate', reason: reason || undefined, ...(target !== NOBODY ? { escalateToUserId: target } : {}) },
+                          : { type: 'escalate', reason: reason.trim(), ...(target !== NOBODY ? { escalateToUserId: target } : {}) },
                       )
                     }
                   >
                     {decisionBusy && pendingDecisionType === mode && <LoaderCircle className="animate-spin motion-reduce:animate-none" aria-hidden="true" />}
-                    {decisionBusy && pendingDecisionType === mode ? t('decision.recording') : mode === 'override' ? t('actions.recordOverride') : t('actions.escalateSubmit')}
+                    {decisionBusy && pendingDecisionType === mode
+                      ? t('decision.recording')
+                      : mode === 'accept'
+                        ? t('actions.confirmAccept')
+                        : mode === 'override'
+                          ? t('actions.recordOverride')
+                          : t('actions.escalateSubmit')}
                   </Button>
                 </div>
               )}

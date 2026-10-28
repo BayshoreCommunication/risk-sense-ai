@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { AlertCircle, Bot, Check, CheckCircle2, ChevronDown, ChevronRight, CircleDot, FileCheck2, Flag, LoaderCircle, LockKeyhole, PanelRight, Send, Sparkles } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
+import { AlertCircle, ArrowRight, Bot, Check, CheckCircle2, ChevronDown, ChevronRight, CircleDot, Clock3, FileCheck2, Flag, LoaderCircle, LockKeyhole, PanelRight, Route, Send, Sparkles, UserRound } from 'lucide-react';
 import { Conversation, ConversationContent, ConversationScrollButton } from '@/components/ai-elements/conversation';
 import { Message as AIMessage, MessageContent, MessageResponse } from '@/components/ai-elements/message';
 import { Suggestion, Suggestions } from '@/components/ai-elements/suggestion';
@@ -474,8 +474,17 @@ function AssessmentContext({
   currentStageIndex: number;
   messages: Message[];
 }) {
+  const locale = useLocale();
   const t = useTranslations('chatSession');
+  const classification = useTranslations('classification');
+  const status = useTranslations('status');
   const stagePosition = currentStageIndex >= 0 ? currentStageIndex + 1 : null;
+  const decision = a?.decision;
+  const decisionType = decision?.type;
+  const decisionTone = decisionType === 'escalate'
+    ? 'border-amber-200 bg-amber-50/45 dark:border-amber-400/25 dark:bg-amber-400/[0.07]'
+    : 'border-emerald-200 bg-emerald-50/35 dark:border-emerald-400/25 dark:bg-emerald-400/[0.06]';
+  const classificationName = (value: string) => classification.has(value) ? classification(value) : formatIdentifierLabel(value);
 
   return (
     <div className="space-y-2 p-2.5" data-testid="assessment-context-panel">
@@ -581,6 +590,76 @@ function AssessmentContext({
           )}
         </div>
       </details>
+
+      {decision && (
+        <section className={`overflow-hidden rounded-xl border shadow-[0_1px_2px_rgba(15,23,42,0.025)] ${decisionTone}`} data-testid="decision-details">
+          <div className="flex items-center justify-between gap-2 border-b border-current/10 px-3 py-2.5">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className={`flex size-6 shrink-0 items-center justify-center rounded-lg ${decisionType === 'escalate' ? 'bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300'}`}>
+                {decisionType === 'escalate' ? <Route className="size-3" aria-hidden="true" /> : <CheckCircle2 className="size-3" aria-hidden="true" />}
+              </span>
+              <div className="min-w-0">
+                <h3 className="text-[0.62rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('decisionDetails.title')}</h3>
+                <p className="mt-0.5 text-[0.72rem] font-semibold leading-4 text-foreground">{t(`decisionDetails.types.${decisionType}`)}</p>
+              </div>
+            </div>
+            <span className="rounded-full border bg-white/70 px-2 py-0.5 text-[0.58rem] font-semibold text-muted-foreground dark:bg-background/55">
+              {t('decisionDetails.currentStatus', { status: status.has(a.status) ? status(a.status) : formatIdentifierLabel(a.status) })}
+            </span>
+          </div>
+
+          <dl className="grid gap-2 px-3 py-2.5 text-[0.68rem]">
+            <div className="grid grid-cols-[0.85rem_minmax(0,1fr)] gap-2">
+              <UserRound className="mt-0.5 size-3 text-muted-foreground" aria-hidden="true" />
+              <div>
+                <dt className="text-[0.58rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">{t(`decisionDetails.actorLabels.${decisionType}`)}</dt>
+                <dd className="mt-0.5 break-words font-medium text-foreground">{decision.byUser?.name ?? t('decisionDetails.unavailable')}</dd>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-[0.85rem_minmax(0,1fr)] gap-2">
+              <Clock3 className="mt-0.5 size-3 text-muted-foreground" aria-hidden="true" />
+              <div>
+                <dt className="text-[0.58rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">{t(`decisionDetails.timeLabels.${decisionType}`)}</dt>
+                <dd className="mt-0.5 font-medium text-foreground">{new Date(decision.decidedAt).toLocaleString(locale)}</dd>
+              </div>
+            </div>
+
+            {decisionType === 'override' && decision.overriddenTo && a.result && (
+              <div className="rounded-lg border border-current/10 bg-white/65 px-2.5 py-2 dark:bg-background/45">
+                <dt className="text-[0.58rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">{t('decisionDetails.classificationChange')}</dt>
+                <dd className="mt-1.5 grid grid-cols-[minmax(0,1fr)_0.75rem_minmax(0,1fr)] items-center gap-1.5 text-foreground">
+                  <span>
+                    <span className="block text-[0.55rem] font-medium text-muted-foreground">{t('decisionDetails.previousClassification')}</span>
+                    <span className="mt-0.5 block font-medium">{classificationName(a.result.classification)}</span>
+                  </span>
+                  <ArrowRight className="size-3 shrink-0 text-muted-foreground" aria-hidden="true" />
+                  <span>
+                    <span className="block text-[0.55rem] font-medium text-muted-foreground">{t('decisionDetails.newClassification')}</span>
+                    <span className="mt-0.5 block font-medium">{classificationName(decision.overriddenTo)}</span>
+                  </span>
+                </dd>
+              </div>
+            )}
+
+            {decisionType === 'escalate' && (
+              <div className="rounded-lg border border-current/10 bg-white/65 px-2.5 py-2 dark:bg-background/45">
+                <dt className="text-[0.58rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">{t('decisionDetails.assignedTo')}</dt>
+                <dd className="mt-0.5 break-words font-medium text-foreground">{a.escalatedTo?.name ?? t('decisionDetails.unassignedQueue')}</dd>
+              </div>
+            )}
+
+            {decision.reason && (
+              <div className="rounded-lg border border-current/10 bg-white/65 px-2.5 py-2 dark:bg-background/45">
+                <dt className="text-[0.58rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">
+                  {decisionType === 'accept' ? t('decisionDetails.note') : t('decisionDetails.reason')}
+                </dt>
+                <dd className="mt-1 break-words leading-4 text-foreground/80">{decision.reason}</dd>
+              </div>
+            )}
+          </dl>
+        </section>
+      )}
 
       <p className="flex gap-2 rounded-xl bg-[#eff4fa] px-3 py-2 text-[0.63rem] leading-4 text-[#607089] dark:bg-muted/60 dark:text-muted-foreground">
         <LockKeyhole className="mt-0.5 size-3 shrink-0 text-[#356bb3] dark:text-blue-300" aria-hidden="true" />

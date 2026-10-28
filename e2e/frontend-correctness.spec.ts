@@ -1262,6 +1262,17 @@ test('a long chat transcript stays viewport-contained with one transcript scroll
       await new Promise<void>((resolve) => {
         releaseDecision = resolve;
       });
+      assessmentState = assessment({
+        ...assessmentState,
+        status: 'closed',
+        decision: {
+          type: 'accept',
+          byUserId: 'user-1',
+          byUser: { _id: 'user-1', name: 'Test User' },
+          reason: 'Reviewed against the available evidence.',
+          decidedAt: '2026-09-14T09:30:00.000Z',
+        },
+      });
       await ok(route, assessmentState);
       return true;
     }
@@ -1459,10 +1470,100 @@ test('a long chat transcript stays viewport-contained with one transcript scroll
 
   const acceptDecision = page.getByRole('button', { name: 'Accept recommendation' });
   await acceptDecision.click();
-  await expect.poll(() => submittedDecision).toEqual({ type: 'accept' });
-  await expect(page.getByRole('button', { name: 'Recording your decision…' })).toBeVisible();
+  const acceptNote = page.getByRole('textbox', { name: 'Decision note (optional)' });
+  await expect(acceptNote).toBeVisible();
+  await acceptNote.fill('Reviewed against the available evidence.');
+  await page.getByRole('button', { name: 'Confirm acceptance' }).click();
+  await expect.poll(() => submittedDecision).toEqual({ type: 'accept', reason: 'Reviewed against the available evidence.' });
+  await expect(page.getByRole('button', { name: 'Recording your decision…' }).first()).toBeVisible();
   releaseDecision?.();
-  await expect(acceptDecision).toBeVisible();
+  const decisionDetails = contextAside.getByTestId('decision-details');
+  await expect(decisionDetails).toBeVisible();
+  await expect(decisionDetails.getByText('Recommendation accepted', { exact: true })).toBeVisible();
+  await expect(decisionDetails.getByText('Test User', { exact: true })).toBeVisible();
+  await expect(decisionDetails.getByText('Reviewed against the available evidence.', { exact: true })).toBeVisible();
+  await expect(contextAside.getByTestId('context-fact-row')).toHaveCount(16);
+});
+
+test('decision details separate accept, override, and escalation evidence from captured facts [FR-22, FR-23, T-061]', async ({ page }) => {
+  await page.setViewportSize({ width: 1536, height: 900 });
+  await authenticate(page, 'requestor');
+  const result = {
+    score: 66,
+    classification: 'elevated_risk',
+    computedClassification: 'elevated_risk',
+    ruleDriven: false,
+    confidence: 91,
+    professionalConsult: false,
+    mandatoryReview: false,
+    explanation: 'The control weakness and financial exposure require a human decision.',
+    keyDrivers: [],
+    recommendedAction: 'Manage the Risk',
+    nextSteps: [],
+    factors: {},
+    computedAt: '2026-10-28T08:00:00.000Z',
+  };
+  let current = assessment({
+    status: 'closed',
+    phase: 'done',
+    result,
+    facts: [{ key: 'amount_usd', value: 250000, source: 'mcq', confidence: 1, flagged: false }],
+    decision: {
+      type: 'override',
+      byUserId: 'reviewer-1',
+      byUser: { _id: 'reviewer-1', name: 'Emily Watson' },
+      overriddenTo: 'issue',
+      reason: 'The unresolved control failure requires the highest classification.',
+      decidedAt: '2026-10-28T08:10:00.000Z',
+    },
+  });
+
+  await mockApi(page, () => currentUser('requestor'), async ({ route, path, method }) => {
+    if (path === '/assessments/assessment-1' && method === 'GET') {
+      await ok(route, current);
+      return true;
+    }
+    if (path === '/assessments/assessment-1/messages' && method === 'GET') {
+      await ok(route, []);
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/chat/assessment-1');
+  const context = page.getByRole('complementary', { name: 'Assessment context' });
+  let details = context.getByTestId('decision-details');
+  await expect(details.getByText('Classification overridden', { exact: true })).toBeVisible();
+  await expect(details.getByText('Emily Watson', { exact: true })).toBeVisible();
+  await expect(details.getByText('Elevated Risk', { exact: true })).toBeVisible();
+  await expect(details.getByText('Issue', { exact: true })).toBeVisible();
+  await expect(details.getByText('The unresolved control failure requires the highest classification.', { exact: true })).toBeVisible();
+  await context.locator('details').locator(':scope > summary').click();
+  await expect(context.getByTestId('context-fact-row')).toHaveCount(1);
+
+  current = assessment({
+    status: 'escalated',
+    phase: 'done',
+    result,
+    facts: [{ key: 'amount_usd', value: 250000, source: 'mcq', confidence: 1, flagged: false }],
+    decision: {
+      type: 'escalate',
+      byUserId: 'owner-1',
+      byUser: { _id: 'owner-1', name: 'David Kim' },
+      reason: 'Treasury control ownership requires an independent review.',
+      decidedAt: '2026-10-28T08:20:00.000Z',
+    },
+    escalatedTo: { _id: 'reviewer-1', name: 'Emily Watson' },
+  });
+  await page.reload();
+  details = context.getByTestId('decision-details');
+  await expect(details.getByText('Escalated for review', { exact: true })).toBeVisible();
+  await expect(details.getByText('David Kim', { exact: true })).toBeVisible();
+  await expect(details.getByText('Emily Watson', { exact: true })).toBeVisible();
+  await expect(details.getByText('Treasury control ownership requires an independent review.', { exact: true })).toBeVisible();
+  await expect(details.getByText('Current: Escalated', { exact: true })).toBeVisible();
+  await context.locator('details').locator(':scope > summary').click();
+  await expect(context.getByTestId('context-fact-row')).toHaveCount(1);
 });
 
 test('the active MCQ is an accessible inline assistant approval card in a fluid conversation shell [FR-06, DASH-04, NFR-07, NFR-08]', async ({ page }) => {

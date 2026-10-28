@@ -1092,6 +1092,33 @@
     "capturedFacts": "Captured facts",
     "factConfidence": "confidence",
     "noFacts": "Captured facts will appear here as you answer.",
+    "decisionDetails": {
+      "title": "Decision details",
+      "types": {
+        "accept": "Recommendation accepted",
+        "override": "Classification overridden",
+        "escalate": "Escalated for review"
+      },
+      "actorLabels": {
+        "accept": "Accepted by",
+        "override": "Decided by",
+        "escalate": "Escalated by"
+      },
+      "timeLabels": {
+        "accept": "Accepted time",
+        "override": "Decision time",
+        "escalate": "Escalated time"
+      },
+      "currentStatus": "Current: {status}",
+      "classificationChange": "Classification change",
+      "previousClassification": "Previous",
+      "newClassification": "New",
+      "assignedTo": "Assigned to",
+      "reason": "Reason",
+      "note": "Note",
+      "unassignedQueue": "Department review queue",
+      "unavailable": "User unavailable"
+    },
     "governanceNote": "The assistant structures and explains; deterministic rules calculate the result, and a human records the final decision.",
     "stages": {
       "loading": "Loading",
@@ -1196,15 +1223,21 @@
       "label": "Escalated",
       "toReviewer": "Escalated to {name}",
       "stillOpen": "Still open until a reviewer accepts or overrides.",
-      "reasonLabel": "Escalation note",
-      "reasonPlaceholder": "Why are you escalating? (optional)"
+      "reasonLabel": "Escalation reason",
+      "reasonPlaceholder": "Explain why this assessment needs another reviewer",
+      "reasonHint": "Enter at least 10 characters. The reason is retained with the escalation."
     },
     "actions": {
       "accept": "Accept recommendation",
+      "confirmAccept": "Confirm acceptance",
       "override": "Override…",
       "escalate": "Escalate…",
       "recordOverride": "Record override",
       "escalateSubmit": "Escalate"
+    },
+    "accept": {
+      "noteLabel": "Decision note (optional)",
+      "notePlaceholder": "Add context for accepting the recommendation"
     },
     "override": {
       "classificationLabel": "Override classification",
