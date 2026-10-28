@@ -43,6 +43,7 @@ import { firebaseSignOut } from '@/lib/firebase/client';
 import { WorkspaceProvider } from '@/components/shell/workspace-context';
 import { LanguageSwitcher } from '@/components/shell/LanguageSwitcher';
 import { ThemeSwitcher } from '@/components/theme/ThemeSwitcher';
+import { BrandMark } from '@/components/shell/BrandMark';
 import { clearSession, ROLE_HOME, storeRole, type Role } from '@/lib/session';
 
 type AuthUser = components['schemas']['AuthUser'];
@@ -294,7 +295,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
       <div className="flex h-full min-h-0 flex-col">
         {mobile ? (
           <div className="flex h-[var(--shell-header-height)] shrink-0 items-center gap-3 border-b border-sidebar-border px-4">
-            <div className="flex size-9 items-center justify-center rounded-lg bg-sidebar-primary text-xs font-bold text-sidebar-primary-foreground">R</div>
+            <BrandMark className="size-9" />
             <div className="min-w-0 flex-1 truncate text-base font-semibold tracking-[-0.01em] text-sidebar-foreground">{t('app.name')}</div>
             <button
               type="button"
@@ -399,7 +400,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
           >
             <Menu className="size-5" />
           </button>
-          <div className="workspace-brand-mark flex shrink-0 items-center justify-center rounded-lg bg-[#216cff] text-sm font-bold text-white shadow-[0_6px_18px_rgba(33,108,255,0.35)]">R</div>
+          <BrandMark className="workspace-brand-mark" priority />
           <div className={`workspace-brand-name min-w-0 truncate font-semibold tracking-[-0.02em] ${desktopNavigationCollapsed ? 'min-[62rem]:hidden' : ''}`}>{t('app.name')}</div>
         </div>
         <div className="workspace-account-panel ml-auto flex shrink-0 items-center gap-2">

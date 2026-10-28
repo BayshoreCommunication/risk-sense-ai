@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { AlertCircle, ArrowRight, Bot, Check, CheckCircle2, ChevronDown, ChevronRight, CircleDot, Clock3, FileCheck2, Flag, LoaderCircle, LockKeyhole, PanelRight, Route, Send, Sparkles, UserRound } from 'lucide-react';
+import { AlertCircle, ArrowRight, Bot, Check, CheckCircle2, ChevronDown, ChevronRight, CircleDot, Clock3, FileCheck2, Flag, LoaderCircle, LockKeyhole, MessageCircle, PanelRight, Route, Send, UserRound } from 'lucide-react';
 import { Conversation, ConversationContent, ConversationScrollButton } from '@/components/ai-elements/conversation';
 import { Message as AIMessage, MessageContent, MessageResponse } from '@/components/ai-elements/message';
 import { Suggestion, Suggestions } from '@/components/ai-elements/suggestion';
@@ -50,6 +50,19 @@ function latestQuestionMessageId(messages: Message[], question: QuestionSnapshot
 
 function normalizedProse(value: string) {
   return formatSystemDisplayText(value).replace(/\s+/g, ' ').trim().toLocaleLowerCase();
+}
+
+function personaSelectionMessageIds(messages: Message[]) {
+  const collapsedIds = new Set<string>();
+
+  messages.forEach((message, index) => {
+    if (message.role !== 'assistant' || message.question?.key !== '__persona') return;
+    collapsedIds.add(message._id);
+    const answer = messages[index + 1];
+    if (answer?.role === 'user' && answer.kind === 'answer') collapsedIds.add(answer._id);
+  });
+
+  return collapsedIds;
 }
 
 /**
@@ -222,6 +235,9 @@ export function ChatSession({ id }: { id: string }) {
       : busyAction === 'persona'
         ? t('persona.processing')
         : t('processing');
+  const inlineChoiceSaving = Boolean(busy && busyAction === 'answer' && hasInlineChoice && optimisticAnswer);
+  const collapsedPersonaMessageIds = personaSelectionMessageIds(messages);
+  const visibleMessages = messages.filter((message) => !collapsedPersonaMessageIds.has(message._id));
 
   return (
     <div className="page-shell @container max-w-none gap-2 overflow-hidden" data-testid="assessment-conversation-page">
@@ -236,7 +252,16 @@ export function ChatSession({ id }: { id: string }) {
               {t('currentStage')}: <span className="text-foreground">{t(`stages.${currentStageKey}`)}</span>
             </span>
           )}
-          {a && <Badge variant={a.status === 'closed' ? 'default' : 'secondary'}>{status.has(a.status) ? status(a.status) : formatIdentifierLabel(a.status)}</Badge>}
+          {a && (
+            <Badge
+              variant={a.status === 'closed' ? 'outline' : 'secondary'}
+              className={a.status === 'closed' ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-300' : undefined}
+              data-testid="assessment-status-badge"
+              data-status={a.status}
+            >
+              {status.has(a.status) ? status(a.status) : formatIdentifierLabel(a.status)}
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -244,8 +269,7 @@ export function ChatSession({ id }: { id: string }) {
         <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#dfe7f2] bg-white px-4 py-2 dark:border-border dark:bg-card sm:px-5">
           <div className="flex items-center gap-2.5">
             <span className="relative flex size-8 items-center justify-center rounded-lg bg-[linear-gradient(145deg,#082451_0%,#216ce7_100%)] text-white shadow-[0_6px_16px_rgba(18,71,150,0.24)] ring-1 ring-white/70">
-              <Bot className="size-3.5" aria-hidden="true" />
-              <Sparkles className="absolute -right-1 -top-1 size-2.5 rounded-full bg-white p-0.5 text-primary shadow-sm" aria-hidden="true" />
+              <Bot className="ai-bot-breathe size-3.5" aria-hidden="true" />
             </span>
             <div>
               <h2 className="text-[0.78rem] font-semibold tracking-[-0.01em]">{t('assistantName')}</h2>
@@ -268,8 +292,8 @@ export function ChatSession({ id }: { id: string }) {
 
         <div className="grid min-h-0 flex-1 @min-[68rem]:grid-cols-[minmax(0,1fr)_17.5rem]">
           <div className="flex min-h-0 min-w-0 flex-col">
-            <Conversation className="min-h-0 flex-1 bg-[#fbfcff] dark:bg-background/55" data-testid="conversation-log">
-              <ConversationContent className="mx-auto w-full max-w-[64rem] gap-3 px-4 py-3.5 sm:px-6 sm:py-4" data-testid="conversation-content">
+            <Conversation className="min-h-0 flex-1 bg-[#f6f9fd] dark:bg-background/55" data-testid="conversation-log">
+              <ConversationContent className="mx-auto w-full max-w-[58rem] gap-2.5 px-4 py-4 sm:gap-3 sm:px-6 sm:py-5" data-testid="conversation-content">
                 {!a && messages.length === 0 && (
                   <div className="flex min-h-72 flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground" role="status">
                     <LoaderCircle className="size-5 animate-spin text-primary" aria-hidden="true" />
@@ -277,7 +301,24 @@ export function ChatSession({ id }: { id: string }) {
                   </div>
                 )}
 
-                {messages.map((message) => {
+                {a?.personaKey && a.phase !== 'persona' && (
+                  <div
+                    className="flex w-full items-center gap-3 rounded-xl border border-[#bcd3ee] bg-[#f2f7fd] px-3.5 py-3 text-[#183b67] shadow-[0_5px_16px_rgba(8,43,94,0.045)] dark:border-[#28517d] dark:bg-[#0d223b] dark:text-[#dcecff]"
+                    data-testid="persona-selection-summary"
+                    role="status"
+                  >
+                    <span className="grid size-7 shrink-0 place-items-center rounded-full border border-[#8eb8e7] bg-white text-[#1768d7] dark:border-[#3977b8] dark:bg-[#123257] dark:text-[#91c4ff]">
+                      <Check className="size-3.5 stroke-[2.4]" aria-hidden="true" />
+                    </span>
+                    <p className="min-w-0 text-[0.74rem] leading-5">
+                      <span className="font-semibold">{t('persona.selected')}</span>
+                      <span className="px-1.5 text-muted-foreground" aria-hidden="true">·</span>
+                      <span className="font-medium">{formatIdentifierLabel(a.personaKey)}</span>
+                    </p>
+                  </div>
+                )}
+
+                {visibleMessages.map((message) => {
                   if (message.role === 'system') {
                     return (
                       <div key={message._id} className="mx-auto flex w-full max-w-[58rem] items-center gap-3 py-1 text-[0.7rem] text-muted-foreground" role="note">
@@ -302,42 +343,57 @@ export function ChatSession({ id }: { id: string }) {
                   const activeInlineChoice = Boolean(inlineChoiceQuestion && message._id === inlineChoiceMessageId);
                   const displayContent = assistant ? formatSystemDisplayText(message.content) : message.content;
                   return (
-                    <AIMessage key={message._id} from={message.role} className={assistant ? 'mx-auto max-w-[60rem]' : 'max-w-[82%] sm:max-w-[70%]'}>
-                      {assistant ? (
-                        <div className="grid grid-cols-[1.75rem_minmax(0,1fr)] items-start gap-2.5">
+                    <AIMessage key={message._id} from={message.role} className={assistant ? 'mx-auto max-w-[56rem]' : 'max-w-[82%] sm:max-w-[70%]'}>
+                      {activeInlineChoice && inlineChoiceQuestion ? (
+                        <InlineChoiceCard
+                          q={inlineChoiceQuestion}
+                          busy={busy}
+                          error={error}
+                          text={text}
+                          setText={setText}
+                          personaLocked={a?.phase === 'questions' && a.personaSource === 'ai'}
+                          onAnswer={async (body, displayValue) => {
+                            const outcome = await answer(body, displayValue);
+                            if (outcome === 'success' && inlineChoiceQuestion.type === 'yes_no') setText('');
+                            return outcome;
+                          }}
+                        />
+                      ) : assistant ? (
+                        <div className="grid grid-cols-[2.25rem_minmax(0,1fr)] items-start gap-2.5">
                           <span
-                            className={`flex size-7 items-center justify-center rounded-lg border shadow-[0_3px_10px_rgba(8,43,94,0.08)] ${
+                            className={`flex size-9 items-center justify-center rounded-full border shadow-[0_4px_12px_rgba(8,43,94,0.1)] ${
                               clarification
-                                ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
-                                : 'border-[#bcd2f3] bg-[linear-gradient(145deg,#f7fbff,#e8f1ff)] text-[#155bd7] dark:border-primary/35 dark:bg-info-soft dark:text-blue-300'
+                                ? 'border-[#c9bcf4] bg-[#f3f0ff] text-[#6d4bd4] dark:border-[#5f4d91] dark:bg-[#241d3e] dark:text-[#c9bcff]'
+                                : 'border-[#bcd2f3] bg-[linear-gradient(145deg,#f7fbff,#e8f1ff)] text-[#155bd7] dark:border-[#315b91] dark:bg-none dark:bg-[#102a4f] dark:text-[#8fc2ff] dark:shadow-[0_3px_12px_rgba(0,0,0,0.28)]'
                             }`}
+                            data-testid="assistant-avatar"
                           >
-                            {clarification ? <Flag className="size-3" aria-hidden="true" /> : <Bot className="size-3" aria-hidden="true" />}
+                            {clarification ? <Flag className="size-3.5" aria-hidden="true" /> : <Bot className="ai-bot-breathe size-3.5" aria-hidden="true" />}
                           </span>
                           <div className="min-w-0">
-                            <span className={`mb-1 block text-[0.62rem] font-semibold tracking-[0.12em] uppercase ${clarification ? 'text-amber-700 dark:text-amber-300' : 'text-muted-foreground'}`}>
-                              {clarification ? t('messageKinds.clarification') : t('assistantName')}
-                            </span>
-                            <MessageContent className={`w-full py-0.5 ${clarification ? 'rounded-r-xl border-l-2 border-amber-300 bg-amber-50/50 py-2 pl-3 pr-2 dark:border-amber-400/50 dark:bg-amber-400/[0.08]' : ''}`}>
-                              <MessageResponse className="text-[0.8rem] leading-[1.55]">{displayContent}</MessageResponse>
-                              {activeInlineChoice && inlineChoiceQuestion && (
-                                <InlineChoiceCard
-                                  q={inlineChoiceQuestion}
-                                  busy={busy}
-                                  error={error}
-                                  personaLocked={a?.phase === 'questions' && a.personaSource === 'ai'}
-                                  onAnswer={async (body, displayValue) => {
-                                    const outcome = await answer(body, displayValue);
-                                    if (outcome === 'success' && inlineChoiceQuestion.type === 'yes_no') setText('');
-                                    return outcome;
-                                  }}
-                                />
-                              )}
+                            {clarification && (
+                              <span className="mb-1 block text-[0.6rem] font-semibold tracking-[0.12em] text-[#6848bf] uppercase dark:text-[#bdadf4]">
+                                {t('messageKinds.clarification')}
+                              </span>
+                            )}
+                            <MessageContent
+                              className={`w-fit max-w-full ${
+                                clarification
+                                  ? 'rounded-r-xl border-l-2 border-[#876ce0] bg-[#f5f2ff] py-2.5 pl-3.5 pr-3 text-[#2d2742] dark:border-[#8e78e6] dark:bg-[#1d1833] dark:text-[#eeeaff]'
+                                  : 'rounded-xl rounded-tl-sm bg-[#eaf2fb]/90 px-3.5 py-2.5 text-[#14243a] dark:bg-[#10243c] dark:text-[#e8f0fa]'
+                              }`}
+                              data-testid="assistant-message-surface"
+                              data-message-kind={clarification ? 'clarification' : message.kind}
+                            >
+                              <MessageResponse className="text-[0.86rem] leading-[1.5]">{displayContent}</MessageResponse>
                             </MessageContent>
                           </div>
                         </div>
                       ) : (
-                        <MessageContent className="text-[0.8rem] [overflow-wrap:anywhere]">
+                        <MessageContent
+                          className="py-2 text-[0.86rem] [overflow-wrap:anywhere] group-[.is-user]:border-[#2b6fdf] group-[.is-user]:bg-[#2b6fdf] group-[.is-user]:text-white group-[.is-user]:shadow-[0_5px_14px_rgba(43,111,223,0.2)] dark:group-[.is-user]:border-[#4c8edb] dark:group-[.is-user]:bg-[#1d5fa9] dark:group-[.is-user]:text-white dark:group-[.is-user]:shadow-[0_6px_16px_rgba(0,0,0,0.22)]"
+                          data-testid="user-message-surface"
+                        >
                           <p className="whitespace-pre-wrap break-words leading-[1.5]">{displayContent}</p>
                         </MessageContent>
                       )}
@@ -346,22 +402,24 @@ export function ChatSession({ id }: { id: string }) {
                 })}
 
                 {optimisticAnswer && (
-                  <AIMessage from="user" className="max-w-[82%] sm:max-w-[70%]" data-testid="optimistic-answer">
-                    <MessageContent aria-label={t('answer.sending')} className="text-[0.8rem] [overflow-wrap:anywhere]">
+                  <AIMessage from="user" className="max-w-[82%] animate-in fade-in slide-in-from-bottom-1 duration-300 motion-reduce:animate-none sm:max-w-[70%]" data-testid="optimistic-answer">
+                    <MessageContent
+                      aria-label={t('answer.sending')}
+                      className="py-2 text-[0.86rem] [overflow-wrap:anywhere] group-[.is-user]:border-[#2b6fdf] group-[.is-user]:bg-[#2b6fdf] group-[.is-user]:text-white group-[.is-user]:shadow-[0_5px_14px_rgba(43,111,223,0.2)] dark:group-[.is-user]:border-[#4c8edb] dark:group-[.is-user]:bg-[#1d5fa9] dark:group-[.is-user]:text-white dark:group-[.is-user]:shadow-[0_6px_16px_rgba(0,0,0,0.22)]"
+                    >
                       <p className="whitespace-pre-wrap break-words leading-[1.5]">{optimisticAnswer}</p>
                     </MessageContent>
                   </AIMessage>
                 )}
 
-                {busy && busyAction !== 'decision' && (
-                  <AIMessage from="assistant" className="mx-auto max-w-[60rem]" data-testid="assistant-processing">
-                    <div className="grid grid-cols-[1.75rem_minmax(0,1fr)] items-start gap-2.5">
-                      <span className="flex size-7 items-center justify-center rounded-lg border border-[#bcd2f3] bg-[linear-gradient(145deg,#f7fbff,#e8f1ff)] text-[#155bd7] shadow-[0_3px_10px_rgba(8,43,94,0.08)] dark:border-primary/35 dark:bg-info-soft dark:text-blue-300">
-                        <LoaderCircle className="size-3 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                {busy && busyAction !== 'decision' && !inlineChoiceSaving && (
+                  <AIMessage from="assistant" className="mx-auto max-w-[56rem] animate-in fade-in duration-300 motion-reduce:animate-none" data-testid="assistant-processing">
+                    <div className="grid grid-cols-[2.25rem_minmax(0,1fr)] items-start gap-2.5">
+                      <span className="flex size-9 items-center justify-center rounded-full border border-[#bcd2f3] bg-[linear-gradient(145deg,#f7fbff,#e8f1ff)] text-[#155bd7] shadow-[0_4px_12px_rgba(8,43,94,0.1)] dark:border-[#315b91] dark:bg-none dark:bg-[#102a4f] dark:text-[#8fc2ff] dark:shadow-[0_3px_12px_rgba(0,0,0,0.28)]">
+                        <LoaderCircle className="size-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                       </span>
-                      <div className="min-w-0 pt-0.5">
-                        <span className="block text-[0.62rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('assistantName')}</span>
-                        <p className="mt-1 text-xs text-muted-foreground">{busyMessage}</p>
+                      <div className="min-w-0 pt-2">
+                        <p className="text-[0.8rem] text-muted-foreground">{busyMessage}</p>
                       </div>
                     </div>
                   </AIMessage>
@@ -379,7 +437,7 @@ export function ChatSession({ id }: { id: string }) {
               <ConversationScrollButton aria-label={t('scrollLatest')} />
             </Conversation>
 
-            {showComposer && (
+            {showComposer && !hasInlineChoice && (
               <div
                 className="scrollbar-subtle max-h-[min(40dvh,22rem)] shrink-0 overflow-y-auto border-t border-[#dfe7f2] bg-[#f5f8fc] px-3 py-3 shadow-[0_-8px_24px_rgba(8,32,68,0.035)] dark:border-border dark:bg-muted/55 dark:shadow-[0_-12px_28px_rgba(1,8,22,0.18)] sm:px-5"
                 data-testid="composer"
@@ -711,16 +769,21 @@ function InlineChoiceCard({
   q,
   busy,
   error,
+  text,
+  setText,
   personaLocked,
   onAnswer,
 }: {
   q: QuestionSnapshot;
   busy: boolean;
   error: string | null;
+  text: string;
+  setText: (value: string) => void;
   personaLocked: boolean;
   onAnswer: (body: { value?: string | number | boolean; text?: string }, displayValue: string) => Promise<AnswerOutcome>;
 }) {
   const t = useTranslations('chatSession');
+  const explanationId = useId();
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
 
   const choices =
@@ -743,74 +806,125 @@ function InlineChoiceCard({
     });
   };
 
+  const submitExplanation = () => {
+    if (busy || q.type !== 'yes_no' || !text.trim()) return;
+    const submittedText = text.trim();
+    setText('');
+    void onAnswer({ text: submittedText }, submittedText).then((outcome) => {
+      if (outcome === 'failure') setText(submittedText);
+    });
+  };
+
   return (
     <fieldset
-      className="mt-2.5 overflow-hidden rounded-[1.1rem] border border-[#c8d8ec] bg-[#f8fbff] shadow-[0_10px_26px_rgba(8,35,76,0.065),0_1px_2px_rgba(8,35,76,0.035)] dark:border-border dark:bg-card dark:shadow-[0_12px_30px_rgba(1,8,22,0.2)]"
+      className="min-w-0 animate-in border-0 fade-in slide-in-from-bottom-1 p-0 duration-300 motion-reduce:animate-none"
       data-testid="inline-choice-card"
       aria-busy={busy}
     >
       <legend className="sr-only">{q.text ?? t('answer.optionsLabel')}</legend>
-      <div className="flex items-center justify-between gap-3 border-b border-[#d7e3f0] bg-[#f6f9fe] px-3.5 py-2.5 dark:border-border dark:bg-muted/45 sm:px-4">
-        <span className="flex items-center gap-2.5 text-[0.74rem] font-semibold text-[#17263d] dark:text-foreground">
-          <span className="grid size-6 place-items-center rounded-full border border-[#c8d9ef] bg-white shadow-[0_2px_6px_rgba(8,35,76,0.05)] dark:border-primary/35 dark:bg-card">
-            <CircleDot className="size-3.5 text-[#2468d6] dark:text-blue-300" aria-hidden="true" />
+      <div
+        className="overflow-hidden rounded-xl border border-[#bcd2ec] bg-[linear-gradient(145deg,#f8fbff_0%,#edf5ff_100%)] shadow-[0_12px_28px_rgba(8,35,76,0.07)] dark:border-[#244b75] dark:bg-none dark:bg-[radial-gradient(circle_at_top_left,rgba(22,75,127,0.22),transparent_42%),#0b1c31] dark:shadow-[0_16px_34px_rgba(0,0,0,0.25)]"
+        data-testid="inline-choice-surface"
+        data-border-treatment="single"
+      >
+        <div className="flex items-start gap-3 px-4 pb-3 pt-4 sm:px-5 sm:pt-5">
+          <span className="grid size-9 shrink-0 place-items-center rounded-full border border-[#8db7e8] bg-[#e8f3ff] text-[#1764ce] shadow-[0_4px_12px_rgba(8,43,94,0.1)] dark:border-[#3775b7] dark:bg-[#12365f] dark:text-[#9bcbff]" data-testid="active-assistant-avatar">
+            <Bot className="ai-bot-breathe size-4" aria-hidden="true" />
           </span>
-          {t('answer.responseLabel')}
-        </span>
-        <span className="rounded-full border border-[#cedced] bg-white px-2.5 py-1 text-[0.64rem] font-medium text-[#40556f] shadow-[0_1px_3px_rgba(8,35,76,0.035)] dark:border-border dark:bg-card dark:text-muted-foreground">
-          {q.type === 'yes_no' ? t('answer.chooseYesNo') : t('answer.chooseOne')}
-        </span>
-      </div>
-      <Suggestions className={`grid gap-2 bg-[#f8fbff] p-3 dark:bg-card sm:p-3.5 ${q.type === 'yes_no' ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'}`}>
-        {choices.map((option) => {
-          const selected = selectedOptionId === option.id;
-          return (
-            <Suggestion
-              key={option.id}
-              data-testid={q.type === 'yes_no' ? 'binary-answer-option' : 'answer-option'}
-              data-selected={selected ? 'true' : 'false'}
-              aria-pressed={selected}
-              suggestion={option.id}
-              variant="outline"
-              disabled={busy}
-              className={`group/choice min-h-11 w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition-[border-color,background-color,box-shadow,transform,opacity] disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-[#77a7ea] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f8fbff] motion-reduce:hover:translate-y-0 dark:focus-visible:ring-offset-card ${
-                selected
-                  ? 'border-[#2468d6] bg-[#eaf3ff] text-[#123e78] shadow-[0_5px_14px_rgba(25,84,166,0.11),inset_0_0_0_1px_rgba(36,104,214,0.08)] hover:border-[#2468d6] hover:bg-[#eaf3ff] dark:border-primary dark:bg-primary/20 dark:text-blue-100 dark:hover:bg-primary/20'
-                  : 'border-[#cad8e8] bg-white text-[#162238] shadow-[0_2px_7px_rgba(8,35,76,0.025)] hover:-translate-y-px hover:border-[#88aee0] hover:bg-[#f4f8fe] hover:shadow-[0_6px_16px_rgba(8,45,101,0.065)] dark:border-border dark:bg-muted/35 dark:text-foreground dark:hover:border-primary/50 dark:hover:bg-muted/65'
-              } ${busy && !selected ? 'opacity-60' : ''}`}
-              onClick={() => choose(option)}
-            >
-              <span
-                aria-hidden="true"
-                className={`grid size-5 shrink-0 place-items-center rounded-full border-2 transition-[border-color,background-color,box-shadow] ${
+          <div className="min-w-0 pt-1.5">
+            <p className="text-[0.86rem] font-semibold leading-5 text-[#14243a] dark:text-[#e6eef9]">{formatSystemDisplayText(q.text ?? '')}</p>
+          </div>
+        </div>
+
+        <Suggestions className={`grid grid-cols-1 gap-2 bg-transparent px-4 pb-4 sm:px-5 ${q.type === 'yes_no' ? '' : 'sm:grid-cols-2'}`}>
+          {choices.map((option) => {
+            const selected = selectedOptionId === option.id;
+            return (
+              <Suggestion
+                key={option.id}
+                data-testid={q.type === 'yes_no' ? 'binary-answer-option' : 'answer-option'}
+                data-selected={selected ? 'true' : 'false'}
+                aria-pressed={selected}
+                suggestion={option.id}
+                variant="outline"
+                disabled={busy}
+                className={`group/choice min-h-11 w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left transition-[border-color,background-color,box-shadow,transform,opacity] disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-[#77a7ea] focus-visible:ring-offset-2 focus-visible:ring-offset-[#edf5ff] motion-reduce:hover:translate-y-0 dark:focus-visible:ring-offset-[#0b1c31] ${
                   selected
-                    ? 'border-[#2468d6] bg-[#2468d6] text-white shadow-[0_0_0_3px_rgba(36,104,214,0.1)]'
-                    : 'border-[#a9bdd4] bg-white text-transparent group-hover/choice:border-[#6795d2] dark:border-muted-foreground dark:bg-card dark:group-hover/choice:border-primary'
-                }`}
+                    ? 'border-[#256bd9] bg-[#e1efff] text-[#103d78] shadow-[0_7px_18px_rgba(25,84,166,0.12)] hover:border-[#256bd9] hover:bg-[#e1efff] dark:border-[#5b9ce8] dark:bg-[#153c67] dark:text-[#eef6ff] dark:shadow-[0_8px_22px_rgba(0,0,0,0.22)] dark:hover:bg-[#153c67]'
+                    : 'border-[#b7cde7] bg-white/70 text-[#162238] shadow-none hover:-translate-y-px hover:border-[#79a6dc] hover:bg-white dark:border-[#2f5883] dark:bg-[#102945]/85 dark:text-[#e8eef7] dark:hover:border-[#568cc6] dark:hover:bg-[#14304f]'
+                } ${busy && !selected ? 'opacity-55' : ''}`}
+                onClick={() => choose(option)}
               >
-                {selected && (busy ? <LoaderCircle className="size-3 animate-spin motion-reduce:animate-none" /> : <Check className="size-3" />)}
-              </span>
-              <span className="min-w-0 flex-1 whitespace-normal text-[0.76rem] font-medium leading-[1.15rem]">{option.label}</span>
-            </Suggestion>
-          );
-        })}
-      </Suggestions>
-      {error && (
-        <p className="mx-3 mb-3 flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-xs leading-5 text-destructive sm:mx-3.5" role="alert">
-          <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-          {error}
-        </p>
-      )}
-      {personaLocked && (
-        <p className="flex items-start gap-2 border-t border-[#e2e9f2] bg-[#fbfcfe] px-3.5 py-2.5 text-[0.7rem] leading-5 text-muted-foreground dark:border-border dark:bg-muted/35 sm:px-4">
-          <LockKeyhole className="mt-0.5 size-3 shrink-0 text-[#2868cf] dark:text-blue-300" aria-hidden="true" />
-          <span>
-            {t('persona.locked')}{' '}
-            <Link className="font-medium text-primary underline underline-offset-2" href="/chat">{t('persona.startNew')}</Link>{' '}
-            {t('persona.ifIncorrect')}
-          </span>
-        </p>
-      )}
+                <span
+                  aria-hidden="true"
+                  className={`grid size-5 shrink-0 place-items-center rounded-full border-2 transition-[border-color,background-color,box-shadow] ${
+                    selected
+                      ? 'border-[#2468d6] bg-[#2468d6] text-white shadow-[0_0_0_3px_rgba(36,104,214,0.1)]'
+                      : 'border-[#90add0] bg-white/80 text-transparent group-hover/choice:border-[#6795d2] dark:border-[#7292b5] dark:bg-[#0b1c31] dark:group-hover/choice:border-[#7ab0eb]'
+                  }`}
+                >
+                  {selected && (busy ? <LoaderCircle className="size-3 animate-spin motion-reduce:animate-none" /> : <Check className="size-3" />)}
+                </span>
+                <span className="min-w-0 flex-1 whitespace-normal text-[0.82rem] font-medium leading-[1.2rem]">{option.label}</span>
+              </Suggestion>
+            );
+          })}
+        </Suggestions>
+
+        {q.type === 'yes_no' && (
+          <div className="mx-4 flex items-center gap-2 border-t border-[#cbdcf0] py-3 sm:mx-5 dark:border-[#294b70]">
+            <label className="sr-only" htmlFor={explanationId}>{t('answer.explainLabel')}</label>
+            <div
+              className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-[#b6cce5] bg-white/75 px-3 shadow-[0_2px_8px_rgba(8,35,76,0.035)] transition-[border-color,background-color,box-shadow] focus-within:border-[#4c8adb] focus-within:shadow-[0_0_0_3px_rgba(46,111,204,0.1)] data-[busy=true]:border-[#a4c2e3] data-[busy=true]:bg-[#edf5fd] data-[busy=true]:shadow-none dark:border-[#315a83] dark:bg-[#0a2038]/80 dark:focus-within:border-[#5e9bdc] dark:data-[busy=true]:border-[#365f88] dark:data-[busy=true]:bg-[#102943]"
+              data-busy={busy ? 'true' : 'false'}
+              data-testid="inline-explanation-shell"
+            >
+              <MessageCircle className="size-3.5 shrink-0 text-[#6d8fb5] data-[busy=true]:text-[#5f83aa] dark:text-[#80a9d3]" aria-hidden="true" data-busy={busy ? 'true' : 'false'} />
+              <Input
+                id={explanationId}
+                disabled={busy}
+                placeholder={t('answer.explainOptionalPlaceholder')}
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !busy && !event.nativeEvent.isComposing) {
+                    event.preventDefault();
+                    submitExplanation();
+                  }
+                }}
+                className="h-10 min-w-0 flex-1 border-0 bg-transparent px-0 text-[0.8rem] shadow-none focus-visible:ring-0 disabled:bg-transparent disabled:text-[#617b99] disabled:opacity-100 disabled:placeholder:text-[#617b99] dark:disabled:bg-transparent dark:disabled:text-[#91acc8] dark:disabled:placeholder:text-[#91acc8]"
+              />
+            </div>
+            <Button
+              size="icon"
+              className="size-10 shrink-0 rounded-full border border-[#2b75cf] bg-[#1768d7] text-white shadow-[0_7px_16px_rgba(24,101,211,0.25)] hover:bg-[#2475dd] disabled:border-[#a8c2de] disabled:bg-[#e8f1fa] disabled:text-[#6f8eae] disabled:shadow-none disabled:opacity-100 dark:border-[#4c91df] dark:bg-[#1768d7] dark:disabled:border-[#365a7d] dark:disabled:bg-[#15304c] dark:disabled:text-[#88a8c9]"
+              disabled={busy || !text.trim()}
+              onClick={submitExplanation}
+              aria-label={t('answer.send')}
+              data-testid="inline-explanation-send"
+            >
+              {busy && text.trim() ? <LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Send className="size-4" aria-hidden="true" />}
+              <span className="sr-only">{t('answer.send')}</span>
+            </Button>
+          </div>
+        )}
+        {error && (
+          <p className="mx-3 mb-3 flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-xs leading-5 text-destructive sm:mx-3.5" role="alert">
+            <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+            {error}
+          </p>
+        )}
+        {personaLocked && (
+          <p className="flex items-start gap-2 border-t border-[#e2e9f2] bg-[#fbfcfe] px-3.5 py-2.5 text-[0.7rem] leading-5 text-muted-foreground dark:border-border dark:bg-muted/35 sm:px-4">
+            <LockKeyhole className="mt-0.5 size-3 shrink-0 text-[#2868cf] dark:text-blue-300" aria-hidden="true" />
+            <span>
+              {t('persona.locked')}{' '}
+              <Link className="font-medium text-primary underline underline-offset-2" href="/chat">{t('persona.startNew')}</Link>{' '}
+              {t('persona.ifIncorrect')}
+            </span>
+          </p>
+        )}
+      </div>
     </fieldset>
   );
 }
@@ -830,6 +944,8 @@ function AnswerBox({
 }) {
   const t = useTranslations('chatSession.answer');
   const inputId = useId();
+  const sendVisualState = busy ? 'loading' : text.trim() ? 'ready' : 'disabled';
+  const sendButtonClass = "border border-[#1f66c7] bg-[#176bd8] text-white shadow-[0_6px_16px_rgba(24,101,211,0.3)] hover:border-[#2e7be2] hover:bg-[#226fda] focus-visible:border-[#8cbcff] focus-visible:ring-[#4f94ed]/35 disabled:border-[#ccd9e8] disabled:bg-[#e6edf5] disabled:text-[#7e94ad] disabled:shadow-none disabled:opacity-100 dark:border-[#4a8fe9] dark:bg-[#176bd8] dark:text-white dark:shadow-[0_7px_18px_rgba(0,0,0,0.28),0_0_0_1px_rgba(107,166,244,0.08)] dark:hover:border-[#78adf2] dark:hover:bg-[#2175e4] dark:disabled:border-[#2b4868] dark:disabled:bg-[#142a43] dark:disabled:text-[#7f9bbb] dark:disabled:shadow-none";
   const submitText = () => {
     if (busy || q.type === 'mcq' || !text.trim()) return;
     const submittedText = text.trim();
@@ -849,8 +965,15 @@ function AnswerBox({
           placeholder={t('chooseOne')}
           className="h-9 flex-1 cursor-not-allowed border-0 bg-transparent px-2 text-[0.78rem] text-muted-foreground shadow-none disabled:opacity-100"
         />
-        <Button size="icon" className="size-8 shrink-0 rounded-full" disabled aria-label={t('send')}>
-          <Send className="size-3.5" aria-hidden="true" />
+        <Button
+          size="icon"
+          className={`size-8 shrink-0 rounded-full ${sendButtonClass}`}
+          disabled
+          aria-label={t('send')}
+          data-testid="composer-send-button"
+          data-visual-state="disabled"
+        >
+          <Send className="size-3.5 stroke-[2.25]" aria-hidden="true" />
           <span className="sr-only">{t('send')}</span>
         </Button>
       </div>
@@ -922,8 +1045,21 @@ function AnswerBox({
         />
         <div className="flex items-center justify-between gap-3 px-3 pb-2 pt-0.5">
           {q.type !== 'yes_no' && <span className="text-[0.65rem] text-muted-foreground">{t('enterHint')}</span>}
-          <Button size="icon" className="ml-auto size-8 rounded-full bg-[linear-gradient(145deg,#0a2c5d,#216ce7)] shadow-[0_5px_14px_rgba(24,83,170,0.22)] transition-transform hover:scale-[1.03] motion-reduce:hover:scale-100" disabled={busy || !text.trim()} onClick={submitText} aria-label={t('send')}>
-            <Send className="size-4" aria-hidden="true" />
+          <Button
+            size="icon"
+            className={`ml-auto size-8 rounded-full transition-transform hover:scale-[1.03] motion-reduce:hover:scale-100 ${sendButtonClass}`}
+            disabled={busy || !text.trim()}
+            onClick={submitText}
+            aria-label={t('send')}
+            aria-busy={busy}
+            data-testid="composer-send-button"
+            data-visual-state={sendVisualState}
+          >
+            {busy ? (
+              <LoaderCircle className="size-4 animate-spin stroke-[2.25] motion-reduce:animate-none" aria-hidden="true" />
+            ) : (
+              <Send className="size-4 stroke-[2.25]" aria-hidden="true" />
+            )}
             <span className="sr-only">{t('send')}</span>
           </Button>
         </div>

@@ -106,6 +106,7 @@ async function mockApi(page: Page, getMe: () => ReturnType<typeof currentUser>, 
 }
 
 test('RiskSense browser icons use the protected-decision brand assets [NFR-08]', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/login');
 
   const iconLinks = await page.locator('link[rel*="icon"]').evaluateAll((links) =>
@@ -126,6 +127,35 @@ test('RiskSense browser icons use the protected-decision brand assets [NFR-08]',
   expect((await appIcon.body()).byteLength).toBeGreaterThan(1_000);
   expect(fallbackIcon.ok()).toBe(true);
   expect(fallbackIcon.headers()['content-type']).toContain('image/x-icon');
+
+  const loginMark = page.getByTestId('login-brand-icon');
+  const assuranceMark = page.getByTestId('login-assurance-brand-icon');
+  await expect(loginMark).toBeVisible();
+  await expect(loginMark.locator('img')).toHaveAttribute('src', /icon\.png/);
+  await expect(loginMark).not.toContainText('R');
+  const loginShadow = await loginMark.evaluate((element) => getComputedStyle(element).boxShadow);
+  expect(loginShadow).not.toContain('rgba(40, 100, 239, 0.3)');
+  await expect(assuranceMark).toBeVisible();
+  await expect(assuranceMark.locator('img')).toHaveAttribute('src', /icon\.png/);
+  await expect(assuranceMark).not.toContainText('R');
+});
+
+test('the authenticated header reuses the rounded favicon artwork instead of a letter tile [NFR-08]', async ({ page }) => {
+  await authenticate(page, 'requestor');
+  await mockApi(page, () => currentUser('requestor'));
+  await page.goto('/review');
+
+  const headerMark = page.locator('header').getByTestId('workspace-brand-icon');
+  await expect(headerMark).toBeVisible();
+  const image = headerMark.locator('img');
+  await expect(image).toHaveAttribute('src', /icon\.png/);
+  await expect(headerMark).not.toContainText('R');
+
+  await page.setViewportSize({ width: 760, height: 820 });
+  await page.getByRole('button', { name: 'Open navigation' }).click();
+  const mobileMark = page.getByRole('dialog', { name: 'Workspace navigation' }).getByTestId('workspace-brand-icon');
+  await expect(mobileMark).toBeVisible();
+  await expect(mobileMark.locator('img')).toHaveAttribute('src', /icon\.png/);
 });
 
 test('development authentication stays hidden unless explicitly enabled [SEC-01]', async ({ page }) => {
@@ -1614,6 +1644,13 @@ test('the active MCQ is an accessible inline assistant approval card in a fluid 
       createdAt: '2026-09-14T00:00:01.000Z',
     },
     {
+      _id: 'message-historical-clarification',
+      role: 'assistant',
+      kind: 'clarification',
+      content: 'Could you clarify which business process was affected?',
+      createdAt: '2026-09-14T00:00:01.500Z',
+    },
+    {
       _id: 'message-active-question',
       role: 'assistant',
       kind: 'question',
@@ -1670,18 +1707,39 @@ test('the active MCQ is an accessible inline assistant approval card in a fluid 
   await page.goto('/chat/assessment-1');
   const conversation = page.getByTestId('conversation-log');
   const historicalAssistant = conversation.locator('.is-assistant').filter({ hasText: 'Which region was affected?' });
+  const historicalUser = conversation.locator('.is-user').filter({ hasText: 'Domestic' });
+  const historicalClarification = conversation.locator('.is-assistant').filter({ hasText: 'Could you clarify which business process was affected?' });
   const activeAssistant = conversation.locator('.is-assistant').filter({ hasText: activeQuestion.text }).last();
   const inlineCard = activeAssistant.getByRole('group', { name: activeQuestion.text });
-  const composer = page.getByTestId('composer');
 
   await expect(historicalAssistant.getByTestId('inline-choice-card')).toHaveCount(0);
+  const historicalSurface = historicalAssistant.getByTestId('assistant-message-surface');
+  await expect(historicalSurface).toBeVisible();
+  await expect(historicalSurface).toHaveCSS('border-top-width', '0px');
+  expect(await historicalSurface.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe('rgba(0, 0, 0, 0)');
+  const historicalAvatarBox = await historicalAssistant.getByTestId('assistant-avatar').boundingBox();
+  expect(Math.round(historicalAvatarBox?.width ?? 0)).toBe(36);
+  await expect(historicalAssistant.getByTestId('assistant-avatar').locator('svg')).toHaveCSS('animation-name', 'ai-bot-breathe');
+  await expect(historicalUser.getByTestId('user-message-surface')).toHaveCSS('background-color', 'rgb(43, 111, 223)');
+  await expect(historicalUser.getByTestId('user-message-surface')).toHaveCSS('color', 'rgb(255, 255, 255)');
+  const clarificationSurface = historicalClarification.getByTestId('assistant-message-surface');
+  await expect(clarificationSurface).toHaveAttribute('data-message-kind', 'clarification');
+  await expect(clarificationSurface).toHaveCSS('background-color', 'rgb(245, 242, 255)');
+  await expect(clarificationSurface).toHaveCSS('border-left-color', 'rgb(135, 108, 224)');
+  expect(await clarificationSurface.evaluate((element) => getComputedStyle(element).color)).not.toBe('rgba(0, 0, 0, 0)');
   await expect(inlineCard).toBeVisible();
   await expect(inlineCard).toHaveAttribute('data-testid', 'inline-choice-card');
   await expect(inlineCard).toHaveAttribute('aria-busy', 'false');
-  await expect(composer).toBeVisible();
-  await expect(composer.getByPlaceholder('Choose the best match')).toBeDisabled();
-  await expect(composer.getByRole('button', { name: 'Send' })).toBeDisabled();
-  await expect(composer.getByTestId('answer-option')).toHaveCount(0);
+  const inlineSurface = inlineCard.getByTestId('inline-choice-surface');
+  const activeAvatarBox = await inlineCard.getByTestId('active-assistant-avatar').boundingBox();
+  expect(Math.round(activeAvatarBox?.width ?? 0)).toBe(36);
+  await expect(inlineCard.getByTestId('active-assistant-avatar').locator('svg')).toHaveCSS('animation-name', 'ai-bot-breathe');
+  await expect(inlineSurface).toHaveAttribute('data-border-treatment', 'single');
+  await expect(inlineSurface).toHaveCSS('border-top-style', 'solid');
+  await expect(inlineSurface).toHaveCSS('border-top-width', '1px');
+  await expect(inlineCard.locator('..')).toHaveCSS('overflow', 'visible');
+  expect(await inlineSurface.evaluate((element) => getComputedStyle(element).boxShadow)).not.toContain('0px 0px 0px 1px');
+  await expect(page.getByTestId('composer')).toHaveCount(0);
   await expect(page.getByTestId('answer-option')).toHaveCount(3);
   const activeAssistantBox = await activeAssistant.boundingBox();
   expect(activeAssistantBox).not.toBeNull();
@@ -1716,7 +1774,8 @@ test('the active MCQ is an accessible inline assistant approval card in a fluid 
   await expect(customerFunds).toBeDisabled();
   await expect(companyFunds).toBeDisabled();
   await expect(page.getByTestId('optimistic-answer')).toContainText('Customer funds');
-  await expect(page.getByTestId('assistant-processing')).toBeVisible();
+  await expect(inlineCard.getByTestId('choice-saving')).toHaveCount(0);
+  await expect(page.getByTestId('assistant-processing')).toHaveCount(0);
 
   releaseAnswer?.();
   await expect(conversation.getByText(nextQuestion.text, { exact: true })).toBeVisible();
@@ -1783,35 +1842,33 @@ test('the active yes/no question keeps inline binary choices above an optional e
   const activeAssistant = conversation.locator('.is-assistant').filter({ hasText: activeQuestion.text }).last();
   const inlineCard = activeAssistant.getByTestId('inline-choice-card');
   const binaryOptions = inlineCard.getByTestId('binary-answer-option');
-  const composer = page.getByTestId('composer');
-  const explanation = composer.getByPlaceholder('or explain in words…');
-  const send = composer.getByRole('button', { name: 'Send' });
+  const explanation = inlineCard.getByPlaceholder('Add a brief explanation (optional)…');
+  const explanationShell = inlineCard.getByTestId('inline-explanation-shell');
+  const send = inlineCard.getByTestId('inline-explanation-send');
 
   await expect(inlineCard).toBeVisible();
   await expect(inlineCard).toHaveAttribute('aria-busy', 'false');
   await expect(binaryOptions).toHaveCount(2);
-  await expect(inlineCard.getByText('Choose Yes or No', { exact: true })).toBeVisible();
+  await expect(inlineCard.getByTestId('inline-choice-surface').getByText(activeQuestion.text, { exact: true })).toBeVisible();
   await expect(inlineCard.getByRole('button', { name: 'Yes', exact: true })).toBeVisible();
   await expect(inlineCard.getByRole('button', { name: 'No', exact: true })).toBeVisible();
-  await expect(composer.getByTestId('binary-answer-option')).toHaveCount(0);
-  await expect(composer.getByRole('button', { name: 'Yes', exact: true })).toHaveCount(0);
-  await expect(composer.getByRole('button', { name: 'No', exact: true })).toHaveCount(0);
+  await expect(page.getByTestId('composer')).toHaveCount(0);
   await expect(page.getByText('Or add a short explanation', { exact: true })).toHaveCount(0);
   await expect(explanation).toBeEnabled();
+  await expect(explanationShell).toHaveAttribute('data-busy', 'false');
   await expect(explanation).toHaveAccessibleName('Explain your answer');
-  const [inlineCardBox, composerBox] = await Promise.all([inlineCard.boundingBox(), composer.boundingBox()]);
-  expect(inlineCardBox).not.toBeNull();
-  expect(composerBox).not.toBeNull();
-  expect(inlineCardBox!.y + inlineCardBox!.height).toBeLessThanOrEqual(composerBox!.y + 1);
+  await expect(send).toBeDisabled();
+  await expect(send).toHaveCSS('opacity', '1');
 
   await explanation.fill('The approver was unavailable.');
   await expect(send).toBeEnabled();
+  await expect(send).toHaveCSS('color', 'rgb(255, 255, 255)');
   await send.click();
   await expect.poll(() => postCount).toBe(1);
   expect(submitted).toEqual([{ text: 'The approver was unavailable.' }]);
-  await expect(composer).toHaveAttribute('data-busy', 'false');
   await expect(explanation).toHaveValue('The approver was unavailable.');
   await expect(inlineCard.getByRole('alert')).toContainText('Please try again.');
+  await explanation.fill('');
 
   const noOption = inlineCard.getByRole('button', { name: 'No', exact: true });
   const yesOption = inlineCard.getByRole('button', { name: 'Yes', exact: true });
@@ -1829,14 +1886,22 @@ test('the active yes/no question keeps inline binary choices above an optional e
   await expect(noOption).toHaveAttribute('aria-pressed', 'true');
   await expect(noOption).toBeDisabled();
   await expect(yesOption).toBeDisabled();
-  await expect(composer).toHaveAttribute('data-busy', 'true');
   await expect(explanation).toBeDisabled();
+  await expect(explanationShell).toHaveAttribute('data-busy', 'true');
+  await expect(explanationShell).toHaveCSS('background-color', 'rgb(237, 245, 253)');
+  await expect(explanation).toHaveCSS('opacity', '1');
+  await expect(explanation).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await page.locator('html').evaluate((element) => element.classList.add('dark'));
+  await expect(explanationShell).toHaveCSS('background-color', 'rgb(16, 41, 67)');
+  await expect(explanation).toHaveCSS('opacity', '1');
+  await page.locator('html').evaluate((element) => element.classList.remove('dark'));
   await expect(page.getByTestId('optimistic-answer')).toContainText('No');
-  await expect(page.getByTestId('assistant-processing')).toBeVisible();
+  await expect(inlineCard.getByTestId('choice-saving')).toHaveCount(0);
+  await expect(page.getByTestId('assistant-processing')).toHaveCount(0);
 
   releaseBinaryAnswer?.();
-  await expect(composer).toHaveAttribute('data-busy', 'false');
   await expect(explanation).toBeEnabled();
+  await expect(explanationShell).toHaveAttribute('data-busy', 'false');
   await expect(explanation).toHaveValue('');
   await expect(page.getByTestId('optimistic-answer')).toHaveCount(0);
   expect(postCount).toBe(2);
@@ -1995,6 +2060,8 @@ test('the free-text composer echoes one intended answer, reports processing, and
   });
   await expect.poll(() => postCount).toBe(2);
   await expect(page.getByTestId('optimistic-answer')).toContainText('Button answer');
+  await expect(send).toHaveAttribute('data-visual-state', 'loading');
+  await expect(send).toHaveAttribute('aria-busy', 'true');
   pendingResponses.shift()?.();
   await expect(composer).toHaveAttribute('data-busy', 'false');
   expect(submitted).toEqual([{ text: 'Final answer' }, { text: 'Button answer' }]);

@@ -16,41 +16,73 @@ test.describe('requestor', () => {
     await expect(page).toHaveURL(/\/chat/);
     await expectNoInternalRequirementKeys(page);
     await page.getByRole('button', { name: 'Finance Officer' }).click();
-    await page.getByPlaceholder(/vendor wire/).fill('A vendor wire of $250,000 went out yesterday without the second approval and nobody can find the request.');
+    await page.getByPlaceholder(/vendor wire/).fill('A $25,000 customer-funds vendor payment was sent without the required second approval. Treasury recalled the payment, notified the customer, and disabled the compromised employee account.');
     await page.getByRole('button', { name: 'Start' }).click();
     await expect(page).toHaveURL(/\/chat\/[a-f0-9]{24}/);
     // Answer whatever the flow asks until the submit bar appears (MCQ/yes-no/number are structured; free text goes to the extractor).
-    // One turn = act, then wait until the composer is idle again with a longer transcript (the UI answers, then reloads).
-    const composer = page.getByTestId('composer');
+    // The focused structured-choice card intentionally replaces the docked composer, so a turn waits for its optimistic answer
+    // to be replaced by the canonical transcript instead of assuming one persistent input surface.
     const turn = async (act: () => Promise<void>) => {
-      const before = Number(await composer.getAttribute('data-messages'));
       await act();
-      await page.waitForFunction(
-        (n) => { const c = document.querySelector('[data-testid="composer"]'); return !!c && c.getAttribute('data-busy') === 'false' && (Number(c.getAttribute('data-messages')) > n || c.getAttribute('data-status') !== 'in_progress'); },
-        before,
-        { timeout: 45_000 },
-      );
+      await expect(page.getByTestId('optimistic-answer')).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByTestId('optimistic-answer')).toHaveCount(0, { timeout: 45_000 });
     };
-    await expect(composer).toHaveAttribute('data-status', /in_progress|intake_complete/, { timeout: 30_000 });
+    await expect(page.getByTestId('assessment-conversation-page')).toBeVisible({ timeout: 30_000 });
+    let freeTextTurn = 0;
     for (let i = 0; i < 40; i++) {
-      if ((await composer.getAttribute('data-status')) !== 'in_progress') break;
-      const mcq = page.locator('[data-testid="answer-option"]').first();
-      const no = page.getByRole('button', { name: /^No$/ });
+      if (await page.getByRole('button', { name: /^Submit/ }).isVisible().catch(() => false)) break;
+      const choiceCard = page.getByTestId('inline-choice-card');
+      const mcq = choiceCard.locator('[data-testid="answer-option"]');
+      const binary = choiceCard.locator('[data-testid="binary-answer-option"]');
       const number = page.getByPlaceholder(/number/i);
       const text = page.getByPlaceholder(/^Type your answer/i);
-      if (await mcq.isVisible().catch(() => false)) await turn(() => mcq.click());
-      else if (await no.isVisible().catch(() => false)) await turn(() => no.click());
-      else if (await number.isVisible().catch(() => false)) await turn(async () => { await number.fill('1000'); await page.keyboard.press('Enter'); });
-      else if (await text.isVisible().catch(() => false)) await turn(async () => { await text.fill('It was a one-off vendor payment of about 250000 dollars; treasury has been informed and the bank recall is in progress.'); await page.keyboard.press('Enter'); });
+      if (await mcq.first().isVisible().catch(() => false)) {
+        const prompt = (await choiceCard.textContent() ?? '').toLowerCase();
+        const preferred = prompt.includes('customer funds')
+          ? 'Customer funds'
+          : prompt.includes('still active')
+            ? 'Contained'
+            : prompt.includes('origin')
+              ? 'Unrecognized'
+              : prompt.includes('execut')
+                ? 'Manually'
+                : null;
+        await turn(() => preferred ? choiceCard.getByRole('button', { name: preferred, exact: true }).click() : mcq.first().click());
+      }
+      else if (await binary.first().isVisible().catch(() => false)) {
+        const prompt = (await choiceCard.textContent() ?? '').toLowerCase();
+        const answer = prompt.includes('authorized according') || prompt.includes('all required approvals') || prompt.includes('similar incident')
+          ? 'No'
+          : 'Yes';
+        await turn(() => choiceCard.getByRole('button', { name: answer, exact: true }).click());
+      }
+      else if (await number.isVisible().catch(() => false)) await turn(async () => { await number.fill('25000'); await page.keyboard.press('Enter'); });
+      else if (await text.isVisible().catch(() => false)) {
+        const answer = freeTextTurn++ === 0
+          ? 'Vendor payment approval and treasury wire transfer.'
+          : 'Treasury recalled the payment, notified the customer, and disabled the compromised employee account.';
+        await turn(async () => { await text.fill(answer); await page.keyboard.press('Enter'); });
+      }
       else await page.waitForTimeout(500);
     }
     await page.getByRole('button', { name: /^Submit/ }).click();
     const result = page.getByTestId('assessment-result');
     await expect(result).toBeVisible({ timeout: 30_000 });
     await expect(result.getByRole('img', { name: /\d+ \/ 100 risk score/ })).toBeVisible();
+    const classificationBadge = result.getByTestId('result-classification-badge');
+    await expect(classificationBadge).toHaveAttribute('data-classification', 'elevated_risk');
+    await expect(classificationBadge).toHaveClass(/bg-orange-50/);
     await expect(page.getByText('Recommended action', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Accept recommendation' }).click();
-    await expect(page.getByText(/Decision recorded: accept/)).toBeVisible();
+    await page.getByLabel('Decision note (optional)').fill('Accepted because the captured evidence and control failure support the recommended classification.');
+    await page.getByRole('button', { name: 'Confirm acceptance' }).click();
+    await expect(page.getByText(/Decision recorded: accept/)).toBeVisible({ timeout: 15_000 });
+    const closedStatus = page.getByTestId('assessment-status-badge');
+    await expect(closedStatus).toHaveAttribute('data-status', 'closed');
+    await expect(closedStatus).toHaveClass(/bg-emerald-50/);
+    const contextDisclosure = page.getByTestId('assessment-context-disclosure');
+    if (await contextDisclosure.isVisible().catch(() => false)) await contextDisclosure.locator(':scope > summary').click();
+    await expect(page.locator('[data-testid="decision-details"]:visible').first()).toBeVisible();
     await page.goto('/review');
     await expect(page.getByRole('heading', { name: 'Requestor dashboard — pending queue' })).toBeVisible();
     await expect(page.getByText('Closed').first()).toBeVisible();

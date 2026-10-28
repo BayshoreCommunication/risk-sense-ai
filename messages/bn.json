@@ -1137,6 +1137,7 @@
       "clarification": "ব্যাখ্যা"
     },
     "persona": {
+      "selected": "পারসোনা নির্বাচন করা হয়েছে",
       "confirmTitle": "মূল্যায়ন persona নিশ্চিত করুন",
       "confirmDescription": "এই মূল্যায়নের সঙ্গে সবচেয়ে মেলে এমন persona বেছে নিন। এতে মূল্যায়নের প্রশ্ন নির্ধারিত হবে।",
       "current": "Persona: {role}",
@@ -1162,6 +1163,7 @@
       "optionsLabel": "উত্তরের বিকল্প",
       "yesNoLabel": "হ্যাঁ বা না উত্তর",
       "explainLabel": "আপনার উত্তর ব্যাখ্যা করুন",
+      "explainOptionalPlaceholder": "সংক্ষিপ্ত ব্যাখ্যা যোগ করুন (ঐচ্ছিক)…",
       "numberLabel": "সংখ্যায় উত্তর",
       "textLabel": "আপনার উত্তর",
       "explainPlaceholder": "অথবা কথায় ব্যাখ্যা করুন…",
@@ -1174,6 +1176,7 @@
       "chooseYesNo": "হ্যাঁ অথবা না বেছে নিন",
       "optionalExplanation": "অথবা সংক্ষিপ্ত ব্যাখ্যা যোগ করুন",
       "numberHint": "চাওয়া পরিমাণ বা মান লিখুন",
+      "savingSelection": "নির্বাচন সংরক্ষণ করা হচ্ছে…",
       "sending": "আপনার উত্তর পাঠানো হচ্ছে"
     }
   },
