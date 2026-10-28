@@ -319,7 +319,7 @@ export function ChatSession({ id }: { id: string }) {
                             <span className={`mb-1 block text-[0.62rem] font-semibold tracking-[0.12em] uppercase ${clarification ? 'text-amber-700 dark:text-amber-300' : 'text-muted-foreground'}`}>
                               {clarification ? t('messageKinds.clarification') : t('assistantName')}
                             </span>
-                            <MessageContent className={`w-full py-0.5 ${clarification ? 'rounded-r-xl border-l-2 border-amber-300 bg-amber-50/50 py-2 pl-3 pr-2 dark:border-amber-400/50 dark:bg-amber-400/[0.08]' : ''}`}>
+                            <MessageContent className={`w-full py-0.5 ${activeInlineChoice ? 'overflow-visible' : ''} ${clarification ? 'rounded-r-xl border-l-2 border-amber-300 bg-amber-50/50 py-2 pl-3 pr-2 dark:border-amber-400/50 dark:bg-amber-400/[0.08]' : ''}`}>
                               <MessageResponse className="text-[0.8rem] leading-[1.55]">{displayContent}</MessageResponse>
                               {activeInlineChoice && inlineChoiceQuestion && (
                                 <InlineChoiceCard
@@ -752,8 +752,9 @@ function InlineChoiceCard({
     >
       <legend className="sr-only">{q.text ?? t('answer.optionsLabel')}</legend>
       <div
-        className="overflow-hidden rounded-[1.15rem] border border-[#bfd3ee] bg-[linear-gradient(180deg,#fbfdff_0%,#f5f9ff_100%)] shadow-[0_12px_30px_rgba(8,35,76,0.075),0_1px_2px_rgba(8,35,76,0.04)] ring-1 ring-white/80 dark:border-[#29496f] dark:bg-none dark:bg-[#0b1b31] dark:shadow-[0_16px_34px_rgba(0,0,0,0.28)] dark:ring-white/[0.035]"
+        className="overflow-hidden rounded-[1.15rem] border border-[#bfd3ee] bg-[linear-gradient(180deg,#fbfdff_0%,#f5f9ff_100%)] shadow-[0_12px_30px_rgba(8,35,76,0.075),0_1px_2px_rgba(8,35,76,0.04)] dark:border-[#29496f] dark:bg-none dark:bg-[#0b1b31] dark:shadow-[0_16px_34px_rgba(0,0,0,0.28)]"
         data-testid="inline-choice-surface"
+        data-border-treatment="single"
       >
         <div className="flex items-center justify-between gap-3 border-b border-[#d5e2f2] bg-white/70 px-3.5 py-2.5 backdrop-blur-sm dark:border-[#29496f] dark:bg-[#10243e]/80 sm:px-4">
           <span className="flex items-center gap-2.5 text-[0.74rem] font-semibold text-[#17263d] dark:text-foreground">

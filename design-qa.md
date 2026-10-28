@@ -466,3 +466,38 @@ The source used a dark paper-plane stroke on both the dim and blue circles, so s
 
 final result: passed
 
+## 2026-10-28 inline choice single-border correction
+
+### Comparison target
+
+- **Source dark state:** `docs/design-qa/mcq-single-border-dark-before.png` (900 × 222 px owner-supplied active MCQ crop).
+- **Source light state:** `docs/design-qa/mcq-single-border-light-before.png` (889 × 223 px owner-supplied active MCQ crop).
+- **Rendered dark state:** `docs/design-qa/mcq-single-border-dark-after.jpg` (1133 × 810 px in-app Browser capture) and focused `mcq-single-border-dark-after-crop.jpg` (780 × 142 px).
+- **Rendered light state:** `docs/design-qa/mcq-single-border-light-after.jpg` (1133 × 810 px in-app Browser capture) and focused `mcq-single-border-light-after-crop.jpg` (780 × 142 px).
+- **Combined focused comparison:** `docs/design-qa/mcq-single-border-before-after.jpg` (960 × 360 px; owner dark/light MCQ crops above, corrected dark/light binary-choice crops below).
+- **Viewport and state:** 1133 × 810 CSS px at 1× density, authenticated Requestor, active structured choice. The assessment advanced from MCQ to yes/no before the post-fix capture; both question types render through the exact same `InlineChoiceCard` surface. Comparison is therefore limited to the shared outer edge, header divider, corner clipping and theme tokens rather than option count or card height.
+
+### Full-view comparison evidence
+
+The active choice remains in the assistant turn above the persistent composer. Conversation width, question hierarchy, option grid, transcript scroll ownership and responsive workspace remain unchanged. The correction does not widen the document or create another scroller.
+
+### Focused comparison evidence
+
+The first pass used a one-pixel border plus an external one-pixel ring. The assistant message wrapper had `overflow-hidden` at exactly the card width, so the ring and shadow were clipped on the left and right edges; their rounded top corners read as cut or layered. The correction removes the second ring and lets only the active inline-choice wrapper expose the card's existing shadow. The retained border now owns all four rounded edges in light and dark themes.
+
+### Required fidelity surfaces
+
+- **Fonts and typography:** unchanged. Response, helper and option typography retain the existing hierarchy.
+- **Spacing and layout rhythm:** unchanged. The `1.15rem` outer radius, header padding, divider, option gaps and responsive columns remain intact.
+- **Colors and visual tokens:** existing light and dark border/background tokens remain; only the duplicate white ring is removed.
+- **Image quality and asset fidelity:** no image asset changed. Existing library icons remain vector-sharp and correctly clipped within their own controls.
+- **Copy and content:** unchanged. Question, helper and option labels are unaffected.
+
+### Findings and comparison history
+
+- Pass 1 identified one P2 visual defect: a duplicate outer ring was clipped by the assistant message wrapper, producing uneven/cut corner edges in both themes.
+- Pass 2 removed the ring, kept the actual one-pixel border, and scoped `overflow-visible` to the active inline-choice message only.
+- Post-fix computed inspection confirms one solid border, an `18.4px` radius, no one-pixel spread shadow and visible parent overflow. Dark/light in-app Browser captures show clean continuous corners. Targeted MCQ and yes/no tests pass; no actionable P0, P1 or P2 difference remains in the scoped border treatment.
+
+final result: passed
+

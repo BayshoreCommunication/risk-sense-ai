@@ -1696,8 +1696,12 @@ test('the active MCQ is an accessible inline assistant approval card in a fluid 
   await expect(inlineCard).toBeVisible();
   await expect(inlineCard).toHaveAttribute('data-testid', 'inline-choice-card');
   await expect(inlineCard).toHaveAttribute('aria-busy', 'false');
-  await expect(inlineCard.getByTestId('inline-choice-surface')).toHaveCSS('border-top-style', 'solid');
-  await expect(inlineCard.getByTestId('inline-choice-surface')).toHaveCSS('border-top-width', '1px');
+  const inlineSurface = inlineCard.getByTestId('inline-choice-surface');
+  await expect(inlineSurface).toHaveAttribute('data-border-treatment', 'single');
+  await expect(inlineSurface).toHaveCSS('border-top-style', 'solid');
+  await expect(inlineSurface).toHaveCSS('border-top-width', '1px');
+  await expect(inlineCard.locator('..')).toHaveCSS('overflow', 'visible');
+  expect(await inlineSurface.evaluate((element) => getComputedStyle(element).boxShadow)).not.toContain('0px 0px 0px 1px');
   await expect(composer).toBeVisible();
   await expect(composer.getByPlaceholder('Choose the best match')).toBeDisabled();
   const dockSend = composer.getByRole('button', { name: 'Send' });
