@@ -746,82 +746,87 @@ function InlineChoiceCard({
 
   return (
     <fieldset
-      className="mt-2.5 overflow-hidden rounded-[1.15rem] border border-[#bfd3ee] bg-[linear-gradient(180deg,#fbfdff_0%,#f5f9ff_100%)] shadow-[0_12px_30px_rgba(8,35,76,0.075),0_1px_2px_rgba(8,35,76,0.04)] ring-1 ring-white/80 dark:border-[#29496f] dark:bg-none dark:bg-[#0b1b31] dark:shadow-[0_16px_34px_rgba(0,0,0,0.28)] dark:ring-white/[0.035]"
+      className="mt-2.5 min-w-0 border-0 p-0"
       data-testid="inline-choice-card"
       aria-busy={busy}
     >
       <legend className="sr-only">{q.text ?? t('answer.optionsLabel')}</legend>
-      <div className="flex items-center justify-between gap-3 border-b border-[#d5e2f2] bg-white/70 px-3.5 py-2.5 backdrop-blur-sm dark:border-[#29496f] dark:bg-[#10243e]/80 sm:px-4">
-        <span className="flex items-center gap-2.5 text-[0.74rem] font-semibold text-[#17263d] dark:text-foreground">
-          <span className="grid size-6 place-items-center rounded-full border border-[#b9d0ee] bg-[#edf5ff] shadow-[0_2px_6px_rgba(8,35,76,0.05)] dark:border-[#37689f] dark:bg-[#17365d]">
-            <CircleDot className="size-3.5 text-[#2468d6] dark:text-blue-300" aria-hidden="true" />
+      <div
+        className="overflow-hidden rounded-[1.15rem] border border-[#bfd3ee] bg-[linear-gradient(180deg,#fbfdff_0%,#f5f9ff_100%)] shadow-[0_12px_30px_rgba(8,35,76,0.075),0_1px_2px_rgba(8,35,76,0.04)] ring-1 ring-white/80 dark:border-[#29496f] dark:bg-none dark:bg-[#0b1b31] dark:shadow-[0_16px_34px_rgba(0,0,0,0.28)] dark:ring-white/[0.035]"
+        data-testid="inline-choice-surface"
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-[#d5e2f2] bg-white/70 px-3.5 py-2.5 backdrop-blur-sm dark:border-[#29496f] dark:bg-[#10243e]/80 sm:px-4">
+          <span className="flex items-center gap-2.5 text-[0.74rem] font-semibold text-[#17263d] dark:text-foreground">
+            <span className="grid size-6 place-items-center rounded-full border border-[#b9d0ee] bg-[#edf5ff] shadow-[0_2px_6px_rgba(8,35,76,0.05)] dark:border-[#37689f] dark:bg-[#17365d]">
+              <CircleDot className="size-3.5 text-[#2468d6] dark:text-blue-300" aria-hidden="true" />
+            </span>
+            {t('answer.responseLabel')}
           </span>
-          {t('answer.responseLabel')}
-        </span>
-        <span className="rounded-full border border-[#c8d9ed] bg-white/90 px-2.5 py-1 text-[0.64rem] font-medium text-[#40556f] shadow-[0_1px_3px_rgba(8,35,76,0.035)] dark:border-[#315579] dark:bg-[#0b1b31] dark:text-[#a9bdd5]">
-          {q.type === 'yes_no' ? t('answer.chooseYesNo') : t('answer.chooseOne')}
-        </span>
-      </div>
-      <Suggestions className={`grid gap-2 bg-transparent p-3 sm:p-3.5 ${q.type === 'yes_no' ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'}`}>
-        {choices.map((option) => {
-          const selected = selectedOptionId === option.id;
-          return (
-            <Suggestion
-              key={option.id}
-              data-testid={q.type === 'yes_no' ? 'binary-answer-option' : 'answer-option'}
-              data-selected={selected ? 'true' : 'false'}
-              aria-pressed={selected}
-              suggestion={option.id}
-              variant="outline"
-              disabled={busy}
-              className={`group/choice min-h-12 w-full items-center gap-3 rounded-[0.9rem] px-3.5 py-3 text-left transition-[border-color,background-color,box-shadow,transform,opacity] disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-[#77a7ea] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f5f9ff] motion-reduce:hover:translate-y-0 dark:focus-visible:ring-offset-[#0b1b31] ${
-                selected
-                  ? 'border-[#256bd9] bg-[#e8f2ff] text-[#103d78] shadow-[0_7px_18px_rgba(25,84,166,0.14),inset_0_0_0_1px_rgba(36,104,214,0.1)] hover:border-[#256bd9] hover:bg-[#e8f2ff] dark:border-[#5a9bf0] dark:bg-[#173b68] dark:text-[#e7f2ff] dark:shadow-[0_8px_22px_rgba(0,0,0,0.25),inset_0_0_0_1px_rgba(128,185,255,0.08)] dark:hover:bg-[#173b68]'
-                  : 'border-[#c8d8ea] bg-white/90 text-[#162238] shadow-[0_2px_8px_rgba(8,35,76,0.035)] hover:-translate-y-px hover:border-[#7ba7df] hover:bg-white hover:shadow-[0_7px_18px_rgba(8,45,101,0.08)] dark:border-[#29496f] dark:bg-[#10243e] dark:text-[#e8eef7] dark:shadow-[0_2px_8px_rgba(0,0,0,0.16)] dark:hover:border-[#4d83bd] dark:hover:bg-[#142c49]'
-              } ${busy && !selected ? 'opacity-60' : ''}`}
-              onClick={() => choose(option)}
-            >
-              <span
-                aria-hidden="true"
-                className={`grid size-5 shrink-0 place-items-center rounded-full border-2 transition-[border-color,background-color,box-shadow] ${
-                  selected
-                    ? 'border-[#2468d6] bg-[#2468d6] text-white shadow-[0_0_0_3px_rgba(36,104,214,0.1)]'
-                    : 'border-[#9eb8d5] bg-white text-transparent group-hover/choice:border-[#6795d2] dark:border-[#6685a8] dark:bg-[#0b1b31] dark:group-hover/choice:border-[#71a9e8]'
-                }`}
-              >
-                {selected && (busy ? <LoaderCircle className="size-3 animate-spin motion-reduce:animate-none" /> : <Check className="size-3" />)}
-              </span>
-              <span className="min-w-0 flex-1 whitespace-normal text-[0.76rem] font-medium leading-[1.15rem]">{option.label}</span>
-            </Suggestion>
-          );
-        })}
-      </Suggestions>
-      {busy && selectedOptionId && (
-        <div
-          className="flex items-center gap-2 border-t border-[#d5e2f2] bg-white/60 px-3.5 py-2 text-[0.7rem] font-medium text-[#31577f] dark:border-[#29496f] dark:bg-[#10243e]/75 dark:text-[#a9c9ed] sm:px-4"
-          data-testid="choice-saving"
-          role="status"
-        >
-          <LoaderCircle className="size-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
-          {t('answer.savingSelection')}
+          <span className="rounded-full border border-[#c8d9ed] bg-white/90 px-2.5 py-1 text-[0.64rem] font-medium text-[#40556f] shadow-[0_1px_3px_rgba(8,35,76,0.035)] dark:border-[#315579] dark:bg-[#0b1b31] dark:text-[#a9bdd5]">
+            {q.type === 'yes_no' ? t('answer.chooseYesNo') : t('answer.chooseOne')}
+          </span>
         </div>
-      )}
-      {error && (
-        <p className="mx-3 mb-3 flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-xs leading-5 text-destructive sm:mx-3.5" role="alert">
-          <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-          {error}
-        </p>
-      )}
-      {personaLocked && (
-        <p className="flex items-start gap-2 border-t border-[#e2e9f2] bg-[#fbfcfe] px-3.5 py-2.5 text-[0.7rem] leading-5 text-muted-foreground dark:border-border dark:bg-muted/35 sm:px-4">
-          <LockKeyhole className="mt-0.5 size-3 shrink-0 text-[#2868cf] dark:text-blue-300" aria-hidden="true" />
-          <span>
-            {t('persona.locked')}{' '}
-            <Link className="font-medium text-primary underline underline-offset-2" href="/chat">{t('persona.startNew')}</Link>{' '}
-            {t('persona.ifIncorrect')}
-          </span>
-        </p>
-      )}
+        <Suggestions className={`grid gap-2 bg-transparent p-3 sm:p-3.5 ${q.type === 'yes_no' ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'}`}>
+          {choices.map((option) => {
+            const selected = selectedOptionId === option.id;
+            return (
+              <Suggestion
+                key={option.id}
+                data-testid={q.type === 'yes_no' ? 'binary-answer-option' : 'answer-option'}
+                data-selected={selected ? 'true' : 'false'}
+                aria-pressed={selected}
+                suggestion={option.id}
+                variant="outline"
+                disabled={busy}
+                className={`group/choice min-h-12 w-full items-center gap-3 rounded-[0.9rem] px-3.5 py-3 text-left transition-[border-color,background-color,box-shadow,transform,opacity] disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-[#77a7ea] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f5f9ff] motion-reduce:hover:translate-y-0 dark:focus-visible:ring-offset-[#0b1b31] ${
+                  selected
+                    ? 'border-[#256bd9] bg-[#e8f2ff] text-[#103d78] shadow-[0_7px_18px_rgba(25,84,166,0.14),inset_0_0_0_1px_rgba(36,104,214,0.1)] hover:border-[#256bd9] hover:bg-[#e8f2ff] dark:border-[#5a9bf0] dark:bg-[#173b68] dark:text-[#e7f2ff] dark:shadow-[0_8px_22px_rgba(0,0,0,0.25),inset_0_0_0_1px_rgba(128,185,255,0.08)] dark:hover:bg-[#173b68]'
+                    : 'border-[#c8d8ea] bg-white/90 text-[#162238] shadow-[0_2px_8px_rgba(8,35,76,0.035)] hover:-translate-y-px hover:border-[#7ba7df] hover:bg-white hover:shadow-[0_7px_18px_rgba(8,45,101,0.08)] dark:border-[#29496f] dark:bg-[#10243e] dark:text-[#e8eef7] dark:shadow-[0_2px_8px_rgba(0,0,0,0.16)] dark:hover:border-[#4d83bd] dark:hover:bg-[#142c49]'
+                } ${busy && !selected ? 'opacity-60' : ''}`}
+                onClick={() => choose(option)}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`grid size-5 shrink-0 place-items-center rounded-full border-2 transition-[border-color,background-color,box-shadow] ${
+                    selected
+                      ? 'border-[#2468d6] bg-[#2468d6] text-white shadow-[0_0_0_3px_rgba(36,104,214,0.1)]'
+                      : 'border-[#9eb8d5] bg-white text-transparent group-hover/choice:border-[#6795d2] dark:border-[#6685a8] dark:bg-[#0b1b31] dark:group-hover/choice:border-[#71a9e8]'
+                  }`}
+                >
+                  {selected && (busy ? <LoaderCircle className="size-3 animate-spin motion-reduce:animate-none" /> : <Check className="size-3" />)}
+                </span>
+                <span className="min-w-0 flex-1 whitespace-normal text-[0.76rem] font-medium leading-[1.15rem]">{option.label}</span>
+              </Suggestion>
+            );
+          })}
+        </Suggestions>
+        {busy && selectedOptionId && (
+          <div
+            className="flex items-center gap-2 border-t border-[#d5e2f2] bg-white/60 px-3.5 py-2 text-[0.7rem] font-medium text-[#31577f] dark:border-[#29496f] dark:bg-[#10243e]/75 dark:text-[#a9c9ed] sm:px-4"
+            data-testid="choice-saving"
+            role="status"
+          >
+            <LoaderCircle className="size-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+            {t('answer.savingSelection')}
+          </div>
+        )}
+        {error && (
+          <p className="mx-3 mb-3 flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-xs leading-5 text-destructive sm:mx-3.5" role="alert">
+            <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+            {error}
+          </p>
+        )}
+        {personaLocked && (
+          <p className="flex items-start gap-2 border-t border-[#e2e9f2] bg-[#fbfcfe] px-3.5 py-2.5 text-[0.7rem] leading-5 text-muted-foreground dark:border-border dark:bg-muted/35 sm:px-4">
+            <LockKeyhole className="mt-0.5 size-3 shrink-0 text-[#2868cf] dark:text-blue-300" aria-hidden="true" />
+            <span>
+              {t('persona.locked')}{' '}
+              <Link className="font-medium text-primary underline underline-offset-2" href="/chat">{t('persona.startNew')}</Link>{' '}
+              {t('persona.ifIncorrect')}
+            </span>
+          </p>
+        )}
+      </div>
     </fieldset>
   );
 }

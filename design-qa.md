@@ -397,3 +397,37 @@ The focused comparison confirms that the new mark occupies the same compact roun
 
 final result: passed
 
+## 2026-10-28 inline choice continuous-border correction
+
+### Comparison target
+
+- **Source visual truth:** `docs/design-qa/mcq-border-before.png` (923 × 244 px owner-supplied dark-mode MCQ capture).
+- **Rendered implementation:** `docs/design-qa/mcq-border-after.jpg` (1164 × 655 px in-app Browser capture).
+- **Focused implementation crop:** `docs/design-qa/mcq-border-after-crop.jpg` (838 × 131 px).
+- **Combined focused comparison:** `docs/design-qa/mcq-border-comparison.jpg` (838 × 345 px).
+- **Viewport and state:** 1164 × 655 CSS px, dark theme, authenticated Requestor, active guided yes/no choice. The reference and implementation show different active questions, so the focused comparison is limited to the shared choice-card border geometry and surface treatment.
+
+### Full-view comparison evidence
+
+The implementation keeps the active question, choice card and composer in the existing conversation flow. Card width, header hierarchy, two-column answer layout and dark workspace rhythm remain unchanged. The corrected card does not add a page or panel scrollbar.
+
+### Focused comparison evidence
+
+The reference exposed the native `fieldset` border around a visually hidden `legend`, producing an interrupted top edge and stray diagonal corner fragments. The corrected implementation keeps the semantic `fieldset` and `legend`, but assigns the visible one-pixel border, radius, clipping, background and shadow to an inner surface. The result has one continuous top edge and clean rounded corners.
+
+### Required fidelity surfaces
+
+- **Fonts and typography:** unchanged. Response label, helper pill and answer labels retain their existing size, weight and contrast.
+- **Spacing and layout rhythm:** unchanged. Header padding, answer gaps and responsive one/two-column behavior are preserved.
+- **Colors and visual tokens:** unchanged. The existing deep-blue card, blue-gray border and selected-answer tokens remain in use.
+- **Shape and border quality:** the visual surface owns a continuous 1 px border and `1.15rem` radius without a native legend cutout.
+- **Copy and content:** unchanged. Only border ownership changed; question content, option content and saving/error states are unaffected.
+
+### Findings and comparison history
+
+- Pass 1 identified one P2 visual defect: the native fieldset/legend rendering interrupted the top border and produced malformed corner fragments.
+- Pass 2 moved presentation to the inner surface while preserving native grouping semantics.
+- Post-fix browser inspection and automated CSS assertions confirm a solid 1 px top border. No actionable P0, P1 or P2 differences remain in the scoped border treatment.
+
+final result: passed
+
