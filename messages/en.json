@@ -1137,6 +1137,7 @@
       "clarification": "clarification"
     },
     "persona": {
+      "selected": "Persona selected",
       "confirmTitle": "Confirm the assessment persona",
       "confirmDescription": "Choose the persona that best matches this assessment. This sets the questions used for the assessment.",
       "current": "Persona: {role}",
@@ -1162,6 +1163,7 @@
       "optionsLabel": "Answer options",
       "yesNoLabel": "Yes or no answer",
       "explainLabel": "Explain your answer",
+      "explainOptionalPlaceholder": "Add a brief explanation (optional)…",
       "numberLabel": "Numeric answer",
       "textLabel": "Your answer",
       "explainPlaceholder": "or explain in words…",

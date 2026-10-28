@@ -233,6 +233,154 @@ Automated completion evidence: current typecheck and lint passed; the 29/29-rout
 
 final result: passed
 
+## 2026-10-28 yes/no explanation locked-saving polish
+
+### Comparison target
+
+- **Owner source:** `docs/design-qa/yes-no-disabled-composer-owner-before-wide.png` (819 × 67 px light-mode crop) with the wider surrounding source retained as `yes-no-disabled-composer-owner-before.png` (978 × 199 px).
+- **Rendered implementation:** `docs/design-qa/yes-no-disabled-composer-light-after-row.png` (838 × 69 px component capture) with the focused shell retained as `yes-no-disabled-composer-light-after.png` (790 × 43 px).
+- **Combined focused comparison:** `docs/design-qa/yes-no-disabled-composer-before-after.png` (838 × 152 px; source above, corrected implementation below).
+- **Viewport and state:** 1280 × 800 CSS px at 1× density, authenticated Requestor, active yes/no question after selecting No while the answer mutation is intentionally held. The captured region is the optional explanation row inside the active inline-choice card.
+
+### Full-view comparison evidence
+
+The surrounding active card keeps its existing width, divider, option layout, radius and optimistic answer behavior. The explanation row remains in place while the mutation is pending, so the card does not collapse, jump or introduce another progress region.
+
+### Focused comparison evidence
+
+The owner source inherited the shared input primitive's muted fill and 60% opacity, producing a darker inner capsule and low-contrast placeholder that read as unavailable. The corrected component keeps the control disabled but moves saving-state ownership to the wrapper: one continuous pale-blue field, transparent input surface, full-opacity placeholder/icon and a quiet blue-gray Send button. The selected option remains the only spinner.
+
+### Required fidelity surfaces
+
+- **Fonts and typography:** the existing 0.8 rem explanation copy, font family and line height are unchanged; full opacity restores legibility without increasing visual prominence.
+- **Spacing and layout rhythm:** row height, 8 px control gap, 12 px horizontal inset and 12 px radius remain unchanged. No layout shift is introduced.
+- **Colors and visual tokens:** light saving uses `#edf5fd` with `#a4c2e3`; dark saving uses `#102943` with `#365f88`. The disabled Send action uses explicit blue-gray tokens rather than blanket opacity.
+- **Image quality and asset fidelity:** the existing library MessageCircle and Send icons remain vector-sharp; no asset, custom SVG, raster placeholder or CSS drawing was introduced.
+- **Copy and content:** the optional explanation placeholder, accessible label, submitted answer and question flow are unchanged.
+
+### Findings and comparison history
+
+- Pass 1 identified one P2 state-quality issue: nested disabled fill plus global opacity created a washed-out inner bar and made the temporary lock resemble a broken field.
+- Pass 2 removed the inherited nested fill/opacity only for this composer, added intentional theme-specific saving tokens and retained real disabled semantics.
+- Post-fix focused comparison shows one coherent field surface with readable intent. Automated browser coverage verifies the pending mutation, disabled control, transparent input, opacity `1`, light background `rgb(237, 245, 253)` and dark background `rgb(16, 41, 67)`. Typecheck, lint and the focused yes/no journey pass. No actionable P0, P1 or P2 finding remains.
+
+final result: passed
+
+## 2026-10-28 shared login and workspace brand mark
+
+### Comparison target
+
+- **Initial source visual truth:** `docs/design-qa/login-letter-logo-before.png` (271 × 117 px owner-supplied login crop showing the generic blue `R` tile).
+- **Owner shadow-review source:** `docs/design-qa/login-logo-shadow-before.png` (277 × 170 px owner-supplied crop showing the approved mark with the unwanted external shadow).
+- **Rendered implementation:** `docs/design-qa/login-shared-brand-no-shadow-after.png` (1389 × 802 px in-app Browser capture).
+- **Focused implementation crop:** `docs/design-qa/login-shared-brand-no-shadow-after-crop.png` (278 × 117 px).
+- **Combined focused comparison:** `docs/design-qa/login-brand-no-shadow-before-after.png` (278 × 302 px).
+- **Viewport and state:** 1389 × 802 CSS px at 1× density, local public login route with the session-expired notice. The 277 × 170 owner shadow-review crop and focused implementation show the same primary login identity slot; the full implementation also shows the matching desktop assurance-panel mark.
+
+### Full-view comparison evidence
+
+The login composition, form width, title hierarchy, assurance panel, responsive split and all authentication controls remain unchanged. The existing approved shield/check artwork now appears in both public brand slots, matching the authenticated header and mobile drawer.
+
+### Focused comparison evidence
+
+The primary 64 px login slot preserves the source tile's position, visual weight and rounded silhouette while replacing the generic letter with the approved product artwork. Owner review then removed the external drop shadow, leaving only the artwork's own internal depth. The assurance-panel slot uses the same asset at 40 px without introducing a second crop or logo variant. Rendered inspection measured the slots at 64 × 64 and 40 × 40 CSS px; both resolve to `/icon.png` and contain no text.
+
+### Required fidelity surfaces
+
+- **Fonts and typography:** unchanged; the logo contains no recreated text and adjacent RiskSense copy retains its existing type hierarchy.
+- **Spacing and layout rhythm:** unchanged; the 64 px and 40 px brand slots retain their existing positions and surrounding gaps. The main logo no longer adds external shadow spread.
+- **Colors and visual tokens:** the approved blue shield artwork replaces the flat generic blue tile; existing white/navy/blue login surfaces remain intact.
+- **Image quality and asset fidelity:** the exact application icon is rendered through Next Image with its approved rounded alpha mask, crop and shield/check details. No CSS drawing, inline SVG, placeholder or approximation is used.
+- **Copy and content:** unchanged; authentication labels, session notice, assurance copy and account initials remain intact.
+
+### Findings and comparison history
+
+- Pass 1 identified one P2 brand-consistency issue: public login surfaces used generic `R` tiles while authenticated surfaces used the approved shield artwork.
+- Pass 2 moved all product-brand slots to one shared image component and preserved user initials as identity data.
+- Pass 3 responded to owner review by removing only the main login mark's external drop shadow. The shared asset, crop, slot size, assurance mark and authenticated header treatments remain unchanged.
+- Desktop login visual inspection, typecheck, lint and focused browser tests pass. Mobile authenticated reuse remains covered by the existing navigation-drawer regression test. No actionable P0, P1 or P2 difference remains in the scoped brand treatment.
+
+final result: passed
+
+## 2026-10-28 create-to-accept semantic color audit
+
+### Comparison target
+
+- **Full flow evidence:** `docs/design-audit/2026-10-28-create-to-accept/01-start.png` through `10-dark-accepted-and-closed.png`.
+- **Corrected light result:** `docs/design-audit/2026-10-28-create-to-accept/13-result-semantic-colors-after.png`.
+- **Corrected light closed state:** `docs/design-audit/2026-10-28-create-to-accept/12-light-accepted-and-closed-after.png`.
+- **Corrected dark closed state:** `docs/design-audit/2026-10-28-create-to-accept/11-dark-accepted-and-closed-after.png`.
+- **Combined comparison:** `docs/design-audit/2026-10-28-create-to-accept/semantic-colors-before-after.png`.
+- **Viewport and state:** 1403 × 810 CSS px at 1× density, authenticated Requestor, one Finance Officer assessment with a stable 54/100 Elevated Risk result. The result-badge before frame was captured immediately before the accept action; the after frame retains the identical assessment, score, classification and explanation after accept. Closed-state comparisons use the identical accepted assessment.
+
+### Full-view comparison evidence
+
+The conversation shell, transcript, result content, context rail, typography, spacing and scroll ownership remain unchanged. The only intentional result changes are the semantic color of the classification surfaces and the terminal status badge.
+
+### Focused comparison evidence
+
+The first pass showed two P2 semantic conflicts: Elevated Risk reused primary-action blue while its score/rail were warm severity colors, and Closed reused active blue while accepted decision evidence was green. The correction reserves blue for interaction/selection, maps Elevated Risk to orange across badge, score ring and rail, and maps Closed to completion green in both themes.
+
+### Required fidelity surfaces
+
+- **Fonts and typography:** unchanged; labels, score, explanation and decision copy retain their existing hierarchy.
+- **Spacing and layout rhythm:** unchanged; result grid, context rail and decision-detail geometry are identical.
+- **Colors and visual tokens:** Monitor Only uses green, Risk amber, Elevated Risk orange and Issue red. Closed uses the accepted/completion green family; active and selectable controls continue to use blue.
+- **Image quality and asset fidelity:** no raster or vector asset changed; the existing favicon and assistant icons remain untouched.
+- **Copy and content:** the assessment facts, deterministic score, classification, explanation, recommendation, decision note, actor and time are unchanged.
+
+### Findings and comparison history
+
+- Pass 1 found two P2 semantic-color mismatches in an otherwise healthy create-to-accept flow.
+- Pass 2 unified the result severity surfaces and terminal status meaning, then repeated light/dark browser inspection.
+- Typecheck, lint, the focused MCQ/yes-no tests and the full Requestor create-to-accept E2E journey pass. No actionable P0, P1 or P2 visual difference remains in the scoped flow.
+
+final result: passed
+
+## 2026-10-28 focused AI conversation flow
+
+### Comparison target
+
+- **Owner-selected source:** `/var/folders/_y/1bg_zrxs0bb1r1652v_trcbc0000gn/T/codex-clipboard-55d90f95-bd4d-49ce-9b62-5d78e7e55ac2.png` (738 × 572 px dark-mode reference).
+- **Rendered dark state:** `docs/design-qa/focused-ai-chat-dark-after.png` (960 × 810 px) and normalized `focused-ai-chat-dark-after-crop.png` (738 × 572 px).
+- **Rendered light state:** `docs/design-qa/focused-ai-chat-light-after.png` (960 × 810 px).
+- **Focused card evidence:** `docs/design-qa/focused-ai-chat-card-after-crop.png` (684 × 266 px) and side-by-side `focused-ai-chat-card-comparison.png` (1384 × 266 px).
+- **Full dark comparison:** `docs/design-qa/focused-ai-chat-dark-comparison.png` (1492 × 572 px).
+- **Viewport and state:** 960 × 810 CSS px at 1× density, authenticated Requestor, active yes/no question. The full journey was also verified from new Finance Officer assessment through accepted decision and closed status.
+
+### Full-view comparison evidence
+
+Completed turns now read as a conversation rather than repeated form sections: assistant prompt on the left, concise user answer on the right, and a single focused card only for the active structured question. A persona confirmation appears once at the beginning. The persistent answer dock is removed while an MCQ/yes-no card is active, eliminating the duplicate-input impression. The existing compact floating jump-to-latest arrow remains unchanged.
+
+### Focused comparison evidence
+
+The active card follows the owner-selected direction: one continuous surface, assistant icon and question in the card header, stacked binary choices, clear radio states, and an optional explanation/send row for yes/no. The card uses balanced 12–16 px internal rhythm, 44 px minimum option targets and compact 13 px conversation copy. It retains enough contrast in both themes without becoming a visually separate form page.
+
+### Required fidelity surfaces
+
+- **Fonts and typography:** conversation copy stays compact and readable; active question weight creates hierarchy without oversized headings. Labels and helper text remain secondary.
+- **Spacing and layout rhythm:** conversation gaps were reduced from the first pass to 16 px. Card padding, option gaps and answer-bubble offsets match the selected density and remain responsive.
+- **Colors and visual tokens:** dark mode uses the existing navy/blue palette with a subtle active-card lift; light mode preserves the same hierarchy with pale blue surfaces and clear borders.
+- **Image quality and asset fidelity:** all UI icons remain library vectors. No generated or low-resolution raster UI asset was introduced.
+- **Copy and content:** duplicate assistant eyebrow text is removed from completed turns. The persona summary, optional explanation label, answer text, score explanation, recommendation and decision copy remain meaningful and localized.
+
+### Interaction and journey verification
+
+- Active MCQ and yes/no selection, optimistic feedback and canonical transcript replacement passed automated coverage.
+- Optional yes/no explanation and send action remain inside the focused card.
+- Number and free-text turns continue through the existing composer.
+- The full Finance Officer journey passed with consistent $25,000 customer-funds evidence, result generation, recommendation, accept note, closed status and visible Decision Details.
+- Captured facts and the result explanation were checked for relevance to the supplied incident narrative.
+- Light/dark rendering and the existing jump-to-latest control were inspected in the local browser.
+
+### Findings and comparison history
+
+- Pass 1 identified one P2 density issue: 20 px transcript gaps made the active card feel pushed away from its question and reduced the visible conversational context.
+- Pass 2 reduced the rhythm to 16 px, placed the active question inside the card, removed the redundant dock for structured turns and added subtle reduced-motion-safe feedback.
+- No actionable P0, P1 or P2 visual differences remain. The implementation is intentionally a little flatter than the concept image so it stays consistent with the product shell; this is an accepted P3 palette nuance.
+
+final result: passed
+
 ## 2026-10-27 internal requirement badge removal QA
 
 - **Source visual truth:** `/var/folders/_y/1bg_zrxs0bb1r1652v_trcbc0000gn/T/codex-clipboard-a2432a92-f889-47a6-9fd8-86abba5adcac.png` (169 × 71 px), supplied by the owner as the `DASH-03` / `FR-27` badge treatment to remove.
@@ -498,6 +646,44 @@ The first pass used a one-pixel border plus an external one-pixel ring. The assi
 - Pass 1 identified one P2 visual defect: a duplicate outer ring was clipped by the assistant message wrapper, producing uneven/cut corner edges in both themes.
 - Pass 2 removed the ring, kept the actual one-pixel border, and scoped `overflow-visible` to the active inline-choice message only.
 - Post-fix computed inspection confirms one solid border, an `18.4px` radius, no one-pixel spread shadow and visible parent overflow. Dark/light in-app Browser captures show clean continuous corners. Targeted MCQ and yes/no tests pass; no actionable P0, P1 or P2 difference remains in the scoped border treatment.
+
+final result: passed
+
+## 2026-10-28 conversational role color, density and avatar-motion polish
+
+### Comparison target
+
+- **Owner feedback sources:** the light and dark Requestor transcript screenshots supplied between 12:52 PM and 1:01 PM on 2026-10-28, specifically identifying small avatars, excessive vertical spacing, undersized text, flat light mode, unclear decorative badge, orange clarification drift and insufficient sender/receiver distinction.
+- **Previous implementation source:** `docs/design-qa/focused-ai-chat-light-after.png` (960 × 810 px at 1× density).
+- **Rendered light implementation:** `docs/design-qa/assistant-message-polish-light-after.png` (1086 × 810 px at 1× density) plus the final clarification capture `clarification-violet-light-after.png` (1403 × 810 px).
+- **Rendered dark implementation:** `docs/design-qa/assistant-message-polish-dark-after.png` (960 × 810 px at 1× density) plus the final clarification capture `clarification-violet-dark-after.png` (1403 × 810 px).
+- **Combined comparison:** `docs/design-qa/assistant-message-polish-comparison.png` (1936 × 810 px).
+- **Clarification source and focused comparison:** `clarification-blue-owner-before.png` (658 × 99 px), `clarification-violet-light-after-crop.png` (700 × 90 px) and `clarification-blue-to-violet-comparison.png` (700 × 209 px).
+- **State:** authenticated Requestor transcript. The source shows an active structured turn while the final light capture shows the same transcript system at review-ready state; comparisons are limited to the shared message rows, role colors, icon scale, typography and density. The active card itself remains covered by the earlier focused same-state evidence.
+
+### Full-view comparison evidence
+
+The final transcript uses a pale blue-gray canvas, 36 px assistant avatars, approximately 14 px conversation copy and 10–12 px turn rhythm. Assistant prompts use quiet soft-blue surfaces; user answers use a brighter accessible blue with white text. The final light sender token is `#2b6fdf`, which has a measured 4.73:1 contrast ratio against white. Dark mode retains a controlled navy assistant surface and deeper blue user bubble. The unclear header sparkle badge is removed.
+
+### Focused comparison evidence
+
+The inner bot glyph scales between 90% and 110% over 2.6 seconds while the circular avatar stays fixed, so motion does not move text or alter row geometry. Reduced-motion preferences collapse animation duration and iteration through the existing global accessibility rule. Clarification now uses a soft violet/indigo surface, flag and rail. It is visibly separate from normal blue assistant prompts and blue user answers without borrowing amber warning or red error semantics.
+
+### Required fidelity surfaces
+
+- **Fonts and typography:** completed questions and answers use approximately 14 px copy with readable 1.5 line height; the active question remains semibold. No text is made artificially large for the laptop workspace.
+- **Spacing and layout rhythm:** transcript gaps are 10 px on compact widths and 12 px from the small breakpoint; the 36 px avatar and slimmer user-bubble padding reduce the previous empty vertical bands.
+- **Colors and visual tokens:** normal assistant prompts remain soft blue, clarification uses a violet/indigo attention family, and user bubbles use `#2b6fdf`/white in light mode and a restrained navy-blue in dark mode. The role hierarchy remains consistent with the product header and active-question card.
+- **Image quality and asset fidelity:** existing Lucide bot/flag icons remain vector-sharp; no raster, custom SVG or placeholder asset was introduced.
+- **Copy and content:** all assessment questions and answers remain unchanged. Only presentation hierarchy and the clarification semantic color changed.
+
+### Findings and comparison history
+
+- Pass 1 found a P2 density/hierarchy issue: 32 px avatars, approximately 13 px copy and 16 px turn gaps made the conversation feel sparse and small.
+- Pass 2 enlarged avatars/copy, tightened the rhythm and tested a bordered white assistant bubble. Owner review rejected the white bubble and unclear sparkle badge.
+- Pass 3 removed the badge, introduced soft-blue AI surfaces, blue/white user bubbles and the requested grow/shrink inner-icon motion. Owner review requested a lighter light-mode user blue and identified amber clarification as visually inconsistent.
+- Pass 4 changed the sender token to accessible `#2b6fdf` and clarification to informational blue.
+- Pass 5 responded to owner review that the clarification still looked too similar to the rest of the chat. The flag, label, rail and surface now use soft violet/indigo tokens in both themes. The focused before/after comparison confirms the semantic separation without changing copy, spacing or layout. Light/dark in-app Browser inspection, typecheck, lint and focused MCQ/yes-no browser tests pass. No actionable P0, P1 or P2 finding remains.
 
 final result: passed
 

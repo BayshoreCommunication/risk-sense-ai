@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LanguageSwitcher } from '@/components/shell/LanguageSwitcher';
+import { BrandMark } from '@/components/shell/BrandMark';
 import { api, toApiError } from '@/lib/api/client';
 import { DEV_AUTH_ENABLED } from '@/lib/environment';
 import {
@@ -202,9 +203,11 @@ function LoginForm() {
     <Card className="w-full max-w-[38rem] gap-0 border-0 bg-transparent py-0 shadow-none">
       <CardHeader className="px-0 pb-8">
         <div className="mb-7 flex items-center justify-between gap-3">
-          <div className="flex size-16 items-center justify-center rounded-xl bg-[#2864ef] text-2xl font-bold text-white shadow-[0_10px_30px_rgba(40,100,239,0.3)]">
-            R
-          </div>
+          <BrandMark
+            className="size-16 rounded-xl shadow-none"
+            priority
+            testId="login-brand-icon"
+          />
           <Badge variant="outline" className="rounded-full bg-background/80 px-3 py-1.5">
             {step === 'otp' ? t('steps.verify') : t('steps.identity')}
           </Badge>
@@ -521,7 +524,7 @@ export default function LoginPage() {
         <section className="relative hidden overflow-hidden bg-[linear-gradient(145deg,#2864ef_0%,#1748c8_100%)] px-10 py-10 text-white min-[75rem]:flex min-[75rem]:flex-col min-[75rem]:justify-between min-[90rem]:px-12 min-[90rem]:py-14">
           <div aria-hidden="true" className="absolute -right-24 -top-16 size-80 rounded-full border border-white/10" />
           <div className="relative flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-lg bg-white/15 text-sm font-bold text-white ring-1 ring-white/20">R</div>
+            <BrandMark className="size-10 ring-1 ring-white/20" testId="login-assurance-brand-icon" />
             <div className="text-lg font-semibold">{t('title')}</div>
           </div>
 

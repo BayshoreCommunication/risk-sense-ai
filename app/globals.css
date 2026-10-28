@@ -480,6 +480,22 @@ html.theme-view-transition::view-transition-new(root) {
   }
 }
 
+@keyframes ai-bot-breathe {
+  0%,
+  100% {
+    transform: scale(0.9);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.ai-bot-breathe {
+  animation: ai-bot-breathe 2.6s ease-in-out infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

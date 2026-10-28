@@ -21,23 +21,23 @@ import { Textarea } from '@/components/ui/textarea';
 import { assessments, type Assessment, type DecisionInput, type EscalationTarget } from '@/lib/assessments';
 import { formatIdentifierLabel, formatIdentifierTokensInText } from '@/lib/format-identifier-label';
 
-const VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
-  monitor_only: 'secondary',
-  risk: 'default',
-  elevated_risk: 'default',
-  issue: 'destructive',
+const CLASSIFICATION_BADGE: Record<string, string> = {
+  monitor_only: 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-300',
+  risk: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300',
+  elevated_risk: 'border-orange-200 bg-orange-50 text-orange-800 dark:border-orange-400/30 dark:bg-orange-400/10 dark:text-orange-300',
+  issue: 'border-red-200 bg-red-50 text-red-800 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-300',
 };
 const ACCENT: Record<string, string> = {
   monitor_only: 'border-l-emerald-500',
-  risk: 'border-l-sky-600',
-  elevated_risk: 'border-l-amber-500',
-  issue: 'border-l-rose-600',
+  risk: 'border-l-amber-500',
+  elevated_risk: 'border-l-orange-500',
+  issue: 'border-l-red-500',
 };
 const SCORE_ACCENT: Record<string, string> = {
   monitor_only: '#059669',
-  risk: '#2563eb',
-  elevated_risk: '#d97706',
-  issue: '#e11d48',
+  risk: '#d97706',
+  elevated_risk: '#ea580c',
+  issue: '#dc2626',
 };
 const NOBODY = '__nobody';
 
@@ -166,7 +166,14 @@ export function ResultCard({
           <div className="min-w-0 self-center">
             <div className="flex flex-wrap items-center gap-2">
               <h3 id={headingId} className="mr-1 text-base font-semibold tracking-tight">{t('title')}</h3>
-              <Badge variant={VARIANT[result.classification] ?? 'default'}>{classificationLabel}</Badge>
+              <Badge
+                variant="outline"
+                className={CLASSIFICATION_BADGE[result.classification]}
+                data-testid="result-classification-badge"
+                data-classification={result.classification}
+              >
+                {classificationLabel}
+              </Badge>
               <Badge variant="outline">{t('confidence', { value: result.confidence })}</Badge>
             </div>
 

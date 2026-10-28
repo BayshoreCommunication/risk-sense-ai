@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -44,6 +43,7 @@ import { firebaseSignOut } from '@/lib/firebase/client';
 import { WorkspaceProvider } from '@/components/shell/workspace-context';
 import { LanguageSwitcher } from '@/components/shell/LanguageSwitcher';
 import { ThemeSwitcher } from '@/components/theme/ThemeSwitcher';
+import { BrandMark } from '@/components/shell/BrandMark';
 import { clearSession, ROLE_HOME, storeRole, type Role } from '@/lib/session';
 
 type AuthUser = components['schemas']['AuthUser'];
@@ -103,14 +103,6 @@ function isNavActive(pathname: string, item: NavItem, home: string) {
 function accountInitials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   return parts.slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join('') || 'R';
-}
-
-function BrandMark({ className = '' }: { className?: string }) {
-  return (
-    <span className={`relative block shrink-0 overflow-hidden rounded-lg shadow-[0_6px_18px_rgba(33,108,255,0.28)] ${className}`} data-testid="workspace-brand-icon">
-      <Image alt="" aria-hidden="true" className="size-full object-cover" height={40} priority src="/icon.png" width={40} />
-    </span>
-  );
 }
 
 /**
@@ -408,7 +400,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
           >
             <Menu className="size-5" />
           </button>
-          <BrandMark className="workspace-brand-mark" />
+          <BrandMark className="workspace-brand-mark" priority />
           <div className={`workspace-brand-name min-w-0 truncate font-semibold tracking-[-0.02em] ${desktopNavigationCollapsed ? 'min-[62rem]:hidden' : ''}`}>{t('app.name')}</div>
         </div>
         <div className="workspace-account-panel ml-auto flex shrink-0 items-center gap-2">
