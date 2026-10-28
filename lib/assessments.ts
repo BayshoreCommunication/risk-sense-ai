@@ -45,7 +45,14 @@ export type Assessment = {
   clarification?: string;
   facts: Fact[];
   result: Result | null;
-  decision: { type: 'accept' | 'override' | 'escalate'; reason?: string; overriddenTo?: string; decidedAt: string } | null;
+  decision: {
+    type: 'accept' | 'override' | 'escalate';
+    byUserId?: string;
+    byUser: { _id: string; name: string } | null;
+    reason?: string;
+    overriddenTo?: string;
+    decidedAt: string;
+  } | null;
   escalatedTo: { _id: string; name: string } | null; // T-061 reviewer the escalation was routed to
   timing: { startedAt: string; intakeCompletedAt?: string; submittedAt?: string; closedAt?: string; durationSec?: number };
   createdAt: string;

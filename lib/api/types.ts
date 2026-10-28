@@ -4843,7 +4843,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Decision recorded; closed or escalated */
+                /** @description Decision recorded; accept note is optional, override needs a 25-character reason, and escalation needs a 10-character reason */
                 200: {
                     headers: {
                         [name: string]: unknown;
