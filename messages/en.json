@@ -1075,6 +1075,19 @@
     "assistantName": "RiskSense assistant",
     "assistantDescription": "Guided, evidence-aware intake",
     "loadingConversation": "Loading your assessment…",
+    "loadFailure": {
+      "not_found": {
+        "title": "This assessment is not available",
+        "description": "It does not exist or belongs to another session. Demo sandbox sessions only see the assessments they created."
+      },
+      "failed": {
+        "title": "The assessment could not be loaded",
+        "description": "Check your connection and try again."
+      },
+      "retry": "Try again",
+      "newAssessment": "New assessment",
+      "myAssessments": "My assessments"
+    },
     "processing": "Understanding your answer and preparing the next question…",
     "refreshFailed": "Your action was saved, but the latest conversation could not be refreshed. Reload this page to sync the full transcript.",
     "scrollLatest": "Scroll to latest message",
