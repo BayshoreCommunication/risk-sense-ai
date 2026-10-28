@@ -1716,7 +1716,8 @@ test('the active MCQ is an accessible inline assistant approval card in a fluid 
   await expect(customerFunds).toBeDisabled();
   await expect(companyFunds).toBeDisabled();
   await expect(page.getByTestId('optimistic-answer')).toContainText('Customer funds');
-  await expect(page.getByTestId('assistant-processing')).toBeVisible();
+  await expect(inlineCard.getByTestId('choice-saving')).toContainText('Saving selection…');
+  await expect(page.getByTestId('assistant-processing')).toHaveCount(0);
 
   releaseAnswer?.();
   await expect(conversation.getByText(nextQuestion.text, { exact: true })).toBeVisible();
@@ -1832,7 +1833,8 @@ test('the active yes/no question keeps inline binary choices above an optional e
   await expect(composer).toHaveAttribute('data-busy', 'true');
   await expect(explanation).toBeDisabled();
   await expect(page.getByTestId('optimistic-answer')).toContainText('No');
-  await expect(page.getByTestId('assistant-processing')).toBeVisible();
+  await expect(inlineCard.getByTestId('choice-saving')).toContainText('Saving selection…');
+  await expect(page.getByTestId('assistant-processing')).toHaveCount(0);
 
   releaseBinaryAnswer?.();
   await expect(composer).toHaveAttribute('data-busy', 'false');

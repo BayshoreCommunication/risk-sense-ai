@@ -1174,6 +1174,7 @@
       "chooseYesNo": "Choose Yes or No",
       "optionalExplanation": "Or add a short explanation",
       "numberHint": "Enter the requested amount or value",
+      "savingSelection": "Saving selection…",
       "sending": "Sending your answer"
     }
   },
