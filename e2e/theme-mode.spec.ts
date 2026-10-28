@@ -69,20 +69,21 @@ async function prepareWorkspace(page: Page, locale: 'en' | 'bn' = 'en') {
 
 async function openAccountMenu(page: Page) {
   const accountMenu = page.getByTestId('account-menu');
-  await accountMenu.locator('summary').click();
-  await expect(accountMenu).toHaveAttribute('open', '');
+  await accountMenu.getByTestId('account-menu-trigger').click();
+  await expect(accountMenu.getByTestId('account-menu-trigger')).toHaveAttribute('aria-expanded', 'true');
   return accountMenu;
 }
 
-async function expectRootTheme(page: Page, theme: 'light' | 'dark') {
+async function expectRootTheme(page: Page, theme: 'light' | 'dark', preference: 'system' | 'light' | 'dark') {
   const root = page.locator('html');
   await expect(root).toHaveAttribute('data-theme', theme);
+  await expect(root).toHaveAttribute('data-theme-preference', preference);
   if (theme === 'dark') await expect(root).toHaveClass(/(?:^|\s)dark(?:\s|$)/);
   else await expect(root).not.toHaveClass(/(?:^|\s)dark(?:\s|$)/);
   await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).colorScheme)).toBe(theme);
 }
 
-test('account theme switch defaults to light, persists dark across reload, and returns to light [DASH-04, NFR-08]', async ({ page }) => {
+test('theme defaults to the device and System, Light, and Dark choices persist correctly [DASH-04, NFR-08]', async ({ page }) => {
   const hydrationMessages: string[] = [];
   page.on('console', (message) => {
     if (/hydration|did not match|server rendered/i.test(message.text())) hydrationMessages.push(message.text());
@@ -91,67 +92,99 @@ test('account theme switch defaults to light, persists dark across reload, and r
     if (/hydration|did not match|server rendered/i.test(error.message)) hydrationMessages.push(error.message);
   });
 
+  await page.emulateMedia({ colorScheme: 'dark' });
   await prepareWorkspace(page);
   await page.goto('/chat');
-  await expectRootTheme(page, 'light');
+  await expectRootTheme(page, 'dark', 'system');
 
   let accountMenu = await openAccountMenu(page);
-  let themeSwitch = accountMenu.getByRole('switch');
-  await expect(themeSwitch).toBeVisible();
-  await expect(themeSwitch).toHaveAccessibleName(/dark mode/i);
-  await expect(themeSwitch).toHaveAttribute('aria-checked', 'false');
+  let themeGroup = accountMenu.getByRole('radiogroup', { name: 'Theme' });
+  await expect(themeGroup).toBeVisible();
+  await expect(themeGroup.getByRole('radio', { name: 'System' })).toHaveAttribute('aria-checked', 'true');
+  await expect(themeGroup.getByRole('radio', { name: 'Light' })).toHaveAttribute('aria-checked', 'false');
+  await expect(themeGroup.getByRole('radio', { name: 'Dark' })).toHaveAttribute('aria-checked', 'false');
 
-  await themeSwitch.click();
-  await expectRootTheme(page, 'dark');
-  themeSwitch = accountMenu.getByRole('switch');
-  await expect(themeSwitch).toHaveAccessibleName(/dark mode/i);
-  await expect(themeSwitch).toHaveAttribute('aria-checked', 'true');
+  await themeGroup.getByRole('radio', { name: 'Light' }).click();
+  await expectRootTheme(page, 'light', 'light');
+  await expect(accountMenu.getByTestId('account-menu-trigger')).toHaveAttribute('aria-expanded', 'true');
+  await expect.poll(async () => (await page.context().cookies()).find((cookie) => cookie.name === 'rs_theme')?.value).toBe('light');
+
+  await page.reload();
+  await expectRootTheme(page, 'light', 'light');
+  accountMenu = await openAccountMenu(page);
+  themeGroup = accountMenu.getByRole('radiogroup', { name: 'Theme' });
+  await expect(themeGroup.getByRole('radio', { name: 'Light' })).toHaveAttribute('aria-checked', 'true');
+
+  await themeGroup.getByRole('radio', { name: 'Dark' }).click();
+  await expectRootTheme(page, 'dark', 'dark');
+  await expect(accountMenu.getByTestId('account-menu-trigger')).toHaveAttribute('aria-expanded', 'true');
   await expect.poll(async () => (await page.context().cookies()).find((cookie) => cookie.name === 'rs_theme')?.value).toBe('dark');
 
   await page.reload();
-  await expectRootTheme(page, 'dark');
+  await expectRootTheme(page, 'dark', 'dark');
   accountMenu = await openAccountMenu(page);
-  themeSwitch = accountMenu.getByRole('switch');
-  await expect(themeSwitch).toHaveAccessibleName(/dark mode/i);
-  await expect(themeSwitch).toHaveAttribute('aria-checked', 'true');
-  expect(hydrationMessages).toEqual([]);
+  themeGroup = accountMenu.getByRole('radiogroup', { name: 'Theme' });
+  await expect(themeGroup.getByRole('radio', { name: 'Dark' })).toHaveAttribute('aria-checked', 'true');
 
-  await themeSwitch.click();
-  await expectRootTheme(page, 'light');
-  await expect(themeSwitch).toHaveAttribute('aria-checked', 'false');
-  await expect.poll(async () => (await page.context().cookies()).find((cookie) => cookie.name === 'rs_theme')?.value).toBe('light');
+  await themeGroup.getByRole('radio', { name: 'System' }).click();
+  await expectRootTheme(page, 'dark', 'system');
+  await expect(accountMenu.getByTestId('account-menu-trigger')).toHaveAttribute('aria-expanded', 'true');
+  await expect.poll(async () => (await page.context().cookies()).find((cookie) => cookie.name === 'rs_theme')?.value).toBe('system');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await expectRootTheme(page, 'light', 'system');
+  expect(hydrationMessages).toEqual([]);
 });
 
-test('theme switch stays English when a stale Bengali preference is present [NFR-08]', async ({ page }) => {
+test('account menu stays open during rapid theme changes [DASH-04, NFR-08]', async ({ page }) => {
+  await prepareWorkspace(page);
+  await page.goto('/chat');
+
+  const accountMenu = await openAccountMenu(page);
+  const themeGroup = accountMenu.getByRole('radiogroup', { name: 'Theme' });
+  const darkBox = await themeGroup.getByRole('radio', { name: 'Dark' }).boundingBox();
+  expect(darkBox).not.toBeNull();
+  await page.evaluate(({ x, y }) => {
+    document.documentElement.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: x, clientY: y }));
+  }, { x: darkBox!.x + darkBox!.width / 2, y: darkBox!.y + darkBox!.height / 2 });
+  await expect(accountMenu.getByTestId('account-menu-trigger')).toHaveAttribute('aria-expanded', 'true');
+
+  for (const name of ['Dark', 'Light', 'Dark', 'System', 'Light'] as const) {
+    await themeGroup.getByRole('radio', { name }).click();
+    await expect(accountMenu.getByTestId('account-menu-trigger')).toHaveAttribute('aria-expanded', 'true');
+  }
+
+  await expectRootTheme(page, 'light', 'light');
+});
+
+test('three-option theme control stays English when a stale Bengali preference is present [NFR-08]', async ({ page }) => {
   await prepareWorkspace(page, 'bn');
   await page.goto('/chat');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 
   const accountMenu = await openAccountMenu(page);
-  const themeSwitch = accountMenu.getByRole('switch');
-  await expect(themeSwitch).toBeVisible();
-  await expect(themeSwitch).toHaveAccessibleName(/dark mode/i);
-  await expect(themeSwitch).toHaveAttribute('aria-checked', 'false');
+  const themeGroup = accountMenu.getByRole('radiogroup', { name: 'Theme' });
+  await expect(themeGroup).toBeVisible();
+  await expect(themeGroup.getByRole('radio', { name: 'System' })).toHaveAttribute('aria-checked', 'true');
+  await expect(themeGroup.getByRole('radio')).toHaveCount(3);
   await expect(accountMenu.getByTestId('language-indicator')).toContainText('English');
   await expect(accountMenu.getByText('বাংলা', { exact: true })).toHaveCount(0);
 });
 
-test('theme switch remains available in the account menu at a 390px mobile viewport [DASH-04, NFR-08]', async ({ page }) => {
+test('three-option theme control remains available at a 390px mobile viewport [DASH-04, NFR-08]', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await prepareWorkspace(page);
   await page.goto('/chat');
 
   const accountMenu = await openAccountMenu(page);
-  const themeSwitch = accountMenu.getByRole('switch');
-  await expect(themeSwitch).toBeVisible();
-  await expect(themeSwitch).toHaveAccessibleName(/dark mode/i);
-  const switchBox = await themeSwitch.boundingBox();
-  expect(switchBox).not.toBeNull();
-  expect(switchBox!.x).toBeGreaterThanOrEqual(0);
-  expect(switchBox!.x + switchBox!.width).toBeLessThanOrEqual(390);
+  const themeGroup = accountMenu.getByRole('radiogroup', { name: 'Theme' });
+  await expect(themeGroup).toBeVisible();
+  const groupBox = await themeGroup.boundingBox();
+  expect(groupBox).not.toBeNull();
+  expect(groupBox!.x).toBeGreaterThanOrEqual(0);
+  expect(groupBox!.x + groupBox!.width).toBeLessThanOrEqual(390);
 
-  await themeSwitch.click();
-  await expectRootTheme(page, 'dark');
+  await themeGroup.getByRole('radio', { name: 'Dark' }).click();
+  await expectRootTheme(page, 'dark', 'dark');
 });
 
 test('reduced-motion preference skips theme transition markers [NFR-08]', async ({ page }) => {
@@ -168,8 +201,8 @@ test('reduced-motion preference skips theme transition markers [NFR-08]', async 
   });
 
   const accountMenu = await openAccountMenu(page);
-  await accountMenu.getByRole('switch').click();
-  await expectRootTheme(page, 'dark');
+  await accountMenu.getByRole('radio', { name: 'Dark' }).click();
+  await expectRootTheme(page, 'dark', 'dark');
 
   const transitionClasses = await page.evaluate(() => (window as typeof window & { __themeTransitionClasses?: string[] }).__themeTransitionClasses ?? []);
   expect(

@@ -15,6 +15,7 @@
     "advancedOperations": "Advanced operations",
     "openNavigation": "Open navigation",
     "closeNavigation": "Close navigation",
+    "accountMenu": "Account menu",
     "skipToContent": "Skip to main content",
     "signOut": "Sign out",
     "signingOut": "Signing out…",
@@ -68,9 +69,10 @@
     "bn": "বাংলা"
   },
   "theme": {
-    "darkMode": "Dark mode",
-    "switchToDark": "Switch to dark mode",
-    "switchToLight": "Switch to light mode"
+    "label": "Theme",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
   },
   "login": {
     "title": "RiskSense AI",

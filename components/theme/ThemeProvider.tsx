@@ -1,35 +1,28 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { applyTheme, persistTheme, type Theme } from '@/lib/theme';
+import { applyTheme, persistTheme, resolveTheme, type ThemePreference } from '@/lib/theme';
 
-type TransitionOrigin = { x: number; y: number };
 type ThemeContextValue = {
-  theme: Theme;
-  setTheme: (theme: Theme, origin?: TransitionOrigin) => void;
-};
-
-type ViewTransition = { finished: Promise<void> };
-type ViewTransitionDocument = Document & {
-  startViewTransition?: (update: () => void) => ViewTransition;
+  theme: ThemePreference;
+  setTheme: (theme: ThemePreference) => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
-const FALLBACK_TRANSITION_MS = 450;
+const THEME_TRANSITION_MS = 240;
 
 function prefersReducedMotion() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-function transitionRadius(origin: TransitionOrigin) {
-  return Math.hypot(Math.max(origin.x, window.innerWidth - origin.x), Math.max(origin.y, window.innerHeight - origin.y));
+function currentSystemPrefersDark() {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
-/** NFR-08: a persisted, no-flash theme with motion-safe animated user switching. */
-export function ThemeProvider({ initialTheme, children }: { initialTheme: Theme; children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(initialTheme);
+/** NFR-08: a persisted, no-flash theme preference with motion-safe user switching. */
+export function ThemeProvider({ initialTheme, children }: { initialTheme: ThemePreference; children: ReactNode }) {
+  const [theme, setThemeState] = useState<ThemePreference>(initialTheme);
   const cleanupTimer = useRef<number | null>(null);
-  const transitionSequence = useRef(0);
 
   const clearTransitionState = useCallback(() => {
     if (cleanupTimer.current !== null) {
@@ -41,40 +34,37 @@ export function ThemeProvider({ initialTheme, children }: { initialTheme: Theme;
 
   useEffect(() => clearTransitionState, [clearTransitionState]);
 
+  useEffect(() => {
+    if (theme !== 'system') return;
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const syncSystemTheme = () => applyTheme(resolveTheme('system', media.matches), 'system');
+    syncSystemTheme();
+    media.addEventListener('change', syncSystemTheme);
+    return () => media.removeEventListener('change', syncSystemTheme);
+  }, [theme]);
+
   const setTheme = useCallback(
-    (nextTheme: Theme, origin?: TransitionOrigin) => {
+    (nextTheme: ThemePreference) => {
       if (nextTheme === theme) return;
 
       const root = document.documentElement;
+      const currentResolvedTheme = root.dataset.theme === 'dark' ? 'dark' : 'light';
+      const nextResolvedTheme = resolveTheme(nextTheme, currentSystemPrefersDark());
       const commit = () => {
-        applyTheme(nextTheme);
+        applyTheme(nextResolvedTheme, nextTheme);
         persistTheme(nextTheme);
         setThemeState(nextTheme);
       };
 
       clearTransitionState();
-      const sequence = ++transitionSequence.current;
-      if (prefersReducedMotion()) {
+      if (prefersReducedMotion() || currentResolvedTheme === nextResolvedTheme) {
         commit();
-        return;
-      }
-
-      const startViewTransition = (document as ViewTransitionDocument).startViewTransition;
-      if (startViewTransition && origin) {
-        root.style.setProperty('--theme-transition-x', `${origin.x}px`);
-        root.style.setProperty('--theme-transition-y', `${origin.y}px`);
-        root.style.setProperty('--theme-transition-radius', `${transitionRadius(origin)}px`);
-        root.classList.add('theme-view-transition');
-        const transition = startViewTransition.call(document, commit);
-        void transition.finished.finally(() => {
-          if (transitionSequence.current === sequence) root.classList.remove('theme-view-transition');
-        });
         return;
       }
 
       root.classList.add('theme-transitioning');
       commit();
-      cleanupTimer.current = window.setTimeout(clearTransitionState, FALLBACK_TRANSITION_MS);
+      cleanupTimer.current = window.setTimeout(clearTransitionState, THEME_TRANSITION_MS);
     },
     [clearTransitionState, theme],
   );

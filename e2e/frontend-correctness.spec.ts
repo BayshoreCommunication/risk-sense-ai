@@ -1110,14 +1110,14 @@ test('desktop sidebar collapse persists while mobile navigation stays labelled a
   expect(expandedNavigationBox!.width).toBe(224);
 
   const accountMenu = page.getByTestId('account-menu');
-  const accountMenuTrigger = accountMenu.locator('summary');
+  const accountMenuTrigger = accountMenu.getByTestId('account-menu-trigger');
   await accountMenuTrigger.click();
-  await expect(accountMenu).toHaveAttribute('open', '');
+  await expect(accountMenuTrigger).toHaveAttribute('aria-expanded', 'true');
   await expect(accountMenu.getByRole('button', { name: 'Sign out' })).toBeVisible();
   await accountMenu.getByText('requestor@example.test', { exact: true }).click();
-  await expect(accountMenu).toHaveAttribute('open', '');
+  await expect(accountMenuTrigger).toHaveAttribute('aria-expanded', 'true');
   await main.click({ position: { x: 12, y: 12 } });
-  await expect(accountMenu).not.toHaveAttribute('open', '');
+  await expect(accountMenuTrigger).toHaveAttribute('aria-expanded', 'false');
   await expect(accountMenu.getByRole('button', { name: 'Sign out' })).toBeHidden();
 
   const collapseNavigation = page.getByRole('button', { name: 'Collapse navigation' });
@@ -1187,6 +1187,63 @@ test('desktop sidebar collapse persists while mobile navigation stays labelled a
   await expect(page.getByRole('button', { name: 'Expand navigation' })).toBeVisible();
 });
 
+test('requestor entry and assessment-list pages fit mobile, tablet, laptop, and desktop viewports [DASH-01, DASH-04, FR-04, NFR-07, NFR-08]', async ({ page }) => {
+  await authenticate(page, 'requestor');
+  await mockApi(page, () => currentUser('requestor'), async ({ route, path, method }) => {
+    if (path === '/personas' && method === 'GET') {
+      await ok(route, [
+        { key: 'finance_officer', name: 'Finance Officer', description: 'Review payment and treasury risk.', sector: 'financial' },
+        { key: 'it_support', name: 'IT Support / Cybersecurity Analyst', description: 'Review access and data incidents.', sector: 'technology' },
+        { key: 'healthcare_compliance', name: 'Healthcare Compliance Officer', description: 'Review patient and privacy incidents.', sector: 'healthcare' },
+      ]);
+      return true;
+    }
+    if (path === '/departments' && method === 'GET') {
+      await ok(route, []);
+      return true;
+    }
+    if (path === '/assessments' && method === 'GET') {
+      await ok(route, {
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 25,
+        pages: 0,
+        counts: { in_progress: 0, intake_complete: 0, awaiting_decision: 0, escalated: 0, closed: 0, error_review: 0, pending: 0, all: 0 },
+        summary: { averageConfidence: null },
+      });
+      return true;
+    }
+    return false;
+  });
+
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 768, height: 900 },
+    { width: 1024, height: 768 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto('/chat');
+    await expect(page.getByRole('heading', { name: 'Persona and scenario selection' })).toBeVisible();
+    await expect(page.getByRole('group', { name: 'Available assessment personas' })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+    if (viewport.width < 992) {
+      await expect(page.getByRole('button', { name: 'Open navigation' })).toBeVisible();
+      await expect(page.locator('#app-desktop-navigation')).toBeHidden();
+    } else {
+      await expect(page.locator('#app-desktop-navigation')).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Open navigation' })).toBeHidden();
+    }
+
+    await page.goto('/review');
+    await expect(page.getByRole('heading', { name: 'Requestor dashboard — pending queue' })).toBeVisible();
+    await expect(page.locator('[aria-label="My assessments"]:visible').first()).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  }
+});
+
 test('sign out is clearly pending, subtly destructive, and duplicate-safe [SEC-01, NFR-08]', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await authenticate(page, 'requestor');
@@ -1211,7 +1268,7 @@ test('sign out is clearly pending, subtly destructive, and duplicate-safe [SEC-0
 
   await page.goto('/chat');
   const accountMenu = page.getByTestId('account-menu');
-  await accountMenu.locator('summary').click();
+  await accountMenu.getByTestId('account-menu-trigger').click();
   const signOut = accountMenu.getByRole('button', { name: 'Sign out' });
   await expect(signOut).toHaveClass(/text-destructive/);
   await signOut.click();
@@ -1601,6 +1658,12 @@ test('the active MCQ is an accessible inline assistant approval card in a fluid 
   let submitted: unknown;
   let answered = false;
   let releaseAnswer: (() => void) | undefined;
+  let releaseCanonicalRefresh: (() => void) | undefined;
+  let canonicalRefreshReads = 0;
+  let canonicalRefreshResponses = 0;
+  const canonicalRefresh = new Promise<void>((resolve) => {
+    releaseCanonicalRefresh = resolve;
+  });
   const activeQuestion = {
     key: 'fund_ownership',
     text: 'Whose funds were involved?',
@@ -1684,11 +1747,21 @@ test('the active MCQ is an accessible inline assistant approval card in a fluid 
   await authenticate(page, 'requestor');
   await mockApi(page, () => currentUser('requestor'), async ({ route, path, method }) => {
     if (path === '/assessments/assessment-1' && method === 'GET') {
+      if (answered) {
+        canonicalRefreshReads += 1;
+        await canonicalRefresh;
+      }
       await ok(route, answered ? answeredAssessment : currentAssessment);
+      if (answered) canonicalRefreshResponses += 1;
       return true;
     }
     if (path === '/assessments/assessment-1/messages' && method === 'GET') {
+      if (answered) {
+        canonicalRefreshReads += 1;
+        await canonicalRefresh;
+      }
       await ok(route, answered ? answeredMessages : currentMessages);
+      if (answered) canonicalRefreshResponses += 1;
       return true;
     }
     if (path === '/assessments/assessment-1/messages' && method === 'POST') {
@@ -1778,7 +1851,18 @@ test('the active MCQ is an accessible inline assistant approval card in a fluid 
   await expect(page.getByTestId('assistant-processing')).toHaveCount(0);
 
   releaseAnswer?.();
+  await expect.poll(() => canonicalRefreshReads).toBe(2);
   await expect(conversation.getByText(nextQuestion.text, { exact: true })).toBeVisible();
+  await expect(page.getByTestId('optimistic-answer')).toHaveCount(0);
+  await expect(page.getByTestId('composer')).toHaveAttribute('data-busy', 'false');
+  const immediateNextTurn = conversation.locator('.is-assistant').filter({ hasText: nextQuestion.text }).last();
+  await expect(immediateNextTurn).toHaveAttribute('data-message-id', /local-question-/);
+  const immediateNextTurnId = await immediateNextTurn.getAttribute('data-message-id');
+
+  releaseCanonicalRefresh?.();
+  await expect.poll(() => canonicalRefreshResponses).toBe(2);
+  await expect(conversation.getByText(nextQuestion.text, { exact: true })).toBeVisible();
+  await expect(conversation.locator('.is-assistant').filter({ hasText: nextQuestion.text }).last()).toHaveAttribute('data-message-id', immediateNextTurnId!);
   await expect(page.getByTestId('optimistic-answer')).toHaveCount(0);
   expect(postCount).toBe(1);
 });
