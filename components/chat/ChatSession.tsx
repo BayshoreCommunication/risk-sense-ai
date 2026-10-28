@@ -96,6 +96,7 @@ export function ChatSession({ id }: { id: string }) {
   const [personasLoading, setPersonasLoading] = useState(false);
   const [busyAction, setBusyAction] = useState<BusyAction | null>(null);
   const [optimisticAnswer, setOptimisticAnswer] = useState<string | null>(null);
+  const [loadFailure, setLoadFailure] = useState<'not_found' | 'failed' | null>(null);
   const busyRef = useRef(false);
   const mutationGenerationRef = useRef(0);
 
@@ -107,9 +108,19 @@ export function ChatSession({ id }: { id: string }) {
     return true;
   }, [id]);
 
-  useEffect(() => {
-    reload().catch((nextError) => setError(toApiError(nextError).message));
+  // The first load owns the empty conversation: a failure replaces the loading state instead of
+  // leaving it spinning above an error. Ownership/sandbox misses are NOT_FOUND by design (SEC-05).
+  const initialLoad = useCallback(() => {
+    setLoadFailure(null);
+    reload().catch((nextError) => {
+      const apiError = toApiError(nextError);
+      setLoadFailure(apiError.code === 'NOT_FOUND' || apiError.code === 'FORBIDDEN' ? 'not_found' : 'failed');
+    });
   }, [reload]);
+
+  useEffect(() => {
+    initialLoad();
+  }, [initialLoad]);
 
   async function run(
     fn: () => Promise<Turn | Assessment>,
@@ -315,10 +326,35 @@ export function ChatSession({ id }: { id: string }) {
           <div className="flex min-h-0 min-w-0 flex-col">
             <Conversation className="min-h-0 flex-1 bg-[#f6f9fd] dark:bg-background/55" data-testid="conversation-log">
               <ConversationContent className="mx-auto w-full max-w-[58rem] gap-2.5 px-4 py-4 sm:gap-3 sm:px-6 sm:py-5" data-testid="conversation-content">
-                {!a && messages.length === 0 && (
+                {!a && messages.length === 0 && !loadFailure && (
                   <div className="flex min-h-72 flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground" role="status">
                     <LoaderCircle className="size-5 animate-spin text-primary" aria-hidden="true" />
                     {t('loadingConversation')}
+                  </div>
+                )}
+
+                {!a && messages.length === 0 && loadFailure && (
+                  <div className="flex min-h-72 flex-col items-center justify-center gap-3 px-4 text-center" role="alert" data-testid="conversation-load-failed" data-reason={loadFailure}>
+                    <span className="grid size-10 place-items-center rounded-full bg-destructive/10 text-destructive">
+                      <AlertCircle className="size-5" aria-hidden="true" />
+                    </span>
+                    <div className="max-w-md space-y-1">
+                      <h3 className="text-sm font-semibold text-foreground">{t(`loadFailure.${loadFailure}.title`)}</h3>
+                      <p className="text-xs leading-5 text-muted-foreground">{t(`loadFailure.${loadFailure}.description`)}</p>
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
+                      {loadFailure === 'failed' && (
+                        <Button size="sm" onClick={initialLoad}>
+                          {t('loadFailure.retry')}
+                        </Button>
+                      )}
+                      <Button size="sm" variant={loadFailure === 'failed' ? 'outline' : 'default'} nativeButton={false} render={<Link href="/chat" />}>
+                        {t('loadFailure.newAssessment')}
+                      </Button>
+                      <Button size="sm" variant="outline" nativeButton={false} render={<Link href="/review" />}>
+                        {t('loadFailure.myAssessments')}
+                      </Button>
+                    </div>
                   </div>
                 )}
 

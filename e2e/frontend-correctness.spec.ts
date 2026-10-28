@@ -1287,6 +1287,43 @@ test('sign out is clearly pending, subtly destructive, and duplicate-safe [SEC-0
   expect(cookies.some((cookie) => ['rs_session', 'rs_role', 'rs_dev_user'].includes(cookie.name))).toBe(false);
 });
 
+test('a chat that cannot be loaded replaces the loading state with a recoverable failure [FR-06, SEC-05, NFR-07]', async ({ page }) => {
+  await authenticate(page, 'requestor');
+  let networkFailures = 1;
+  await mockApi(page, () => currentUser('requestor'), async ({ route, path }) => {
+    if (path.startsWith('/assessments/sandbox-miss')) {
+      await apiError(route, 404, 'NOT_FOUND', 'assessment not found');
+      return true;
+    }
+    if (path === '/assessments/flaky-1' || path === '/assessments/flaky-1/messages') {
+      if (networkFailures > 0) {
+        await route.abort('failed');
+        return true;
+      }
+      await ok(route, path.endsWith('/messages') ? [] : assessment({ _id: 'flaky-1' }));
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/chat/sandbox-miss');
+  const failure = page.getByTestId('conversation-load-failed');
+  await expect(failure).toHaveAttribute('data-reason', 'not_found');
+  await expect(failure.getByText('This assessment is not available')).toBeVisible();
+  await expect(page.getByText('Loading your assessment…')).toHaveCount(0);
+  await expect(failure.getByRole('button', { name: 'Try again' })).toHaveCount(0);
+  await expect(failure.getByRole('button', { name: 'New assessment' })).toHaveAttribute('href', '/chat');
+  await expect(failure.getByRole('button', { name: 'My assessments' })).toHaveAttribute('href', '/review');
+  await expect(page.getByTestId('composer')).toHaveCount(0);
+
+  await page.goto('/chat/flaky-1');
+  await expect(page.getByTestId('conversation-load-failed')).toHaveAttribute('data-reason', 'failed');
+  networkFailures = 0;
+  await page.getByRole('button', { name: 'Try again' }).click();
+  await expect(page.getByTestId('conversation-load-failed')).toHaveCount(0);
+  await expect(page.getByTestId('assessment-status-badge')).toBeVisible();
+});
+
 test('a long chat transcript stays viewport-contained with one transcript scroller and responsive context [FR-05, FR-06, FR-20, NFR-07, NFR-08]', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await authenticate(page, 'requestor');
