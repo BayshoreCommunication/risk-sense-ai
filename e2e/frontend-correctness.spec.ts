@@ -128,6 +128,24 @@ test('RiskSense browser icons use the protected-decision brand assets [NFR-08]',
   expect(fallbackIcon.headers()['content-type']).toContain('image/x-icon');
 });
 
+test('the authenticated header reuses the rounded favicon artwork instead of a letter tile [NFR-08]', async ({ page }) => {
+  await authenticate(page, 'requestor');
+  await mockApi(page, () => currentUser('requestor'));
+  await page.goto('/review');
+
+  const headerMark = page.locator('header').getByTestId('workspace-brand-icon');
+  await expect(headerMark).toBeVisible();
+  const image = headerMark.locator('img');
+  await expect(image).toHaveAttribute('src', /icon\.png/);
+  await expect(headerMark).not.toContainText('R');
+
+  await page.setViewportSize({ width: 760, height: 820 });
+  await page.getByRole('button', { name: 'Open navigation' }).click();
+  const mobileMark = page.getByRole('dialog', { name: 'Workspace navigation' }).getByTestId('workspace-brand-icon');
+  await expect(mobileMark).toBeVisible();
+  await expect(mobileMark.locator('img')).toHaveAttribute('src', /icon\.png/);
+});
+
 test('development authentication stays hidden unless explicitly enabled [SEC-01]', async ({ page }) => {
   await page.goto('/login');
   await expect(page.getByText('Development sign-in (seeded accounts, no OTP)')).toHaveCount(0);

@@ -356,3 +356,44 @@ The 32 × 32 favicon export was inspected independently. The rounded silhouette 
 
 final result: passed
 
+## 2026-10-28 authenticated header favicon brand mark
+
+### Comparison target
+
+- **Source placement:** `docs/design-qa/header-letter-reference.png` (owner-supplied 65 × 55 px header crop showing the letter tile to replace).
+- **Selected replacement asset:** `app/icon.png` (512 × 512 px rounded shield/check favicon artwork).
+- **Rendered implementation:** `docs/design-qa/header-favicon-implementation-full.jpg` (1133 × 810 px in-app Browser capture).
+- **Focused implementation crop:** `docs/design-qa/header-favicon-implementation-crop.jpg` (80 × 64 px).
+- **Combined focused comparison:** `docs/design-qa/header-brand-comparison.jpg` (292 × 126 px).
+- **Viewport and state:** 1133 × 810 CSS px, dark theme, authenticated Requestor, closed assessment route. Capture density required no normalization; the combined comparison enlarges the crops only for inspection.
+
+### Full-view comparison evidence
+
+The implementation preserves the source header's navy surface, mark position, brand-name baseline, account-control alignment, top-bar height and surrounding workspace layout. The only intentional visual change is replacing the blue letter tile with the already-approved favicon artwork.
+
+### Focused comparison evidence
+
+The focused comparison confirms that the new mark occupies the same compact rounded-square slot and remains vertically centered beside `RiskSense AI`. The favicon's rounded alpha mask, blue palette, shield and check are preserved; no CSS-drawn or substitute artwork is used.
+
+### Required fidelity surfaces
+
+- **Fonts and typography:** unchanged. Brand name family, weight, size, tracking and baseline remain intact.
+- **Spacing and layout rhythm:** unchanged. The mark continues to use the responsive `workspace-brand-mark` dimensions and existing 12 px gap.
+- **Colors and visual tokens:** the navy top bar remains unchanged; the mark now uses the approved blue favicon artwork instead of the generic blue tile.
+- **Image quality and asset fidelity:** the exact 512 px application icon is rendered through Next Image and downsampled for the responsive 36–40 px slot.
+- **Copy and content:** `RiskSense AI` is unchanged; the decorative image has empty alternative text because the adjacent brand name supplies the accessible label.
+
+### Findings
+
+- No actionable P0, P1 or P2 visual differences.
+- P3 observation: fine orbital details naturally reduce at the compact header size, while the shield/check remains recognizable. This is expected favicon behavior and does not require a separate header asset.
+
+### Comparison history and interaction checks
+
+- Pass 1 found no P0/P1/P2 issue, so no visual correction loop was required.
+- Desktop authenticated header and mobile navigation header render the same asset.
+- Header navigation, account menu and sidebar behavior remain unchanged.
+- Automated browser coverage verifies both responsive placements.
+
+final result: passed
+
