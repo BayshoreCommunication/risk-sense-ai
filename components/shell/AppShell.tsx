@@ -118,10 +118,12 @@ export function AppShell({ role, children }: { role: Role; children: React.React
   const [loadError, setLoadError] = useState<string | null>(null);
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean | null>(null);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const mobileNavigationRef = useRef<HTMLElement>(null);
   const mobileNavigationTriggerRef = useRef<HTMLButtonElement>(null);
-  const accountMenuRef = useRef<HTMLDetailsElement>(null);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
+  const accountMenuTriggerRef = useRef<HTMLButtonElement>(null);
   const logoutStartedRef = useRef(false);
 
   const verifySession = useCallback(async () => {
@@ -189,13 +191,36 @@ export function AppShell({ role, children }: { role: Role; children: React.React
   useEffect(() => {
     const closeAccountMenuOutside = (event: PointerEvent) => {
       const accountMenu = accountMenuRef.current;
-      if (!accountMenu?.open || event.composedPath().includes(accountMenu)) return;
-      accountMenu.open = false;
+      if (!accountMenuOpen || !accountMenu) return;
+      const triggerBounds = accountMenu.getBoundingClientRect();
+      const panelBounds = accountMenu.querySelector<HTMLElement>('#app-account-menu-panel')?.getBoundingClientRect();
+      const isWithin = (bounds: DOMRect | undefined) => Boolean(
+        bounds &&
+        event.clientX >= bounds.left &&
+        event.clientX <= bounds.right &&
+        event.clientY >= bounds.top &&
+        event.clientY <= bounds.bottom,
+      );
+      const isInsideMenuBounds = isWithin(triggerBounds) || isWithin(panelBounds);
+      if (event.composedPath().includes(accountMenu) || isInsideMenuBounds) return;
+      setAccountMenuOpen(false);
     };
 
     document.addEventListener('pointerdown', closeAccountMenuOutside, true);
     return () => document.removeEventListener('pointerdown', closeAccountMenuOutside, true);
-  }, []);
+  }, [accountMenuOpen]);
+
+  useEffect(() => {
+    if (!accountMenuOpen) return;
+    const closeAccountMenuOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      setAccountMenuOpen(false);
+      accountMenuTriggerRef.current?.focus();
+    };
+    document.addEventListener('keydown', closeAccountMenuOnEscape);
+    return () => document.removeEventListener('keydown', closeAccountMenuOnEscape);
+  }, [accountMenuOpen]);
 
   useEffect(() => {
     if (!mobileNavigationOpen) return;
@@ -404,13 +429,22 @@ export function AppShell({ role, children }: { role: Role; children: React.React
           <div className={`workspace-brand-name min-w-0 truncate font-semibold tracking-[-0.02em] ${desktopNavigationCollapsed ? 'min-[62rem]:hidden' : ''}`}>{t('app.name')}</div>
         </div>
         <div className="workspace-account-panel ml-auto flex shrink-0 items-center gap-2">
-          <details ref={accountMenuRef} className="group relative" data-testid="account-menu">
-            <summary className="flex cursor-pointer list-none items-center gap-2 rounded-full border border-white/25 bg-white/[0.04] px-3 py-2 text-[0.82rem] font-semibold text-white outline-none transition hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/70 sm:px-4 [&::-webkit-details-marker]:hidden">
+          <div ref={accountMenuRef} className="relative" data-testid="account-menu">
+            <button
+              ref={accountMenuTriggerRef}
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={accountMenuOpen}
+              aria-controls="app-account-menu-panel"
+              data-testid="account-menu-trigger"
+              className="flex cursor-pointer items-center gap-2 rounded-full border border-white/25 bg-white/[0.04] px-3 py-2 text-[0.82rem] font-semibold text-white outline-none transition hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/70 sm:px-4"
+              onClick={() => setAccountMenuOpen((open) => !open)}
+            >
               <span className="sm:hidden">{accountInitials(me.user.name)}</span>
               <span className="hidden truncate sm:inline">{accountInitials(me.user.name)} · {t(`roles.${trustedRole}`)}</span>
-              <ChevronDown aria-hidden="true" className="hidden size-4 text-white/70 transition group-open:rotate-180 sm:block" />
-            </summary>
-            <div className="absolute right-0 mt-2 max-h-[calc(100dvh-var(--shell-header-height)-1rem)] w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-border bg-card text-card-foreground shadow-[0_20px_55px_rgba(6,29,67,0.22)]">
+              <ChevronDown aria-hidden="true" className={`hidden size-4 text-white/70 transition sm:block ${accountMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {accountMenuOpen ? <div id="app-account-menu-panel" role="dialog" aria-label={t('app.accountMenu')} className="absolute right-0 mt-2 max-h-[calc(100dvh-var(--shell-header-height)-1rem)] w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-border bg-card text-card-foreground shadow-[0_20px_55px_rgba(6,29,67,0.22)]">
               <div className="border-b p-4">
                 <p className="truncate text-sm font-semibold">{me.user.name}</p>
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">{me.user.email}</p>
@@ -432,8 +466,8 @@ export function AppShell({ role, children }: { role: Role; children: React.React
                 {signingOut ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin motion-reduce:animate-none" /> : <LogOut aria-hidden="true" className="size-4" />}
                 {signingOut ? t('app.signingOut') : t('app.signOut')}
               </button>
-            </div>
-          </details>
+            </div> : null}
+          </div>
         </div>
         </header>
 

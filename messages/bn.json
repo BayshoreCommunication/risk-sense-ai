@@ -15,6 +15,7 @@
     "advancedOperations": "উন্নত কার্যক্রম",
     "openNavigation": "নেভিগেশন খুলুন",
     "closeNavigation": "নেভিগেশন বন্ধ করুন",
+    "accountMenu": "অ্যাকাউন্ট মেনু",
     "skipToContent": "মূল বিষয়বস্তুতে যান",
     "signOut": "সাইন আউট",
     "signingOut": "সাইন আউট হচ্ছে…",
@@ -68,9 +69,10 @@
     "bn": "বাংলা"
   },
   "theme": {
-    "darkMode": "ডার্ক মোড",
-    "switchToDark": "ডার্ক মোডে যান",
-    "switchToLight": "লাইট মোডে যান"
+    "label": "থিম",
+    "system": "সিস্টেম",
+    "light": "লাইট",
+    "dark": "ডার্ক"
   },
   "login": {
     "title": "RiskSense AI",

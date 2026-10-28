@@ -21,7 +21,7 @@ type StageKey = 'persona' | 'describe' | 'questions' | 'review' | 'decision';
 type BusyAction = 'answer' | 'persona' | 'submit' | 'decision';
 type AnswerOutcome = 'success' | 'failure' | 'ignored';
 type RunOutcome =
-  | { status: 'success' | 'committed'; result: Turn | Assessment }
+  | { status: 'success'; result: Turn | Assessment }
   | { status: 'failure' };
 
 const WORKFLOW_STAGES: StageKey[] = ['persona', 'describe', 'questions', 'review', 'decision'];
@@ -65,6 +65,20 @@ function personaSelectionMessageIds(messages: Message[]) {
   return collapsedIds;
 }
 
+function reconcileCommittedMessageKeys(current: Message[], canonical: Message[]) {
+  return canonical.map((message, index) => {
+    const rendered = current[index];
+    if (!rendered?._id.startsWith('local-')) return message;
+    const sameRenderedTurn =
+      rendered.role === message.role &&
+      rendered.kind === message.kind &&
+      rendered.content === message.content &&
+      (rendered.role !== 'assistant' ||
+        (rendered.question?.key ?? rendered.questionKey) === (message.question?.key ?? message.questionKey));
+    return sameRenderedTurn ? { ...message, _id: rendered._id } : message;
+  });
+}
+
 /**
  * One intake conversation (FR-03..FR-08). Structured answers never touch the model; free text is
  * sent only for fact extraction. Submission and the required human decision remain explicit.
@@ -83,11 +97,14 @@ export function ChatSession({ id }: { id: string }) {
   const [busyAction, setBusyAction] = useState<BusyAction | null>(null);
   const [optimisticAnswer, setOptimisticAnswer] = useState<string | null>(null);
   const busyRef = useRef(false);
+  const mutationGenerationRef = useRef(0);
 
-  const reload = useCallback(async () => {
+  const reload = useCallback(async (expectedGeneration?: number) => {
     const [assessment, transcript] = await Promise.all([assessments.get(id), assessments.messages(id)]);
+    if (expectedGeneration !== undefined && expectedGeneration !== mutationGenerationRef.current) return false;
     setA(assessment);
-    setMessages(transcript);
+    setMessages((current) => reconcileCommittedMessageKeys(current, transcript));
+    return true;
   }, [id]);
 
   useEffect(() => {
@@ -97,26 +114,30 @@ export function ChatSession({ id }: { id: string }) {
   async function run(
     fn: () => Promise<Turn | Assessment>,
     action: BusyAction,
-    onRefreshFailure?: (result: Turn | Assessment) => void,
+    onCommitted?: (result: Turn | Assessment) => void,
   ): Promise<RunOutcome> {
     if (busyRef.current) return { status: 'failure' };
+    const mutationGeneration = mutationGenerationRef.current + 1;
+    mutationGenerationRef.current = mutationGeneration;
     busyRef.current = true;
     setBusy(true);
     setBusyAction(action);
     setError(null);
     try {
       const result = await fn();
-      try {
-        await reload();
-        return { status: 'success', result };
-      } catch {
-        // The mutation already committed. Keep its returned state and never invite a duplicate retry
-        // just because transcript revalidation failed.
-        setA(result);
-        onRefreshFailure?.(result);
-        setError(t('refreshFailed'));
-        return { status: 'committed', result };
-      }
+      // The mutation response is canonical for the new assessment state. Reveal it immediately and
+      // reconcile the full transcript in the background instead of blocking the next interaction on
+      // two additional reads. A newer mutation invalidates an older background response.
+      setA(result);
+      onCommitted?.(result);
+      void reload(mutationGeneration)
+        .then((applied) => {
+          if (applied) setError(null);
+        })
+        .catch(() => {
+          if (mutationGeneration === mutationGenerationRef.current) setError(t('refreshFailed'));
+        });
+      return { status: 'success', result };
     } catch (mutationError) {
       setError(toApiError(mutationError).message);
       return { status: 'failure' };
@@ -343,7 +364,7 @@ export function ChatSession({ id }: { id: string }) {
                   const activeInlineChoice = Boolean(inlineChoiceQuestion && message._id === inlineChoiceMessageId);
                   const displayContent = assistant ? formatSystemDisplayText(message.content) : message.content;
                   return (
-                    <AIMessage key={message._id} from={message.role} className={assistant ? 'mx-auto max-w-[56rem]' : 'max-w-[82%] sm:max-w-[70%]'}>
+                    <AIMessage key={message._id} from={message.role} className={assistant ? 'mx-auto max-w-[56rem]' : 'max-w-[82%] sm:max-w-[70%]'} data-message-id={message._id}>
                       {activeInlineChoice && inlineChoiceQuestion ? (
                         <InlineChoiceCard
                           q={inlineChoiceQuestion}
