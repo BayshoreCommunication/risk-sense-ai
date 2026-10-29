@@ -5,7 +5,14 @@
   },
   "common": {
     "close": "Close",
-    "retry": "Retry"
+    "retry": "Retry",
+    "pagination": {
+      "label": "List pagination",
+      "showing": "Showing {from}–{to} of {total}",
+      "page": "Page {page} of {pages}",
+      "previous": "Previous",
+      "next": "Next"
+    }
   },
   "app": {
     "name": "RiskSense AI",

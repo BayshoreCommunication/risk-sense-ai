@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DataPagination, useClientPagination } from '@/components/ui/data-pagination';
+import { CardListSkeleton, TableLoadingRows } from '@/components/ui/loading-skeletons';
 import { PageHeader } from '@/components/shell/PageHeader';
 import { api, toApiError } from '@/lib/api/client';
 import type { components, paths } from '@/lib/api/types';
@@ -67,6 +69,7 @@ export default function DepartmentsPage() {
 
   const personasById = useMemo(() => new Map(personas.map((persona) => [persona._id, persona])), [personas]);
   const restrictedDepartments = departments.filter((department) => department.personaIds.length > 0).length;
+  const { page, setPage, totalPages, pageItems } = useClientPagination(departments, 10);
 
   function openCreate() {
     setEditor({ mode: 'create', department: null });
@@ -156,9 +159,9 @@ export default function DepartmentsPage() {
       {saved && <p className="rounded-md border bg-muted/20 p-3 text-sm" role="status">{saved}</p>}
 
       <div className="data-panel divide-y min-[75rem]:hidden">
-        {loading && <p className="p-8 text-center text-sm text-muted-foreground">{t('loading')}</p>}
+        {loading && <CardListSkeleton label={t('loading')} cards={5} lines={2} />}
         {!loading && !pageError && departments.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('empty')}</p>}
-        {departments.map((department) => (
+        {!loading && pageItems.map((department) => (
           <article key={department._id} className="space-y-3 p-4">
             <div className="flex flex-wrap items-start justify-between gap-3"><h2 className="min-w-0 break-words text-sm font-semibold">{department.name}</h2><Button className="shrink-0" size="sm" variant="outline" onClick={() => openEdit(department)}>{t('editMapping')}</Button></div>
             {department.personaIds.length === 0 ? (
@@ -184,11 +187,11 @@ export default function DepartmentsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading && <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground">{t('loading')}</TableCell></TableRow>}
+            {loading && <TableLoadingRows columns={3} rows={6} label={t('loading')} />}
             {!loading && !pageError && departments.length === 0 && (
               <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground">{t('empty')}</TableCell></TableRow>
             )}
-            {departments.map((department) => (
+            {!loading && pageItems.map((department) => (
               <TableRow key={department._id}>
                 <TableCell className="font-medium">{department.name}</TableCell>
                 <TableCell className="max-w-2xl whitespace-normal">
@@ -209,6 +212,9 @@ export default function DepartmentsPage() {
           </TableBody>
         </Table>
       </div>
+      {!loading && !pageError && (
+        <DataPagination page={page} totalPages={totalPages} totalItems={departments.length} pageSize={10} onPageChange={setPage} className="rounded-xl border bg-card" />
+      )}
 
       <Dialog open={editor !== null} onOpenChange={(open) => !open && closeEditor()}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">

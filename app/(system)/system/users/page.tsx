@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DataPagination, useClientPagination } from '@/components/ui/data-pagination';
+import { CardListSkeleton, TableLoadingRows } from '@/components/ui/loading-skeletons';
 import { PageHeader } from '@/components/shell/PageHeader';
 import { useWorkspace } from '@/components/shell/workspace-context';
 import { api, toApiError } from '@/lib/api/client';
@@ -142,6 +144,7 @@ export default function UsersPage() {
     { value: 'disabled', label: status('disabled') },
   ];
   const controlsDisabled = planState !== 'ready' || pageError !== null;
+  const { page, setPage, totalPages, pageItems } = useClientPagination(users, 10);
 
   function updateDraft(next: Partial<UserDraft>) {
     setDraft((current) => ({ ...current, ...next }));
@@ -290,17 +293,13 @@ export default function UsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-28 text-center text-muted-foreground">{t('loading')}</TableCell>
-                </TableRow>
-              )}
+              {loading && <TableLoadingRows columns={6} rows={6} label={t('loading')} />}
               {!loading && !pageError && users.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="h-28 text-center text-muted-foreground">{t('empty')}</TableCell>
                 </TableRow>
               )}
-              {users.map((user) => (
+              {!loading && pageItems.map((user) => (
                 <TableRow key={user._id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -329,9 +328,9 @@ export default function UsersPage() {
         </div>
 
         <div className="divide-y min-[75rem]:hidden">
-          {loading && <p className="p-8 text-center text-sm text-muted-foreground">{t('loading')}</p>}
+          {loading && <CardListSkeleton label={t('loading')} cards={5} lines={3} />}
           {!loading && !pageError && users.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('empty')}</p>}
-          {users.map((user) => (
+          {!loading && pageItems.map((user) => (
             <article key={user._id} className="space-y-3 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
@@ -350,6 +349,10 @@ export default function UsersPage() {
             </article>
           ))}
         </div>
+
+        {!loading && !pageError && (
+          <DataPagination page={page} totalPages={totalPages} totalItems={users.length} pageSize={10} onPageChange={setPage} />
+        )}
 
         {/* The frame closes with one policy line; later client comments require every PAID account to complete MFA. */}
         <div id="user-role-policy" className="m-4 flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50/55 p-4 text-sm leading-6 text-blue-950/80 dark:border-blue-400/25 dark:bg-blue-400/10 dark:text-blue-100/85 sm:m-6">

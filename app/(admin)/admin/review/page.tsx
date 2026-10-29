@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { CardListSkeleton, TableLoadingRows } from '@/components/ui/loading-skeletons';
 import { toApiError } from '@/lib/api/client';
 import { assessments, type AssessmentListItem, type AssessmentListResult } from '@/lib/assessments';
 
@@ -75,13 +76,7 @@ export default function MandatoryReviewQueuePage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {!data && !error && (
-              <TableRow>
-                <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
-                  {t('loading')}
-                </TableCell>
-              </TableRow>
-            )}
+            {!data && !error && <TableLoadingRows columns={8} rows={7} label={t('loading')} />}
             {data && items.length === 0 && (
               <TableRow>
                 <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
@@ -130,7 +125,7 @@ export default function MandatoryReviewQueuePage() {
         </Table>
       </section>
       <section className="data-panel divide-y min-[62rem]:hidden" aria-busy={!data && !error}>
-        {!data && !error ? <p className="px-4 py-12 text-center text-sm text-muted-foreground">{t('loading')}</p> : null}
+        {!data && !error ? <CardListSkeleton label={t('loading')} cards={5} lines={3} /> : null}
         {data && items.length === 0 ? <p className="px-4 py-12 text-center text-sm text-muted-foreground">{t('empty')}</p> : null}
         {items.map((a) => (
           <article key={a._id} data-testid="admin-review-card" className="space-y-4 p-4 sm:p-5">

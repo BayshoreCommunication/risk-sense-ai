@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DataPagination, useClientPagination } from '@/components/ui/data-pagination';
+import { CardListSkeleton, TableLoadingRows } from '@/components/ui/loading-skeletons';
 import { PageHeader } from '@/components/shell/PageHeader';
 import { useWorkspace } from '@/components/shell/workspace-context';
 import { api, toApiError } from '@/lib/api/client';
@@ -108,6 +110,7 @@ export default function SystemAuditArchivePage() {
   useEffect(() => {
     void load();
   }, [load]);
+  const manifestPagination = useClientPagination(manifests, 8);
 
   useEffect(() => {
     const rangeEnd = new Date();
@@ -256,7 +259,7 @@ export default function SystemAuditArchivePage() {
         </Card>
       ) : null}
 
-      {enabled && (
+      {(loading || enabled) && (
         <Card>
           <CardHeader className="border-b">
             <CardTitle className="flex items-center gap-2"><Fingerprint className="size-4 text-primary" aria-hidden="true" />{t('history.title')}</CardTitle>
@@ -264,8 +267,9 @@ export default function SystemAuditArchivePage() {
           </CardHeader>
           <CardContent className="px-0">
             <div className="divide-y min-[75rem]:hidden">
+              {loading && <CardListSkeleton label={t('loading')} cards={4} lines={2} />}
               {!loading && manifests.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('history.empty')}</p>}
-              {manifests.map((manifest) => (
+              {!loading && manifestPagination.pageItems.map((manifest) => (
                 <article key={manifest._id} className="space-y-3 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="break-words text-sm font-semibold">{new Date(manifest.createdAt).toLocaleString(locale)}</p><p className="mt-1 break-words text-xs text-muted-foreground">{new Date(manifest.from).toLocaleDateString(locale)} – {new Date(manifest.to).toLocaleDateString(locale)}</p></div><Badge className="shrink-0" variant="outline">{manifest.recordCount}</Badge></div>
                   <dl className="grid grid-cols-1 gap-3 text-xs min-[30rem]:grid-cols-2"><div className="min-w-0"><dt className="text-muted-foreground">{t('history.columns.sequence')}</dt><dd className="mt-1 break-all font-mono">{manifest.firstSeq}–{manifest.lastSeq}</dd></div><div className="min-w-0"><dt className="text-muted-foreground">{t('history.columns.hash')}</dt><dd className="mt-1 truncate font-mono" title={manifest.exportHash}>{manifest.exportHash.slice(0, 14)}…</dd></div></dl>
@@ -284,8 +288,9 @@ export default function SystemAuditArchivePage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
+                  {loading && <TableLoadingRows columns={5} rows={5} label={t('loading')} />}
                   {!loading && manifests.length === 0 && <TableRow><TableCell colSpan={5} className="py-10 text-center text-muted-foreground">{t('history.empty')}</TableCell></TableRow>}
-                  {manifests.map((manifest) => (
+                  {!loading && manifestPagination.pageItems.map((manifest) => (
                     <TableRow key={manifest._id}>
                       <TableCell className="whitespace-nowrap">{new Date(manifest.createdAt).toLocaleString(locale)}</TableCell>
                       <TableCell className="whitespace-nowrap text-xs">{new Date(manifest.from).toLocaleDateString(locale)} – {new Date(manifest.to).toLocaleDateString(locale)}</TableCell>
@@ -297,6 +302,7 @@ export default function SystemAuditArchivePage() {
                 </TableBody>
               </Table>
             </div>
+            {!loading && <DataPagination page={manifestPagination.page} totalPages={manifestPagination.totalPages} totalItems={manifests.length} pageSize={8} onPageChange={manifestPagination.setPage} />}
           </CardContent>
         </Card>
       )}

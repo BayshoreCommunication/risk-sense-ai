@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DataPagination, useClientPagination } from '@/components/ui/data-pagination';
+import { CardListSkeleton, TableLoadingRows } from '@/components/ui/loading-skeletons';
 import { PageHeader } from '@/components/shell/PageHeader';
 import { api, toApiError } from '@/lib/api/client';
 import type { components } from '@/lib/api/types';
@@ -83,6 +85,8 @@ export default function ConformancePage() {
   }
 
   const summary = lastRun ?? runs[0] ?? null;
+  const flagPagination = useClientPagination(flags, 8);
+  const runPagination = useClientPagination(runs, 8);
 
   return (
     <div className="page-shell system-workbench">
@@ -133,9 +137,9 @@ export default function ConformancePage() {
           </label>
         </div>
         <div className="divide-y rounded-lg border min-[75rem]:hidden">
-          {loading && <p className="p-8 text-center text-sm text-muted-foreground">{t('flags.loading')}</p>}
+          {loading && <CardListSkeleton label={t('flags.loading')} cards={5} lines={3} />}
           {!loading && !error && flags.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{includeResolved ? t('flags.emptyAll') : t('flags.emptyOpen')}</p>}
-          {flags.map((flag) => {
+          {!loading && flagPagination.pageItems.map((flag) => {
             const assessmentId = idText(flag.assessmentId);
             return (
               <article key={`mobile-${flag._id ?? assessmentId}`} className="space-y-3 p-4">
@@ -158,11 +162,11 @@ export default function ConformancePage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">{t('flags.loading')}</TableCell></TableRow>}
+              {loading && <TableLoadingRows columns={5} rows={6} label={t('flags.loading')} />}
               {!loading && !error && flags.length === 0 && (
                 <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">{includeResolved ? t('flags.emptyAll') : t('flags.emptyOpen')}</TableCell></TableRow>
               )}
-              {flags.map((flag) => {
+              {!loading && flagPagination.pageItems.map((flag) => {
                 const assessmentId = idText(flag.assessmentId);
                 return (
                   <TableRow key={flag._id ?? assessmentId}>
@@ -181,6 +185,7 @@ export default function ConformancePage() {
             </TableBody>
           </Table>
         </div>
+        {!loading && !error && <DataPagination page={flagPagination.page} totalPages={flagPagination.totalPages} totalItems={flags.length} pageSize={8} onPageChange={flagPagination.setPage} className="px-0 pb-0" />}
       </section>
 
       <section className="data-panel space-y-3 p-4 sm:p-5">
@@ -189,8 +194,9 @@ export default function ConformancePage() {
           <p className="text-xs text-muted-foreground">{t('runs.description')}</p>
         </div>
         <div className="divide-y rounded-lg border min-[75rem]:hidden">
+          {loading && <CardListSkeleton label={t('flags.loading')} cards={4} lines={2} />}
           {!loading && runs.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('runs.empty')}</p>}
-          {runs.map((run) => (
+          {!loading && runPagination.pageItems.map((run) => (
             <article key={`mobile-${run.ranAt}:${run.trigger}`} className="space-y-3 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="break-words text-sm font-semibold">{run.trigger}</p><p className="mt-1 break-words text-xs text-muted-foreground">{new Date(run.ranAt).toLocaleString(locale)}</p></div><Badge className="shrink-0" variant="outline">{t('runs.duration', { value: run.durationMs })}</Badge></div>
               <dl className="grid grid-cols-2 gap-3 text-xs"><div><dt className="text-muted-foreground">{t('runs.columns.scanned')}</dt><dd className="font-semibold tabular-nums">{run.scanned}</dd></div><div><dt className="text-muted-foreground">{t('runs.columns.valid')}</dt><dd className="font-semibold tabular-nums">{run.valid}</dd></div><div><dt className="text-muted-foreground">{t('runs.columns.flagged')}</dt><dd className="font-semibold tabular-nums">{run.flagged}</dd></div><div><dt className="text-muted-foreground">{t('runs.columns.resolved')}</dt><dd className="font-semibold tabular-nums">{run.resolved}</dd></div></dl>
@@ -201,8 +207,9 @@ export default function ConformancePage() {
           <Table className="min-w-[860px]" containerLabel={t('runs.title')}>
             <TableHeader><TableRow><TableHead>{t('runs.columns.when')}</TableHead><TableHead>{t('runs.columns.trigger')}</TableHead><TableHead className="text-right">{t('runs.columns.scanned')}</TableHead><TableHead className="text-right">{t('runs.columns.valid')}</TableHead><TableHead className="text-right">{t('runs.columns.flagged')}</TableHead><TableHead className="text-right">{t('runs.columns.resolved')}</TableHead><TableHead className="text-right">{t('runs.columns.duration')}</TableHead></TableRow></TableHeader>
             <TableBody>
+              {loading && <TableLoadingRows columns={7} rows={5} label={t('flags.loading')} />}
               {!loading && runs.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">{t('runs.empty')}</TableCell></TableRow>}
-              {runs.map((run) => (
+              {!loading && runPagination.pageItems.map((run) => (
                 <TableRow key={`${run.ranAt}:${run.trigger}`}>
                   <TableCell>{new Date(run.ranAt).toLocaleString(locale)}</TableCell>
                   <TableCell>{run.trigger}</TableCell>
@@ -216,6 +223,7 @@ export default function ConformancePage() {
             </TableBody>
           </Table>
         </div>
+        {!loading && !error && <DataPagination page={runPagination.page} totalPages={runPagination.totalPages} totalItems={runs.length} pageSize={8} onPageChange={runPagination.setPage} className="px-0 pb-0" />}
       </section>
     </div>
   );

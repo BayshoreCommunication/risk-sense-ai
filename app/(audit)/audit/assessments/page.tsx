@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { CardListSkeleton, TableLoadingRows } from '@/components/ui/loading-skeletons';
 import { toApiError } from '@/lib/api/client';
 import { assessments, type AssessmentListItem, type AssessmentListResult } from '@/lib/assessments';
 import { formatIdentifierLabel } from '@/lib/format-identifier-label';
@@ -56,7 +57,7 @@ export default function AuditAssessmentsPage() {
 
       {error && <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</div>}
       <div className="data-panel divide-y min-[75rem]:hidden">
-        {loading && <p className="p-8 text-center text-sm text-muted-foreground">{t('loading')}</p>}
+        {loading && <CardListSkeleton label={t('loading')} cards={5} lines={3} />}
         {!loading && data && items.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('empty')}</p>}
         {!loading && items.map((a) => (
           <article key={a._id} className="space-y-3 p-4">
@@ -97,11 +98,7 @@ export default function AuditAssessmentsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading && (
-              <TableRow>
-                <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">{t('loading')}</TableCell>
-              </TableRow>
-            )}
+            {loading && <TableLoadingRows columns={9} rows={7} label={t('loading')} />}
             {!loading && data && items.length === 0 && (
               <TableRow>
                 <TableCell colSpan={9} className="text-center text-muted-foreground">

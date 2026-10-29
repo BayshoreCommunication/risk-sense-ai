@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { CardListSkeleton, TableLoadingRows } from '@/components/ui/loading-skeletons';
 import { toApiError } from '@/lib/api/client';
 import { auditApi, type AuditListQuery, type AuditLogEntry } from '@/lib/audit';
 import { formatIdentifierLabel } from '@/lib/format-identifier-label';
@@ -207,7 +208,7 @@ export default function AuditLogsPage() {
       </div>
       {error && <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</div>}
       <div className="data-panel divide-y min-[75rem]:hidden">
-        {loading && <p className="p-8 text-center text-sm text-muted-foreground">{t('loading')}</p>}
+        {loading && <CardListSkeleton label={t('loading')} cards={5} lines={3} />}
         {!loading && visibleItems.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{isLoadedPageFilter ? t('emptyPageFilter') : t('empty')}</p>}
         {!loading && visibleItems.map((entry) => (
           <article key={entry._id} className="space-y-3 p-4">
@@ -245,13 +246,7 @@ export default function AuditLogsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading && (
-              <TableRow>
-                <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
-                  {t('loading')}
-                </TableCell>
-              </TableRow>
-            )}
+            {loading && <TableLoadingRows columns={5} rows={7} label={t('loading')} />}
             {!loading && visibleItems.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">{isLoadedPageFilter ? t('emptyPageFilter') : t('empty')}</TableCell>

@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DataPagination, useClientPagination } from '@/components/ui/data-pagination';
+import { CardListSkeleton, TableLoadingRows } from '@/components/ui/loading-skeletons';
 import { api, handleSessionResponse, toApiError } from '@/lib/api/client';
 import type { components } from '@/lib/api/types';
 import { DEV_AUTH_ENABLED } from '@/lib/environment';
@@ -69,6 +71,13 @@ export default function DatasetsPage() {
   const [busy, setBusy] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const { page, setPage, totalPages, pageItems } = useClientPagination(items, 8);
+  const expandedErrors = items.find((dataset) => dataset._id === expanded)?.validationErrors ?? [];
+  const errorPagination = useClientPagination(expandedErrors, 10);
+
+  useEffect(() => {
+    errorPagination.setPage(1);
+  }, [expanded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -255,13 +264,7 @@ export default function DatasetsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading && (
-              <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
-                  {commonT('loading')}
-                </TableCell>
-              </TableRow>
-            )}
+            {loading && <TableLoadingRows columns={7} rows={6} label={commonT('loading')} />}
             {!loading && items.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
@@ -269,7 +272,7 @@ export default function DatasetsPage() {
                 </TableCell>
               </TableRow>
             )}
-            {items.map((d) => (
+            {!loading && pageItems.map((d) => (
               <TableRow key={d._id}>
                 <TableCell>
                   <div className="flex items-center gap-2 font-medium">
@@ -308,9 +311,9 @@ export default function DatasetsPage() {
       </section>
 
       <section className="data-panel divide-y min-[75rem]:hidden" aria-busy={loading}>
-        {loading && <p className="px-4 py-12 text-center text-sm text-muted-foreground">{commonT('loading')}</p>}
+        {loading && <CardListSkeleton label={commonT('loading')} cards={5} lines={3} />}
         {!loading && items.length === 0 && <p className="px-4 py-12 text-center text-sm text-muted-foreground">{t('empty')}</p>}
-        {items.map((d) => (
+        {!loading && pageItems.map((d) => (
           <article key={d._id} className="space-y-4 p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -353,6 +356,10 @@ export default function DatasetsPage() {
         ))}
       </section>
 
+      {!loading && (
+        <DataPagination page={page} totalPages={totalPages} totalItems={items.length} pageSize={8} onPageChange={setPage} className="rounded-xl border bg-card" />
+      )}
+
       {expanded && items.find((d) => d._id === expanded)?.validationErrors.length ? (
         <Card id={`dataset-errors-${expanded}`} className="border-destructive/20 shadow-none">
           <CardHeader className="border-b pb-4">
@@ -371,9 +378,7 @@ export default function DatasetsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items
-                  .find((d) => d._id === expanded)!
-                  .validationErrors.map((e, i) => (
+                {errorPagination.pageItems.map((e, i) => (
                     <TableRow key={i}>
                       <TableCell>{e.sheet}</TableCell>
                       <TableCell>{e.row || '—'}</TableCell>
@@ -385,9 +390,7 @@ export default function DatasetsPage() {
             </Table>
             </div>
             <div className="divide-y md:hidden">
-              {items
-                .find((d) => d._id === expanded)!
-                .validationErrors.map((e, i) => (
+              {errorPagination.pageItems.map((e, i) => (
                   <article key={i} className="grid grid-cols-2 gap-3 py-4 text-sm first:pt-0 last:pb-0">
                     <div><p className="text-xs text-muted-foreground">{t('validation.columns.sheet')}</p><p className="mt-0.5 font-medium">{e.sheet}</p></div>
                     <div><p className="text-xs text-muted-foreground">{t('validation.columns.row')}</p><p className="mt-0.5 font-medium tabular-nums">{e.row || '—'}</p></div>
@@ -396,6 +399,14 @@ export default function DatasetsPage() {
                   </article>
                 ))}
             </div>
+            <DataPagination
+              page={errorPagination.page}
+              totalPages={errorPagination.totalPages}
+              totalItems={expandedErrors.length}
+              pageSize={10}
+              onPageChange={errorPagination.setPage}
+              className="px-0 pb-0"
+            />
           </CardContent>
         </Card>
       ) : null}

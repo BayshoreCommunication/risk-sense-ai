@@ -5,7 +5,14 @@
   },
   "common": {
     "close": "বন্ধ করুন",
-    "retry": "আবার চেষ্টা করুন"
+    "retry": "আবার চেষ্টা করুন",
+    "pagination": {
+      "label": "তালিকার পৃষ্ঠা",
+      "showing": "মোট {total}-এর মধ্যে {from}–{to} দেখানো হচ্ছে",
+      "page": "পৃষ্ঠা {page} / {pages}",
+      "previous": "আগের",
+      "next": "পরের"
+    }
   },
   "app": {
     "name": "RiskSense AI",

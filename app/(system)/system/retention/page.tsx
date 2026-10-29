@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DataPagination, useClientPagination } from '@/components/ui/data-pagination';
+import { CardListSkeleton, TableLoadingRows } from '@/components/ui/loading-skeletons';
 import { PageHeader } from '@/components/shell/PageHeader';
 import { api, toApiError } from '@/lib/api/client';
 import type { components, paths } from '@/lib/api/types';
@@ -34,11 +36,16 @@ export default function RetentionPage() {
   const [policyDraft, setPolicyDraft] = useState<Settings['retentionPolicy'] | null>(null);
   const [policySaving, setPolicySaving] = useState(false);
   const [policySaved, setPolicySaved] = useState<string | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(true);
 
-  const load = useCallback(() => {
-    api.GET('/system/retention/runs').then((r) => (r.data ? setRuns(r.data.data as Run[]) : setError(toApiError((r as { error?: unknown }).error).message)));
+  const load = useCallback(async () => {
+    setHistoryLoading(true);
+    const r = await api.GET('/system/retention/runs');
+    if (r.data) setRuns(r.data.data as Run[]);
+    else setError(toApiError((r as { error?: unknown }).error).message);
+    setHistoryLoading(false);
   }, []);
-  useEffect(load, [load]);
+  useEffect(() => { void load(); }, [load]);
   useEffect(() => {
     api.GET('/system/tenant').then((result) => {
       if (result.data) {
@@ -91,6 +98,7 @@ export default function RetentionPage() {
       : t('policyTable.days', { days: days.toLocaleString(locale) });
 
   const displayedPolicy = policyDraft ?? settings?.retentionPolicy ?? null;
+  const runPagination = useClientPagination(runs, 8);
   const policyDirty = Boolean(
     settings &&
       policyDraft &&
@@ -309,8 +317,9 @@ export default function RetentionPage() {
         <CardHeader className="border-b"><CardTitle className="flex items-center gap-3"><span className="card-icon"><History className="size-5" aria-hidden="true" /></span>{t('history.title')}</CardTitle><CardDescription>{t('history.description')}</CardDescription></CardHeader>
         <CardContent className="px-0">
       <div className="divide-y min-[75rem]:hidden">
-        {runs.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('empty')}</p>}
-        {runs.map((r) => (
+        {historyLoading && <CardListSkeleton label={t('history.title')} cards={4} lines={2} />}
+        {!historyLoading && runs.length === 0 && <p className="p-8 text-center text-sm text-muted-foreground">{t('empty')}</p>}
+        {!historyLoading && runPagination.pageItems.map((r) => (
           <article key={r._id} className="space-y-3 p-4">
             <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="break-words text-sm font-semibold">{r.dryRun ? t('modes.dry') : t('modes.enforced')}</p><p className="mt-1 break-words text-xs text-muted-foreground">{new Date(r.ranAt).toLocaleString(locale)}</p></div><Badge className="max-w-full shrink-0 whitespace-normal text-left" variant="outline">{r.trigger}</Badge></div>
             <dl className="grid grid-cols-2 gap-3 text-xs">
@@ -338,14 +347,15 @@ export default function RetentionPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {runs.length === 0 && (
+            {historyLoading && <TableLoadingRows columns={8} rows={5} label={t('history.title')} />}
+            {!historyLoading && runs.length === 0 && (
               <TableRow>
                 <TableCell colSpan={8} className="text-center text-muted-foreground">
                   {t('empty')}
                 </TableCell>
               </TableRow>
             )}
-            {runs.map((r) => (
+            {!historyLoading && runPagination.pageItems.map((r) => (
               <TableRow key={r._id}>
                 <TableCell className="whitespace-nowrap">{new Date(r.ranAt).toLocaleString(locale)}</TableCell>
                 <TableCell>{r.trigger}</TableCell>
@@ -360,6 +370,7 @@ export default function RetentionPage() {
           </TableBody>
         </Table>
       </div>
+      {!historyLoading && <DataPagination page={runPagination.page} totalPages={runPagination.totalPages} totalItems={runs.length} pageSize={8} onPageChange={runPagination.setPage} />}
         </CardContent>
       </Card>
     </div>

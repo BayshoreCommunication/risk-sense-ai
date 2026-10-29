@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DataPagination, useClientPagination } from '@/components/ui/data-pagination';
+import { CardListSkeleton, TableLoadingRows } from '@/components/ui/loading-skeletons';
 import { Textarea } from '@/components/ui/textarea';
 import { StructuredFieldEditor, type StructuredFieldKind, validateStructuredField } from '@/components/admin/StructuredFieldEditor';
 import { formatIdentifierLabel } from '@/components/admin/format-identifier-label';
@@ -211,6 +213,11 @@ export function ContentManager(props: ContentManagerProps) {
       });
     });
   }, [items, filter, facets, facetValues]);
+  const pagination = useClientPagination(visible, 12);
+
+  useEffect(() => {
+    pagination.setPage(1);
+  }, [filter, facetValues]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function openCreate() {
     setEditing(null);
@@ -385,9 +392,9 @@ export function ContentManager(props: ContentManagerProps) {
 
       {card ? (
         <section className="content-manager-list scrollbar-subtle min-h-0 flex-1 space-y-3 overflow-y-auto pr-1" aria-busy={loading} aria-label={title}>
-          {loading && <p className="rounded-xl border bg-card p-8 text-center text-muted-foreground">{t('loading')}</p>}
+          {loading && <div className="overflow-hidden rounded-xl border bg-card"><CardListSkeleton label={t('loading')} cards={6} lines={2} /></div>}
           {!loading && visible.length === 0 && <p className="rounded-xl border bg-card p-8 text-center text-muted-foreground">{t('empty')}</p>}
-          {visible.map((item) => {
+          {!loading && pagination.pageItems.map((item) => {
             const rendered = card(item);
             return (
               <article key={item._id} className="flex flex-wrap items-center gap-3 rounded-lg border bg-card p-4 transition-[border-color,box-shadow] min-[96rem]:gap-4">
@@ -428,13 +435,7 @@ export function ContentManager(props: ContentManagerProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={columns.length + (versioned ? 3 : 2)} className="h-32 text-center text-muted-foreground">
-                    {t('loading')}
-                  </TableCell>
-                </TableRow>
-              )}
+              {loading && <TableLoadingRows columns={columns.length + (versioned ? 3 : 2)} rows={7} label={t('loading')} />}
               {!loading && visible.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={columns.length + (versioned ? 3 : 2)} className="h-32 text-center text-muted-foreground">
@@ -442,7 +443,7 @@ export function ContentManager(props: ContentManagerProps) {
                   </TableCell>
                 </TableRow>
               )}
-              {visible.map((item) => (
+              {!loading && pagination.pageItems.map((item) => (
                 <TableRow key={item._id} className="group/row scroll-mt-12">
                   {columns.map((c) => (
                     <TableCell key={c.key} className="max-w-72 whitespace-normal leading-5">
@@ -466,6 +467,10 @@ export function ContentManager(props: ContentManagerProps) {
             </TableBody>
           </Table>
         </section>
+      )}
+
+      {!loading && (
+        <DataPagination page={pagination.page} totalPages={pagination.totalPages} totalItems={visible.length} pageSize={12} onPageChange={pagination.setPage} className="rounded-xl border bg-card" />
       )}
 
       {footer}

@@ -115,7 +115,8 @@ test('system user provisioning keeps one vertical scroll owner across phone, tab
     await page.setViewportSize(viewport);
     await page.goto('/system/users');
     await expect(page.getByRole('heading', { name: 'User and role provisioning' })).toBeVisible();
-    await expect(page.getByText('Review Specialist 14')).toHaveCount(2);
+    await expect(page.getByText('Showing 1–10 of 14')).toBeVisible();
+    await expect(page.getByText('Review Specialist 9')).toHaveCount(0);
 
     const layout = await page.evaluate(() => {
       const shell = document.querySelector<HTMLElement>('.page-shell');
@@ -135,7 +136,43 @@ test('system user provisioning keeps one vertical scroll owner across phone, tab
     } else {
       expect(layout).toMatchObject({ shellScrolls: false, tableVisible: true, tableScrolls: true });
     }
+
+    await page.getByRole('button', { name: 'Next' }).click();
+    await expect(page.getByText('Review Specialist 9')).toHaveCount(2);
+    await expect(page.getByText('Page 2 of 2')).toBeVisible();
   }
+});
+
+test('system tables use structural skeletons while data is loading [FR-02, FR-10, NFR-08]', async ({ page }) => {
+  let releaseUsers!: () => void;
+  const usersReady = new Promise<void>((resolve) => { releaseUsers = resolve; });
+
+  await mockApi(page, async ({ route, path, method }) => {
+    if (path === '/system/users' && method === 'GET') {
+      await usersReady;
+      await ok(route, []);
+      return true;
+    }
+    if (path === '/system/departments' && method === 'GET') {
+      await ok(route, []);
+      return true;
+    }
+    if (path === '/system/tenant' && method === 'GET') {
+      await ok(route, { ...me.tenant, name: 'Test tenant', retentionPolicy: {}, authPolicy: { otpRequired: true }, sso: { providerId: null, domain: null } });
+      return true;
+    }
+    return false;
+  });
+
+  await page.setViewportSize({ width: 1440, height: 800 });
+  await page.goto('/system/users');
+  const panel = page.locator('.system-users-panel');
+  await expect(panel.locator('[data-slot="skeleton"]').first()).toBeVisible();
+  await expect(panel).toHaveAttribute('aria-busy', 'true');
+
+  releaseUsers();
+  await expect(panel.locator('[data-slot="skeleton"]')).toHaveCount(0);
+  await expect(panel).toHaveAttribute('aria-busy', 'false');
 });
 
 test('SSO, session, and sector configuration mirror the supported tenant contract [FR-03, SEC-02, NFR-04, NFR-08]', async ({ page }) => {

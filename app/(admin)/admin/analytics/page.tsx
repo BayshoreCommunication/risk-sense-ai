@@ -11,6 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DataPagination, useClientPagination } from '@/components/ui/data-pagination';
+import { MetricGridSkeleton, TableLoadingRows } from '@/components/ui/loading-skeletons';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useWorkspace } from '@/components/shell/workspace-context';
 import { toApiError } from '@/lib/api/client';
 import { assessments, type AssessmentListItem } from '@/lib/assessments';
@@ -76,6 +79,7 @@ function AnalyticsDashboard() {
   // Client comment 50: the viewer self-selects how the same month data is presented.
   const [view, setView] = useState<'chart' | 'pie' | 'table'>('chart');
   const [error, setError] = useState<string | null>(null);
+  const drilldownPagination = useClientPagination(drilldown.items, 10);
   const monthWindow = useMemo(() => lastFiveCompleteMonths(), []);
 
   // Headline metrics cover the trailing twelve months; the chart covers the five complete months the frame shows.
@@ -221,7 +225,9 @@ function AnalyticsDashboard() {
         </p>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2 min-[75rem]:grid-cols-4 min-[96rem]:gap-4">
+      {SUMMARY_TYPES.some((type) => !data[type]) ? (
+        <MetricGridSkeleton label={t('loading')} />
+      ) : <div className="grid gap-3 sm:grid-cols-2 min-[75rem]:grid-cols-4 min-[96rem]:gap-4">
         <StatTile
           label={t('reports.volume.title')}
           value={vol ? Number(vol.summary.started).toLocaleString() : '—'}
@@ -250,7 +256,7 @@ function AnalyticsDashboard() {
           icon={<TrendingUp className="size-5" />}
           tone="violet"
         />
-      </div>
+      </div>}
 
       <section id="monthly-classification" className="data-panel scroll-mt-20">
         <div className="flex flex-col gap-3 border-b px-4 py-4 min-[80rem]:flex-row min-[80rem]:items-start min-[80rem]:justify-between">
@@ -286,10 +292,13 @@ function AnalyticsDashboard() {
         </div>
         <div className="p-5 sm:p-6">
           {monthlyClassification === null ? (
-            <div className="grid h-64 place-items-center rounded-xl bg-muted/20" role="status">
-              <div className="space-y-2 text-center">
-                <span className="mx-auto block size-7 animate-pulse rounded-full border-2 border-primary/25 border-t-primary" aria-hidden="true" />
-                <p className="text-sm text-muted-foreground">{t('loading')}</p>
+            <div className="space-y-5 rounded-xl border bg-card p-5" role="status" aria-live="polite" aria-label={t('loading')}>
+              <span className="sr-only">{t('loading')}</span>
+              <div className="grid grid-cols-4 gap-3" aria-hidden="true">
+                {Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-14" />)}
+              </div>
+              <div className="flex h-48 items-end gap-5 border-b border-l px-5 pb-0" aria-hidden="true">
+                {[48, 72, 58, 88, 66].map((height, index) => <Skeleton key={index} className="flex-1 rounded-b-none" style={{ height: `${height}%` }} />)}
               </div>
             </div>
           ) : selectedMonthData ? (
@@ -431,12 +440,15 @@ function AnalyticsDashboard() {
                   </div>
 
                   {drilldown.status === 'loading' || drilldown.status === 'idle' ? (
-                    <p className="grid min-h-28 place-items-center text-sm text-muted-foreground" role="status">{t('loading')}</p>
+                    <Table containerLabel={t('loading')}>
+                      <TableBody><TableLoadingRows columns={7} rows={5} label={t('loading')} /></TableBody>
+                    </Table>
                   ) : drilldown.status === 'error' ? (
                     <p className="m-4 rounded-lg border border-destructive/25 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{drilldown.error}</p>
                   ) : drilldown.items.length === 0 ? (
                     <p className="grid min-h-28 place-items-center text-sm text-muted-foreground" role="status">{reviewT('empty.filtered')}</p>
                   ) : (
+                    <>
                     <Table
                       containerLabel={t('monthly.segmentDetail', {
                         classification: selectedSegment.label,
@@ -463,7 +475,7 @@ function AnalyticsDashboard() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {drilldown.items.map((item) => {
+                        {drilldownPagination.pageItems.map((item) => {
                           const classification = finalClassification(item);
                           return (
                             <TableRow key={item._id}>
@@ -487,6 +499,8 @@ function AnalyticsDashboard() {
                         })}
                       </TableBody>
                     </Table>
+                    <DataPagination page={drilldownPagination.page} totalPages={drilldownPagination.totalPages} totalItems={drilldown.items.length} pageSize={10} onPageChange={drilldownPagination.setPage} />
+                    </>
                   )}
                 </section>
               ) : null}

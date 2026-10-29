@@ -64,6 +64,43 @@ async function mockApi(page: Page, handler: Handler) {
   });
 }
 
+test('administrator catalogs paginate large loaded lists without losing filters [DASH-02, NFR-08]', async ({ page }) => {
+  const personas = Array.from({ length: 15 }, (_, index) => ({
+    _id: `persona-${index + 1}`,
+    key: `persona_${index + 1}`,
+    name: `Persona ${String(index + 1).padStart(2, '0')}`,
+    sector: 'financial',
+    description: `Operational persona ${index + 1}`,
+    status: 'active',
+    version: 1,
+    isCurrent: true,
+    departmentIds: [],
+  }));
+
+  await authenticate(page);
+  await mockApi(page, async (route, path, method) => {
+    if (path === '/personas' && method === 'GET') {
+      await ok(route, personas);
+      return true;
+    }
+    if (path === '/scenarios' && method === 'GET') {
+      await ok(route, []);
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/admin/personas');
+  await expect(page.getByText('Showing 1–12 of 15')).toBeVisible();
+  await expect(page.getByText('Persona 15', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.getByText('Persona 15', { exact: true })).toBeVisible();
+
+  await page.getByLabel('Filter content').fill('Persona 15');
+  await expect(page.getByText('Persona 15', { exact: true })).toBeVisible();
+  await expect(page.getByText('Page 1 of 1')).toHaveCount(0);
+});
+
 test('persona sector choices come only from the authenticated tenant vocabulary [NFR-04, NFR-08]', async ({ page }) => {
   await authenticate(page);
   await mockApi(page, async (route, path, method) => {
