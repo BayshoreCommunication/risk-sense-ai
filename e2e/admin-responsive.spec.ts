@@ -64,6 +64,33 @@ async function prepareAdministrator(page: Page) {
     if (['/personas', '/scenarios', '/questions', '/rules', '/scoring-matrices', '/datasets', '/departments'].includes(path)) {
       return ok(route, []);
     }
+    if (path === '/analytics/trends') {
+      return ok(route, {
+        columns: [
+          { key: 'period', label: 'Period', kind: 'text' },
+          { key: 'group', label: 'Classification', kind: 'text' },
+          { key: 'count', label: 'Count', kind: 'number' },
+        ],
+        rows: [
+          { period: '2026-08', group: 'risk', count: 4 },
+          { period: '2026-08', group: 'issue', count: 2 },
+          { period: '2026-09', group: 'monitor_only', count: 2 },
+          { period: '2026-09', group: 'elevated_risk', count: 3 },
+        ],
+        summary: {},
+      });
+    }
+    if (path.startsWith('/reports/')) {
+      const type = path.split('/').at(-1);
+      const result = type === 'volume'
+        ? { columns: [], rows: [], summary: { started: 12, closed: 8, escalated: 1 } }
+        : type === 'classification'
+          ? { columns: [], rows: [{ classification: 'risk', count: 3 }], summary: { scored: 3 } }
+          : type === 'override-rate'
+            ? { columns: [], rows: [], summary: { overrideRate: 12.5, overridden: 1, accepted: 7 } }
+            : { columns: [], rows: [], summary: { avgTotalSec: 3600, p95TotalSec: 7200, avgIntakeSec: 600 } };
+      return ok(route, result);
+    }
     if (path === '/assessments') {
       const items = Array.from({ length: 30 }, (_, index) => ({
         _id: `assessment-${index}`,
@@ -151,4 +178,20 @@ test('Administrator overview keeps its access guidance on one line at desktop wi
   const note = page.getByText('All configuration access routes through this audited workspace, never direct database or code access.', { exact: true });
   await expect(note).toBeVisible();
   expect(await note.evaluate((element) => element.getBoundingClientRect().height <= Number.parseFloat(getComputedStyle(element).lineHeight) + 1)).toBe(true);
+});
+
+test('Analytics chart selection can be reset without changing its data window [DASH-03]', async ({ page }) => {
+  await prepareAdministrator(page);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/admin/analytics');
+
+  const reset = page.getByRole('button', { name: 'Reset chart' });
+  await expect(reset).toBeEnabled();
+  await reset.click();
+  await expect(reset).toBeDisabled();
+
+  const month = page.getByRole('button', { name: /Select .+: \d+ scored assessments/ }).first();
+  await month.click();
+  await expect(reset).toBeEnabled();
+  await expect(page.getByText('Last 5 complete months', { exact: true })).toBeVisible();
 });

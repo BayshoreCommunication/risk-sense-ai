@@ -706,6 +706,7 @@
         "selectMonth": "Select {month}: {total} scored assessments",
         "empty": "Monthly classification data is unavailable for this window.",
         "viewLabel": "Monthly classification view",
+        "reset": "Reset chart",
         "monthLabel": "Month",
         "pieTitle": "{month} classification distribution as a pie chart",
         "columns": {

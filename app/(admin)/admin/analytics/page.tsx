@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { ArrowLeft, CalendarDays, ChartNoAxesColumn, ChartPie, ClipboardList, Clock3, RefreshCw, ShieldX, Table2, TrendingUp, X } from 'lucide-react';
+import { ArrowLeft, CalendarDays, ChartNoAxesColumn, ChartPie, ClipboardList, Clock3, RefreshCw, RotateCcw, ShieldX, Table2, TrendingUp, X } from 'lucide-react';
 import { ChartStyles, PieChart, STATUS, StackedClassificationChart, StatTile, type StackedClassificationMonth } from '@/components/analytics/Charts';
 import { formatIdentifierLabel } from '@/components/admin/format-identifier-label';
 import { PageHeader } from '@/components/shell/PageHeader';
@@ -145,6 +145,13 @@ function AnalyticsDashboard() {
   );
   const selectedMonthData = stackedClassificationMonths.find((month) => month.key === selectedMonth) ?? stackedClassificationMonths.at(-1) ?? null;
   const selectedSegment = selectedMonthData?.segments.find((segment) => segment.key === selectedClassification) ?? null;
+  const hasChartSelection = selectedMonth !== null || selectedClassification !== null;
+
+  const resetChartSelection = () => {
+    setSelectedMonth(null);
+    setSelectedClassification(null);
+    setDrilldown(EMPTY_DRILLDOWN);
+  };
 
   // Comment 49 requires a real drill-down, not merely a highlighted aggregate. The list endpoint's
   // `classification` filter is the AI class, while this chart uses the final class (human override wins),
@@ -267,13 +274,17 @@ function AnalyticsDashboard() {
                 {t('views.table')}
               </Button>
             </div>
+            <Button size="sm" variant="outline" disabled={!hasChartSelection} onClick={resetChartSelection}>
+              <RotateCcw data-icon="inline-start" aria-hidden="true" />
+              {t('monthly.reset')}
+            </Button>
             <span className="inline-flex w-fit items-center gap-2 rounded-lg border bg-background px-3 py-2 text-xs font-medium text-foreground shadow-sm">
               <CalendarDays className="size-4 text-muted-foreground" aria-hidden="true" />
               {t('monthly.window')}
             </span>
           </div>
         </div>
-        <div className="p-4">
+        <div className="p-5 sm:p-6">
           {monthlyClassification === null ? (
             <div className="grid h-64 place-items-center rounded-xl bg-muted/20" role="status">
               <div className="space-y-2 text-center">
@@ -284,7 +295,7 @@ function AnalyticsDashboard() {
           ) : selectedMonthData ? (
             <>
               {/* Client comment 49: a month's classification counts are selectable and labelled. */}
-              <div className="mb-4 grid overflow-hidden rounded-lg border sm:grid-cols-2 min-[75rem]:grid-cols-4" role="group" aria-label={t('monthly.selectedMonth', { month: selectedMonthData.label })}>
+              <div className="mb-6 grid overflow-hidden rounded-lg border sm:grid-cols-2 min-[75rem]:grid-cols-4" role="group" aria-label={t('monthly.selectedMonth', { month: selectedMonthData.label })}>
                 {selectedMonthData.segments.map((segment) => {
                   const status = STATUS[segment.key] ?? { color: 'var(--s9)', icon: '●' };
                   const count = segment.value === null ? t('monthly.notAvailable') : segment.value.toLocaleString(locale);
@@ -377,7 +388,7 @@ function AnalyticsDashboard() {
                 <StackedClassificationChart
                   months={stackedClassificationMonths}
                   title={t('monthly.chartTitle')}
-                  selectedMonth={selectedMonthData.key}
+                  selectedMonth={selectedMonth}
                   selectedClassification={selectedClassification}
                   onMonthSelect={setSelectedMonth}
                   onSegmentSelect={(month, classification) => {

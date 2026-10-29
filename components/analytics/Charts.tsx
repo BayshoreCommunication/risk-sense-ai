@@ -10,8 +10,8 @@ import { formatIdentifierLabel } from '@/lib/format-identifier-label';
  * four classifications, sequential blue for single-series magnitude. Every chart ships a hover layer
  * and the page pairs each one with a table view; series identity is never color alone (legend + labels).
  */
-export const SERIES_LIGHT = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948', '#898781'];
-export const SERIES_DARK = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767', '#898781'];
+export const SERIES_LIGHT = ['#2f6fb3', '#b85c34', '#2e7d66', '#a66b1f', '#a04f75', '#4f7a43', '#6656a3', '#b84a4a', '#667085'];
+export const SERIES_DARK = ['#5b9be0', '#d97a4e', '#48a689', '#c9973a', '#c9749b', '#73a261', '#9184ce', '#d96b6b', '#98a2b3'];
 /** Classification = ordered status: monitor_only → good, risk → warning, elevated_risk → serious, issue → critical. */
 export const STATUS: Record<string, { color: string; icon: string }> = {
   monitor_only: { color: '#23825b', icon: '●' },
@@ -30,9 +30,9 @@ export interface StackedClassificationMonth {
 export function ChartStyles() {
   return (
     <style>{`
-      .viz { --viz-surface:transparent; --viz-ink:#172033; --viz-ink2:#536078; --viz-muted:#7b8496; --viz-grid:#e6eaf0; --viz-axis:#cbd2dc;
+      .viz { --viz-surface:transparent; --viz-ink:#172033; --viz-ink2:#475467; --viz-muted:#667085; --viz-grid:#dbe2ea; --viz-axis:#bcc6d2; --viz-tooltip-bg:#172033; --viz-tooltip-text:#f8fafc; --viz-tooltip-border:#344054; --viz-point-ring:#ffffff;
         ${SERIES_LIGHT.map((c, i) => `--s${i + 1}:${c};`).join('')} }
-      .dark .viz { --viz-surface:transparent; --viz-ink:var(--foreground); --viz-ink2:color-mix(in srgb,var(--foreground) 78%,transparent); --viz-muted:var(--muted-foreground); --viz-grid:color-mix(in srgb,var(--border) 78%,transparent); --viz-axis:var(--border);
+      .dark .viz { --viz-surface:transparent; --viz-ink:var(--foreground); --viz-ink2:color-mix(in srgb,var(--foreground) 78%,transparent); --viz-muted:var(--muted-foreground); --viz-grid:color-mix(in srgb,var(--border) 78%,transparent); --viz-axis:var(--border); --viz-tooltip-bg:#132238; --viz-tooltip-text:#f8fafc; --viz-tooltip-border:#36516f; --viz-point-ring:var(--card);
         ${SERIES_DARK.map((c, i) => `--s${i + 1}:${c};`).join('')} }
       .viz text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
     `}</style>
@@ -57,9 +57,9 @@ function Tooltip({ x, y, lines }: { x: number; y: number; lines: string[] }) {
   const ty = y - h - 10 < PAD.top ? y + 12 : y - h - 10;
   return (
     <g pointerEvents="none">
-      <rect x={tx} y={ty} width={w} height={h} rx={4} fill="var(--viz-ink)" opacity={0.92} />
+      <rect x={tx} y={ty} width={w} height={h} rx={5} fill="var(--viz-tooltip-bg)" stroke="var(--viz-tooltip-border)" strokeWidth={1} />
       {lines.map((l, i) => (
-        <text key={i} x={tx + 8} y={ty + 14 + i * 14} fontSize={11} fill="#ffffff">
+        <text key={i} x={tx + 8} y={ty + 14 + i * 14} fontSize={11} fontWeight={i === 0 ? 600 : 400} fill="var(--viz-tooltip-text)">
           {l}
         </text>
       ))}
@@ -226,7 +226,7 @@ export function LineChart({ periods, series, format = (v) => String(v), title, u
           <line x1={xAt(active)} x2={xAt(active)} y1={PAD.top} y2={PAD.top + innerH} stroke={selected === active ? 'var(--s2)' : 'var(--viz-axis)'} strokeWidth={selected === active ? 2 : 1} strokeDasharray="3 3" />
           {series.map((s, si) => s.values[active] !== null && s.values[active] !== undefined && (
             <g key={s.name}>
-              <circle cx={xAt(active)} cy={yAt(s.values[active] as number)} r={5} fill={`var(--s${si + 1})`} stroke="white" strokeWidth={2} />
+              <circle cx={xAt(active)} cy={yAt(s.values[active] as number)} r={5} fill={`var(--s${si + 1})`} stroke="var(--viz-point-ring)" strokeWidth={2} />
             </g>
           ))}
           <Tooltip x={xAt(active)} y={PAD.top + 20} lines={[periods[active]!, ...series.map((s) => `${s.name}: ${s.values[active] === null || s.values[active] === undefined ? '—' : format(s.values[active] as number) + unit}`)]} />
@@ -398,21 +398,21 @@ export function StackedClassificationChart({
 
   return (
     <div className="viz" role="group" aria-label={title}>
-      <div className="overflow-x-auto pb-2">
+      <div className="overflow-x-auto pb-2 pt-1">
         <div className="min-w-[34rem]">
           <div className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-3">
-            <div className="flex h-56 flex-col justify-between pb-px text-right text-[10px] tabular-nums text-muted-foreground" aria-hidden="true">
+            <div className="flex h-60 flex-col justify-between pb-px text-right text-[10px] tabular-nums text-muted-foreground" aria-hidden="true">
               {tickValues.map((tick, index) => (
                 <span key={`${tick}-${index}`}>{tick.toLocaleString(locale)}</span>
               ))}
             </div>
-            <div className="relative h-56 border-b">
+            <div className="relative h-60 border-b">
               <div className="pointer-events-none absolute inset-0 flex flex-col justify-between" aria-hidden="true">
                 {tickValues.map((tick, index) => (
                   <span key={`${tick}-${index}`} className="block border-t border-dashed border first:border-solid" />
                 ))}
               </div>
-              <div className="absolute inset-0 flex items-end justify-around gap-6 px-4">
+              <div className="absolute inset-0 flex items-end justify-around gap-10 px-8">
                 {months.map((month) => {
                   const total = observedTotal(month);
                   const isSelectedMonth = selectedMonth === month.key;
@@ -421,7 +421,7 @@ export function StackedClassificationChart({
                   return (
                     <div
                       key={month.key}
-                      className={`flex h-full min-w-12 max-w-20 flex-1 items-end border-x border-transparent transition-colors ${isSelectedMonth ? 'border-primary/15 bg-primary/[0.035]' : ''}`}
+                      className={`flex h-full min-w-10 max-w-16 flex-1 items-end border-x border-transparent transition-colors ${isSelectedMonth ? 'border-primary/15 bg-primary/[0.035]' : ''}`}
                       aria-label={`${month.label}: ${total === null ? '—' : total.toLocaleString(locale)}`}
                     >
                       <div
@@ -459,7 +459,7 @@ export function StackedClassificationChart({
               </div>
             </div>
           </div>
-          <div className="ml-[3.5rem] grid grid-cols-5 gap-2 pt-2">
+          <div className="ml-[3.5rem] grid grid-cols-5 gap-3 pt-3">
             {months.map((month) => {
               const total = observedTotal(month);
               return (
@@ -478,7 +478,7 @@ export function StackedClassificationChart({
             })}
           </div>
           {/* Legend, as docs/design/figma-frames/17-admin-analytics-dashboard.png shows under the bars. */}
-          <div className="ml-[3.5rem] flex flex-wrap items-center gap-x-5 gap-y-2 border-t pt-3 mt-3" aria-hidden="true">
+          <div className="ml-[3.5rem] mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 border-t pt-4" aria-hidden="true">
             {(months[0]?.segments ?? []).map((segment, index) => {
               const status = STATUS[segment.key] ?? { color: `var(--s${index + 1})`, icon: '●' };
               const dimmed = selectedClassification !== null && selectedClassification !== segment.key;
