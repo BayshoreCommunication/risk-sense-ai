@@ -963,6 +963,32 @@ test('shared sandbox audit views stay masked and expose no unmask action [SEC-03
   expect(unmaskRequests).toEqual([]);
 });
 
+test('audit assessment summary partitions the total into intake, awaiting decision and closed [DASH-01, FR-26]', async ({ page }) => {
+  await authenticate(page, 'audit');
+  await mockApi(page, () => currentUser('audit', { fullAudit: true }), async ({ route, path, method }) => {
+    if (path === '/assessments' && method === 'GET') {
+      await ok(route, {
+        items: [],
+        total: 444,
+        page: 1,
+        limit: 25,
+        pages: 18,
+        counts: { in_progress: 12, intake_complete: 3, awaiting_decision: 79, escalated: 27, closed: 322, error_review: 1, pending: 107, all: 444 },
+        summary: { averageConfidence: null },
+      });
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/audit/assessments');
+  const summary = page.getByTestId('audit-assessment-summary');
+  await expect(summary).toContainText('444 assessments');
+  await expect(summary).toContainText('15in intake');
+  await expect(summary).toContainText('107awaiting decision or review');
+  await expect(summary).toContainText('322Closed');
+});
+
 test('a late unmasked audit response cannot overwrite a newer masked view [SEC-05, SEC-07]', async ({ page }) => {
   let unmaskCalls = 0;
   let releaseFirstUnmask!: () => void;

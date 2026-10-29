@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Database, History, ShieldCheck } from 'lucide-react';
+import { ClipboardList, Database, History, ShieldCheck } from 'lucide-react';
 import { AssessmentDetail } from '@/components/review/AssessmentDetail';
 import { ReconstructionView } from '@/components/review/ReconstructionView';
 import { PageHeader } from '@/components/shell/PageHeader';
@@ -45,8 +45,10 @@ export default function AuditAssessmentsPage() {
       <PageHeader title={t('title')} description={t('description')} requirements={['FR-26']} />
 
       {data && (
-        <div className="data-panel grid divide-y sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        // The three status tiles partition the total: intake + awaiting decision/review + closed (DASH-01).
+        <div className="data-panel grid divide-y lg:grid-cols-4 lg:divide-x lg:divide-y-0" data-testid="audit-assessment-summary">
           <div className="flex items-center gap-3 p-4"><span className="grid size-9 place-items-center rounded-lg bg-blue-500/10 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300"><Database className="size-4" aria-hidden="true" /></span><p className="text-sm font-medium">{t('count', { count: data.total })}</p></div>
+          <div className="flex items-center gap-3 p-4"><span className="grid size-9 place-items-center rounded-lg bg-slate-500/10 text-slate-700 dark:bg-slate-400/15 dark:text-slate-300"><ClipboardList className="size-4" aria-hidden="true" /></span><p className="text-sm font-medium"><span className="mr-1 text-xl tabular-nums">{data.counts.in_progress + data.counts.intake_complete}</span>{t('summary.intake')}</p></div>
           <div className="flex items-center gap-3 p-4"><span className="grid size-9 place-items-center rounded-lg bg-amber-500/10 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300"><History className="size-4" aria-hidden="true" /></span><p className="text-sm font-medium"><span className="mr-1 text-xl tabular-nums">{data.counts.pending}</span>{t('summary.pending')}</p></div>
           <div className="flex items-center gap-3 p-4"><span className="grid size-9 place-items-center rounded-lg bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300"><ShieldCheck className="size-4" aria-hidden="true" /></span><p className="text-sm font-medium"><span className="mr-1 text-xl tabular-nums">{data.counts.closed}</span>{status('closed')}</p></div>
         </div>

@@ -574,12 +574,21 @@ test('unverified password account sees a retryable resend flow without an applic
     }
     await route.abort('failed');
   });
+  let warmUpProbes = 0;
   await page.route('**/test-api/**', async (route) => {
-    backendCalls.push(new URL(route.request().url()).pathname);
+    const path = new URL(route.request().url()).pathname;
+    // The login page wakes the API with an unauthenticated readiness probe; it is not a session call.
+    if (path === '/test-api/health/ready' && route.request().method() === 'GET') {
+      warmUpProbes += 1;
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '{"data":{"status":"ok"}}' });
+      return;
+    }
+    backendCalls.push(path);
     await route.fulfill({ status: 500, contentType: 'application/json', body: '{}' });
   });
 
   await page.goto('/login');
+  await expect.poll(() => warmUpProbes).toBe(1);
   await page.getByLabel('Work email').fill(email);
   await page.getByLabel('Password').fill('correct-horse-battery-staple');
   await page.getByRole('button', { name: 'Resend verification email' }).click();
