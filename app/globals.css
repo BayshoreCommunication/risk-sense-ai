@@ -452,18 +452,22 @@
   /* Dense configuration work benefits from quieter surfaces than the navigational overview.
      The overview intentionally does not opt into this class. */
   .admin-workbench,
-  .system-workbench {
+  .system-workbench,
+  .audit-workbench {
     gap: 1rem;
   }
   .admin-workbench .data-panel,
   .admin-workbench .control-strip,
   .system-workbench .data-panel,
-  .system-workbench .control-strip {
+  .system-workbench .control-strip,
+  .audit-workbench .data-panel,
+  .audit-workbench .control-strip {
     border-radius: 0.75rem;
     box-shadow: 0 1px 2px color-mix(in oklch, var(--foreground), transparent 95%);
   }
   .admin-workbench .role-pill,
-  .system-workbench .role-pill {
+  .system-workbench .role-pill,
+  .audit-workbench .role-pill {
     border: 1px solid var(--border);
     border-radius: 0.5rem;
     background: color-mix(in oklch, var(--muted), var(--card) 34%);
@@ -480,7 +484,8 @@
     box-shadow: 0 1px 3px color-mix(in oklch, var(--foreground), transparent 94%);
   }
   .admin-workbench [data-slot='table-header'],
-  .system-workbench [data-slot='table-header'] {
+  .system-workbench [data-slot='table-header'],
+  .audit-workbench [data-slot='table-header'] {
     background: color-mix(in oklch, var(--muted), var(--card) 34%);
   }
   .system-workbench [data-slot='card'] {
@@ -497,6 +502,19 @@
   }
   .system-workbench [data-slot='table-body'] [data-slot='table-row']:hover {
     background: color-mix(in oklch, var(--muted), transparent 54%);
+  }
+  .audit-workbench [data-slot='table-row'] {
+    transition: background-color 140ms ease;
+  }
+  .audit-workbench [data-slot='table-body'] [data-slot='table-row']:hover {
+    background: color-mix(in oklch, var(--muted), transparent 54%);
+  }
+  .audit-workbench .audit-status-banner {
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 2px color-mix(in oklch, var(--foreground), transparent 96%);
+  }
+  .audit-workbench .audit-summary > div {
+    min-height: 4.75rem;
   }
   /* The user directory switches from cards to its bounded table at 75rem. Until that same
      breakpoint the page shell owns vertical scrolling, so the card list can never be clipped. */

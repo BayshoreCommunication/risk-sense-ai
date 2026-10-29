@@ -41,12 +41,12 @@ export default function AuditAssessmentsPage() {
 
   const items = data?.items ?? [];
   return (
-    <div className="page-shell">
+    <div className="page-shell audit-workbench">
       <PageHeader title={t('title')} description={t('description')} requirements={['FR-26']} />
 
       {data && (
         // The three status tiles partition the total: intake + awaiting decision/review + closed (DASH-01).
-        <div className="data-panel grid divide-y lg:grid-cols-4 lg:divide-x lg:divide-y-0" data-testid="audit-assessment-summary">
+        <div className="audit-summary data-panel grid divide-y lg:grid-cols-4 lg:divide-x lg:divide-y-0" data-testid="audit-assessment-summary">
           <div className="flex items-center gap-3 p-4"><span className="grid size-9 place-items-center rounded-lg bg-blue-500/10 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300"><Database className="size-4" aria-hidden="true" /></span><p className="text-sm font-medium">{t('count', { count: data.total })}</p></div>
           <div className="flex items-center gap-3 p-4"><span className="grid size-9 place-items-center rounded-lg bg-slate-500/10 text-slate-700 dark:bg-slate-400/15 dark:text-slate-300"><ClipboardList className="size-4" aria-hidden="true" /></span><p className="text-sm font-medium"><span className="mr-1 text-xl tabular-nums">{data.counts.in_progress + data.counts.intake_complete}</span>{t('summary.intake')}</p></div>
           <div className="flex items-center gap-3 p-4"><span className="grid size-9 place-items-center rounded-lg bg-amber-500/10 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300"><History className="size-4" aria-hidden="true" /></span><p className="text-sm font-medium"><span className="mr-1 text-xl tabular-nums">{data.counts.pending}</span>{t('summary.pending')}</p></div>
@@ -81,7 +81,7 @@ export default function AuditAssessmentsPage() {
           </article>
         ))}
       </div>
-      <div className="data-panel fills hidden min-w-0 overflow-hidden min-[75rem]:flex">
+      <div className="audit-assessments-panel data-panel fills hidden min-w-0 overflow-hidden min-[75rem]:flex">
         <Table className="min-w-[72rem]" containerLabel={t('title')}>
           <TableHeader>
             <TableRow>

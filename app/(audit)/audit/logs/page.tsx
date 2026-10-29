@@ -119,7 +119,7 @@ export default function AuditLogsPage() {
   }
 
   return (
-    <div className="page-shell">
+    <div className="page-shell audit-workbench">
       <PageHeader
         title={t('title')}
         description={t('description')}
@@ -149,7 +149,7 @@ export default function AuditLogsPage() {
         }
       />
       <div
-        className={`flex flex-col gap-3 rounded-xl border p-4 text-sm sm:flex-row sm:items-center sm:justify-between ${
+        className={`audit-status-banner flex flex-col gap-3 border p-4 text-sm sm:flex-row sm:items-center sm:justify-between ${
           unmask ? 'border-amber-300 bg-amber-50/80 text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100' : 'border-blue-200 bg-blue-50/65 text-blue-950 dark:border-blue-400/25 dark:bg-blue-400/10 dark:text-blue-100'
         }`}
         role="status"
@@ -233,7 +233,7 @@ export default function AuditLogsPage() {
           </article>
         ))}
       </div>
-      <div className="data-panel hidden min-w-0 overflow-hidden min-[75rem]:flex">
+      <div className="audit-logs-panel data-panel fills hidden min-w-0 overflow-hidden min-[75rem]:flex">
         <Table className="min-w-[56rem]" containerLabel={t('title')}>
           <TableHeader>
             <TableRow>

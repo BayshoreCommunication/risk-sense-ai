@@ -759,3 +759,37 @@ The inner bot glyph scales between 90% and 110% over 2.6 seconds while the circu
 
 final result: passed
 
+## 2026-10-29 Audit role responsive workbench
+
+### Comparison target
+
+- **Source visual truth:** `../docs/audits/2026-10-29-audit-responsive/source-audit-logs-desktop.png`, `source-audit-assessments-desktop.png` and `source-audit-logs-mobile.png` captured before implementation.
+- **Rendered implementation:** `../docs/audits/2026-10-29-audit-responsive/implementation-audit-logs-desktop.png`, `implementation-audit-assessments-desktop.png` and `implementation-audit-logs-mobile.png`.
+- **Combined evidence:** `comparison-audit-logs-desktop.png`, `comparison-audit-assessments-desktop.png` and `comparison-audit-logs-mobile.png` in the same folder.
+- **Viewport and density:** desktop 1,440 × 760 CSS px and source/implementation pixels at 1×; mobile 390 × 780 CSS px and source/implementation pixels at 1×. No density normalization was required.
+- **State:** authenticated PAID Audit role with 50 masked audit events and 25 assessment rows. Source and implementation use the same mocked API shape, filters and content volume.
+
+### Full-view comparison evidence
+
+The implementation preserves the two-screen Audit information architecture, existing labels, event and assessment fields, summary metrics, filters, masking controls and actions. The log table now occupies a bounded desktop evidence region, so pagination and the immutable-record note stay visible. Mobile continues to use complete evidence cards and one page-level vertical scroller.
+
+### Focused comparison evidence
+
+A separate focused crop was not needed because the changes concern page-level scroll ownership, surface radius/elevation and complete table/card composition. All relevant details remain legible in the equal-size full-view comparisons.
+
+### Required fidelity surfaces
+
+- **Fonts and typography:** unchanged. Page, table, filter, badge and governance-copy hierarchy retain the existing font family, weights and sizes.
+- **Spacing and layout rhythm:** work pages use a consistent 16 px section rhythm, 12 px panel radii and low elevation. The desktop evidence table absorbs remaining height instead of extending the whole page.
+- **Colors and visual tokens:** semantic masking blue and assessment-status colors are unchanged. Neutral surfaces and the Audit role pill now follow the quiet privileged-workspace tokens.
+- **Image quality and asset fidelity:** no raster assets changed. Existing application and Lucide icons remain source assets; no substitute drawings were introduced.
+- **Copy and content:** unchanged. The same data, filters, notes and actions are rendered.
+
+### Findings and comparison history
+
+- Pass 1 identified one P2 scroll issue: the long desktop audit table pushed pagination and governance guidance below the visible workspace, and one P2 consistency issue: elevated rounded surfaces did not match the refined privileged workspaces.
+- Pass 2 bounded both desktop evidence tables, applied the scoped Audit workbench and retained flowing cards below 1,200 px.
+- Post-fix combined comparisons and four-viewport browser checks show no document overflow or competing vertical scroller. No actionable P0, P1 or P2 difference remains.
+
+final result: passed
+
