@@ -131,7 +131,7 @@ export default function DepartmentsPage() {
   }
 
   return (
-    <div className="page-shell">
+    <div className="page-shell system-workbench">
       <PageHeader
         title={t('title')}
         description={t('description')}

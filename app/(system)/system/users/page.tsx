@@ -249,7 +249,7 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="page-shell max-w-7xl">
+    <div className="page-shell system-workbench max-w-7xl">
       <PageHeader
         title={t('title')}
         description={t('description')}
@@ -265,7 +265,7 @@ export default function UsersPage() {
         </div>
       )}
 
-      <section className="overflow-hidden rounded-xl border bg-card shadow-[0_10px_30px_rgba(15,35,65,0.06)]" aria-busy={loading}>
+      <section className="system-users-panel fills overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgba(15,35,65,0.05)]" aria-busy={loading}>
         <div className="flex flex-wrap items-center justify-between gap-4 border-b px-4 py-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <span className="card-icon"><UsersRound className="size-5" aria-hidden="true" /></span>
@@ -277,7 +277,7 @@ export default function UsersPage() {
           <Button className="shrink-0" variant="outline" onClick={openCreate} disabled={controlsDisabled}><UserPlus aria-hidden="true" />{t('provision')}</Button>
         </div>
 
-        <div className="hidden min-[75rem]:block">
+        <div className="hidden min-h-0 flex-1 min-[75rem]:flex">
           <Table className="min-w-[840px] table-fixed" containerLabel={t('list.title')}>
             <TableHeader className="bg-muted">
               <TableRow>

@@ -163,7 +163,7 @@ export default function SystemAuditArchivePage() {
   const latest = manifests[0] ?? null;
 
   return (
-    <div className="page-shell">
+    <div className="page-shell system-workbench">
       <PageHeader
         title={t('title')}
         description={t('description')}

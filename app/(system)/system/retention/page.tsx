@@ -147,7 +147,7 @@ export default function RetentionPage() {
     : [];
 
   return (
-    <div className="page-shell">
+    <div className="page-shell system-workbench">
       <PageHeader
         title={t('title')}
         description={t('description')}
@@ -155,7 +155,7 @@ export default function RetentionPage() {
       />
 
       {settings && (
-        <Card className="overflow-hidden shadow-[0_10px_30px_rgba(15,35,65,0.06)]">
+        <Card className="overflow-hidden">
           <CardHeader className="border-b">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>

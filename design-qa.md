@@ -234,6 +234,40 @@ Automated completion evidence: current typecheck and lint passed; the 29/29-rout
 
 final result: passed
 
+## 2026-10-29 System Administrator responsive workbench
+
+### Comparison target
+
+- **Source visual truth:** `../docs/audits/2026-10-29-system-admin-responsive/live-system-users-viewport.png` (3,108 × 1,985 px in-app Browser capture of the live System Users route).
+- **Rendered desktop implementation:** `../docs/audits/2026-10-29-system-admin-responsive/implementation-system-users-desktop.png` (1,440 × 900 px at a 1,440 × 900 CSS viewport, DPR 1).
+- **Rendered mobile implementation:** `../docs/audits/2026-10-29-system-admin-responsive/implementation-system-users-mobile.png` (390 × 844 px at a 390 × 844 CSS viewport, DPR 1).
+- **Combined comparison:** `../docs/audits/2026-10-29-system-admin-responsive/comparison-live-vs-implementation.png` (2,880 × 900 px). The live app region was cropped to 2,084 × 1,303 px and normalized to 1,440 × 900 before being placed beside the implementation; browser whitespace was excluded without stretching app content.
+- **State:** authenticated System Administrator, light theme, populated user directory. The live and local datasets differ, so the comparison evaluates hierarchy, density, containment and component treatment rather than row-for-row content.
+
+### Full-view comparison evidence
+
+The implementation keeps the same shell, navigation, title, description, role indicator, provision action, user columns, status semantics and policy note. It reduces decorative elevation, keeps the directory inside the available desktop height, and lets the table—not the whole document—own scrolling. The 390 px implementation replaces the six-column table with complete user cards and one page-level vertical scroll path.
+
+### Focused comparison evidence
+
+The user-directory panel preserves every visible data category while using a quieter header, 12 px radius, 36 px icon tile, flat table header and restrained row feedback. The mobile card includes identity, role, MFA, departments, last login, status and Edit, so the responsive change does not hide operational evidence.
+
+### Required fidelity surfaces
+
+- **Fonts and typography:** existing Geist hierarchy, weights and labels are unchanged. Table and card copy remain readable without truncating names or email addresses beyond their bounded identity row.
+- **Spacing and layout rhythm:** section gaps are reduced to a consistent 16 px; cards use 12 px radii and low elevation; the table fills the remaining desktop height. Mobile cards keep 16 px padding and 44 px action targets.
+- **Colors and visual tokens:** neutral surfaces and subtle borders carry structure. Blue, emerald, violet and amber remain limited to role/status meaning; no new decorative gradient was added.
+- **Image quality and asset fidelity:** the existing RiskSense brand asset and Lucide icons remain vector/raster sharp at their original roles. No custom SVG, CSS-drawn icon or placeholder image was introduced.
+- **Copy and content:** all existing System Administrator copy, user data, policy guidance and actions are preserved. No metric, control or fake data field was added to the product.
+
+### Findings and comparison history
+
+- Pass 1 found one P2 responsive defect: at 1,024 px the user list rendered as cards but the panel already used the desktop bounded-height behavior, clipping the lower cards.
+- Pass 2 aligned bounded table behavior with the existing 1,200 px card/table breakpoint. Below 1,200 px the page shell owns vertical scrolling; at and above it the table owns vertical scrolling.
+- Post-fix browser coverage passes at 390, 768, 1,024 and 1,440 px with no document-level horizontal overflow and exactly one vertical scroll owner. The complete 19-test System Administrator suite covers users, tenant/SSO, retention, disaster recovery, departments, conformance and audit archive. No actionable P0, P1 or P2 finding remains.
+
+final result: passed
+
 ## 2026-10-29 soft classification chart palette
 
 ### Comparison target

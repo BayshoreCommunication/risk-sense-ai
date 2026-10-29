@@ -59,7 +59,7 @@ export default function TenantSettingsPage() {
   if (!merged) return <p className="text-sm text-muted-foreground">{error ?? t('loading')}</p>;
   const dirty = Object.keys(draft).length > 0;
   return (
-    <div className="page-shell max-w-7xl">
+    <div className="page-shell system-workbench max-w-7xl">
       <PageHeader
         title={t('title')}
         description={
@@ -71,7 +71,7 @@ export default function TenantSettingsPage() {
         requirements={['FR-03', 'SEC-02']}
       />
 
-      <Card className="overflow-hidden shadow-[0_10px_30px_rgba(15,35,65,0.06)]">
+      <Card className="overflow-hidden">
         <CardContent className="divide-y p-0">
           <section className="space-y-5 p-4 sm:p-6" aria-labelledby="identity-provider-title">
             <div className="flex items-start gap-3">

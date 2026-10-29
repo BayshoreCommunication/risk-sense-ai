@@ -73,6 +73,71 @@ test('/system lands on user provisioning and the rail exposes every workspace [D
   }
 });
 
+test('system user provisioning keeps one vertical scroll owner across phone, tablet, laptop, and desktop [FR-02, FR-10, NFR-08]', async ({ page }) => {
+  const departments = [
+    { _id: '64b000000000000000000020', name: 'Finance', personaIds: [] },
+    { _id: '64b000000000000000000021', name: 'Operations', personaIds: [] },
+  ];
+  const users = Array.from({ length: 14 }, (_, index) => ({
+    _id: `64b0000000000000000001${String(index).padStart(2, '0')}`,
+    email: `reviewer-${index + 1}@example.test`,
+    name: `Review Specialist ${index + 1}`,
+    role: 'requestor' as const,
+    departmentIds: [departments[index % departments.length]._id],
+    crossDepartmentAccess: false,
+    mfaEnrolled: index % 2 === 0,
+    status: 'active' as const,
+    lastLoginAt: index % 3 === 0 ? null : '2026-10-29T08:00:00.000Z',
+  }));
+
+  await mockApi(page, async ({ route, path, method }) => {
+    if (path === '/system/users' && method === 'GET') {
+      await ok(route, users);
+      return true;
+    }
+    if (path === '/system/departments' && method === 'GET') {
+      await ok(route, departments);
+      return true;
+    }
+    if (path === '/system/tenant' && method === 'GET') {
+      await ok(route, { ...me.tenant, name: 'Test tenant', retentionPolicy: {}, authPolicy: { otpRequired: true }, sso: { providerId: null, domain: null } });
+      return true;
+    }
+    return false;
+  });
+
+  for (const viewport of [
+    { width: 390, height: 780 },
+    { width: 768, height: 820 },
+    { width: 1024, height: 768 },
+    { width: 1440, height: 760 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto('/system/users');
+    await expect(page.getByRole('heading', { name: 'User and role provisioning' })).toBeVisible();
+    await expect(page.getByText('Review Specialist 14')).toHaveCount(2);
+
+    const layout = await page.evaluate(() => {
+      const shell = document.querySelector<HTMLElement>('.page-shell');
+      const table = document.querySelector<HTMLElement>('[data-slot="table-container"]');
+      const isVisible = (element: HTMLElement | null) => Boolean(element && element.getClientRects().length > 0);
+      return {
+        documentOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+        shellScrolls: Boolean(shell && shell.scrollHeight > shell.clientHeight + 1),
+        tableVisible: isVisible(table),
+        tableScrolls: Boolean(isVisible(table) && table && table.scrollHeight > table.clientHeight + 1),
+      };
+    });
+
+    expect(layout.documentOverflow).toBe(false);
+    if (viewport.width < 1200) {
+      expect(layout).toMatchObject({ shellScrolls: true, tableVisible: false, tableScrolls: false });
+    } else {
+      expect(layout).toMatchObject({ shellScrolls: false, tableVisible: true, tableScrolls: true });
+    }
+  }
+});
+
 test('SSO, session, and sector configuration mirror the supported tenant contract [FR-03, SEC-02, NFR-04, NFR-08]', async ({ page }) => {
   const settings = {
     ...me.tenant,

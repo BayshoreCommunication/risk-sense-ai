@@ -451,15 +451,19 @@
 
   /* Dense configuration work benefits from quieter surfaces than the navigational overview.
      The overview intentionally does not opt into this class. */
-  .admin-workbench {
+  .admin-workbench,
+  .system-workbench {
     gap: 1rem;
   }
   .admin-workbench .data-panel,
-  .admin-workbench .control-strip {
+  .admin-workbench .control-strip,
+  .system-workbench .data-panel,
+  .system-workbench .control-strip {
     border-radius: 0.75rem;
     box-shadow: 0 1px 2px color-mix(in oklch, var(--foreground), transparent 95%);
   }
-  .admin-workbench .role-pill {
+  .admin-workbench .role-pill,
+  .system-workbench .role-pill {
     border: 1px solid var(--border);
     border-radius: 0.5rem;
     background: color-mix(in oklch, var(--muted), var(--card) 34%);
@@ -475,8 +479,32 @@
     border-color: color-mix(in oklch, var(--primary), var(--border) 72%);
     box-shadow: 0 1px 3px color-mix(in oklch, var(--foreground), transparent 94%);
   }
-  .admin-workbench [data-slot='table-header'] {
+  .admin-workbench [data-slot='table-header'],
+  .system-workbench [data-slot='table-header'] {
     background: color-mix(in oklch, var(--muted), var(--card) 34%);
+  }
+  .system-workbench [data-slot='card'] {
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 2px color-mix(in oklch, var(--foreground), transparent 95%);
+  }
+  .system-workbench .card-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.625rem;
+  }
+  .system-workbench [data-slot='table-row'] {
+    transition: background-color 140ms ease;
+  }
+  .system-workbench [data-slot='table-body'] [data-slot='table-row']:hover {
+    background: color-mix(in oklch, var(--muted), transparent 54%);
+  }
+  /* The user directory switches from cards to its bounded table at 75rem. Until that same
+     breakpoint the page shell owns vertical scrolling, so the card list can never be clipped. */
+  @media (max-width: 74.999rem) {
+    .system-users-panel.fills {
+      flex: none;
+      min-height: auto;
+    }
   }
 
   /* Weight slider on the scoring matrix screen: filled blue track up to the thumb. */
