@@ -91,7 +91,7 @@ function ReportFilter({
 function ResultTable({ result, title, positiveCountsOnly = false, formatGroupIdentifiers = false }: { result: ReportResult; title: string; positiveCountsOnly?: boolean; formatGroupIdentifiers?: boolean }) {
   const rows = positiveCountsOnly ? result.rows.filter((row) => Number(row.count) > 0) : result.rows;
   return (
-    <div className="overflow-hidden rounded-xl border">
+    <div className="min-w-0 overflow-hidden rounded-xl border">
       <Table containerLabel={title}>
         <caption className="sr-only">{title}</caption>
         <TableHeader className="bg-muted">

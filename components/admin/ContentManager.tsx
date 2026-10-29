@@ -327,7 +327,7 @@ export function ContentManager(props: ContentManagerProps) {
   );
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-5">
+    <div className="content-manager flex min-h-0 min-w-0 flex-1 flex-col gap-5">
       {(() => {
         const count = !loading && <Badge variant="secondary" aria-label={`${visible.length} ${title}`}>{visible.length}</Badge>;
         const controls = (
@@ -384,7 +384,7 @@ export function ContentManager(props: ContentManagerProps) {
       {summary && !loading ? summary(items) : null}
 
       {card ? (
-        <section className="scrollbar-subtle min-h-0 flex-1 space-y-3 overflow-y-auto pr-1" aria-busy={loading} aria-label={title}>
+        <section className="content-manager-list scrollbar-subtle min-h-0 flex-1 space-y-3 overflow-y-auto pr-1" aria-busy={loading} aria-label={title}>
           {loading && <p className="rounded-xl border bg-card p-8 text-center text-muted-foreground">{t('loading')}</p>}
           {!loading && visible.length === 0 && <p className="rounded-xl border bg-card p-8 text-center text-muted-foreground">{t('empty')}</p>}
           {visible.map((item) => {
