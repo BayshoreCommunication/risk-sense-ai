@@ -1366,7 +1366,8 @@
       "title": "Assessments (audit view)",
       "description": "Every assessment in the tenant, newest first. “Reconstruct” rebuilds a record from the audit history and flags drift.",
       "summary": {
-        "pending": "open or pending"
+        "intake": "in intake",
+        "pending": "awaiting decision or review"
       },
       "columns": {
         "started": "Started",

@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { ArrowRight, BarChart3, CheckCircle2, LoaderCircle, LockKeyhole, ShieldCheck, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -67,6 +67,12 @@ function LoginForm() {
   const [notice, setNotice] = useState<LoginNotice | null>(null);
   const [busy, setBusy] = useState(false);
   const [activeDemoRole, setActiveDemoRole] = useState<Role | null>(null);
+
+  // Wake the serverless API and its database connection while the visitor reads this page, so the
+  // first sign-in does not pay the cold start (NFR-01). Best effort: the result is never shown.
+  useEffect(() => {
+    void api.GET('/health/ready').catch(() => undefined);
+  }, []);
 
   const routeNotice = params.get('reason') === 'session_expired'
     ? t('sessionExpired')
