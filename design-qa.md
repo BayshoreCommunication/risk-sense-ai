@@ -234,6 +234,43 @@ Automated completion evidence: current typecheck and lint passed; the 29/29-rout
 
 final result: passed
 
+## 2026-10-29 soft classification chart palette
+
+### Comparison target
+
+- **Source visual truth:** `../docs/audits/2026-10-29-chart-soft-palette/source-chart-deep-colors.png` (1043 × 368 px owner-supplied focused Light chart crop).
+- **Rendered Light implementation:** `../docs/audits/2026-10-29-chart-soft-palette/implementation-chart-soft-light.jpg` (1164 × 655 px in-app Browser capture).
+- **Rendered Dark implementation:** `../docs/audits/2026-10-29-chart-soft-palette/implementation-chart-soft-dark.jpg` (1164 × 655 px in-app Browser capture).
+- **Combined comparison:** `../docs/audits/2026-10-29-chart-soft-palette/comparison-source-top-implementation-bottom.jpg` (1042 × 978 px; source on top and Light implementation below).
+- **Viewport and density:** implementation captured at 1164 × 655 CSS px and 1× density. The source is a focused crop, so comparison is normalized to the shared summary/chart region rather than browser or workspace chrome.
+- **State:** authenticated Administrator, monthly classification Chart view, September selected.
+
+### Full-view comparison evidence
+
+The information hierarchy, data, month order, stacked proportions, summary totals and selection surface remain unchanged. The implementation retains the recently increased bar/label spacing and Reset action. Only the four classification color tokens change.
+
+### Focused comparison evidence
+
+The source's deep green, ochre, terracotta and red fills dominated the white plot. The implementation uses softer green, gold, orange and rose fills. The hues still communicate Monitor Only → Risk → Elevated Risk → Issue and remain identifiable through summary icons, labels, legend text and the Table alternative. Dark mode uses brighter companions rather than reusing the Light fills against navy.
+
+### Required fidelity surfaces
+
+- **Fonts and typography:** unchanged; title, summary and axis hierarchy remain the existing Geist/system stack with the same weights and line heights.
+- **Spacing and layout rhythm:** unchanged; plot height, five month tracks, summary grid and legend rhythm remain intact.
+- **Colors and visual tokens:** corrected. Four root classification tokens now have explicit Light and Dark values; summary markers, bars and legends share them.
+- **Image quality and asset fidelity:** no new raster or decorative asset was introduced. Existing product mark and library icons remain unchanged.
+- **Copy and content:** unchanged. All metric values, month labels, classifications and actions remain identical.
+
+### Findings and comparison history
+
+- Pass 1 identified one P2 visual-weight issue: semantically correct but deep fills made the chart feel heavy on the refined Light dashboard.
+- Pass 2 introduced softer theme-aware classification tokens while preserving classification order, selected-state behavior and non-color labels.
+- Post-fix Light and Dark in-app Browser captures show clear segment separation without saturated blocks. Browser console inspection reports no errors.
+- The related dataset-table defect is covered by a 1440 px browser test that proves the File and Content rows cells do not overlap and the content cell does not overflow. The scoring-page browser snapshot contains no internal requirement key.
+- Lint, TypeScript, four Administrator responsive tests and the production build pass. No actionable P0, P1 or P2 finding remains.
+
+final result: passed
+
 ## 2026-10-28 yes/no explanation locked-saving polish
 
 ### Comparison target

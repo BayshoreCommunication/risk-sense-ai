@@ -4,7 +4,7 @@ import { ACCOUNTS, devLogin } from './helpers';
 /** T-100: one journey per role, plus the role guard (DASH-04, SEC-01) and the AI-01 decision path. */
 
 async function expectNoInternalRequirementKeys(page: Page) {
-  await expect(page.locator('header.workspace-header')).not.toContainText(/\b(?:AI|DASH|FR|NFR|SEC)-\d/);
+  await expect(page.locator('main')).not.toContainText(/\b(?:AI|DASH|FR|NFR|SEC)-\d/);
 }
 
 test.describe('requestor', () => {

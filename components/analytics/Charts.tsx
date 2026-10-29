@@ -14,10 +14,10 @@ export const SERIES_LIGHT = ['#2f6fb3', '#b85c34', '#2e7d66', '#a66b1f', '#a04f7
 export const SERIES_DARK = ['#5b9be0', '#d97a4e', '#48a689', '#c9973a', '#c9749b', '#73a261', '#9184ce', '#d96b6b', '#98a2b3'];
 /** Classification = ordered status: monitor_only → good, risk → warning, elevated_risk → serious, issue → critical. */
 export const STATUS: Record<string, { color: string; icon: string }> = {
-  monitor_only: { color: '#23825b', icon: '●' },
-  risk: { color: '#bd811f', icon: '▲' },
-  elevated_risk: { color: '#c96e48', icon: '◆' },
-  issue: { color: '#c64a4a', icon: '■' },
+  monitor_only: { color: 'var(--chart-monitor-only, #65a98b)', icon: '●' },
+  risk: { color: 'var(--chart-risk, #d6af57)', icon: '▲' },
+  elevated_risk: { color: 'var(--chart-elevated-risk, #de9172)', icon: '◆' },
+  issue: { color: 'var(--chart-issue, #db7378)', icon: '■' },
 };
 
 export interface StackedClassificationMonth {
@@ -30,6 +30,8 @@ export interface StackedClassificationMonth {
 export function ChartStyles() {
   return (
     <style>{`
+      :root { --chart-monitor-only:#65a98b; --chart-risk:#d6af57; --chart-elevated-risk:#de9172; --chart-issue:#db7378; }
+      .dark { --chart-monitor-only:#78c4a2; --chart-risk:#e4c36f; --chart-elevated-risk:#e8a58a; --chart-issue:#e9898e; }
       .viz { --viz-surface:transparent; --viz-ink:#172033; --viz-ink2:#475467; --viz-muted:#667085; --viz-grid:#dbe2ea; --viz-axis:#bcc6d2; --viz-tooltip-bg:#172033; --viz-tooltip-text:#f8fafc; --viz-tooltip-border:#344054; --viz-point-ring:#ffffff;
         ${SERIES_LIGHT.map((c, i) => `--s${i + 1}:${c};`).join('')} }
       .dark .viz { --viz-surface:transparent; --viz-ink:var(--foreground); --viz-ink2:color-mix(in srgb,var(--foreground) 78%,transparent); --viz-muted:var(--muted-foreground); --viz-grid:color-mix(in srgb,var(--border) 78%,transparent); --viz-axis:var(--border); --viz-tooltip-bg:#132238; --viz-tooltip-text:#f8fafc; --viz-tooltip-border:#36516f; --viz-point-ring:var(--card);

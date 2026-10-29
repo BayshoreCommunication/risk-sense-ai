@@ -233,7 +233,16 @@ export default function DatasetsPage() {
       {error && <p className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</p>}
 
       <section className="data-panel fills hidden min-[75rem]:flex" aria-busy={loading}>
-        <Table className="min-w-[900px]" containerLabel={t('title')}>
+        <Table className="min-w-[1120px] table-fixed" containerLabel={t('title')}>
+          <colgroup>
+            <col className="w-[20%]" />
+            <col className="w-[22%]" />
+            <col className="w-[11%]" />
+            <col className="w-[11%]" />
+            <col className="w-[15%]" />
+            <col className="w-[9%]" />
+            <col className="w-[12%]" />
+          </colgroup>
           <TableHeader>
             <TableRow>
               <TableHead>{t('columns.file')}</TableHead>
@@ -274,8 +283,10 @@ export default function DatasetsPage() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="font-semibold tabular-nums">{contentRows(d)}</div>
-                  <div className="mt-0.5 text-xs text-muted-foreground tabular-nums">
-                    {t('columns.personas')} {d.counts.personas} · {t('columns.scenarios')} {d.counts.scenarios} · {t('columns.questions')} {d.counts.questions}
+                  <div className="mt-1 flex flex-wrap justify-end gap-x-2 gap-y-0.5 text-xs leading-5 text-muted-foreground tabular-nums">
+                    <span>{t('columns.personas')} {d.counts.personas}</span>
+                    <span>{t('columns.scenarios')} {d.counts.scenarios}</span>
+                    <span>{t('columns.questions')} {d.counts.questions}</span>
                   </div>
                   <div className="mt-1 flex items-center justify-end gap-1 text-xs text-muted-foreground">
                     <span>{t('columns.errors')}</span>
