@@ -14,10 +14,10 @@ export const SERIES_LIGHT = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba
 export const SERIES_DARK = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767', '#898781'];
 /** Classification = ordered status: monitor_only → good, risk → warning, elevated_risk → serious, issue → critical. */
 export const STATUS: Record<string, { color: string; icon: string }> = {
-  monitor_only: { color: '#0ca30c', icon: '●' },
-  risk: { color: '#fab219', icon: '▲' },
-  elevated_risk: { color: '#ec835a', icon: '◆' },
-  issue: { color: '#d03b3b', icon: '■' },
+  monitor_only: { color: '#23825b', icon: '●' },
+  risk: { color: '#bd811f', icon: '▲' },
+  elevated_risk: { color: '#c96e48', icon: '◆' },
+  issue: { color: '#c64a4a', icon: '■' },
 };
 
 export interface StackedClassificationMonth {
@@ -401,18 +401,18 @@ export function StackedClassificationChart({
       <div className="overflow-x-auto pb-2">
         <div className="min-w-[34rem]">
           <div className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-3">
-            <div className="flex h-60 flex-col justify-between pb-px text-right text-[10px] tabular-nums text-muted-foreground" aria-hidden="true">
+            <div className="flex h-56 flex-col justify-between pb-px text-right text-[10px] tabular-nums text-muted-foreground" aria-hidden="true">
               {tickValues.map((tick, index) => (
                 <span key={`${tick}-${index}`}>{tick.toLocaleString(locale)}</span>
               ))}
             </div>
-            <div className="relative h-60 border-b">
+            <div className="relative h-56 border-b">
               <div className="pointer-events-none absolute inset-0 flex flex-col justify-between" aria-hidden="true">
                 {tickValues.map((tick, index) => (
                   <span key={`${tick}-${index}`} className="block border-t border-dashed border first:border-solid" />
                 ))}
               </div>
-              <div className="absolute inset-0 flex items-end justify-around gap-8 px-6">
+              <div className="absolute inset-0 flex items-end justify-around gap-6 px-4">
                 {months.map((month) => {
                   const total = observedTotal(month);
                   const isSelectedMonth = selectedMonth === month.key;
@@ -421,11 +421,11 @@ export function StackedClassificationChart({
                   return (
                     <div
                       key={month.key}
-                      className={`flex h-full min-w-12 max-w-24 flex-1 items-end rounded-t-xl transition-colors ${isSelectedMonth ? 'bg-primary/6' : ''}`}
+                      className={`flex h-full min-w-12 max-w-20 flex-1 items-end border-x border-transparent transition-colors ${isSelectedMonth ? 'border-primary/15 bg-primary/[0.035]' : ''}`}
                       aria-label={`${month.label}: ${total === null ? '—' : total.toLocaleString(locale)}`}
                     >
                       <div
-                        className={`flex w-full flex-col-reverse overflow-hidden rounded-t-xl shadow-[0_2px_10px_rgba(15,35,65,0.10)] ring-1 transition-shadow dark:shadow-[0_2px_14px_rgba(0,0,0,0.24)] ${isSelectedMonth ? 'ring-primary/45' : 'ring-black/5 dark:ring-white/10'}`}
+                        className={`flex w-full flex-col-reverse overflow-hidden rounded-t-[3px] transition-[box-shadow,opacity] ${isSelectedMonth ? 'ring-1 ring-primary/55' : 'ring-1 ring-border/80'}`}
                         style={{ height: `${stackHeight}%` }}
                       >
                         {month.segments.map((segment, index) => {
@@ -438,12 +438,11 @@ export function StackedClassificationChart({
                             <button
                               key={segment.key}
                               type="button"
-                              className="group relative w-full outline-none transition-[filter,opacity] hover:brightness-110 focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
+                              className="group relative w-full outline-none transition-opacity hover:opacity-85 focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
                               style={{
                                 height: `${height}%`,
                                 minHeight: '0.3rem',
-                                backgroundImage: `linear-gradient(180deg, color-mix(in srgb, ${status.color} 88%, white) 0%, ${status.color} 100%)`,
-                                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.28)',
+                                background: status.color,
                                 opacity: dimmed ? 0.45 : 1,
                               }}
                               title={`${month.label} · ${status.icon} ${segment.label}: ${value.toLocaleString(locale)}`}
@@ -467,7 +466,7 @@ export function StackedClassificationChart({
                 <button
                   key={month.key}
                   type="button"
-                  className={`rounded-lg px-1.5 py-1.5 text-center text-xs outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring ${selectedMonth === month.key ? 'bg-primary/10 font-semibold text-primary' : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'}`}
+                  className={`rounded-md border border-transparent px-1.5 py-1.5 text-center text-xs outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring ${selectedMonth === month.key ? 'border-border bg-muted/70 font-semibold text-foreground' : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'}`}
                   aria-label={selectMonthLabel(month.label, total === null ? '—' : total.toLocaleString(locale))}
                   aria-pressed={selectedMonth === month.key}
                   onClick={() => onMonthSelect(month.key)}
@@ -485,7 +484,7 @@ export function StackedClassificationChart({
               const dimmed = selectedClassification !== null && selectedClassification !== segment.key;
               return (
                 <span key={segment.key} className={`flex items-center gap-2 text-xs ${dimmed ? 'text-muted-foreground/55' : 'text-foreground/80'}`}>
-                  <span className="size-2.5 rounded-sm" style={{ background: status.color, opacity: dimmed ? 0.45 : 1 }} />
+                  <span className="size-2 rounded-full" style={{ background: status.color, opacity: dimmed ? 0.45 : 1 }} />
                   {segment.label}
                 </span>
               );
@@ -512,15 +511,15 @@ export function StatTile({
   tone?: 'blue' | 'green' | 'amber' | 'violet';
 }) {
   const tones = {
-    blue: 'bg-blue-500/10 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300',
-    green: 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300',
-    amber: 'bg-amber-500/10 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300',
-    violet: 'bg-violet-500/10 text-violet-700 dark:bg-violet-400/15 dark:text-violet-300',
+    blue: 'text-blue-700 dark:text-blue-300',
+    green: 'text-emerald-700 dark:text-emerald-300',
+    amber: 'text-amber-700 dark:text-amber-300',
+    violet: 'text-violet-700 dark:text-violet-300',
   } as const;
 
   return (
-    <div className="flex min-h-24 items-center gap-3 rounded-xl border bg-card p-3 shadow-[0_1px_2px_rgba(15,35,65,0.05)] min-[96rem]:min-h-28 min-[96rem]:gap-4 min-[96rem]:p-4">
-      <span className={`grid size-10 shrink-0 place-items-center rounded-xl min-[96rem]:size-12 ${tones[tone]}`} aria-hidden="true">
+    <div className="flex min-h-20 items-center gap-3 rounded-lg border bg-card p-3 min-[96rem]:min-h-24 min-[96rem]:p-4">
+      <span className={`grid size-9 shrink-0 place-items-center rounded-md border border-current/10 bg-muted/35 min-[96rem]:size-10 ${tones[tone]}`} aria-hidden="true">
         {icon}
       </span>
       <div className="min-w-0">

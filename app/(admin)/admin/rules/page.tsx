@@ -10,10 +10,10 @@ import { useWorkspace } from '@/components/shell/workspace-context';
 
 /** Icon and colour per forced classification, following docs/design/figma-frames/14-admin-rule-engine.png. */
 const CLASSIFICATION_TONE: Record<string, { icon: LucideIcon; tile: string; text: string }> = {
-  monitor_only: { icon: ShieldCheck, tile: 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300', text: 'text-emerald-700 dark:text-emerald-300' },
-  risk: { icon: AlertTriangle, tile: 'bg-amber-500/10 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300', text: 'text-amber-700 dark:text-amber-300' },
-  elevated_risk: { icon: ArrowUpCircle, tile: 'bg-orange-500/12 text-orange-700 dark:bg-orange-400/15 dark:text-orange-300', text: 'text-orange-700 dark:text-orange-300' },
-  issue: { icon: Siren, tile: 'bg-red-500/10 text-red-700 dark:bg-red-400/15 dark:text-red-300', text: 'text-red-700 dark:text-red-300' },
+  monitor_only: { icon: ShieldCheck, tile: 'text-emerald-700 dark:text-emerald-300', text: 'text-emerald-700 dark:text-emerald-300' },
+  risk: { icon: AlertTriangle, tile: 'text-amber-700 dark:text-amber-300', text: 'text-amber-700 dark:text-amber-300' },
+  elevated_risk: { icon: ArrowUpCircle, tile: 'text-orange-700 dark:text-orange-300', text: 'text-orange-700 dark:text-orange-300' },
+  issue: { icon: Siren, tile: 'text-red-700 dark:text-red-300', text: 'text-red-700 dark:text-red-300' },
 };
 
 function ruleFields(t: ReturnType<typeof useTranslations>, sectors: string[]): FieldSpec[] {
@@ -51,7 +51,7 @@ export default function RulesPage() {
     return `${condition.factKey ?? 'fact'} ${operator[condition.op ?? ''] ?? condition.op ?? ''}${condition.op === 'exists' ? '' : ` ${Array.isArray(condition.value) ? condition.value.join(', ') : String(condition.value ?? '')}`}`;
   };
   return (
-    <div className="page-shell">
+    <div className="page-shell admin-workbench">
       <ContentManager
         title={t('title')}
         description={t('description')}
@@ -66,8 +66,8 @@ export default function RulesPage() {
           const Icon = tone.icon;
           return {
             icon: (
-              <span className={`grid size-12 shrink-0 place-items-center rounded-xl min-[96rem]:size-14 min-[96rem]:rounded-2xl ${tone.tile}`}>
-                <Icon className="size-6 min-[96rem]:size-7" strokeWidth={1.8} aria-hidden="true" />
+              <span className={`grid size-9 shrink-0 place-items-center rounded-md border border-current/10 bg-muted/35 ${tone.tile}`}>
+                <Icon className="size-4.5" strokeWidth={1.8} aria-hidden="true" />
               </span>
             ),
             title: String(item.name ?? item.key ?? ''),

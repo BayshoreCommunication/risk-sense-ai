@@ -49,9 +49,9 @@ export default function MandatoryReviewQueuePage() {
   const pages = data?.pages ?? 1;
 
   return (
-    <div className="page-shell">
+    <div className="page-shell admin-workbench">
       <PageHeader title={t('title')} description={t('description')} requirements={['AI-03', 'FR-20']} />
-      <div className="scrollbar-subtle flex w-full gap-1 overflow-x-auto rounded-xl border bg-muted/35 p-1 shadow-sm sm:w-fit">
+      <div className="scrollbar-subtle flex w-full gap-1 overflow-x-auto rounded-lg border bg-muted/35 p-1 sm:w-fit">
         <Button size="sm" variant={tab === 'pending' ? 'default' : 'ghost'} aria-pressed={tab === 'pending'} onClick={() => { setTab('pending'); setPage(1); }}>
           {t('tabs.pending')}{data ? ` ${data.counts.pending}` : ''}
         </Button>

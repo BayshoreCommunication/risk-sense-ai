@@ -390,7 +390,7 @@ export function ContentManager(props: ContentManagerProps) {
           {visible.map((item) => {
             const rendered = card(item);
             return (
-              <article key={item._id} className="flex min-h-24 flex-wrap items-center gap-3 rounded-2xl border bg-card p-4 shadow-[0_4px_16px_rgba(15,35,65,0.045)] transition-shadow hover:shadow-[0_8px_24px_rgba(15,35,65,0.07)] min-[96rem]:min-h-28 min-[96rem]:gap-4 min-[96rem]:p-5">
+              <article key={item._id} className="flex flex-wrap items-center gap-3 rounded-lg border bg-card p-4 transition-[border-color,box-shadow] min-[96rem]:gap-4">
                 {rendered.icon}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -402,7 +402,7 @@ export function ContentManager(props: ContentManagerProps) {
                       </span>
                     ) : null}
                   </div>
-                  {rendered.body ? <div className="mt-2 text-sm leading-6 text-muted-foreground">{rendered.body}</div> : null}
+                  {rendered.body ? <div className="mt-1.5 text-sm leading-5 text-muted-foreground">{rendered.body}</div> : null}
                 </div>
                 <div className="flex w-full shrink-0 flex-row-reverse items-center justify-between gap-2 border-t pt-3 sm:w-auto sm:flex-col sm:items-end sm:justify-start sm:border-0 sm:pt-0">
                   <Badge variant={STATUS_VARIANT[item.status] ?? 'secondary'} className={STATUS_CLASS[item.status]}>

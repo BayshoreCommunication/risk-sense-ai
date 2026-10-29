@@ -449,6 +449,36 @@
     @apply font-heading text-2xl font-semibold tracking-[-0.035em] tabular-nums;
   }
 
+  /* Dense configuration work benefits from quieter surfaces than the navigational overview.
+     The overview intentionally does not opt into this class. */
+  .admin-workbench {
+    gap: 1rem;
+  }
+  .admin-workbench .data-panel,
+  .admin-workbench .control-strip {
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 2px color-mix(in oklch, var(--foreground), transparent 95%);
+  }
+  .admin-workbench .role-pill {
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    background: color-mix(in oklch, var(--muted), var(--card) 34%);
+    padding: 0.3rem 0.7rem;
+    color: var(--foreground);
+  }
+  .admin-workbench .content-manager-list > article {
+    min-height: 0;
+    border-radius: 0.75rem;
+    box-shadow: none;
+  }
+  .admin-workbench .content-manager-list > article:hover {
+    border-color: color-mix(in oklch, var(--primary), var(--border) 72%);
+    box-shadow: 0 1px 3px color-mix(in oklch, var(--foreground), transparent 94%);
+  }
+  .admin-workbench [data-slot='table-header'] {
+    background: color-mix(in oklch, var(--muted), var(--card) 34%);
+  }
+
   /* Weight slider on the scoring matrix screen: filled blue track up to the thumb. */
   .weight-slider {
     @apply h-1.5 w-full cursor-pointer appearance-none rounded-full bg-transparent;

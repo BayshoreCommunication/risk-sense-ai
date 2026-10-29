@@ -51,7 +51,7 @@ export default function ScenariosPage() {
     };
   }, []);
   return (
-    <div className="page-shell">
+    <div className="page-shell admin-workbench">
       <ContentManager
       title={t('title')}
       description={t('description')}
@@ -65,10 +65,10 @@ export default function ScenariosPage() {
         { key: 'conversationFlow', label: t('columns.questions'), render: (it) => String((it.conversationFlow as unknown[] | undefined)?.length ?? 0) },
       ]}
       callout={featured ? (
-        <section className="overflow-hidden rounded-2xl border bg-card shadow-[0_8px_28px_rgba(15,35,65,0.06)]" aria-label={String(featured.name ?? featured.key ?? t('entity'))}>
-          <header className="flex flex-wrap items-start justify-between gap-4 border-b bg-[linear-gradient(120deg,#ffffff,#f6f9ff)] px-5 py-4 dark:bg-[linear-gradient(120deg,var(--card),color-mix(in_srgb,var(--card)_90%,var(--primary)_10%))] sm:px-6">
+        <section className="overflow-hidden rounded-lg border bg-card" aria-label={String(featured.name ?? featured.key ?? t('entity'))}>
+          <header className="flex flex-wrap items-start justify-between gap-4 border-b bg-muted/25 px-5 py-4 sm:px-6">
             <div className="flex min-w-0 items-start gap-3">
-              <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-sky-500/10 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300"><GitBranch className="size-5" aria-hidden="true" /></span>
+              <span className="grid size-9 shrink-0 place-items-center rounded-md border bg-card text-sky-700 dark:text-sky-300"><GitBranch className="size-4" aria-hidden="true" /></span>
               <div className="min-w-0">
                 <h2 className="truncate text-base font-semibold">{String(featured.name ?? featured.key ?? '')}</h2>
                 <p className="mt-1 text-xs text-muted-foreground">{formatIdentifierLabel(String(featured.personaKey ?? '')) || '—'} · v{String(featured.version ?? 1)}</p>
@@ -87,7 +87,7 @@ export default function ScenariosPage() {
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">{String(featured.businessContext ?? '—')}</p>
               </div>
             </div>
-            <div className="space-y-5 rounded-xl border bg-muted/25 p-4">
+            <div className="space-y-5 lg:border-l lg:pl-5">
               <div>
                 <h3 className="flex items-center gap-2 text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase"><ShieldAlert className="size-3.5" aria-hidden="true" />{t('fields.riskIndicators')}</h3>
                 <div className="mt-2 flex flex-wrap gap-1.5">

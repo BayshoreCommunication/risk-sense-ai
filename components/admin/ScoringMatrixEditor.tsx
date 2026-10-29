@@ -29,22 +29,22 @@ const FACTOR_ORDER = ['controlEffectiveness', 'impact', 'severity', 'likelihood'
 type FactorKey = (typeof FACTOR_ORDER)[number];
 
 const FACTOR_ICON: Record<FactorKey, { icon: LucideIcon; className: string }> = {
-  controlEffectiveness: { icon: Target, className: 'bg-blue-500/10 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300' },
-  impact: { icon: BarChart3, className: 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300' },
-  severity: { icon: AlertTriangle, className: 'bg-amber-500/10 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300' },
-  likelihood: { icon: ShieldHalf, className: 'bg-violet-500/10 text-violet-700 dark:bg-violet-400/15 dark:text-violet-300' },
-  duration: { icon: Clock, className: 'bg-slate-500/10 text-slate-700 dark:bg-slate-400/15 dark:text-slate-300' },
-  regulatorySensitivity: { icon: Scale, className: 'bg-teal-500/10 text-teal-700 dark:bg-teal-400/15 dark:text-teal-300' },
+  controlEffectiveness: { icon: Target, className: 'text-blue-700 dark:text-blue-300' },
+  impact: { icon: BarChart3, className: 'text-emerald-700 dark:text-emerald-300' },
+  severity: { icon: AlertTriangle, className: 'text-amber-700 dark:text-amber-300' },
+  likelihood: { icon: ShieldHalf, className: 'text-violet-700 dark:text-violet-300' },
+  duration: { icon: Clock, className: 'text-slate-700 dark:text-slate-300' },
+  regulatorySensitivity: { icon: Scale, className: 'text-teal-700 dark:text-teal-300' },
 };
 
 const CLASSIFICATION_ORDER = ['monitor_only', 'risk', 'elevated_risk', 'issue'] as const;
 type Classification = (typeof CLASSIFICATION_ORDER)[number];
 
 const CLASSIFICATION_STYLE: Record<Classification, { icon: LucideIcon; tile: string; value: string }> = {
-  monitor_only: { icon: Eye, tile: 'bg-blue-500/10 text-blue-600 dark:bg-blue-400/15 dark:text-blue-300', value: 'text-blue-700 dark:text-blue-300' },
-  risk: { icon: AlertTriangle, tile: 'bg-amber-500/10 text-amber-600 dark:bg-amber-400/15 dark:text-amber-300', value: 'text-amber-700 dark:text-amber-300' },
-  elevated_risk: { icon: ArrowUpCircle, tile: 'bg-orange-500/12 text-orange-600 dark:bg-orange-400/15 dark:text-orange-300', value: 'text-orange-700 dark:text-orange-300' },
-  issue: { icon: Bell, tile: 'bg-red-500/10 text-red-600 dark:bg-red-400/15 dark:text-red-300', value: 'text-red-700 dark:text-red-300' },
+  monitor_only: { icon: Eye, tile: 'text-blue-600 dark:text-blue-300', value: 'text-blue-700 dark:text-blue-300' },
+  risk: { icon: AlertTriangle, tile: 'text-amber-600 dark:text-amber-300', value: 'text-amber-700 dark:text-amber-300' },
+  elevated_risk: { icon: ArrowUpCircle, tile: 'text-orange-600 dark:text-orange-300', value: 'text-orange-700 dark:text-orange-300' },
+  issue: { icon: Bell, tile: 'text-red-600 dark:text-red-300', value: 'text-red-700 dark:text-red-300' },
 };
 
 const CONFIDENCE_GATES = ['professionalConsultBelow', 'mandatoryReviewBelow'] as const;
@@ -210,7 +210,7 @@ export function ScoringMatrixEditor() {
   // activates one. Say so, because this screen cannot create it and an unexplained empty state reads as broken.
   if (!group || !editing)
     return (
-      <div className="rounded-2xl border bg-card p-6 text-sm shadow-[0_1px_2px_rgba(15,35,65,0.05)]">
+      <div className="rounded-lg border bg-card p-6 text-sm">
         <p className="text-muted-foreground">{t('empty')}</p>
         <Button className="mt-4" variant="outline" nativeButton={false} render={<Link href="/admin/datasets" />}>
           {t('emptyAction')}
@@ -222,7 +222,7 @@ export function ScoringMatrixEditor() {
   const approved = Boolean(draft?.approvedBy);
 
   return (
-    <section className="rounded-2xl border bg-card p-5 shadow-[0_1px_2px_rgba(15,35,65,0.05)] sm:p-6">
+    <section className="rounded-lg border bg-card p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="font-heading text-xl font-bold tracking-[-0.01em] [overflow-wrap:anywhere]">{t('heading', { name: group.name })}</h2>
@@ -298,7 +298,7 @@ export function ScoringMatrixEditor() {
           return (
             <div key={key} className="grid grid-cols-[minmax(0,1fr)_4rem] items-center gap-x-4 gap-y-3 border-b p-4 last:border-b-0 sm:grid-cols-[minmax(11rem,1fr)_minmax(0,2.4fr)_7rem]">
               <div className="flex min-w-0 items-center gap-3">
-                <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${className}`}>
+                <span className={`grid size-9 shrink-0 place-items-center rounded-md border bg-muted/35 ${className}`}>
                   <Icon className="size-4.5" aria-hidden="true" />
                 </span>
                 <label className="truncate text-sm font-medium" htmlFor={`weight-${key}`}>
@@ -337,8 +337,8 @@ export function ScoringMatrixEditor() {
           const range = editing.thresholds[classification];
           const { icon: Icon, tile, value } = CLASSIFICATION_STYLE[classification];
           return (
-            <div key={classification} className="flex items-start gap-3 rounded-xl border p-4">
-              <span className={`grid size-11 shrink-0 place-items-center rounded-full ${tile}`}>
+            <div key={classification} className="flex items-start gap-3 rounded-lg border p-4">
+              <span className={`grid size-10 shrink-0 place-items-center rounded-md border bg-muted/35 ${tile}`}>
                 <Icon className="size-5" aria-hidden="true" />
               </span>
               <div className="min-w-0">
@@ -357,7 +357,7 @@ export function ScoringMatrixEditor() {
       <h3 className="mt-7 font-heading text-base font-bold tracking-[-0.01em]">{t('confidenceTitle')}</h3>
       <div className="mt-3 grid gap-4 sm:grid-cols-2">
         {CONFIDENCE_GATES.map((gate) => (
-          <div key={gate} className="space-y-1 rounded-xl border p-4">
+          <div key={gate} className="space-y-1 rounded-lg border p-4">
             <Label htmlFor={gate}>{t(`confidenceGates.${gate}`)}</Label>
             <Input
               id={gate}
