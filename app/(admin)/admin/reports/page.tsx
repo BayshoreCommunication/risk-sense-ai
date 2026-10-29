@@ -22,7 +22,7 @@ export default function StandardReportsPage() {
 
   if (!workspace?.features.reports) {
     return (
-      <div className="page-shell">
+      <div className="page-shell admin-workbench">
         <Card className="mx-auto w-full max-w-2xl">
           <CardHeader className="items-center text-center">
             <span className="mb-2 grid size-11 place-items-center rounded-xl bg-primary/10 text-primary">
@@ -43,7 +43,7 @@ export default function StandardReportsPage() {
   }
 
   return (
-    <div className="page-shell">
+    <div className="page-shell admin-workbench">
       <PageHeader title={t('title')} description={t('description')} requirements={['FR-26', 'FR-28']} />
       <ReportsWorkspace />
 

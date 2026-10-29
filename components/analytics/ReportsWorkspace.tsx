@@ -42,12 +42,11 @@ const REPORT_CONFIG: {
   messageKey: 'volume' | 'classification' | 'override' | 'time';
   icon: LucideIcon;
   tone: string;
-  calloutTone: string;
 }[] = [
-  { type: 'volume', id: 'report-volume', messageKey: 'volume', icon: ChartNoAxesColumn, tone: 'bg-blue-500/10 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300', calloutTone: 'border-blue-200/70 bg-blue-50 text-blue-950/75 dark:border-blue-400/25 dark:bg-blue-400/10 dark:text-blue-100/85' },
-  { type: 'classification', id: 'report-classification', messageKey: 'classification', icon: ChartPie, tone: 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300', calloutTone: 'border-emerald-200/70 bg-emerald-50 text-emerald-950/75 dark:border-emerald-400/25 dark:bg-emerald-400/10 dark:text-emerald-100/85' },
-  { type: 'override-rate', id: 'report-override', messageKey: 'override', icon: UserRound, tone: 'bg-amber-500/10 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300', calloutTone: 'border-amber-200/70 bg-amber-50 text-amber-950/75 dark:border-amber-400/25 dark:bg-amber-400/10 dark:text-amber-100/85' },
-  { type: 'assessment-time', id: 'report-time', messageKey: 'time', icon: Clock3, tone: 'bg-violet-500/10 text-violet-700 dark:bg-violet-400/15 dark:text-violet-300', calloutTone: 'border-violet-200/70 bg-violet-50 text-violet-950/75 dark:border-violet-400/25 dark:bg-violet-400/10 dark:text-violet-100/85' },
+  { type: 'volume', id: 'report-volume', messageKey: 'volume', icon: ChartNoAxesColumn, tone: 'text-blue-700 dark:text-blue-300' },
+  { type: 'classification', id: 'report-classification', messageKey: 'classification', icon: ChartPie, tone: 'text-emerald-700 dark:text-emerald-300' },
+  { type: 'override-rate', id: 'report-override', messageKey: 'override', icon: UserRound, tone: 'text-amber-700 dark:text-amber-300' },
+  { type: 'assessment-time', id: 'report-time', messageKey: 'time', icon: Clock3, tone: 'text-violet-700 dark:text-violet-300' },
 ];
 
 type Loadable<T> =
@@ -122,7 +121,6 @@ function ReportPanel({
   description,
   icon: Icon,
   tone,
-  calloutTone,
   state,
   query,
   expanded,
@@ -139,7 +137,6 @@ function ReportPanel({
   description: string;
   icon: LucideIcon;
   tone: string;
-  calloutTone: string;
   state: Loadable<ReportResult>;
   query: ReportQuery;
   expanded: boolean;
@@ -174,19 +171,19 @@ function ReportPanel({
       <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
         <button
           type="button"
-          className="group flex min-w-0 flex-1 items-center gap-4 rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="group flex min-w-0 flex-1 items-center gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-labelledby={titleId}
           aria-expanded={expanded}
           aria-controls={contentId}
           onClick={onToggle}
         >
-          <span className={`grid size-14 shrink-0 place-items-center rounded-xl ${tone}`} aria-hidden="true">
-            <Icon className="size-7" />
+          <span className={`grid size-10 shrink-0 place-items-center rounded-md border bg-muted/35 ${tone}`} aria-hidden="true">
+            <Icon className="size-5" />
           </span>
           <span className="min-w-0 flex-1">
             <span id={titleId} role="heading" aria-level={2} className="block font-heading font-semibold">{title}</span>
             <span className="mt-1 block text-sm text-muted-foreground">{scope}</span>
-            <span className={`mt-2 block max-w-xl rounded-md border px-2.5 py-1 text-xs ${calloutTone}`}>{callout}</span>
+            <span className="mt-1.5 block max-w-xl text-xs leading-5 text-muted-foreground">{callout}</span>
           </span>
           <ChevronDown className={`size-5 shrink-0 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} aria-hidden="true" />
         </button>
@@ -453,7 +450,7 @@ export function ReportsWorkspace() {
           aria-controls="report-trends-content"
           onClick={() => setTrendsOpen((open) => !open)}
         >
-          <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary" aria-hidden="true"><ChartNoAxesColumn className="size-5" /></span>
+          <span className="grid size-10 place-items-center rounded-md border bg-muted/35 text-primary" aria-hidden="true"><ChartNoAxesColumn className="size-5" /></span>
           <span className="min-w-0 flex-1">
             <span className="block font-heading font-semibold">{t('trends.title', { group: t(`groups.${by}`) })}</span>
             <span className="mt-1 block text-xs text-muted-foreground">{t('trends.description', { group: t(`groups.${by}`).toLocaleLowerCase() })}</span>

@@ -171,7 +171,7 @@ export default function DatasetsPage() {
   const unavailableCount = items.filter((dataset) => dataset.status === 'rejected' || dataset.status === 'failed').length;
 
   return (
-    <div className="page-shell">
+    <div className="page-shell admin-workbench">
       <PageHeader
         title={t('title')}
         description={t('description')}
@@ -185,18 +185,18 @@ export default function DatasetsPage() {
       />
 
       {/* Counter strip with an icon per state, as docs/design/figma-frames/16-admin-training-datasets.png. */}
-      <section className="grid gap-px overflow-hidden rounded-xl border bg-border shadow-[0_4px_16px_rgba(15,35,65,0.04)] sm:grid-cols-2 min-[75rem]:grid-cols-3 min-[96rem]:grid-cols-5" aria-label={t('summary.label')}>
+      <section className="grid gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-2 min-[75rem]:grid-cols-3 min-[96rem]:grid-cols-5" aria-label={t('summary.label')}>
         {([
-          { key: 'total', value: items.length, icon: Database, tile: 'bg-blue-500/10 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300' },
-          { key: 'active', value: activeCount, icon: CircleCheck, tile: 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300' },
-          { key: 'review', value: reviewCount, icon: Clock, tile: 'bg-amber-500/10 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300' },
-          { key: 'activation', value: activationCount, icon: Power, tile: 'bg-indigo-500/10 text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-300' },
-          { key: 'unavailable', value: unavailableCount, icon: ShieldX, tile: 'bg-slate-500/10 text-slate-600 dark:bg-slate-400/15 dark:text-slate-300' },
+          { key: 'total', value: items.length, icon: Database, tile: 'text-blue-700 dark:text-blue-300' },
+          { key: 'active', value: activeCount, icon: CircleCheck, tile: 'text-emerald-700 dark:text-emerald-300' },
+          { key: 'review', value: reviewCount, icon: Clock, tile: 'text-amber-700 dark:text-amber-300' },
+          { key: 'activation', value: activationCount, icon: Power, tile: 'text-indigo-700 dark:text-indigo-300' },
+          { key: 'unavailable', value: unavailableCount, icon: ShieldX, tile: 'text-slate-600 dark:text-slate-300' },
         ] as const).map((counter) => {
           const Icon = counter.icon;
           return (
             <div key={counter.key} data-counter={counter.key} className="flex min-h-24 items-center gap-3 bg-card px-4 py-3">
-              <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${counter.tile}`}>
+              <span className={`grid size-9 shrink-0 place-items-center rounded-md border bg-muted/35 ${counter.tile}`}>
                 <Icon className="size-4.5" aria-hidden="true" />
               </span>
               <div className="min-w-0">
@@ -209,10 +209,10 @@ export default function DatasetsPage() {
         })}
       </section>
 
-      <Card className="py-0 shadow-[0_4px_16px_rgba(15,35,65,0.04)]">
+      <Card className="rounded-lg py-0 shadow-none">
         <CardContent className="grid gap-4 p-4 sm:p-5 min-[75rem]:grid-cols-[minmax(16rem,0.8fr)_minmax(22rem,1.2fr)_auto] min-[75rem]:items-center">
           <div className="flex min-w-0 items-start gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+            <span className="grid size-10 shrink-0 place-items-center rounded-md border bg-muted/35 text-primary">
               <UploadCloud className="size-5" aria-hidden="true" />
             </span>
             <div className="min-w-0">
@@ -220,7 +220,7 @@ export default function DatasetsPage() {
               <CardDescription className="mt-1 text-xs leading-5">{t('upload.description')}</CardDescription>
             </div>
           </div>
-          <div className="relative w-full rounded-xl border border-dashed border-primary/30 bg-primary/[0.025] p-1.5">
+          <div className="relative w-full rounded-md border border-dashed border-border bg-muted/20 p-1.5">
             <Input aria-label={t('upload.fileLabel')} type="file" accept=".xlsx" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="w-full border-0 bg-transparent shadow-none" />
           </div>
           <Button onClick={() => void run(upload)} disabled={!file || busy} className="shrink-0 min-[75rem]:justify-self-end">
@@ -233,7 +233,16 @@ export default function DatasetsPage() {
       {error && <p className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</p>}
 
       <section className="data-panel fills hidden min-[75rem]:flex" aria-busy={loading}>
-        <Table className="min-w-[900px]" containerLabel={t('title')}>
+        <Table className="min-w-[1120px] table-fixed" containerLabel={t('title')}>
+          <colgroup>
+            <col className="w-[20%]" />
+            <col className="w-[22%]" />
+            <col className="w-[11%]" />
+            <col className="w-[11%]" />
+            <col className="w-[15%]" />
+            <col className="w-[9%]" />
+            <col className="w-[12%]" />
+          </colgroup>
           <TableHeader>
             <TableRow>
               <TableHead>{t('columns.file')}</TableHead>
@@ -274,8 +283,10 @@ export default function DatasetsPage() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="font-semibold tabular-nums">{contentRows(d)}</div>
-                  <div className="mt-0.5 text-xs text-muted-foreground tabular-nums">
-                    {t('columns.personas')} {d.counts.personas} · {t('columns.scenarios')} {d.counts.scenarios} · {t('columns.questions')} {d.counts.questions}
+                  <div className="mt-1 flex flex-wrap justify-end gap-x-2 gap-y-0.5 text-xs leading-5 text-muted-foreground tabular-nums">
+                    <span>{t('columns.personas')} {d.counts.personas}</span>
+                    <span>{t('columns.scenarios')} {d.counts.scenarios}</span>
+                    <span>{t('columns.questions')} {d.counts.questions}</span>
                   </div>
                   <div className="mt-1 flex items-center justify-end gap-1 text-xs text-muted-foreground">
                     <span>{t('columns.errors')}</span>

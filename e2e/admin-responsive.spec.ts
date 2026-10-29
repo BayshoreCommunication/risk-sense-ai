@@ -61,8 +61,51 @@ async function prepareAdministrator(page: Page) {
   await page.route('**/test-api/**', async (route) => {
     const path = new URL(route.request().url()).pathname.replace(/^\/test-api/, '');
     if (path === '/me') return ok(route, currentAdministrator);
-    if (['/personas', '/scenarios', '/questions', '/rules', '/scoring-matrices', '/datasets', '/departments'].includes(path)) {
+    if (path === '/datasets') {
+      return ok(route, [{
+        _id: 'dataset-1',
+        seq: 1,
+        fileName: 'starter-content.json',
+        format: 'json',
+        status: 'active',
+        counts: { personas: 3, scenarios: 13, questions: 76, scoring: 6, skippedRows: 0 },
+        validationErrors: [],
+        authorId: 'admin-1',
+        reviewerId: 'reviewer-1',
+        author: { id: 'admin-1', name: 'Alex Morgan' },
+        reviewer: { id: 'reviewer-1', name: 'Sarah Chen' },
+        createdAt: '2026-09-16T12:00:09.000Z',
+      }]);
+    }
+    if (['/personas', '/scenarios', '/questions', '/rules', '/scoring-matrices', '/departments'].includes(path)) {
       return ok(route, []);
+    }
+    if (path === '/analytics/trends') {
+      return ok(route, {
+        columns: [
+          { key: 'period', label: 'Period', kind: 'text' },
+          { key: 'group', label: 'Classification', kind: 'text' },
+          { key: 'count', label: 'Count', kind: 'number' },
+        ],
+        rows: [
+          { period: '2026-08', group: 'risk', count: 4 },
+          { period: '2026-08', group: 'issue', count: 2 },
+          { period: '2026-09', group: 'monitor_only', count: 2 },
+          { period: '2026-09', group: 'elevated_risk', count: 3 },
+        ],
+        summary: {},
+      });
+    }
+    if (path.startsWith('/reports/')) {
+      const type = path.split('/').at(-1);
+      const result = type === 'volume'
+        ? { columns: [], rows: [], summary: { started: 12, closed: 8, escalated: 1 } }
+        : type === 'classification'
+          ? { columns: [], rows: [{ classification: 'risk', count: 3 }], summary: { scored: 3 } }
+          : type === 'override-rate'
+            ? { columns: [], rows: [], summary: { overrideRate: 12.5, overridden: 1, accepted: 7 } }
+            : { columns: [], rows: [], summary: { avgTotalSec: 3600, p95TotalSec: 7200, avgIntakeSec: 600 } };
+      return ok(route, result);
     }
     if (path === '/assessments') {
       const items = Array.from({ length: 30 }, (_, index) => ({
@@ -121,6 +164,7 @@ test('every Administrator page reflows and keeps its scroll path reachable [DASH
       await page.goto(path);
       await expect(page.getByRole('heading', { name: heading })).toBeVisible();
       await expect(page.locator('.page-shell')).toBeVisible();
+      await expect(page.locator('main')).not.toContainText(/\b(?:AI|DASH|FR|NFR|SEC)-\d/);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
       expect(await page.locator('main').evaluate((main) => main.scrollWidth <= main.clientWidth + 1)).toBe(true);
     }
@@ -151,4 +195,37 @@ test('Administrator overview keeps its access guidance on one line at desktop wi
   const note = page.getByText('All configuration access routes through this audited workspace, never direct database or code access.', { exact: true });
   await expect(note).toBeVisible();
   expect(await note.evaluate((element) => element.getBoundingClientRect().height <= Number.parseFloat(getComputedStyle(element).lineHeight) + 1)).toBe(true);
+});
+
+test('Analytics chart selection can be reset without changing its data window [DASH-03]', async ({ page }) => {
+  await prepareAdministrator(page);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/admin/analytics');
+
+  const reset = page.getByRole('button', { name: 'Reset chart' });
+  await expect(reset).toBeEnabled();
+  await reset.click();
+  await expect(reset).toBeDisabled();
+
+  const month = page.getByRole('button', { name: /Select .+: \d+ scored assessments/ }).first();
+  await month.click();
+  await expect(reset).toBeEnabled();
+  await expect(page.getByText('Last 5 complete months', { exact: true })).toBeVisible();
+});
+
+test('Dataset desktop columns keep content details inside their assigned cells [FR-13, FR-14, NFR-08]', async ({ page }) => {
+  await prepareAdministrator(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/admin/datasets');
+
+  const fileCell = page.getByRole('cell').filter({ hasText: 'starter-content.json' });
+  const rowsCell = page.getByRole('cell').filter({ hasText: 'Personas 3' });
+  await expect(fileCell).toBeVisible();
+  await expect(rowsCell).toBeVisible();
+
+  const [fileBox, rowsBox] = await Promise.all([fileCell.boundingBox(), rowsCell.boundingBox()]);
+  expect(fileBox).not.toBeNull();
+  expect(rowsBox).not.toBeNull();
+  expect(fileBox!.x + fileBox!.width).toBeLessThanOrEqual(rowsBox!.x + 1);
+  expect(await rowsCell.evaluate((cell) => cell.scrollWidth <= cell.clientWidth + 1)).toBe(true);
 });

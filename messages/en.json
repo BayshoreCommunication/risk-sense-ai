@@ -443,7 +443,7 @@
           "mandatoryReviewBelow": "Mandatory review below (%)"
         },
         "confidenceHints": {
-          "professionalConsultBelow": "Extraction confidence under this figure recommends a Professional Consult instead of a plain result (FR-20).",
+          "professionalConsultBelow": "Extraction confidence under this figure recommends a Professional Consult instead of a plain result.",
           "mandatoryReviewBelow": "Confidence under this figure flags the assessment for human review before it can be closed."
         },
         "confidenceHint": "Both gates must be between 0 and 100.",
@@ -706,6 +706,7 @@
         "selectMonth": "Select {month}: {total} scored assessments",
         "empty": "Monthly classification data is unavailable for this window.",
         "viewLabel": "Monthly classification view",
+        "reset": "Reset chart",
         "monthLabel": "Month",
         "pieTitle": "{month} classification distribution as a pie chart",
         "columns": {

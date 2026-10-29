@@ -9,10 +9,10 @@ import { questionsApi, type Item } from '@/lib/admin/content';
 import { useWorkspace } from '@/components/shell/workspace-context';
 
 const SUMMARY_TONE = [
-  { icon: FileQuestion, tile: 'bg-blue-500/10 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300' },
-  { icon: CircleCheck, tile: 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300' },
-  { icon: Clock, tile: 'bg-amber-500/10 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300' },
-  { icon: BookmarkCheck, tile: 'bg-violet-500/10 text-violet-700 dark:bg-violet-400/15 dark:text-violet-300' },
+  { icon: FileQuestion, tile: 'text-blue-700 dark:text-blue-300' },
+  { icon: CircleCheck, tile: 'text-emerald-700 dark:text-emerald-300' },
+  { icon: Clock, tile: 'text-amber-700 dark:text-amber-300' },
+  { icon: BookmarkCheck, tile: 'text-violet-700 dark:text-violet-300' },
 ] as const;
 
 function tagsOf(item: Item) {
@@ -53,7 +53,7 @@ export default function QuestionsPage() {
   const workspace = useWorkspace();
   const fields = questionFields(t, workspace?.sectors ?? []);
   return (
-    <div className="page-shell">
+    <div className="page-shell admin-workbench">
       <ContentManager
       title={t('title')}
       description={t('description')}
@@ -77,8 +77,8 @@ export default function QuestionsPage() {
               const Icon = tone.icon;
               return (
                 <div key={counter.key} className="flex items-center gap-3 bg-card p-4">
-                  <span className={`grid size-10 shrink-0 place-items-center rounded-full ${tone.tile}`}>
-                    <Icon className="size-5" aria-hidden="true" />
+                  <span className={`grid size-9 shrink-0 place-items-center rounded-md border border-current/10 bg-muted/35 ${tone.tile}`}>
+                    <Icon className="size-4" aria-hidden="true" />
                   </span>
                   <div>
                     <p className="metric-value">{counter.value.toLocaleString(locale)}</p>
@@ -94,7 +94,7 @@ export default function QuestionsPage() {
         const tags = tagsOf(item);
         const pills = [...new Set([...(tags.personaKeys ?? []), ...(tags.sectors ?? [])].map(formatIdentifierLabel).filter(Boolean))];
         return {
-          icon: <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><FileQuestion className="size-5" aria-hidden="true" /></span>,
+          icon: <span className="grid size-9 shrink-0 place-items-center rounded-md border bg-muted/35 text-primary"><FileQuestion className="size-4" aria-hidden="true" /></span>,
           title: String(item.text ?? item.key ?? ''),
           body: (
             <span className="flex flex-wrap items-center gap-x-3 gap-y-1.5">

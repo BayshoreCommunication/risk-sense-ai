@@ -40,7 +40,7 @@ export default function PersonasPage() {
     { name: 'defaultScenarioKey', label: t('fields.defaultScenarioKey'), kind: 'text', help: t('help.defaultScenarioKey') },
   ];
   return (
-    <div className="page-shell">
+    <div className="page-shell admin-workbench">
       <ContentManager
       title={t('title')}
       description={t('description')}

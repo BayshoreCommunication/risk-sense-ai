@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { ArrowLeft, CalendarDays, ChartNoAxesColumn, ChartPie, ClipboardList, Clock3, RefreshCw, ShieldX, Table2, TrendingUp, X } from 'lucide-react';
+import { ArrowLeft, CalendarDays, ChartNoAxesColumn, ChartPie, ClipboardList, Clock3, RefreshCw, RotateCcw, ShieldX, Table2, TrendingUp, X } from 'lucide-react';
 import { ChartStyles, PieChart, STATUS, StackedClassificationChart, StatTile, type StackedClassificationMonth } from '@/components/analytics/Charts';
 import { formatIdentifierLabel } from '@/components/admin/format-identifier-label';
 import { PageHeader } from '@/components/shell/PageHeader';
@@ -145,6 +145,13 @@ function AnalyticsDashboard() {
   );
   const selectedMonthData = stackedClassificationMonths.find((month) => month.key === selectedMonth) ?? stackedClassificationMonths.at(-1) ?? null;
   const selectedSegment = selectedMonthData?.segments.find((segment) => segment.key === selectedClassification) ?? null;
+  const hasChartSelection = selectedMonth !== null || selectedClassification !== null;
+
+  const resetChartSelection = () => {
+    setSelectedMonth(null);
+    setSelectedClassification(null);
+    setDrilldown(EMPTY_DRILLDOWN);
+  };
 
   // Comment 49 requires a real drill-down, not merely a highlighted aggregate. The list endpoint's
   // `classification` filter is the AI class, while this chart uses the final class (human override wins),
@@ -195,7 +202,7 @@ function AnalyticsDashboard() {
   );
 
   return (
-    <div className="page-shell">
+    <div className="page-shell admin-workbench">
       <ChartStyles />
       <PageHeader
         title={t('title')}
@@ -219,28 +226,28 @@ function AnalyticsDashboard() {
           label={t('reports.volume.title')}
           value={vol ? Number(vol.summary.started).toLocaleString() : '—'}
           hint={vol ? t('stats.startedHint', { closed: Number(vol.summary.closed), escalated: Number(vol.summary.escalated) }) : undefined}
-          icon={<ClipboardList className="size-6" />}
+          icon={<ClipboardList className="size-5" />}
           tone="blue"
         />
         <StatTile
           label={t('stats.overrideRate')}
           value={ovr && ovr.summary.overrideRate !== null ? `${ovr.summary.overrideRate}%` : '—'}
           hint={ovr ? t('stats.overrideHint', { overridden: Number(ovr.summary.overridden), decided: Number(ovr.summary.accepted) + Number(ovr.summary.overridden) }) : undefined}
-          icon={<ChartPie className="size-6" />}
+          icon={<ChartPie className="size-5" />}
           tone="green"
         />
         <StatTile
           label={t('reports.time.title')}
           value={tim ? fmtSeconds(tim.summary.avgTotalSec as number | null) : '—'}
           hint={tim ? t('stats.timeHint', { p95: fmtSeconds(tim.summary.p95TotalSec as number | null), intake: fmtSeconds(tim.summary.avgIntakeSec as number | null) }) : undefined}
-          icon={<Clock3 className="size-6" />}
+          icon={<Clock3 className="size-5" />}
           tone="amber"
         />
         <StatTile
           label={`${t('classifications.elevated_risk')}+`}
           value={cls && elevatedRate !== null ? `${elevatedRate}%` : '—'}
           hint={cls ? `${elevatedCount.toLocaleString(locale)} / ${scored.toLocaleString(locale)} ${t('monthly.scored').toLocaleLowerCase(locale)}` : undefined}
-          icon={<TrendingUp className="size-6" />}
+          icon={<TrendingUp className="size-5" />}
           tone="violet"
         />
       </div>
@@ -267,13 +274,17 @@ function AnalyticsDashboard() {
                 {t('views.table')}
               </Button>
             </div>
+            <Button size="sm" variant="outline" disabled={!hasChartSelection} onClick={resetChartSelection}>
+              <RotateCcw data-icon="inline-start" aria-hidden="true" />
+              {t('monthly.reset')}
+            </Button>
             <span className="inline-flex w-fit items-center gap-2 rounded-lg border bg-background px-3 py-2 text-xs font-medium text-foreground shadow-sm">
               <CalendarDays className="size-4 text-muted-foreground" aria-hidden="true" />
               {t('monthly.window')}
             </span>
           </div>
         </div>
-        <div className="p-4">
+        <div className="p-5 sm:p-6">
           {monthlyClassification === null ? (
             <div className="grid h-64 place-items-center rounded-xl bg-muted/20" role="status">
               <div className="space-y-2 text-center">
@@ -284,7 +295,7 @@ function AnalyticsDashboard() {
           ) : selectedMonthData ? (
             <>
               {/* Client comment 49: a month's classification counts are selectable and labelled. */}
-              <div className="mb-5 flex flex-wrap gap-2" role="group" aria-label={t('monthly.selectedMonth', { month: selectedMonthData.label })}>
+              <div className="mb-6 grid overflow-hidden rounded-lg border sm:grid-cols-2 min-[75rem]:grid-cols-4" role="group" aria-label={t('monthly.selectedMonth', { month: selectedMonthData.label })}>
                 {selectedMonthData.segments.map((segment) => {
                   const status = STATUS[segment.key] ?? { color: 'var(--s9)', icon: '●' };
                   const count = segment.value === null ? t('monthly.notAvailable') : segment.value.toLocaleString(locale);
@@ -292,8 +303,8 @@ function AnalyticsDashboard() {
                     <button
                       key={segment.key}
                       type="button"
-                      className="rounded-lg border px-3 py-2 text-left outline-none transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring"
-                      style={{ borderColor: `color-mix(in srgb, ${status.color} 30%, transparent)`, background: `color-mix(in srgb, ${status.color} 7%, transparent)` }}
+                      className="border-b border-border px-3 py-2 text-left outline-none transition-colors last:border-b-0 hover:bg-muted/35 focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:[&:nth-child(odd)]:border-r sm:[&:nth-last-child(-n+2)]:border-b-0 min-[75rem]:border-r min-[75rem]:border-b-0 min-[75rem]:last:border-r-0"
+                      style={selectedClassification === segment.key ? { background: `color-mix(in srgb, ${status.color} 8%, transparent)` } : undefined}
                       aria-label={t('monthly.segmentDetail', { classification: segment.label, month: selectedMonthData.label, count })}
                       aria-pressed={selectedClassification === segment.key}
                       onClick={() => setSelectedClassification((current) => (current === segment.key ? null : (segment.key as ClassificationKey)))}
@@ -302,7 +313,7 @@ function AnalyticsDashboard() {
                         <span aria-hidden="true">{status.icon}</span>
                         <span className="text-foreground">{segment.label}</span>
                       </span>
-                      <strong className="mt-1 block text-lg tabular-nums" style={{ color: status.color }}>
+                      <strong className="mt-1 block text-base tabular-nums text-foreground">
                         {count}
                       </strong>
                     </button>
@@ -377,7 +388,7 @@ function AnalyticsDashboard() {
                 <StackedClassificationChart
                   months={stackedClassificationMonths}
                   title={t('monthly.chartTitle')}
-                  selectedMonth={selectedMonthData.key}
+                  selectedMonth={selectedMonth}
                   selectedClassification={selectedClassification}
                   onMonthSelect={setSelectedMonth}
                   onSegmentSelect={(month, classification) => {
@@ -498,7 +509,7 @@ export default function AnalyticsPage() {
 
   if (!workspace?.features.reports) {
     return (
-      <div className="page-shell">
+      <div className="page-shell admin-workbench">
         <Card className="mx-auto w-full max-w-2xl">
           <CardHeader className="items-center text-center">
             <span className="mb-2 grid size-11 place-items-center rounded-xl bg-primary/10 text-primary">

@@ -17,7 +17,7 @@ import { ScoringMatrixEditor } from '@/components/admin/ScoringMatrixEditor';
 export default function ScoringPage() {
   const t = useTranslations('admin.scoring');
   return (
-    <div className="page-shell">
+    <div className="page-shell admin-workbench">
       <PageHeader title={t('title')} requirements={['FR-18', 'FR-19', 'FR-20']} />
       <ScoringMatrixEditor />
     </div>
