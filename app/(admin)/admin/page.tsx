@@ -159,8 +159,8 @@ export default function Page() {
           <Button size="sm" variant="outline" onClick={() => void loadSnapshot()}>{t('retry')}</Button>
         </div>
       ) : null}
-      <p className="flex max-w-2xl items-start gap-3 text-sm leading-6 text-muted-foreground">
-        <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground"><Info className="size-3.5" aria-hidden="true" /></span>
+      <p className="flex w-full items-start gap-3 text-sm leading-6 text-muted-foreground min-[62rem]:items-center min-[62rem]:whitespace-nowrap">
+        <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground min-[62rem]:mt-0"><Info className="size-3.5" aria-hidden="true" /></span>
         {t('accessNote')}
       </p>
     </div>

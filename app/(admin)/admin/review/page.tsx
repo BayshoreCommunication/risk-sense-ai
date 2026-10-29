@@ -51,7 +51,7 @@ export default function MandatoryReviewQueuePage() {
   return (
     <div className="page-shell">
       <PageHeader title={t('title')} description={t('description')} requirements={['AI-03', 'FR-20']} />
-      <div className="inline-flex rounded-xl border bg-muted/35 p-1 shadow-sm">
+      <div className="scrollbar-subtle flex w-full gap-1 overflow-x-auto rounded-xl border bg-muted/35 p-1 shadow-sm sm:w-fit">
         <Button size="sm" variant={tab === 'pending' ? 'default' : 'ghost'} aria-pressed={tab === 'pending'} onClick={() => { setTab('pending'); setPage(1); }}>
           {t('tabs.pending')}{data ? ` ${data.counts.pending}` : ''}
         </Button>
@@ -60,7 +60,7 @@ export default function MandatoryReviewQueuePage() {
         </Button>
       </div>
       {error && <p className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</p>}
-      <section className="data-panel fills" aria-busy={!data && !error}>
+      <section className="data-panel fills hidden min-[62rem]:flex" aria-busy={!data && !error}>
         <Table className="min-w-[880px] table-fixed min-[96rem]:min-w-[980px]" containerLabel={t('title')}>
           <TableHeader className="bg-muted">
             <TableRow>
@@ -129,9 +129,69 @@ export default function MandatoryReviewQueuePage() {
           </TableBody>
         </Table>
       </section>
+      <section className="data-panel divide-y min-[62rem]:hidden" aria-busy={!data && !error}>
+        {!data && !error ? <p className="px-4 py-12 text-center text-sm text-muted-foreground">{t('loading')}</p> : null}
+        {data && items.length === 0 ? <p className="px-4 py-12 text-center text-sm text-muted-foreground">{t('empty')}</p> : null}
+        {items.map((a) => (
+          <article key={a._id} data-testid="admin-review-card" className="space-y-4 p-4 sm:p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">{t('columns.started')}</p>
+                <time className="mt-1 block text-sm font-medium" dateTime={a.createdAt}>{new Date(a.createdAt).toLocaleString(locale)}</time>
+              </div>
+              <Badge variant="secondary">{statusT.has(a.status) ? statusT(a.status) : formatIdentifierLabel(a.status)}</Badge>
+            </div>
+
+            <dl className="grid gap-3 text-sm sm:grid-cols-2">
+              <div className="min-w-0">
+                <dt className="text-xs text-muted-foreground">{t('columns.requestor')}</dt>
+                <dd className="mt-0.5 truncate font-medium" title={a.requestor?.name}>{a.requestor?.name ?? '—'}</dd>
+              </div>
+              <div className="min-w-0">
+                <dt className="text-xs text-muted-foreground">{t('columns.department')}</dt>
+                <dd className="mt-0.5 [overflow-wrap:anywhere]">{a.department?.name ?? '—'}</dd>
+              </div>
+              <div className="min-w-0 sm:col-span-2">
+                <dt className="text-xs text-muted-foreground">{t('columns.personaScenario')}</dt>
+                <dd className="mt-0.5 font-medium">{a.personaKey ? formatIdentifierLabel(a.personaKey) : '—'}</dd>
+                <dd className="mt-0.5 text-xs text-muted-foreground">{a.scenarioKey ? formatIdentifierLabel(a.scenarioKey) : '—'}</dd>
+              </div>
+            </dl>
+
+            <div className="grid gap-3 border-t pt-3 sm:grid-cols-2 sm:items-end">
+              <div>
+                <p className="text-xs text-muted-foreground">{t('columns.classification')}</p>
+                <div className="mt-1">
+                  {a.result ? (
+                    <Badge variant="outline" className={CLASSIFICATION_CLASS[a.result.classification]}>
+                      {classification.has(a.result.classification) ? classification(a.result.classification) : formatIdentifierLabel(a.result.classification)}
+                    </Badge>
+                  ) : '—'}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">{t('columns.confidence')}</p>
+                {a.result ? (
+                  <div className="mt-2 flex items-center gap-2">
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                      <div className="h-full rounded-full bg-amber-500" style={{ width: `${Math.max(0, Math.min(100, a.result.confidence))}%` }} />
+                    </div>
+                    <span className="w-10 text-right font-medium tabular-nums">{a.result.confidence}%</span>
+                  </div>
+                ) : <p className="mt-1">—</p>}
+              </div>
+            </div>
+
+            <Button className="w-full" size="sm" variant="outline" onClick={() => setOpen(a)}>
+              <Eye data-icon="inline-start" aria-hidden="true" />
+              {t('inspect')}
+            </Button>
+          </article>
+        ))}
+      </section>
       <div className="flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <span>{data ? t('flagged', { count: data.total }) : t('loading')}</span>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(page - 1)}>
             {t('pagination.previous')}
           </Button>

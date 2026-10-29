@@ -25,10 +25,10 @@ export function PageHeader({ title, description, titleAdornment, actions }: Page
   const workspace = useWorkspace();
 
   return (
-    <header className="workspace-header flex flex-col gap-3 min-[75rem]:flex-row min-[75rem]:items-start min-[75rem]:justify-between min-[96rem]:gap-4">
+    <header className="workspace-header flex min-w-0 flex-col gap-3 min-[75rem]:flex-row min-[75rem]:items-start min-[75rem]:justify-between min-[96rem]:gap-4">
       <div className="min-w-0 max-w-3xl">
         <div className="flex flex-wrap items-center gap-2.5">
-          <h1 className="page-heading">{title}</h1>
+          <h1 className="page-heading min-w-0 [overflow-wrap:anywhere]">{title}</h1>
           {titleAdornment}
         </div>
         {description ? <p className="page-description mt-2">{description}</p> : null}

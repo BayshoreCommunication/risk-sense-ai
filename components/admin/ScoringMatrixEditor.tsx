@@ -224,8 +224,8 @@ export function ScoringMatrixEditor() {
   return (
     <section className="rounded-2xl border bg-card p-5 shadow-[0_1px_2px_rgba(15,35,65,0.05)] sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="font-heading text-xl font-bold tracking-[-0.01em]">{t('heading', { name: group.name })}</h2>
+        <div className="min-w-0">
+          <h2 className="font-heading text-xl font-bold tracking-[-0.01em] [overflow-wrap:anywhere]">{t('heading', { name: group.name })}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {t.rich('description', {
               range: (chunks) => <span className="font-semibold text-foreground">{chunks}</span>,
