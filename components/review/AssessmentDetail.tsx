@@ -171,7 +171,7 @@ export function AssessmentDetail({ id }: { id: string }) {
                   <ol className="space-y-2">
                     {distinctNextSteps.map((step, index) => (
                       <li key={`${index}-${step}`} className="flex gap-2 text-muted-foreground">
-                        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">{index + 1}</span>
+                        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">{index + 1}</span>
                         <span className="leading-5">{step}</span>
                       </li>
                     ))}

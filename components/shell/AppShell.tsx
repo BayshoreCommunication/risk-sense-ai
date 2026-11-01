@@ -365,7 +365,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
                   {startsAdvanced ? compact ? (
                     <div className="my-4 border-t border-sidebar-border" aria-hidden="true" />
                   ) : (
-                    <div className="mb-2 mt-6 border-t border-sidebar-border px-3 pt-4 text-[0.61rem] font-semibold tracking-[0.14em] text-sidebar-foreground/45 uppercase">
+                    <div className="mb-2 mt-6 border-t border-sidebar-border px-3 pt-4 text-[0.72rem] font-semibold tracking-[0.14em] text-sidebar-foreground/45 uppercase">
                       {t('app.advancedOperations')}
                     </div>
                   ) : null}
@@ -448,7 +448,7 @@ export function AppShell({ role, children }: { role: Role; children: React.React
               <div className="border-b p-4">
                 <p className="truncate text-sm font-semibold">{me.user.name}</p>
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">{me.user.email}</p>
-                <p className="mt-2 text-[0.65rem] font-semibold tracking-[0.12em] text-primary uppercase">{me.tenant.plan} · {t(`roles.${trustedRole}`)}</p>
+                <p className="mt-2 text-[0.72rem] font-semibold tracking-[0.12em] text-primary uppercase">{me.tenant.plan} · {t(`roles.${trustedRole}`)}</p>
               </div>
               <div className="border-b p-3">
                 <LanguageSwitcher className="justify-between" />

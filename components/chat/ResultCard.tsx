@@ -156,11 +156,11 @@ export function ResultCard({
               <div className="grid size-full place-items-center rounded-full bg-white text-center shadow-[inset_0_0_0_1px_rgba(148,163,184,0.2)] dark:bg-card dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
                 <span>
                   <span className="block font-heading text-[1.65rem] font-semibold leading-none tracking-tight tabular-nums text-[#10233f] dark:text-foreground">{result.score}</span>
-                  <span className="mt-0.5 block text-[0.58rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase">/100</span>
+                  <span className="mt-0.5 block text-[0.72rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase">/100</span>
                 </span>
               </div>
             </div>
-            <span className="mt-2 text-[0.62rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">{t('scoreLabel')}</span>
+            <span className="mt-2 text-[0.72rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">{t('scoreLabel')}</span>
           </div>
 
           <div className="min-w-0 self-center">
@@ -195,7 +195,7 @@ export function ResultCard({
             </div>
 
             <div className="mt-3 rounded-xl border border-[#e5ebf3] bg-white/75 px-3 py-2.5 dark:border-border dark:bg-background/50">
-              <p className="flex items-center gap-1.5 text-[0.62rem] font-semibold tracking-[0.1em] text-[#49627f] uppercase dark:text-muted-foreground">
+              <p className="flex items-center gap-1.5 text-[0.72rem] font-semibold tracking-[0.1em] text-[#49627f] uppercase dark:text-muted-foreground">
                 <Sparkles className="size-3 text-primary" aria-hidden="true" />
                 {t('summaryLabel')}
               </p>
@@ -220,7 +220,7 @@ export function ResultCard({
             <CheckCircle2 aria-hidden="true" className="size-3.5" />
           </span>
           <div className="min-w-0">
-            <h4 className="text-[0.62rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">{t('recommendedAction')}</h4>
+            <h4 className="text-[0.72rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">{t('recommendedAction')}</h4>
             <p className="mt-0.5 text-[0.82rem] font-medium leading-5 text-foreground">{result.recommendedAction}</p>
           </div>
         </section>
@@ -239,10 +239,10 @@ export function ResultCard({
                     return (
                       <li key={driver} className="grid grid-cols-[0.4rem_minmax(0,1fr)] gap-2 rounded-lg bg-[#f7f9fc] px-2.5 py-2 dark:bg-muted/35">
                         <span className="mt-[0.4rem] size-1.5 rounded-full bg-primary" aria-hidden="true" />
-                        <span className="flex min-w-0 items-center justify-between gap-2 text-[0.72rem] leading-[1.125rem]">
+                        <span className="flex min-w-0 items-center justify-between gap-2 text-xs leading-[1.125rem]">
                           <span className="min-w-0 truncate text-foreground/75">{display.label}</span>
                           {display.value && (
-                            <span className="shrink-0 rounded-full border border-[#dbe5f1] bg-white px-2 py-0.5 text-[0.62rem] font-medium text-[#365675] dark:border-border dark:bg-background/70 dark:text-blue-200">
+                            <span className="shrink-0 rounded-full border border-[#dbe5f1] bg-white px-2 py-0.5 text-xs font-medium text-[#365675] dark:border-border dark:bg-background/70 dark:text-blue-200">
                               {display.value}
                             </span>
                           )}
@@ -262,8 +262,8 @@ export function ResultCard({
                 </h4>
                 <ol className="mt-2 space-y-1.5">
                   {distinctNextSteps.map((step, index) => (
-                    <li key={`${index}-${step}`} className="grid grid-cols-[1.35rem_minmax(0,1fr)] gap-2 text-[0.72rem] text-muted-foreground">
-                      <span className="flex size-[1.15rem] items-center justify-center rounded-full border bg-background text-[0.58rem] font-semibold tabular-nums text-foreground">{index + 1}</span>
+                    <li key={`${index}-${step}`} className="grid grid-cols-[1.35rem_minmax(0,1fr)] gap-2 text-xs text-muted-foreground">
+                      <span className="flex size-[1.15rem] items-center justify-center rounded-full border bg-background text-xs font-semibold tabular-nums text-foreground">{index + 1}</span>
                       <span className="leading-[1.15rem]">{step}</span>
                     </li>
                   ))}
@@ -278,11 +278,11 @@ export function ResultCard({
             <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-[0.75rem] font-semibold outline-none transition hover:bg-[#f8fafc] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 dark:hover:bg-muted/45 sm:px-5 [&::-webkit-details-marker]:hidden">
               <Scale aria-hidden="true" className="size-3.5 text-primary" />
               <span className="flex-1">{t('factors.title')}</span>
-              <span className="rounded-full bg-[#eef4fb] px-2 py-0.5 text-[0.6rem] font-semibold tabular-nums text-[#315b91] dark:bg-primary/15 dark:text-blue-200">{factorEntries.length}</span>
+              <span className="rounded-full bg-[#eef4fb] px-2 py-0.5 text-xs font-semibold tabular-nums text-[#315b91] dark:bg-primary/15 dark:text-blue-200">{factorEntries.length}</span>
               <ChevronDown aria-hidden="true" className="size-3.5 text-muted-foreground transition-transform group-open:rotate-180" />
             </summary>
             <div className="border-t border-[#e7edf4] px-4 py-3 dark:border-border sm:px-5">
-              <div className="hidden grid-cols-[minmax(9rem,1fr)_5rem_6rem_6rem] gap-4 px-2 pb-2 text-[0.58rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:grid">
+              <div className="hidden grid-cols-[minmax(9rem,1fr)_5rem_6rem_6rem] gap-4 px-2 pb-2 text-[0.72rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:grid">
                 <span>{t('factors.factorLabel')}</span>
                 <span>{t('factors.valueLabel')}</span>
                 <span>{t('factors.weightLabel')}</span>
@@ -294,7 +294,7 @@ export function ResultCard({
                     ? Math.max(0, Math.min(100, (Math.abs(factor.contribution) / factor.weight) * 100))
                     : 0;
                   return (
-                    <div key={key} className="grid gap-2 rounded-lg bg-[#f8fafc] px-2.5 py-2 text-[0.7rem] dark:bg-muted/35 sm:grid-cols-[minmax(9rem,1fr)_5rem_6rem_6rem] sm:items-center sm:gap-4">
+                    <div key={key} className="grid gap-2 rounded-lg bg-[#f8fafc] px-2.5 py-2 text-xs dark:bg-muted/35 sm:grid-cols-[minmax(9rem,1fr)_5rem_6rem_6rem] sm:items-center sm:gap-4">
                       <dt className="min-w-0 font-medium text-foreground">
                         <span className="block truncate">{formatIdentifierLabel(key)}</span>
                         <span
@@ -363,7 +363,7 @@ export function ResultCard({
                   </span>
                   <div>
                     <h4 id={`${headingId}-decision`} className="text-[0.78rem] font-semibold">{t('decision.title')}</h4>
-                    <p className="mt-0.5 text-[0.68rem] leading-[1.1rem] text-muted-foreground">{t('decision.notice')}</p>
+                    <p className="mt-0.5 text-xs leading-[1.1rem] text-muted-foreground">{t('decision.notice')}</p>
                   </div>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">

@@ -276,7 +276,7 @@ export function ChatSession({ id }: { id: string }) {
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h1 className="font-heading text-[1.05rem] font-bold tracking-[-0.025em] text-foreground sm:text-lg">{t('title')}</h1>
-          <p className="mt-0.5 text-[0.68rem] text-muted-foreground">{t('assessmentId', { id: id.slice(-8).toUpperCase() })}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{t('assessmentId', { id: id.slice(-8).toUpperCase() })}</p>
         </div>
         <div className="flex items-center gap-2">
           {currentStageKey && (
@@ -305,7 +305,7 @@ export function ChatSession({ id }: { id: string }) {
             </span>
             <div>
               <h2 className="text-[0.78rem] font-semibold tracking-[-0.01em]">{t('assistantName')}</h2>
-              <p className="mt-0.5 text-[0.65rem] text-muted-foreground">{t('assistantDescription')}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t('assistantDescription')}</p>
             </div>
           </div>
           <div className="flex min-w-0 items-center gap-2">
@@ -315,7 +315,7 @@ export function ChatSession({ id }: { id: string }) {
                 <span>{t('contextPanel')}</span>
                 <ChevronDown className="size-3.5 text-muted-foreground transition-transform group-open/context:rotate-180" aria-hidden="true" />
               </summary>
-              <div className="scrollbar-subtle absolute right-0 top-full z-30 mt-2 max-h-[min(70dvh,34rem)] w-[min(21rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border bg-card shadow-[0_20px_55px_rgba(15,35,65,0.18)]">
+              <div className="scrollbar-subtle absolute left-0 top-full z-30 mt-2 max-h-[min(70dvh,34rem)] sm:left-auto sm:right-0 w-[min(21rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border bg-card shadow-[0_20px_55px_rgba(15,35,65,0.18)]">
                 <AssessmentContext a={a} currentStageIndex={currentStageIndex} messages={messages} />
               </div>
             </details>
@@ -378,7 +378,7 @@ export function ChatSession({ id }: { id: string }) {
                 {visibleMessages.map((message) => {
                   if (message.role === 'system') {
                     return (
-                      <div key={message._id} className="mx-auto flex w-full max-w-[58rem] items-center gap-3 py-1 text-[0.7rem] text-muted-foreground" role="note">
+                      <div key={message._id} className="mx-auto flex w-full max-w-[58rem] items-center gap-3 py-1 text-xs text-muted-foreground" role="note">
                         <span className="h-px flex-1 bg-border" aria-hidden="true" />
                         <span>{message.content}</span>
                         <span className="h-px flex-1 bg-border" aria-hidden="true" />
@@ -429,7 +429,7 @@ export function ChatSession({ id }: { id: string }) {
                           </span>
                           <div className="min-w-0">
                             {clarification && (
-                              <span className="mb-1 block text-[0.6rem] font-semibold tracking-[0.12em] text-[#6848bf] uppercase dark:text-[#bdadf4]">
+                              <span className="mb-1 block text-[0.72rem] font-semibold tracking-[0.12em] text-[#6848bf] uppercase dark:text-[#bdadf4]">
                                 {t('messageKinds.clarification')}
                               </span>
                             )}
@@ -605,10 +605,10 @@ function AssessmentContext({
     <div className="space-y-2 p-2.5" data-testid="assessment-context-panel">
       <section className="rounded-xl border border-[#e2e8f0] bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:border-border dark:bg-card">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-[0.62rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('workflow')}</h3>
+          <h3 className="text-[0.72rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('workflow')}</h3>
           {stagePosition !== null && (
             <span
-              className="rounded-full bg-[#eef4fb] px-2 py-0.5 text-[0.62rem] font-semibold tabular-nums text-[#315b91] dark:bg-primary/15 dark:text-blue-300"
+              className="rounded-full bg-[#eef4fb] px-2 py-0.5 text-xs font-semibold tabular-nums text-[#315b91] dark:bg-primary/15 dark:text-blue-300"
               aria-label={`${stagePosition} / ${WORKFLOW_STAGES.length}`}
               data-testid="workflow-progress"
             >
@@ -621,10 +621,10 @@ function AssessmentContext({
             const complete = index < currentStageIndex || (a?.status === 'closed' && index === currentStageIndex);
             const current = index === currentStageIndex && !complete;
             return (
-              <li key={stage} className="relative flex min-h-6 gap-2 pb-1.5 last:min-h-0 last:pb-0" aria-current={current ? 'step' : undefined}>
-                {index < WORKFLOW_STAGES.length - 1 && <span className="absolute top-4 bottom-0 left-[0.4375rem] w-px bg-[#dce4ee] dark:bg-border" aria-hidden="true" />}
+              <li key={stage} className="relative flex min-h-7 gap-2.5 pb-2 last:min-h-0 last:pb-0" aria-current={current ? 'step' : undefined}>
+                {index < WORKFLOW_STAGES.length - 1 && <span className="absolute top-5 bottom-0 left-[0.5625rem] w-px bg-[#dce4ee] dark:bg-border" aria-hidden="true" />}
                 <span
-                  className={`relative z-[1] flex size-4 shrink-0 items-center justify-center rounded-full border text-[0.55rem] font-semibold ${
+                  className={`relative z-[1] flex size-5 shrink-0 items-center justify-center rounded-full border text-xs font-semibold ${
                     complete
                       ? 'border-emerald-600 bg-emerald-600 text-white'
                       : current
@@ -632,9 +632,9 @@ function AssessmentContext({
                         : 'border-[#d6dee9] bg-white text-muted-foreground dark:border-border dark:bg-card'
                   }`}
                 >
-                  {complete ? <Check className="size-2.5" aria-hidden="true" /> : current ? <CircleDot className="size-2.5" aria-hidden="true" /> : index + 1}
+                  {complete ? <Check className="size-3" aria-hidden="true" /> : current ? <CircleDot className="size-3" aria-hidden="true" /> : index + 1}
                 </span>
-                <span className={`-mt-px text-[0.72rem] leading-4 ${current ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>{t(`stages.${stage}`)}</span>
+                <span className={`text-[0.8125rem] leading-5 ${current ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>{t(`stages.${stage}`)}</span>
               </li>
             );
           })}
@@ -643,19 +643,19 @@ function AssessmentContext({
 
       {(a?.personaKey || a?.scenarioKey) && (
         <section className="rounded-xl border border-[#e2e8f0] bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:border-border dark:bg-card">
-          <h3 className="text-[0.62rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('assessmentContext')}</h3>
-          <dl className="mt-1.5 grid gap-1.5">
+          <h3 className="text-[0.72rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('assessmentContext')}</h3>
+          <dl className="mt-2 grid gap-2">
             {a.personaKey && (
               <div>
-                <dt className="text-[0.61rem] font-medium tracking-[0.04em] text-muted-foreground uppercase">{t('role')}</dt>
-                <dd className="mt-0.5 text-[0.74rem] font-medium leading-4 text-foreground">{formatIdentifierLabel(a.personaKey)}</dd>
-                {a.personaSource === 'ai' && <dd className="mt-0.5 text-[0.62rem] text-primary">{t('aiSuggestedRole')}</dd>}
+                <dt className="text-[0.72rem] font-medium tracking-[0.04em] text-muted-foreground uppercase">{t('role')}</dt>
+                <dd className="mt-0.5 text-sm font-medium leading-5 text-foreground">{formatIdentifierLabel(a.personaKey)}</dd>
+                {a.personaSource === 'ai' && <dd className="mt-0.5 text-xs text-primary">{t('aiSuggestedRole')}</dd>}
               </div>
             )}
             {a.scenarioKey && (
               <div>
-                <dt className="text-[0.61rem] font-medium tracking-[0.04em] text-muted-foreground uppercase">{t('scenario')}</dt>
-                <dd className="mt-0.5 text-[0.74rem] font-medium leading-4 text-foreground">{formatIdentifierLabel(a.scenarioKey)}</dd>
+                <dt className="text-[0.72rem] font-medium tracking-[0.04em] text-muted-foreground uppercase">{t('scenario')}</dt>
+                <dd className="mt-0.5 text-sm font-medium leading-5 text-foreground">{formatIdentifierLabel(a.scenarioKey)}</dd>
               </div>
             )}
           </dl>
@@ -664,10 +664,10 @@ function AssessmentContext({
 
       <details className="group/facts overflow-hidden rounded-xl border border-[#e2e8f0] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.025)] dark:border-border dark:bg-card">
         <summary className="flex min-h-9 cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 outline-none transition hover:bg-[#f8fafc] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50 dark:hover:bg-muted/60 [&::-webkit-details-marker]:hidden">
-          <span className="text-[0.62rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('capturedFacts')}</span>
+          <span className="text-[0.72rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('capturedFacts')}</span>
           <span className="flex items-center gap-1.5">
-            <span className="min-w-6 rounded-full bg-[#eef4fb] px-1.5 py-0.5 text-center text-[0.62rem] font-semibold tabular-nums text-[#315b91] dark:bg-primary/15 dark:text-blue-300">{a?.facts?.length ?? 0}</span>
-            <ChevronDown className="size-3 text-muted-foreground transition-transform group-open/facts:rotate-180" aria-hidden="true" />
+            <span className="min-w-6 rounded-full bg-[#eef4fb] px-1.5 py-0.5 text-center text-xs font-semibold tabular-nums text-[#315b91] dark:bg-primary/15 dark:text-blue-300">{a?.facts?.length ?? 0}</span>
+            <ChevronDown className="size-3.5 text-muted-foreground transition-transform group-open/facts:rotate-180" aria-hidden="true" />
           </span>
         </summary>
         <div className="border-t border-[#edf1f6] p-1.5 dark:border-border">
@@ -676,24 +676,24 @@ function AssessmentContext({
               {a.facts.map((fact) => (
                 <div
                   key={fact.key}
-                  className="grid grid-cols-[0.85rem_minmax(0,1fr)] gap-2 rounded-lg px-1.5 py-1.5 transition-colors hover:bg-[#f8fafc] dark:hover:bg-muted/60"
+                  className="grid grid-cols-[1rem_minmax(0,1fr)] gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-[#f8fafc] dark:hover:bg-muted/60"
                   data-testid="context-fact-row"
                 >
                   <span className={`mt-0.5 ${fact.flagged ? 'text-amber-600 dark:text-amber-300' : 'text-emerald-600 dark:text-emerald-300'}`}>
-                    {fact.flagged ? <Flag className="size-2.5" aria-hidden="true" /> : <Check className="size-2.5" aria-hidden="true" />}
+                    {fact.flagged ? <Flag className="size-3" aria-hidden="true" /> : <Check className="size-3" aria-hidden="true" />}
                   </span>
                   <div className="min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="min-w-0 truncate text-[0.71rem] font-medium leading-4 text-foreground">{formatIdentifierLabel(fact.key)}</p>
+                      <p className="min-w-0 truncate text-[0.8125rem] font-medium leading-5 text-foreground">{formatIdentifierLabel(fact.key)}</p>
                       <span
-                        className="shrink-0 text-[0.59rem] leading-4 tabular-nums text-muted-foreground"
+                        className="shrink-0 text-xs leading-5 tabular-nums text-muted-foreground"
                         aria-label={`${Math.round(fact.confidence * 100)}% ${t('factConfidence')}`}
                         title={`${Math.round(fact.confidence * 100)}% ${t('factConfidence')}`}
                       >
                         {Math.round(fact.confidence * 100)}%
                       </span>
                     </div>
-                    <p className="line-clamp-2 break-words text-[0.66rem] leading-4 text-muted-foreground">
+                    <p className="line-clamp-2 break-words text-[0.75rem] leading-5 text-muted-foreground">
                       {factOptionLabel(fact, messages) ?? formatDisplayValue(fact.value, t('answer.yes'), t('answer.no'))}
                     </p>
                   </div>
@@ -701,7 +701,7 @@ function AssessmentContext({
               ))}
             </div>
           ) : (
-            <p className="px-1 py-1 text-[0.7rem] leading-5 text-muted-foreground">{t('noFacts')}</p>
+            <p className="px-1.5 py-1.5 text-[0.8125rem] leading-5 text-muted-foreground">{t('noFacts')}</p>
           )}
         </div>
       </details>
@@ -714,20 +714,20 @@ function AssessmentContext({
                 {decisionType === 'escalate' ? <Route className="size-3" aria-hidden="true" /> : <CheckCircle2 className="size-3" aria-hidden="true" />}
               </span>
               <div className="min-w-0">
-                <h3 className="text-[0.62rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('decisionDetails.title')}</h3>
-                <p className="mt-0.5 text-[0.72rem] font-semibold leading-4 text-foreground">{t(`decisionDetails.types.${decisionType}`)}</p>
+                <h3 className="text-[0.72rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{t('decisionDetails.title')}</h3>
+                <p className="mt-0.5 text-[0.8125rem] font-semibold leading-5 text-foreground">{t(`decisionDetails.types.${decisionType}`)}</p>
               </div>
             </div>
-            <span className="rounded-full border bg-white/70 px-2 py-0.5 text-[0.58rem] font-semibold text-muted-foreground dark:bg-background/55">
+            <span className="rounded-full border bg-white/70 px-2 py-0.5 text-xs font-semibold text-muted-foreground dark:bg-background/55">
               {t('decisionDetails.currentStatus', { status: status.has(a.status) ? status(a.status) : formatIdentifierLabel(a.status) })}
             </span>
           </div>
 
-          <dl className="grid gap-2 px-3 py-2.5 text-[0.68rem]">
+          <dl className="grid gap-2.5 px-3 py-2.5 text-[0.78rem]">
             <div className="grid grid-cols-[0.85rem_minmax(0,1fr)] gap-2">
               <UserRound className="mt-0.5 size-3 text-muted-foreground" aria-hidden="true" />
               <div>
-                <dt className="text-[0.58rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">{t(`decisionDetails.actorLabels.${decisionType}`)}</dt>
+                <dt className="text-[0.72rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">{t(`decisionDetails.actorLabels.${decisionType}`)}</dt>
                 <dd className="mt-0.5 break-words font-medium text-foreground">{decision.byUser?.name ?? t('decisionDetails.unavailable')}</dd>
               </div>
             </div>
@@ -735,22 +735,22 @@ function AssessmentContext({
             <div className="grid grid-cols-[0.85rem_minmax(0,1fr)] gap-2">
               <Clock3 className="mt-0.5 size-3 text-muted-foreground" aria-hidden="true" />
               <div>
-                <dt className="text-[0.58rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">{t(`decisionDetails.timeLabels.${decisionType}`)}</dt>
+                <dt className="text-[0.72rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">{t(`decisionDetails.timeLabels.${decisionType}`)}</dt>
                 <dd className="mt-0.5 font-medium text-foreground">{new Date(decision.decidedAt).toLocaleString(locale)}</dd>
               </div>
             </div>
 
             {decisionType === 'override' && decision.overriddenTo && a.result && (
               <div className="rounded-lg border border-current/10 bg-white/65 px-2.5 py-2 dark:bg-background/45">
-                <dt className="text-[0.58rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">{t('decisionDetails.classificationChange')}</dt>
+                <dt className="text-[0.72rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">{t('decisionDetails.classificationChange')}</dt>
                 <dd className="mt-1.5 grid grid-cols-[minmax(0,1fr)_0.75rem_minmax(0,1fr)] items-center gap-1.5 text-foreground">
                   <span>
-                    <span className="block text-[0.55rem] font-medium text-muted-foreground">{t('decisionDetails.previousClassification')}</span>
+                    <span className="block text-xs font-medium text-muted-foreground">{t('decisionDetails.previousClassification')}</span>
                     <span className="mt-0.5 block font-medium">{classificationName(a.result.classification)}</span>
                   </span>
                   <ArrowRight className="size-3 shrink-0 text-muted-foreground" aria-hidden="true" />
                   <span>
-                    <span className="block text-[0.55rem] font-medium text-muted-foreground">{t('decisionDetails.newClassification')}</span>
+                    <span className="block text-xs font-medium text-muted-foreground">{t('decisionDetails.newClassification')}</span>
                     <span className="mt-0.5 block font-medium">{classificationName(decision.overriddenTo)}</span>
                   </span>
                 </dd>
@@ -759,25 +759,25 @@ function AssessmentContext({
 
             {decisionType === 'escalate' && (
               <div className="rounded-lg border border-current/10 bg-white/65 px-2.5 py-2 dark:bg-background/45">
-                <dt className="text-[0.58rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">{t('decisionDetails.assignedTo')}</dt>
+                <dt className="text-[0.72rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">{t('decisionDetails.assignedTo')}</dt>
                 <dd className="mt-0.5 break-words font-medium text-foreground">{a.escalatedTo?.name ?? t('decisionDetails.unassignedQueue')}</dd>
               </div>
             )}
 
             {decision.reason && (
               <div className="rounded-lg border border-current/10 bg-white/65 px-2.5 py-2 dark:bg-background/45">
-                <dt className="text-[0.58rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">
+                <dt className="text-[0.72rem] font-medium tracking-[0.06em] text-muted-foreground uppercase">
                   {decisionType === 'accept' ? t('decisionDetails.note') : t('decisionDetails.reason')}
                 </dt>
-                <dd className="mt-1 break-words leading-4 text-foreground/80">{decision.reason}</dd>
+                <dd className="mt-1 break-words leading-5 text-foreground/80">{decision.reason}</dd>
               </div>
             )}
           </dl>
         </section>
       )}
 
-      <p className="flex gap-2 rounded-xl bg-[#eff4fa] px-3 py-2 text-[0.63rem] leading-4 text-[#607089] dark:bg-muted/60 dark:text-muted-foreground">
-        <LockKeyhole className="mt-0.5 size-3 shrink-0 text-[#356bb3] dark:text-blue-300" aria-hidden="true" />
+      <p className="flex gap-2 rounded-xl bg-[#eff4fa] px-3 py-2.5 text-xs leading-5 text-[#607089] dark:bg-muted/60 dark:text-muted-foreground">
+        <LockKeyhole className="mt-1 size-3 shrink-0 text-[#356bb3] dark:text-blue-300" aria-hidden="true" />
         <span>{t('governanceNote')}</span>
       </p>
     </div>
@@ -972,7 +972,7 @@ function InlineChoiceCard({
           </p>
         )}
         {personaLocked && (
-          <p className="flex items-start gap-2 border-t border-[#e2e9f2] bg-[#fbfcfe] px-3.5 py-2.5 text-[0.7rem] leading-5 text-muted-foreground dark:border-border dark:bg-muted/35 sm:px-4">
+          <p className="flex items-start gap-2 border-t border-[#e2e9f2] bg-[#fbfcfe] px-3.5 py-2.5 text-xs leading-5 text-muted-foreground dark:border-border dark:bg-muted/35 sm:px-4">
             <LockKeyhole className="mt-0.5 size-3 shrink-0 text-[#2868cf] dark:text-blue-300" aria-hidden="true" />
             <span>
               {t('persona.locked')}{' '}
@@ -1052,7 +1052,7 @@ function AnswerBox({
       <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
         <div className="flex items-center justify-between gap-3 sm:col-span-2">
           <p className="text-xs font-semibold text-foreground">{t('responseLabel')}</p>
-          <p className="text-[0.7rem] text-muted-foreground">{t('numberHint')}</p>
+          <p className="text-xs text-muted-foreground">{t('numberHint')}</p>
         </div>
         <div>
           <label className="sr-only" htmlFor={inputId}>{q.text ?? t('numberLabel')}</label>
@@ -1101,7 +1101,7 @@ function AnswerBox({
           }}
         />
         <div className="flex items-center justify-between gap-3 px-3 pb-2 pt-0.5">
-          {q.type !== 'yes_no' && <span className="text-[0.65rem] text-muted-foreground">{t('enterHint')}</span>}
+          {q.type !== 'yes_no' && <span className="text-xs text-muted-foreground">{t('enterHint')}</span>}
           <Button
             size="icon"
             className={`ml-auto size-8 rounded-full transition-transform hover:scale-[1.03] motion-reduce:hover:scale-100 ${sendButtonClass}`}

@@ -211,7 +211,7 @@ export default function DatasetsPage() {
               <div className="min-w-0">
                 <p className="metric-value text-xl">{loading ? '—' : counter.value}</p>
                 <p className="text-xs font-semibold">{t(`summary.${counter.key}`)}</p>
-                <p className="mt-0.5 text-[0.68rem] leading-4 text-muted-foreground">{t(`summary.hints.${counter.key}`)}</p>
+                <p className="mt-0.5 text-xs leading-4 text-muted-foreground">{t(`summary.hints.${counter.key}`)}</p>
               </div>
             </div>
           );

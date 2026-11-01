@@ -130,7 +130,7 @@ export default function NewAssessmentPage() {
                     </span>
                     <span className="min-w-0 flex-1">
                       {selected ? (
-                        <span className="mb-1.5 inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-[0.68rem] font-semibold text-primary">
+                        <span className="mb-1.5 inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
                           {t('selected')}
                         </span>
                       ) : null}
@@ -177,7 +177,7 @@ export default function NewAssessmentPage() {
                 <h2 id="incident-context-heading" className="text-sm font-semibold">{t('optionalContext')}</h2>
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">{t('optionalContextHint')}</p>
               </div>
-              <span className={`shrink-0 text-[0.7rem] ${hasIncompleteContext ? 'font-medium text-destructive' : 'text-muted-foreground'}`}>
+              <span className={`shrink-0 text-xs ${hasIncompleteContext ? 'font-medium text-destructive' : 'text-muted-foreground'}`}>
                 {t('characterHint', { count: trimmedText.length })}
               </span>
             </div>
@@ -191,7 +191,7 @@ export default function NewAssessmentPage() {
               aria-invalid={hasIncompleteContext}
               className="mt-3 min-h-24 resize-y bg-card px-4 py-3 text-sm leading-6 shadow-none focus-visible:ring-2"
             />
-            <div className="mt-2 flex items-start gap-2 text-[0.72rem] leading-5 text-muted-foreground">
+            <div className="mt-2 flex items-start gap-2 text-xs leading-5 text-muted-foreground">
               <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden="true" />
               <span>{t('privacyNote')}</span>
             </div>

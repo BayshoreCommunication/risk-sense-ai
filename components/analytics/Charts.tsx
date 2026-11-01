@@ -43,7 +43,7 @@ export function ChartStyles() {
 
 const W = 720;
 const H = 240;
-const PAD = { top: 16, right: 16, bottom: 28, left: 40 };
+const PAD = { top: 16, right: 16, bottom: 30, left: 44 };
 
 function niceMax(v: number) {
   if (v <= 0) return 1;
@@ -53,15 +53,15 @@ function niceMax(v: number) {
 }
 
 function Tooltip({ x, y, lines }: { x: number; y: number; lines: string[] }) {
-  const w = Math.max(...lines.map((l) => l.length)) * 6.2 + 16;
-  const h = lines.length * 14 + 10;
+  const w = Math.max(...lines.map((l) => l.length)) * 6.8 + 16;
+  const h = lines.length * 16 + 10;
   const tx = Math.min(Math.max(x - w / 2, PAD.left), W - PAD.right - w);
   const ty = y - h - 10 < PAD.top ? y + 12 : y - h - 10;
   return (
     <g pointerEvents="none">
       <rect x={tx} y={ty} width={w} height={h} rx={5} fill="var(--viz-tooltip-bg)" stroke="var(--viz-tooltip-border)" strokeWidth={1} />
       {lines.map((l, i) => (
-        <text key={i} x={tx + 8} y={ty + 14 + i * 14} fontSize={11} fontWeight={i === 0 ? 600 : 400} fill="var(--viz-tooltip-text)">
+        <text key={i} x={tx + 8} y={ty + 16 + i * 16} fontSize={12} fontWeight={i === 0 ? 600 : 400} fill="var(--viz-tooltip-text)">
           {l}
         </text>
       ))}
@@ -92,7 +92,7 @@ export function BarChart({ data, format = (v) => String(v), title }: { data: { l
         return (
           <g key={t}>
             <line x1={PAD.left} x2={W - PAD.right} y1={y} y2={y} stroke="var(--viz-grid)" strokeWidth={1} />
-            <text x={PAD.left - 6} y={y + 4} fontSize={10} textAnchor="end" fill="var(--viz-muted)">
+            <text x={PAD.left - 6} y={y + 4} fontSize={12} textAnchor="end" fill="var(--viz-muted)">
               {format(t)}
             </text>
           </g>
@@ -111,7 +111,7 @@ export function BarChart({ data, format = (v) => String(v), title }: { data: { l
               opacity={active === null || active === i ? 1 : 0.38}
             />
             {i % every === 0 && (
-              <text x={PAD.left + i * slot + slot / 2} y={H - 10} fontSize={10} fontWeight={selected === i ? 700 : 400} textAnchor="middle" fill={selected === i ? 'var(--viz-ink)' : 'var(--viz-muted)'}>
+              <text x={PAD.left + i * slot + slot / 2} y={H - 10} fontSize={12} fontWeight={selected === i ? 700 : 400} textAnchor="middle" fill={selected === i ? 'var(--viz-ink)' : 'var(--viz-muted)'}>
                 {d.label}
               </text>
             )}
@@ -173,13 +173,13 @@ export function LineChart({ periods, series, format = (v) => String(v), title, u
       {ticks.map((t) => (
         <g key={t}>
           <line x1={PAD.left} x2={PAD.left + innerW} y1={yAt(t)} y2={yAt(t)} stroke="var(--viz-grid)" />
-          <text x={PAD.left - 6} y={yAt(t) + 4} fontSize={10} textAnchor="end" fill="var(--viz-muted)">
+          <text x={PAD.left - 6} y={yAt(t) + 4} fontSize={12} textAnchor="end" fill="var(--viz-muted)">
             {format(t)}
           </text>
         </g>
       ))}
       {periods.map((p, i) => i % every === 0 && (
-        <text key={p} x={xAt(i)} y={H - 10} fontSize={10} textAnchor="middle" fill="var(--viz-muted)">
+        <text key={p} x={xAt(i)} y={H - 10} fontSize={12} textAnchor="middle" fill="var(--viz-muted)">
           {p}
         </text>
       ))}
@@ -191,7 +191,7 @@ export function LineChart({ periods, series, format = (v) => String(v), title, u
           <g key={s.name}>
             <path d={d} fill="none" stroke={`var(--s${si + 1})`} strokeWidth={2.5} strokeLinejoin="round" opacity={active === null ? 1 : 0.88} />
             {series.length > 1 && series.length <= 4 && last && (
-              <text x={last[0] + 6} y={last[1] + 4} fontSize={10} fill="var(--viz-ink2)">
+              <text x={last[0] + 6} y={last[1] + 4} fontSize={12} fill="var(--viz-ink2)">
                 {s.name}
               </text>
             )}
@@ -239,7 +239,7 @@ export function LineChart({ periods, series, format = (v) => String(v), title, u
           {series.map((s, si) => (
             <g key={s.name} transform={`translate(${W - PAD.right - 84}, ${PAD.top + si * 16})`}>
               <rect width={10} height={10} rx={2} fill={`var(--s${si + 1})`} />
-              <text x={14} y={9} fontSize={10} fill="var(--viz-ink2)">
+              <text x={14} y={9} fontSize={12} fill="var(--viz-ink2)">
                 {s.name.length > 13 ? `${s.name.slice(0, 12)}…` : s.name}
               </text>
             </g>
@@ -307,7 +307,7 @@ export function PieChart({ rows, title, totalLabel }: { rows: { key: string; lab
           );
         })}
         <circle cx="120" cy="120" r="48" fill="var(--card)" />
-        <text x="120" y="116" textAnchor="middle" fontSize="11" fill="var(--viz-muted)">{totalLabel}</text>
+        <text x="120" y="116" textAnchor="middle" fontSize="12" fill="var(--viz-muted)">{totalLabel}</text>
         <text x="120" y="139" textAnchor="middle" fontSize="22" fontWeight="700" fill="var(--viz-ink)">{total.toLocaleString(locale)}</text>
       </svg>
       <div className="divide-y divide-border/70 border-y">
@@ -403,7 +403,7 @@ export function StackedClassificationChart({
       <div className="overflow-x-auto pb-2 pt-1">
         <div className="min-w-[34rem]">
           <div className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-3">
-            <div className="flex h-60 flex-col justify-between pb-px text-right text-[10px] tabular-nums text-muted-foreground" aria-hidden="true">
+            <div className="flex h-60 flex-col justify-between pb-px text-right text-xs tabular-nums text-muted-foreground" aria-hidden="true">
               {tickValues.map((tick, index) => (
                 <span key={`${tick}-${index}`}>{tick.toLocaleString(locale)}</span>
               ))}
@@ -474,7 +474,7 @@ export function StackedClassificationChart({
                   onClick={() => onMonthSelect(month.key)}
                 >
                   <span className="block truncate">{month.label}</span>
-                  <span className="mt-0.5 block text-[10px] font-medium tabular-nums">{total === null ? '—' : total.toLocaleString(locale)}</span>
+                  <span className="mt-0.5 block text-xs font-medium tabular-nums">{total === null ? '—' : total.toLocaleString(locale)}</span>
                 </button>
               );
             })}
