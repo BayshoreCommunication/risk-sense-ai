@@ -79,7 +79,7 @@ export default function RulesPage() {
                   {t('card.then')}{' '}
                   <strong className={tone.text}>{classification.has(forced) ? classification(forced) : formatIdentifierLabel(forced)}</strong>
                 </span>
-                <Badge variant="outline" className="bg-background text-[0.68rem]">{t('card.priority', { value: String(item.priority ?? 100) })}</Badge>
+                <Badge variant="outline" className="bg-background text-xs">{t('card.priority', { value: String(item.priority ?? 100) })}</Badge>
               </span>
             ),
           };
@@ -90,7 +90,7 @@ export default function RulesPage() {
             <div className="min-w-0 text-xs leading-5">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-semibold">{t('lockoutExample.title')}</span>
-                <Badge variant="outline" className="border-blue-300 bg-white/70 text-[0.62rem] text-blue-900 dark:border-blue-400/30 dark:bg-background/65 dark:text-blue-200">{t('lockoutExample.notActive')}</Badge>
+                <Badge variant="outline" className="border-blue-300 bg-white/70 text-xs text-blue-900 dark:border-blue-400/30 dark:bg-background/65 dark:text-blue-200">{t('lockoutExample.notActive')}</Badge>
                 <code className="rounded bg-white/75 px-1.5 py-0.5 dark:bg-background/65">{t('lockoutExample.condition')}</code>
                 <span aria-hidden="true">→</span>
                 <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-300" variant="outline">{classification('monitor_only')}</Badge>

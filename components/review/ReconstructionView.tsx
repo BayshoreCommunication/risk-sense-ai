@@ -121,8 +121,8 @@ export function ReconstructionView({ id }: { id: string }) {
                 {r.conformance.differences.map((d) => (
                   <tr key={d.field} className="border-t">
                     <td className="px-4 py-3 font-mono">{d.field}</td>
-                    <td className="max-w-72 whitespace-normal px-4 py-3 font-mono text-[11px]">{JSON.stringify(d.fromAudit)}</td>
-                    <td className="max-w-72 whitespace-normal px-4 py-3 font-mono text-[11px]">{JSON.stringify(d.stored)}</td>
+                    <td className="max-w-72 whitespace-normal px-4 py-3 font-mono text-xs">{JSON.stringify(d.fromAudit)}</td>
+                    <td className="max-w-72 whitespace-normal px-4 py-3 font-mono text-xs">{JSON.stringify(d.stored)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -163,7 +163,7 @@ export function ReconstructionView({ id }: { id: string }) {
               <div className="text-xs text-muted-foreground">{t('state.pinnedVersions')}</div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {Object.entries(s.versions).map(([key, value]) => (
-                  <Badge key={key} variant="outline" className="font-mono text-[11px]">
+                  <Badge key={key} variant="outline" className="font-mono text-xs">
                     {key}={typeof value === 'object' && value ? `${(value as { version?: number }).version ?? '?'}` : String(value)}
                   </Badge>
                 ))}

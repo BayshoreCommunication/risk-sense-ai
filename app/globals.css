@@ -257,7 +257,7 @@
     @apply max-w-3xl text-sm leading-6 text-muted-foreground;
   }
   .eyebrow {
-    @apply text-[0.68rem] font-semibold tracking-[0.15em] text-primary uppercase;
+    @apply text-[0.72rem] font-semibold tracking-[0.15em] text-primary uppercase;
   }
   /* Customer-facing page-header chrome: show the active role without internal traceability keys. */
   .role-pill {

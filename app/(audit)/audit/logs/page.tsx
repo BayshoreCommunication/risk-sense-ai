@@ -203,7 +203,7 @@ export default function AuditLogsPage() {
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <input id="audit-search" className="h-9 w-full rounded-lg border border-input bg-transparent pl-8 pr-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50" value={search} onChange={(e) => { setSearch(e.target.value); setCursor(null); }} placeholder={t('filters.searchPlaceholder')} />
           </div>
-          <p className="text-[0.7rem] leading-5 text-muted-foreground">{t('filters.searchScope')}</p>
+          <p className="text-xs leading-5 text-muted-foreground">{t('filters.searchScope')}</p>
         </div>
       </div>
       {error && <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">{error}</div>}
@@ -257,7 +257,7 @@ export default function AuditLogsPage() {
                 <TableCell className="whitespace-nowrap align-top">{new Date(e.createdAt).toLocaleString(locale)}</TableCell>
                 <TableCell className="align-top">
                   <p className="whitespace-nowrap text-sm font-medium">{e.actorRole ? formatIdentifierLabel(e.actorRole) : t('systemActor')}</p>
-                  {e.actorUserId && <p className="mt-0.5 font-mono text-[0.68rem] text-muted-foreground" title={e.actorUserId}>…{e.actorUserId.slice(-8)}</p>}
+                  {e.actorUserId && <p className="mt-0.5 font-mono text-xs text-muted-foreground" title={e.actorUserId}>…{e.actorUserId.slice(-8)}</p>}
                 </TableCell>
                 <TableCell>
                   <div className="flex min-w-64 items-start justify-between gap-2">
@@ -265,7 +265,7 @@ export default function AuditLogsPage() {
                       <span className="font-medium">{e.action}</span>
                       <div className="mt-1 flex items-center gap-2">
                         <Badge variant="secondary">{formatIdentifierLabel(e.category)}</Badge>
-                        <span className="font-mono text-[0.68rem] text-muted-foreground">{t('sequenceValue', { value: e.seq })}</span>
+                        <span className="font-mono text-xs text-muted-foreground">{t('sequenceValue', { value: e.seq })}</span>
                       </div>
                     </div>
                     <Button

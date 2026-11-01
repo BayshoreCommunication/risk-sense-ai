@@ -318,7 +318,7 @@ function AnalyticsDashboard() {
                       aria-pressed={selectedClassification === segment.key}
                       onClick={() => setSelectedClassification((current) => (current === segment.key ? null : (segment.key as ClassificationKey)))}
                     >
-                      <span className="flex items-center gap-1.5 text-[11px] font-medium" style={{ color: status.color }}>
+                      <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: status.color }}>
                         <span aria-hidden="true">{status.icon}</span>
                         <span className="text-foreground">{segment.label}</span>
                       </span>

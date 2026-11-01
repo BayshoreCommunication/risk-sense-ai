@@ -581,7 +581,7 @@ function ReviewDashboard() {
 
               <dl className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
                 <div className="rounded-lg border border-border/70 px-3 py-2.5">
-                  <dt className="text-[0.65rem] font-semibold tracking-[0.06em] text-muted-foreground uppercase">{t('columns.classification')}</dt>
+                  <dt className="text-[0.72rem] font-semibold tracking-[0.06em] text-muted-foreground uppercase">{t('columns.classification')}</dt>
                   <dd className="mt-1.5 flex flex-wrap items-center gap-1.5">
                     {a.result ? (
                       <>
@@ -594,7 +594,7 @@ function ReviewDashboard() {
                   </dd>
                 </div>
                 <div className="rounded-lg border border-border/70 px-3 py-2.5">
-                  <dt className="text-[0.65rem] font-semibold tracking-[0.06em] text-muted-foreground uppercase">{t('columns.confidence')}</dt>
+                  <dt className="text-[0.72rem] font-semibold tracking-[0.06em] text-muted-foreground uppercase">{t('columns.confidence')}</dt>
                   <dd className="mt-1.5">
                     {a.result ? (
                       <>
@@ -607,7 +607,7 @@ function ReviewDashboard() {
                   </dd>
                 </div>
                 <div className="col-span-2 rounded-lg border border-border/70 px-3 py-2.5 sm:col-span-1">
-                  <dt className="text-[0.65rem] font-semibold tracking-[0.06em] text-muted-foreground uppercase">{t('columns.daysOpen')}</dt>
+                  <dt className="text-[0.72rem] font-semibold tracking-[0.06em] text-muted-foreground uppercase">{t('columns.daysOpen')}</dt>
                   <dd className="mt-1 text-lg font-semibold tabular-nums">{daysOpen(a, dashboardOpenedAt)}</dd>
                 </div>
               </dl>

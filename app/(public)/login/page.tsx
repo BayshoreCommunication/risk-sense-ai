@@ -256,13 +256,13 @@ function LoginForm() {
                       <span className="truncate text-xs font-semibold text-foreground">{tRole(account.role)}</span>
                       {selected ? <LoaderCircle aria-hidden="true" className="size-3.5 shrink-0 animate-spin text-primary" /> : <ArrowRight aria-hidden="true" className="size-3.5 shrink-0 text-primary transition-transform group-hover:translate-x-0.5" />}
                     </span>
-                    <span className="mt-1 block text-[0.68rem] font-medium text-primary">{t('demo.sandbox')}</span>
-                    <span className="mt-1 block truncate text-[0.63rem] text-muted-foreground">{account.email}</span>
+                    <span className="mt-1 block text-xs font-medium text-primary">{t('demo.sandbox')}</span>
+                    <span className="mt-1 block truncate text-xs text-muted-foreground">{account.email}</span>
                   </button>
                 );
               })}
             </div>
-            <p className="mt-3 text-[0.68rem] leading-4 text-muted-foreground">{t('demo.safety')}</p>
+            <p className="mt-3 text-xs leading-4 text-muted-foreground">{t('demo.safety')}</p>
           </section>
         ) : null}
 
@@ -358,7 +358,7 @@ function LoginForm() {
                 </p>
               )}
             </form>
-            <div className="flex items-center gap-3 text-center text-[0.68rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+            <div className="flex items-center gap-3 text-center text-[0.72rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
               <span className="h-px flex-1 bg-border" />
               {t('or')}
               <span className="h-px flex-1 bg-border" />

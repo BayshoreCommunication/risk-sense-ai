@@ -37,7 +37,7 @@ export function ThemeSwitcher({ className }: { className?: string }) {
               role="radio"
               aria-checked={selected}
               className={cn(
-                'flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[0.68rem] font-semibold outline-none transition-[background-color,color,box-shadow] duration-200',
+                'flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold outline-none transition-[background-color,color,box-shadow] duration-200',
                 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-muted motion-reduce:transition-none',
                 selected
                   ? 'bg-card text-primary shadow-[0_2px_8px_rgba(6,29,67,0.12)]'
