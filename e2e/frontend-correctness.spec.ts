@@ -520,6 +520,48 @@ test('named escalatee keeps requestor and department context without broad revie
   await expect(card).toContainText('Review the payment controls.');
 });
 
+test('analytics opens on the newest month that has scored assessments [DASH-03, FR-27]', async ({ page }) => {
+  // Window on 2026-11-25 is Jun–Oct 2026; October has no scored assessments.
+  await page.clock.setFixedTime(new Date('2026-11-25T12:00:00.000Z'));
+  await authenticate(page, 'administrator');
+  const emptyReport = { columns: [], rows: [], summary: {} };
+  await mockApi(page, () => currentUser('administrator', { reports: true }), async ({ route, path, method }) => {
+    if (method !== 'GET') return false;
+    if (path.startsWith('/reports/')) {
+      await ok(route, emptyReport);
+      return true;
+    }
+    if (path === '/analytics/trends') {
+      await ok(route, {
+        columns: [{ key: 'period', label: 'Period', kind: 'text' }, { key: 'group', label: 'Classification', kind: 'text' }, { key: 'count', label: 'Count', kind: 'number' }],
+        rows: ['2026-06', '2026-07', '2026-08', '2026-09'].flatMap((period) => [
+          { period, group: 'risk', count: 3 },
+          { period, group: 'issue', count: 1 },
+        ]),
+        summary: { by: 'classification' },
+      });
+      return true;
+    }
+    return false;
+  });
+
+  await page.goto('/admin/analytics');
+  const monthlyPanel = page.locator('section.data-panel').filter({ has: page.getByRole('heading', { name: 'Monthly classification distribution', exact: true }) });
+  const monthSelectors = monthlyPanel.getByRole('button', { name: /^Select / });
+  await expect(monthSelectors).toHaveCount(5);
+  await expect(monthSelectors.nth(3)).toHaveAttribute('aria-pressed', 'true');
+  await expect(monthSelectors.nth(4)).toHaveAttribute('aria-pressed', 'false');
+  const totals = monthlyPanel.getByRole('group', { name: /classification totals$/ });
+  await expect(totals.getByRole('button', { name: /^Risk in Sep 2026: 3$/ })).toBeVisible();
+
+  await monthSelectors.nth(4).click();
+  await expect(monthSelectors.nth(4)).toHaveAttribute('aria-pressed', 'true');
+  await expect(totals.getByRole('button', { name: /^Risk in Oct 2026: 0$/ })).toBeVisible();
+  // Reset clears the highlight; the totals fall back to the same newest non-empty month, not October.
+  await monthlyPanel.getByRole('button', { name: 'Reset chart' }).click();
+  await expect(totals.getByRole('button', { name: /^Risk in Sep 2026: 3$/ })).toBeVisible();
+});
+
 test('analytics supports pie, table and persistent period drill-down views [DASH-03, FR-27, FR-28]', async ({ page }) => {
   let failNextClassification = false;
   let drilldownUrl = '';
