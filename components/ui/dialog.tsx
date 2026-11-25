@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
-import { cn } from "cn"
+import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
