@@ -58,6 +58,11 @@ function monthsFromTrends(keys: string[], result: ReportResult): MonthlyClassifi
   });
 }
 
+/** Default focus: the newest month that has scored assessments, so the legend never opens on all zeros. */
+function defaultMonth<T extends { total: number | null }>(months: T[]): T | null {
+  return months.findLast((month) => (month.total ?? 0) > 0) ?? months.at(-1) ?? null;
+}
+
 /**
  * DASH-03 analytics dashboard, laid out as docs/design/figma-frames/17-admin-analytics-dashboard.png:
  * headline metrics and the monthly classification distribution. The FR-26 report views, their FR-28
@@ -111,7 +116,7 @@ function AnalyticsDashboard() {
         .then((result) => {
           const months = monthsFromTrends(monthWindow.map((month) => month.key), result);
           setMonthlyClassification(months);
-          setSelectedMonth((current) => (current && months.some((month) => month.key === current) ? current : (months.at(-1)?.key ?? null)));
+          setSelectedMonth((current) => (current && months.some((month) => month.key === current) ? current : (defaultMonth(months)?.key ?? null)));
         })
         .catch((e) => {
           setMonthlyClassification([]);
@@ -147,7 +152,7 @@ function AnalyticsDashboard() {
       })),
     [monthlyClassification, monthFormatter, t],
   );
-  const selectedMonthData = stackedClassificationMonths.find((month) => month.key === selectedMonth) ?? stackedClassificationMonths.at(-1) ?? null;
+  const selectedMonthData = stackedClassificationMonths.find((month) => month.key === selectedMonth) ?? defaultMonth(stackedClassificationMonths);
   const selectedSegment = selectedMonthData?.segments.find((segment) => segment.key === selectedClassification) ?? null;
   const hasChartSelection = selectedMonth !== null || selectedClassification !== null;
 
